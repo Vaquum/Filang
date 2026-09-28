@@ -1,38 +1,79 @@
 # Filang
 
-A parametric financial-program language and factorized engine for trillion-scale feature research.
+A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: specification phase. The engine, CLI, and performance claims described in the specification are not implemented or established yet.**
+**Status: runnable 0.1 research vertical slice.** It generates unfamiliar typed expressions, shares their numerical dependencies, searches threshold readouts, freezes selected programs and evaluates them on a later period. The broader factory specification and trillion-feature scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1). Delivery of this slice is tracked in [issue #2](https://github.com/mikkokotila/Filang/issues/2).
 
-## Founding specification
+## Run without market data
 
-[Issue #1 — Specification: Filang — a parametric financial-program language and factorized feature factory](https://github.com/mikkokotila/Filang/issues/1) is the authoritative product and architecture specification. It contains the semantic contracts, family evaluators, delivery milestones, acceptance matrix, and evidence requirements.
+Rust 1.63 or later. The native package has **no third-party dependencies**; the committed Cargo.lock builds offline.
 
-Implementation issues and pull requests should reference the relevant requirements in #1. Proposed command names and module layouts in that issue describe future interfaces, not commands available in this checkout.
+```sh
+cargo test --locked --offline
+cargo build --release --locked --offline
+./target/release/filang demo --out runs/demo
+```
 
-## The idea
+The synthetic demo generates data, searches programs, freezes candidates, and replays a separate period. Synthetic performance is a functionality test, not financial evidence. Use a fresh output directory for each run.
 
-Features are typed, causal programs rather than entries in a fixed indicator catalog. Inputs, graph topology, operators, windows, lags, constants, normalization, and readouts are parameters. Opaque feature names retain reconstructible programs and provenance.
+## Run the Binance spot campaign
 
-The engine compiles and evaluates **families of programs**, sharing numerical dependencies, threshold behaviors, Boolean paths, sufficient statistics, and execution summaries wherever their contracts permit it. A general native path handles supported constructions without a specialized family evaluator.
+The data adapter is optional Python/Polars; the engine does not import Python, Limen or Terasweep. The source is an immutable revision of Vaquum's BTCUSDT 4-hour spot snapshot, with a required SHA-256.
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-data.txt
+.venv/bin/python scripts/prepare_hf.py
+cargo build --release --locked --offline
+
+# This command can only select on the discovery CSV, ending before 2025.
+./target/release/filang search --config examples/btc4h.cfg
+
+# Read the validation results and inspect the frozen programs before this step.
+./target/release/filang evaluate \
+  --data data/btc4h/evaluation.csv \
+  --selection runs/btc4h/frozen.tsv \
+  --out runs/btc4h-evaluation
+
+# Same frozen programs; do not select again using the final-period results.
+./target/release/filang evaluate \
+  --data data/btc4h/evaluation.csv \
+  --selection runs/btc4h/frozen.tsv \
+  --out runs/btc4h-stress --fee-bps 10 --slip-bps 10
+```
+
+For another discovery run, use `search --config examples/btc4h.cfg --out runs/another-run` and point evaluation at that run's frozen file. Merely rerunning on the same final period does not create new out-of-sample evidence.
+
+## What the factory searches
+
+Inputs, source combinations, rolling windows, lags, smoothing, arithmetic interactions, normalization and expression topology vary through parameters. Eight composition motifs can reuse unfamiliar subprograms. For example, a feature can combine normalized trend distance with changing activity and then smooth or difference their interaction. Programs get opaque, reconstructible SHA-256 identities rather than becoming separate source files.
+
+The example searches 4,096 generated feature programs alongside 51 tunable indicator definitions, six fixed indicator rules and cash/buy-and-hold. Thresholds and direction are readouts, not extra numerical features. The data split is training 2021–2023, selection-validation 2024, and final evaluation 2025–September 2026. Costs and execution are identical for generated and established-indicator comparisons.
+
+See [the execution, language and selection contract](docs/CONTRACT.md) before interpreting any return. Next-open execution is idealized, fees are assumptions, Sharpe is not serial-correlation adjusted, and the larger generated search receives a larger selection budget. This is not a trading recommendation or proof of future alpha.
+
+## Artifacts and inspection
+
+`runs/<run>/programs.tsv` retains formulas. `discovery.jsonl` records all scored readouts. `selected_validation.json` reports the frozen selections on validation. `frozen.tsv` plus its checksum can be replayed without rerunning search. `summary.json` distinguishes numerical programs, readouts, actual numerical work and full replays. Final evaluation writes `evaluation.json` and a trace CSV for each frozen program.
+
+```sh
+./target/release/filang inspect --config examples/btc4h.cfg
+make test
+```
+
+Optional independent checks:
+
+```sh
+# NumPy is required only by this verification script.
+python3 scripts/verify_reference.py --data data/btc4h/evaluation.csv \
+  --report runs/btc4h-evaluation/evaluation.json --trace-dir runs/btc4h-evaluation
+python3 scripts/compare_discovery.py runs/one-matched-run runs/another-matched-run
+```
 
 ## Reference prototypes, not blueprints
 
-**Limen is the capability prototype:** examples of how features, rules, and evaluation capabilities can work and expose research value. Understand the intended numerical/economic behavior, then independently generalize and redesign its computation for trillion-feature scale—not port the catalog or preserve its implementation boundaries.
+**Limen is the capability prototype:** understand what a financial construction computes and why it is useful, then independently generalize and redesign its computation at scale.
 
-**Terasweep is the performance prototype:** an early demonstration of factorization and native acceleration, not a prescribed optimization stack or an estimate of the performance frontier. Filang's brief is to go substantially beyond it, including eliminating work at the algorithm, representation, family, and parameter-region levels.
+**Terasweep is the performance prototype:** a starting point for eliminating repeated work, not a prescribed kernel stack or performance ceiling. Filang combines shared numerical DAGs with parameter-event scoring in this slice; broader algorithms remain open.
 
-Neither prototype defines Filang's architecture, compatibility obligations, or ceiling. Correctness comes from Filang-owned explicit contracts and independent reference tests. Optional prototype comparisons are supporting evidence where semantics match.
-
-## Architectural commitments
-
-- **Standalone Rust core.** Filang owns its capability contracts and execution architecture; prototype integration or compatibility is not a delivery requirement.
-- **Semantics before optimization.** Availability, timelines, validity, initialization, precision, execution assumptions, and metric populations are explicit.
-- **Factorization before intrinsics.** Eliminate repeated work before accelerating the work that remains.
-- **Auditable research.** Exact evaluation, equivalent-region reuse, proven bounds, approximate objectives, heuristic search, and full replays are distinct outcomes.
-
-A trillion possible addresses is not a trillion different features or a trillion completed backtests. Scale claims must state precisely what was generated, evaluated, shared, skipped, and retained.
-
-## Repository boundary
-
-This repository starts with the specification and bootstrap documentation only. It contains no copied Limen/Terasweep implementation, market datasets, credentials, or generated benchmark artifacts. Source references and the limits of existing evidence are recorded in issue #1.
+Neither prototype is a runtime dependency or compatibility obligation. Correctness is defined here and checked with independent reference calculations. This repository contains no copied prototype implementation or market dataset.

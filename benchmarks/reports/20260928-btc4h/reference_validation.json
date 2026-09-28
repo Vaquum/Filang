@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "reference": "independent window arithmetic and explicit cash/share ledger",
+  "candidates_checked": 14,
+  "numeric_max_absolute_error": 8.36735125631094e-11,
+  "position_disagreements": null,
+  "data": "data/btc4h/discovery.csv",
+  "report": "runs/btc4h/selected_validation.json",
+  "numpy_version": "2.5.1"
+}
