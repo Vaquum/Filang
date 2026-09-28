@@ -19,6 +19,8 @@ jobs:
         run: cargo +1.63.0 fmt --all -- --check
       - name: Tests (including offline synthetic discovery and sealed replay)
         run: cargo +1.63.0 test --locked --offline
+      - name: Record exercised SIMD backend
+        run: cargo +1.63.0 test --locked --offline kernels::tests::simd_matches_scalar_boundaries -- --nocapture
       - name: Lint
         run: cargo +1.63.0 clippy --locked --offline --all-targets -- -D warnings
       - name: Release build

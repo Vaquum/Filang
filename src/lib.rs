@@ -8,3 +8,10 @@ pub mod lang;
 pub mod report;
 pub mod search;
 pub type Result<T> = std::result::Result<T, String>;
+
+pub mod kernels;
+pub mod packed;
+pub mod quantiles;
+pub mod walk;
+pub mod walk_config;
+pub mod walk_evaluate;

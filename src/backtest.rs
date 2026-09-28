@@ -104,6 +104,9 @@ impl Market {
         let mut terms = Vec::with_capacity(len);
         for t in start..start + len {
             let a = d.columns[0][t + 2] / d.columns[0][t + 1];
+            if !a.is_finite() || a <= 0.0 {
+                return Err("nonfinite or nonpositive price growth".into());
+            }
             gross.push(a);
             terms.push(std::array::from_fn(|c| {
                 let factor = a * mult[c];
@@ -139,6 +142,108 @@ impl Market {
     pub fn score_direct_summaries(&self, x: &[f64], rules: &[Rule]) -> Result<Vec<Lite>> {
         self.validate_series(x, rules)?;
         Ok(rules.iter().map(|r| self.direct_lite(x, *r)).collect())
+    }
+    /// One activation sweep, cost-independent category moments, many cost scenarios.
+    /// No sorting/history scan is repeated for a changed fee/slippage pair.
+    pub fn score_scenarios(
+        &self,
+        x: &[f64],
+        rules: &[Rule],
+        costs: &[Costs],
+    ) -> Result<Vec<Vec<Lite>>> {
+        self.validate_series(x, rules)?;
+        for cost in costs {
+            cost.validate()?;
+        }
+        let mut values = (0..self.len)
+            .filter_map(|t| {
+                let v = x[self.start + t];
+                if v.is_finite() {
+                    Some((v, t))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        values.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap().then(a.1.cmp(&b.1)));
+        let mut out = vec![vec![Lite::default(); rules.len()]; costs.len()];
+        for greater in [false, true] {
+            let mut queries = (0..rules.len())
+                .filter(|i| rules[*i].greater == greater)
+                .collect::<Vec<_>>();
+            queries.sort_unstable_by(|i, j| {
+                let o = rules[*i]
+                    .threshold
+                    .partial_cmp(&rules[*j].threshold)
+                    .unwrap();
+                if greater {
+                    o.reverse()
+                } else {
+                    o
+                }
+            });
+            let mut pos = vec![false; self.len];
+            let mut next = 0;
+            let mut stats = FreeStats::default();
+            for qi in queries {
+                while next < values.len() {
+                    let vi = if greater {
+                        values.len() - 1 - next
+                    } else {
+                        next
+                    };
+                    let (v, t) = values[vi];
+                    if !rules[qi].active(v) {
+                        break;
+                    }
+                    let lo = t.saturating_sub(1);
+                    let hi = (t + 2).min(self.len);
+                    for j in lo..hi {
+                        if pos[j] {
+                            let cat = (j == 0 || !pos[j - 1]) as usize
+                                + 2 * ((j + 1 == pos.len() || !pos[j + 1]) as usize);
+                            stats.update(cat, self.gross[j], -1);
+                        }
+                    }
+                    pos[t] = true;
+                    for j in lo..hi {
+                        if pos[j] {
+                            let cat = (j == 0 || !pos[j - 1]) as usize
+                                + 2 * ((j + 1 == pos.len() || !pos[j + 1]) as usize);
+                            stats.update(cat, self.gross[j], 1);
+                        }
+                    }
+                    next += 1;
+                }
+                for (ci, &cost) in costs.iter().enumerate() {
+                    out[ci][qi] = stats.render(self.len, cost);
+                }
+            }
+        }
+        Ok(out)
+    }
+    /// Explicit complete-period ledger, used by chronological portfolio replay.
+    pub fn position_ledger(&self, p: &[bool]) -> Result<Vec<Period>> {
+        if p.len() != self.len {
+            return Err("position length differs from execution range".into());
+        }
+        Ok((0..p.len())
+            .map(|t| {
+                if !p[t] {
+                    return Period::default();
+                }
+                let entry = t == 0 || !p[t - 1];
+                let exit = t + 1 == p.len() || !p[t + 1];
+                let cat = entry as usize + 2 * exit as usize;
+                Period {
+                    net: self.terms[t][cat][1],
+                    gross: self.gross[t] - 1.0,
+                    active: true,
+                    entry,
+                    exit,
+                }
+            })
+            .collect())
     }
     fn contribution(&self, p: &[bool], t: usize) -> (usize, usize, [f64; 3]) {
         if !p[t] {
@@ -291,6 +396,99 @@ impl Market {
         answers
     }
 }
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Period {
+    pub net: f64,
+    pub gross: f64,
+    pub active: bool,
+    pub entry: bool,
+    pub exit: bool,
+}
+/// Includes explicit flat gaps between rebalance windows; no hidden gap compounding.
+pub fn metrics_from_ledger(rows: &[Period], interval: i64) -> Result<Metrics> {
+    if rows.is_empty()
+        || interval <= 0
+        || rows
+            .iter()
+            .any(|r| !r.net.is_finite() || r.net <= -1.0 || !r.gross.is_finite() || r.gross <= -1.0)
+    {
+        return Err("invalid chronological ledger".into());
+    }
+    let mut lite = Lite {
+        periods: rows.len(),
+        ..Lite::default()
+    };
+    let (mut peak, mut dd, mut gross, mut trade, mut trade_sum) =
+        (0.0f64, 0.0f64, 0.0f64, 0.0f64, 0.0f64);
+    for r in rows {
+        lite.active += r.active as usize;
+        lite.entries += r.entry as usize;
+        lite.log_return += r.net.ln_1p();
+        lite.sum += r.net;
+        lite.sum_sq += r.net * r.net;
+        gross += r.gross.ln_1p();
+        peak = peak.max(lite.log_return);
+        dd = dd.max(peak - lite.log_return);
+        if r.active {
+            trade += r.net.ln_1p();
+            if r.exit {
+                trade_sum += trade.exp_m1();
+                trade = 0.0;
+            }
+        }
+    }
+    Ok(Metrics {
+        lite,
+        gross_return_pct: gross.exp_m1() * 100.0,
+        max_drawdown_pct: -(-dd).exp_m1() * 100.0,
+        cagr_pct: (lite.log_return * 31557600.0 / (rows.len() as f64 * interval as f64)).exp_m1()
+            * 100.0,
+        mean_trade_bps: if lite.entries > 0 {
+            trade_sum / lite.entries as f64 * 10000.0
+        } else {
+            f64::NAN
+        },
+    })
+}
+#[derive(Clone, Copy, Default)]
+struct FreeStats {
+    count: [isize; 4],
+    returns: [Kahan; 4],
+    squares: [Kahan; 4],
+    log: Kahan,
+}
+impl FreeStats {
+    fn update(&mut self, cat: usize, growth: f64, sign: isize) {
+        let r = growth - 1.0;
+        self.count[cat] += sign;
+        self.returns[cat].add(sign as f64 * r);
+        self.squares[cat].add(sign as f64 * r * r);
+        self.log.add(sign as f64 * growth.ln());
+    }
+    fn render(&self, periods: usize, cost: Costs) -> Lite {
+        let (en, ex) = cost.multipliers();
+        let multipliers = [1.0, en, ex, en * ex];
+        let entries = (self.count[1] + self.count[3]) as usize;
+        let exits = (self.count[2] + self.count[3]) as usize;
+        let (mut sum, mut sum_sq) = (0.0, 0.0);
+        for (i, &m) in multipliers.iter().enumerate() {
+            let c = self.count[i] as f64;
+            let delta = m - 1.0;
+            sum += m * self.returns[i].sum + c * delta;
+            sum_sq += m * m * self.squares[i].sum
+                + 2.0 * m * delta * self.returns[i].sum
+                + c * delta * delta;
+        }
+        Lite {
+            periods,
+            entries,
+            active: self.count.iter().sum::<isize>() as usize,
+            log_return: self.log.sum + entries as f64 * en.ln() + exits as f64 * ex.ln(),
+            sum,
+            sum_sq,
+        }
+    }
+}
 #[derive(Clone, Copy, Default)]
 struct Kahan {
     sum: f64,
@@ -395,6 +593,66 @@ mod tests {
         );
         assert_eq!(flat.lite.return_pct(), 0.0);
         assert_eq!(flat.max_drawdown_pct, 0.0);
+    }
+    #[test]
+    fn shared_cost_scenarios_match_independent_ledgers() {
+        let d = data();
+        let costs = [
+            Costs {
+                fee_bps: 0.0,
+                slip_bps: 0.0,
+            },
+            Costs {
+                fee_bps: 5.0,
+                slip_bps: 5.0,
+            },
+            Costs {
+                fee_bps: 50.0,
+                slip_bps: 70.0,
+            },
+        ];
+        let m = Market::new(&d, 0, d.len(), costs[0]).unwrap();
+        let rules = (-10..=10)
+            .flat_map(|j| {
+                [false, true].map(move |greater| Rule {
+                    greater,
+                    threshold: j as f64 / 10.0,
+                })
+            })
+            .collect::<Vec<_>>();
+        for seed in 0..50 {
+            let x = (0..d.len())
+                .map(|i| {
+                    if (i + seed) % 13 == 0 {
+                        f64::NAN
+                    } else {
+                        ((i * 23 + seed * 17) % 19) as f64 / 9.0 - 1.0
+                    }
+                })
+                .collect::<Vec<_>>();
+            let fast = m.score_scenarios(&x, &rules, &costs).unwrap();
+            for (ci, &cost) in costs.iter().enumerate() {
+                let market = Market::new(&d, 0, d.len(), cost).unwrap();
+                for (i, &r) in rules.iter().enumerate() {
+                    let reference = market.score(&x, r).unwrap();
+                    let f = fast[ci][i];
+                    assert_eq!(
+                        (f.entries, f.active),
+                        (reference.lite.entries, reference.lite.active)
+                    );
+                    assert!((f.log_return - reference.lite.log_return).abs() < 1e-12);
+                    assert!((f.sum - reference.lite.sum).abs() < 1e-12);
+                    assert!((f.sum_sq - reference.lite.sum_sq).abs() < 1e-12);
+                    let p = x[..market.len]
+                        .iter()
+                        .map(|v| r.active(*v))
+                        .collect::<Vec<_>>();
+                    let ledger = market.position_ledger(&p).unwrap();
+                    let z = metrics_from_ledger(&ledger, 1).unwrap();
+                    assert!((z.max_drawdown_pct - reference.max_drawdown_pct).abs() < 1e-11);
+                }
+            }
+        }
     }
     #[test]
     fn no_same_bar_return() {

@@ -1,0 +1,28 @@
+{
+  "recorded_at_utc": "2026-09-28T15:08:53.026048+00:00",
+  "status": "fold_selections_frozen_before_this_campaign_outer_replay",
+  "research_role": "retrospective_walkforward_not_untouched",
+  "engine_sha256": "78f2840067a6e14175a54c691049306305646f0718df95bc8deb7df9205a27e1",
+  "source_files": {
+    "src/backtest.rs": "c2a12dd550656f58488c4032ef8060b384265e2c7c48f98eb1b3fefbf21cd767",
+    "src/config.rs": "fe86b199715a6abbfc356e564dad3d2e457a25fea89c49e112206c7b720bdc0e",
+    "src/data.rs": "4fed428409f4a1ff5dba12a44b5014429659b5e23ce8ec02a1c9b87e505da20f",
+    "src/engine.rs": "dcd4062883450a42a803a0f25fcdcd391fbfa17f21dd482595676fe665288a2a",
+    "src/hash.rs": "ae616cefb47710a53db602f9b9da8ae53141707eff56e5b5178b65b427d22d79",
+    "src/kernels.rs": "25bed94473fcde3943049e7b9173cf49b4d75c6d26a1e9de2cf2386e0b7a9209",
+    "src/lang.rs": "38c6bb28b00ebac5684e53b61fa7c61aa419723fa3ba25996f5df4a446b1bba0",
+    "src/lib.rs": "a4920a947a63011b3f7754ced75a92e9f8d11d965ac264eb36888b67efab0cc5",
+    "src/main.rs": "3e32b4a96af6ad3c1f8f989666d631d2bf10fb633cd88340a317a8758e67e9e5",
+    "src/packed.rs": "38fa9098142041a228240e00ff5a63fefae257015c33e4eb7e5824d91484c05a",
+    "src/quantiles.rs": "ec73b46c72c0b912984339c12fe427a7cc7aece185bc838621482c87f80f0942",
+    "src/report.rs": "c3b6443f6fef9d28c86878bf621cc0ee52e1bd52114680cf34ba71e75d136653",
+    "src/search.rs": "3edc8ff48a4fa8367e4c6140597027283012eae20c176f5cef3bbc6e25d74212",
+    "src/walk.rs": "48231bce0bbd6d0f364e49f88213f0cf23db3dfcecea82cb5842e79942d03ed5",
+    "src/walk_config.rs": "24cf0d408b0d9a0fd81556ee495975e1dbf72401914bd934aa9c192a8a9076bd",
+    "src/walk_evaluate.rs": "7bd6fe1c08aa7d295a83b65979e85e7f01773af40f4533f4a74f0fdfc23980e0"
+  },
+  "config_sha256": "9751af959242f1379a047a61c107fcf1454423ccae12ea0772409e2dee6d108a",
+  "rustc": "rustc 1.63.0 (4b91a6ea7 2022-08-08)",
+  "cpu": "Apple M1 Max",
+  "frozen_sha256": "0f329672f5a9c0d3950ec6b7feaade56578811a58764d6916753fc0c2ccf63a5"
+}

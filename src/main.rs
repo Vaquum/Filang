@@ -1,6 +1,6 @@
 use filang::{backtest::Costs, config::Config, data, report, search, Result};
 use std::{collections::HashMap, env, fs, path::Path};
-const HELP:&str="Filang 0.1.0 (research prototype)\n\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
+const HELP:&str="Filang 0.2.0 (research prototype)\n\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
 fn arguments() -> Result<(String, HashMap<String, String>)> {
     let mut it = env::args().skip(1);
     let command = it.next().unwrap_or_else(|| "help".into());
@@ -37,6 +37,41 @@ fn entry() -> Result<()> {
     match cmd.as_str() {
         "help" | "--help" | "-h" => {
             print!("{HELP}");
+        }
+        "walk-search" | "walk-inspect" => {
+            let path = take(&mut flags, "--config")?;
+            let out = flags.remove("--out");
+            finish(&flags)?;
+            let raw = fs::read_to_string(path).map_err(|e| e.to_string())?;
+            let mut cfg = filang::walk_config::WalkConfig::parse(&raw)?;
+            if let Some(p) = out {
+                cfg.base.out = p;
+            }
+            if cmd == "walk-inspect" {
+                println!("{}", filang::walk::inspect(&cfg));
+            } else {
+                let summary = filang::walk::run(&cfg)?;
+                report::write(Path::new(&cfg.base.out).join("experiment.cfg"), &raw)?;
+                println!("{summary}");
+            }
+        }
+        "walk-evaluate" => {
+            let data = take(&mut flags, "--data")?;
+            let selection = take(&mut flags, "--selection")?;
+            let out = take(&mut flags, "--out")?;
+            let scenario = flags
+                .remove("--scenario")
+                .unwrap_or_else(|| "primary".into());
+            if scenario != "primary" && scenario != "stress" {
+                return Err("scenario must be primary or stress".into());
+            }
+            let backend = filang::kernels::Backend::resolve(
+                &flags.remove("--backend").unwrap_or_else(|| "auto".into()),
+            )?;
+            finish(&flags)?;
+            let _ =
+                filang::walk_evaluate::run(&data, &selection, &out, scenario == "stress", backend)?;
+            println!("Walk evaluation: {out}/evaluation.json");
         }
         "search" | "inspect" => {
             let path = take(&mut flags, "--config")?;
