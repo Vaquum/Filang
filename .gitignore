@@ -1,0 +1,25 @@
+# Rust build output; keep Cargo.lock versioned when the package is added.
+/target/
+
+# Local datasets and generated research output.
+/data/
+/runs/
+/artifacts/
+/benchmarks/results/
+
+# Optional local adapter environments and caches.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local credentials and machine-specific configuration.
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Operating-system files.
+.DS_Store
