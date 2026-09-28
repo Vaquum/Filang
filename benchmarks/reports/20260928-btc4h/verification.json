@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "source_commit": "8902ce957ef875ce96f1658ad205d6be79a5c2dd",
+  "fresh_local_clone": true,
+  "offline_test": true,
+  "offline_release_build": true,
+  "synthetic_end_to_end_replays": 11,
+  "rust_tests_passed": 13,
+  "third_party_native_dependencies": 0,
+  "repository_local_data_environment_verified": true,
+  "source_data_recheck": "identical checksums",
+  "initial_ci_run": 36431190998,
+  "initial_ci_jobs": {
+    "macos": 108957496314,
+    "ubuntu": 108957496080
+  }
+}

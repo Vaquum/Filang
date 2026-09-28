@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Streaming differential check of full discovery ledgers (standard library only)."""
 import argparse
+if not __debug__:
+    raise RuntimeError("verification must not run with Python assertions disabled")
 import itertools
 import json
 import math

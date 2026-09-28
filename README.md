@@ -69,9 +69,11 @@ Optional independent checks:
 
 ```sh
 # NumPy is required only by this verification script.
-python3 scripts/verify_reference.py --data data/btc4h/evaluation.csv \
+.venv/bin/python -m pip install -r requirements-verify.txt
+.venv/bin/python scripts/verify_reference.py --data data/btc4h/evaluation.csv \
   --report runs/btc4h-evaluation/evaluation.json --trace-dir runs/btc4h-evaluation
 python3 scripts/compare_discovery.py runs/one-matched-run runs/another-matched-run
+python3 scripts/benchmark.py --out runs/benchmark --repeats 3
 ```
 
 ## Reference prototypes, not blueprints

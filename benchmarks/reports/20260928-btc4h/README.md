@@ -35,9 +35,23 @@ Positive drawdown values denote peak-to-trough loss. Returns are compounded and 
 | control / `Buy_and_hold` | +122.01% | -9.88% | 53.45% | 1 | 100.00% | -10.06% |
 | control / `Cash` | +0.00% | +0.00% | 0.00% | 0 | 0.00% | +0.00% |
 
+## Measured whole-process performance
+
+Three fresh-process repetitions per path on an Apple M1 Max (64 GiB host memory), one native thread, Rust 1.63.0. Variant order was rotated. No CPU pinning; operating-system file caches were not flushed. Times include process startup, CSV loading, feature planning/computation, scoring, all readout logging, frozen artifacts and selected validation replays. No final-period data were read by this benchmark.
+
+| Path | Median wall time | Min–max | Maximum measured RSS | Search numerical node evaluations |
+|---|---:|---:|---:|---:|
+| Per-program evaluation + direct threshold scans | 9.449 s | 8.936–9.458 s | 32.0 MiB | 98,417 |
+| Shared batches + direct threshold scans | 7.786 s | 7.507–7.932 s | 97.2 MiB | 43,728 |
+| Shared batches + parameter-event scoring | 7.175 s | 7.129–7.193 s | 102.8 MiB | 43,728 |
+
+The matched whole-process median gain is **1.317×** over the already-native direct path, not an orders-of-magnitude speedup claim. The default search uses only 38 readouts per non-fixed feature; this is a first working family evaluator, not the performance frontier. Numerical payload peaked at 34.4 MiB in the shared search; that figure is not process RSS. Node counts in the table cover search computation; the separately counted selected validation replays also perform numerical work.
+
+All nine processes produced byte-identical frozen selections. The complete direct/event discovery ledgers were compared again on the current hash-named artifacts; 157,594 readouts passed. Raw timing/resource logs and summary JSON are retained. `scripts/benchmark.py --out runs/new-benchmark --repeats 3` reproduces the ladder without accessing the final period.
+
 ## Scope and correctness
 
-The campaign generated **4,096 unfamiliar programs**, alongside 51 tunable established-indicator definitions, six fixed indicator rules and two controls. There are 4,153 distinct numerical program roots (some fixed rules share roots), **157,594 feature/readout evaluations** and **945,564 requested block-metric evaluations**. These are not 945,564 independent features or full ledger replays. Fourteen frozen candidates received full chronological validation replays; the same fourteen received final primary and stress replays.
+The campaign generated **4,096 unfamiliar programs**, alongside 51 tunable established-indicator definitions, six fixed indicator rules and two controls. There are 4,153 structurally distinct numerical program roots (not a claim of independent signals or complete algebraic inequivalence) (some fixed rules share roots), **157,594 feature/readout evaluations** and **945,564 requested block-metric evaluations**. These are not 945,564 independent features or full ledger replays. Fourteen frozen candidates received full chronological validation replays; the same fourteen received final primary and stress replays.
 
 Direct and event-sweep scoring matched across the complete 157,594-row discovery ledger, with maximum absolute selection-score disagreement about 3.11e-15 in the initial check. Frozen selection was byte-identical across the matched direct/shared/event runs before the cosmetic name change. Independent NumPy direct-window features and explicit cash/share accounting checked all fourteen final candidates under both cost scenarios: zero signal disagreements; maximum absolute reported metric disagreement below 3.5e-11. See the JSON evidence files for exact values and environments.
 

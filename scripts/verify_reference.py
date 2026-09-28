@@ -7,6 +7,8 @@ Execution holds explicit shares and cash, not the native category statistics.
 """
 from __future__ import annotations
 import argparse
+if not __debug__:
+    raise RuntimeError("verification must not run with Python assertions disabled")
 from datetime import datetime, timezone
 import json
 from pathlib import Path

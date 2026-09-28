@@ -1,0 +1,35 @@
+features 256/4155; readouts 9432; numerical payload peak 2.8 MiB
+features 512/4155; readouts 19160; numerical payload peak 3.6 MiB
+features 768/4155; readouts 28888; numerical payload peak 3.7 MiB
+features 1024/4155; readouts 38616; numerical payload peak 3.7 MiB
+features 1280/4155; readouts 48344; numerical payload peak 4.1 MiB
+features 1536/4155; readouts 58072; numerical payload peak 4.4 MiB
+features 1792/4155; readouts 67800; numerical payload peak 4.4 MiB
+features 2048/4155; readouts 77528; numerical payload peak 4.4 MiB
+features 2304/4155; readouts 87256; numerical payload peak 4.4 MiB
+features 2560/4155; readouts 96984; numerical payload peak 4.4 MiB
+features 2816/4155; readouts 106712; numerical payload peak 4.5 MiB
+features 3072/4155; readouts 116440; numerical payload peak 4.5 MiB
+features 3328/4155; readouts 126168; numerical payload peak 4.7 MiB
+features 3584/4155; readouts 135896; numerical payload peak 4.7 MiB
+features 3840/4155; readouts 145624; numerical payload peak 4.7 MiB
+features 4096/4155; readouts 155352; numerical payload peak 4.7 MiB
+features 4155/4155; readouts 157594; numerical payload peak 4.7 MiB
+        8.92 real         8.73 user         0.07 sys
+            27164672  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                1827  page reclaims
+                   1  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                 195  voluntary context switches
+                 523  involuntary context switches
+        112962862659  instructions retired
+         27504177899  cycles elapsed
+            26427728  peak memory footprint

@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "readouts_compared": 157594,
+  "max_abs_errors": {
+    "training_net_pct": 1.3073986337985843e-12,
+    "validation_net_pct": 6.963318810448982e-13,
+    "validation_sharpe": 9.769962616701378e-15,
+    "selection_score": 3.1086244689504383e-15
+  },
+  "frozen_selection": "byte-identical"
+}
