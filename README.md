@@ -44,6 +44,10 @@ cargo build --release --locked --offline
 
 For another discovery run, use `search --config examples/btc4h.cfg --out runs/another-run` and point evaluation at that run's frozen file. Merely rerunning on the same final period does not create new out-of-sample evidence.
 
+## First measured result
+
+[The full frozen campaign report](benchmarks/reports/20260928-btc4h/README.md) records the first real-data run. All five generated selections lost money in the later period; the tuned SMA-distance comparator was positive at primary costs but negative under doubled costs. The implementation is runnable; a robust generated trading edge has **not** been established. All frozen candidates and failed outcomes are retained.
+
 ## What the factory searches
 
 Inputs, source combinations, rolling windows, lags, smoothing, arithmetic interactions, normalization and expression topology vary through parameters. Eight composition motifs can reuse unfamiliar subprograms. For example, a feature can combine normalized trend distance with changing activity and then smooth or difference their interaction. Programs get opaque, reconstructible SHA-256 identities rather than becoming separate source files.
