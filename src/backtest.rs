@@ -84,6 +84,7 @@ pub struct Market {
     pub len: usize,
     pub interval: i64,
     gross: Vec<f64>,
+    gross_prefix: Vec<f64>,
     terms: Vec<[[f64; 3]; 4]>,
 }
 impl Market {
@@ -114,11 +115,16 @@ impl Market {
                 [factor.ln(), r, r * r]
             }));
         }
+        let mut gross_prefix = vec![0.0; len + 1];
+        for t in 0..len {
+            gross_prefix[t + 1] = gross_prefix[t] + terms[t][0][0];
+        }
         Ok(Self {
             start,
             len,
             interval: d.interval,
             gross,
+            gross_prefix,
             terms,
         })
     }
@@ -241,13 +247,10 @@ impl Market {
         sorted.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap().then(a.1.cmp(&b.1)));
         let zero = metrics_from_ledger(&vec![Period::default(); self.len], self.interval)?;
         let mut answers = vec![zero; rules.len()];
-        let mut prefix = vec![0.0; self.len + 1];
-        for t in 0..self.len {
-            prefix[t + 1] = prefix[t] + self.gross[t].ln();
-        }
+        let prefix = &self.gross_prefix;
         // Cost multiplier recovered from prepared single-period terms: no pricing
         // parameters or target result are hard-coded into the family evaluator.
-        let trade_cost = (self.terms[0][3][0] - self.gross[0].ln()).exp();
+        let trade_cost = (self.terms[0][3][0] - self.terms[0][0][0]).exp();
         for greater in [false, true] {
             let mut queries = (0..rules.len())
                 .filter(|i| rules[*i].greater == greater)
@@ -312,7 +315,7 @@ impl Market {
                             let entry = j == 0 || !active[j - 1];
                             let exit = j + 1 == self.len || !active[j + 1];
                             let c = self.terms[j][entry as usize + 2 * exit as usize];
-                            PathNode::leaf(c, self.gross[j].ln(), entry)
+                            PathNode::leaf(c, self.terms[j][0][0], entry)
                         } else {
                             PathNode::default()
                         };

@@ -46,8 +46,11 @@ nodes are different graph dependencies and cannot share incompatible state.
 `family::Program` compiles terminal pointwise operations into 256-row tiles,
 using existing SIMD arithmetic, and can emit packed predicates without full
 intermediate arrays. Capturing a numerical root is required by threshold-order
-sweeps, not by every possible consumer. Anonymous, nested atom-program tests
+sweeps, not by every possible consumer. Anonymous, nested atom-program and actual open-generator corpus tests
 exercise this compiler without consulting the anchor catalog.
+
+Price log-prefixes and category terms are prepared once per market context and
+reused across all feature programs and thresholds.
 
 Full threshold-family scoring uses local position activations, an associative
 path-summary tree for maximum drawdown, and interval-component merges for mean
