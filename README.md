@@ -2,9 +2,9 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.2 research engine; the founding campaign below used 0.1.** It generates unfamiliar typed expressions, shares their numerical dependencies, searches threshold readouts, freezes selected programs and evaluates them on a later period. The broader factory specification and trillion-feature scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1). Delivery of this slice is tracked in [issue #2](https://github.com/mikkokotila/Filang/issues/2).
+**Status: runnable 0.3, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #6](https://github.com/mikkokotila/Filang/issues/6) tracks this slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
 
-## New: factorized walk-forward discovery
+## Earlier delivery: factorized walk-forward discovery
 
 The 0.2 native path adds paged generation, a shared numerical basis across workers,
 reused fold and cost statistics, prefix-quantile factorization, NEON/AVX2 kernels,
@@ -21,6 +21,36 @@ The diverse generated policy was positive under both cost scenarios in this retr
 study, but remained far behind the strongest fixed trend controls. This is not fresh
 untouched evidence or a claim of a robust generated edge.
 The original 0.1 campaign below is retained unchanged as historical evidence.
+
+## Current workflow: known-indicator parity first
+
+[The measured parity report](benchmarks/reports/20260928-anchor-parity/README.md)
+records the passing anchor checks, complete-result comparisons, and matched
+single-threaded performance: 120,832 metric sets in a three-repeat experiment and
+1,050,704 metric sets in a separate large pair. Coverage is explicitly eight
+reference APIs, not all indicators or one million numerical features.
+
+The next research step is not novel-topology generation. Filang reconstructs
+established indicator definitions using ordinary atoms, verifies values, signals,
+trade events, complete equity paths and PnL/risk against pinned TA-Lib plus
+independent cash/share accounting, then unlocks bounded period/threshold
+neighborhoods. See [the parity and benchmark contract](docs/ANCHOR_PARITY.md).
+
+```sh
+cargo build --release --locked --offline
+.venv/bin/python -m pip install -r requirements-parity.txt
+./target/release/filang anchor-parity --data data/btc4h/evaluation.csv --out runs/parity
+.venv/bin/python scripts/anchor_reference.py --data data/btc4h/evaluation.csv \
+  --manifest runs/parity/manifest.json --native runs/parity --out runs/parity-ref --gate
+./target/release/filang anchor-sweep --data data/btc4h/evaluation.csv \
+  --gate runs/parity/gate.txt --radius 4 --thresholds 129 --out runs/neighbors
+```
+
+This is an explicitly listed first coverage cohort, not all TA-Lib functions or
+proof that every indicator is profitable. The compiler has no indicator-name
+shortcuts: grouped statistics, coefficient-lane SIMD, tiled atom execution and
+full-risk threshold sweeps also accept anonymous atom programs. Stored market
+outcomes are regression evidence, never answers embedded in the native engine.
 
 ## Run without market data
 

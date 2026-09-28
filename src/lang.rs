@@ -13,13 +13,17 @@ pub enum Op {
     Sub,
     Mul,
     Div,
+    Div0,
     Min2,
     Max2,
     Abs,
     Neg,
     Lag(usize),
+    Skip(usize),
     Diff(usize),
     Mean(usize),
+    MeanSum(usize),
+    StdSum(usize),
     Std(usize),
     Min(usize),
     Max(usize),
@@ -46,7 +50,7 @@ impl Graph {
         use Op::*;
         let arity = match op {
             Source(_) | Constant(_) => 0,
-            Add | Sub | Mul | Div | Min2 | Max2 => 2,
+            Add | Sub | Mul | Div | Div0 | Min2 | Max2 => 2,
             _ => 1,
         };
         if args.len() != arity || args.iter().any(|i| *i >= self.nodes.len()) {
@@ -57,7 +61,8 @@ impl Graph {
             Constant(b) if !f64::from_bits(b).is_finite() => {
                 return Err("constant must be finite".into())
             }
-            Lag(n) | Diff(n) | Mean(n) | Std(n) | Min(n) | Max(n) | Ema(n) | Wilder(n)
+            Lag(n) | Skip(n) | Diff(n) | Mean(n) | MeanSum(n) | StdSum(n) | Std(n) | Min(n)
+            | Max(n) | Ema(n) | Wilder(n)
                 if n == 0 || n > 100_000 =>
             {
                 return Err("window/lag outside 1..100000".into())
@@ -75,7 +80,7 @@ impl Graph {
                 }
                 a
             }
-            Mul | Div => {
+            Mul | Div | Div0 => {
                 let a = self.nodes[args[0]].unit;
                 let b = self.nodes[args[1]].unit;
                 let s = if op == Mul { 1 } else { -1 };
@@ -141,13 +146,17 @@ impl Graph {
             Sub => "sub".into(),
             Mul => "mul".into(),
             Div => "div".into(),
+            Div0 => "div0".into(),
             Min2 => "min2".into(),
             Max2 => "max2".into(),
             Abs => "abs".into(),
             Neg => "neg".into(),
             Lag(n) => format!("lag {n}"),
+            Skip(n) => format!("skip {n}"),
             Diff(n) => format!("diff {n}"),
             Mean(n) => format!("mean {n}"),
+            MeanSum(n) => format!("mean_sum {n}"),
+            StdSum(n) => format!("std_sum {n}"),
             Std(n) => format!("std {n}"),
             Min(n) => format!("min {n}"),
             Max(n) => format!("max {n}"),
@@ -203,7 +212,7 @@ impl Graph {
                 "constant" => Op::Constant(
                     u64::from_str_radix(take(ts, at)?, 16).map_err(|_| "bad constant bits")?,
                 ),
-                "add" | "sub" | "mul" | "div" | "min2" | "max2" => {
+                "add" | "sub" | "mul" | "div" | "div0" | "min2" | "max2" => {
                     args.push(expr(g, ts, at, depth + 1)?);
                     args.push(expr(g, ts, at, depth + 1)?);
                     match name {
@@ -211,6 +220,7 @@ impl Graph {
                         "sub" => Op::Sub,
                         "mul" => Op::Mul,
                         "div" => Op::Div,
+                        "div0" => Op::Div0,
                         "min2" => Op::Min2,
                         _ => Op::Max2,
                     }
@@ -223,13 +233,17 @@ impl Graph {
                         Op::Neg
                     }
                 }
-                "lag" | "diff" | "mean" | "std" | "min" | "max" | "ema" | "wilder" => {
+                "lag" | "skip" | "diff" | "mean" | "mean_sum" | "std_sum" | "std" | "min"
+                | "max" | "ema" | "wilder" => {
                     let n = take(ts, at)?.parse::<usize>().map_err(|_| "bad window")?;
                     args.push(expr(g, ts, at, depth + 1)?);
                     match name {
                         "lag" => Op::Lag(n),
+                        "skip" => Op::Skip(n),
                         "diff" => Op::Diff(n),
                         "mean" => Op::Mean(n),
+                        "mean_sum" => Op::MeanSum(n),
+                        "std_sum" => Op::StdSum(n),
                         "std" => Op::Std(n),
                         "min" => Op::Min(n),
                         "max" => Op::Max(n),

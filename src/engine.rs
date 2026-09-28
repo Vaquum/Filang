@@ -111,12 +111,20 @@ pub fn evaluate_with(
         simd_nodes,
     })
 }
-fn kernel(op: &Op, a: Option<&[f64]>, b: Option<&[f64]>, d: &Data) -> Vec<f64> {
+pub(crate) fn kernel(op: &Op, a: Option<&[f64]>, b: Option<&[f64]>, d: &Data) -> Vec<f64> {
     use Op::*;
     let n = d.len();
     match *op {
         Source(j) => d.columns[j as usize].clone(),
         Constant(bits) => vec![f64::from_bits(bits); n],
+        MeanSum(w) | StdSum(w) => {
+            let (m, s) = crate::family_kernels::raw_moments(a.unwrap(), w);
+            if matches!(op, MeanSum(_)) {
+                m
+            } else {
+                s
+            }
+        }
         Mean(w) | Std(w) => moments(a.unwrap(), w, matches!(op, Std(_))),
         Min(w) | Max(w) => extrema(a.unwrap(), w, matches!(op, Max(_))),
         Ema(w) | Wilder(w) => smooth(
@@ -136,12 +144,20 @@ fn kernel(op: &Op, a: Option<&[f64]>, b: Option<&[f64]>, d: &Data) -> Vec<f64> {
                 let y = b.map(|v| v[t]).unwrap_or(0.0);
                 let v = match *op {
                     Lag(k) if t >= k => a[t - k],
+                    Skip(k) if t >= k => x,
                     Diff(k) if t >= k => x - a[t - k],
                     Abs => x.abs(),
                     Neg => -x,
                     Add if x.is_finite() && y.is_finite() => x + y,
                     Sub if x.is_finite() && y.is_finite() => x - y,
                     Mul if x.is_finite() && y.is_finite() => x * y,
+                    Div0 if x.is_finite() && y.is_finite() => {
+                        if y.abs() > 1e-12 {
+                            x / y
+                        } else {
+                            0.0
+                        }
+                    }
                     Div if x.is_finite() && y.is_finite() && y.abs() > 1e-12 => x / y,
                     Min2 if x.is_finite() && y.is_finite() => x.min(y),
                     Max2 if x.is_finite() && y.is_finite() => x.max(y),

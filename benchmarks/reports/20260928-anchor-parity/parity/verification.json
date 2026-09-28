@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "talib_wrapper": "0.6.8",
+  "talib_c": "0.6.4 (Oct 20 2025 20:23:07)",
+  "numpy": "2.5.1",
+  "data_sha256": "7844ae10462b6ddd6b17ea21a0626153b6786cbb0fd828bf2593e574a7578625",
+  "manifest_sha256": "6e1395124b92666297335dbee7618155cf60b7f2cec769c3419f66af2ae04fc7",
+  "programs": 18,
+  "full_metric_queries": 88,
+  "all_features_captured": true,
+  "all_threshold_masks_compared": true,
+  "position_disagreements": 0,
+  "max_feature_absolute_error": 3.6432190597679437e-10,
+  "max_metric_absolute_error": 4.888534022029489e-12,
+  "independent_cash_share_replays": 88,
+  "trade_event_disagreements": 0,
+  "max_equity_trade_trace_error": 7.904787935331115e-14,
+  "errors": [],
+  "error_count": 0,
+  "total_internal_seconds": 1.003266249987064,
+  "metric_columns": "net_return_pct,gross_return_pct,cagr_pct,max_drawdown_pct,sharpe_annualized_naive,trades,exposure_pct,mean_bps_per_bar,mean_trade_bps,periods",
+  "stored_control_regressions": 16
+}
