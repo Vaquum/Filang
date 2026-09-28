@@ -16,9 +16,17 @@ Features are typed, causal programs rather than entries in a fixed indicator cat
 
 The engine compiles and evaluates **families of programs**, sharing numerical dependencies, threshold behaviors, Boolean paths, sufficient statistics, and execution summaries wherever their contracts permit it. A general native path handles supported constructions without a specialized family evaluator.
 
+## Reference prototypes, not blueprints
+
+**Limen is the capability prototype:** examples of how features, rules, and evaluation capabilities can work and expose research value. Understand the intended numerical/economic behavior, then independently generalize and redesign its computation for trillion-feature scale—not port the catalog or preserve its implementation boundaries.
+
+**Terasweep is the performance prototype:** an early demonstration of factorization and native acceleration, not a prescribed optimization stack or an estimate of the performance frontier. Filang's brief is to go substantially beyond it, including eliminating work at the algorithm, representation, family, and parameter-region levels.
+
+Neither prototype defines Filang's architecture, compatibility obligations, or ceiling. Correctness comes from Filang-owned explicit contracts and independent reference tests. Optional prototype comparisons are supporting evidence where semantics match.
+
 ## Architectural commitments
 
-- **Standalone Rust core.** Limen and Terasweep are references and optional integration targets, not mandatory runtime dependencies.
+- **Standalone Rust core.** Filang owns its capability contracts and execution architecture; prototype integration or compatibility is not a delivery requirement.
 - **Semantics before optimization.** Availability, timelines, validity, initialization, precision, execution assumptions, and metric populations are explicit.
 - **Factorization before intrinsics.** Eliminate repeated work before accelerating the work that remains.
 - **Auditable research.** Exact evaluation, equivalent-region reuse, proven bounds, approximate objectives, heuristic search, and full replays are distinct outcomes.
