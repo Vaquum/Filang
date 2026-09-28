@@ -155,6 +155,7 @@ impl Market {
         for cost in costs {
             cost.validate()?;
         }
+        let scenarios = costs.iter().copied().map(Scenario::new).collect::<Vec<_>>();
         let mut values = (0..self.len)
             .filter_map(|t| {
                 let v = x[self.start + t];
@@ -202,7 +203,7 @@ impl Market {
                         if pos[j] {
                             let cat = (j == 0 || !pos[j - 1]) as usize
                                 + 2 * ((j + 1 == pos.len() || !pos[j + 1]) as usize);
-                            stats.update(cat, self.gross[j], -1);
+                            stats.update(cat, self.gross[j], self.terms[j][0][0], -1);
                         }
                     }
                     pos[t] = true;
@@ -210,13 +211,13 @@ impl Market {
                         if pos[j] {
                             let cat = (j == 0 || !pos[j - 1]) as usize
                                 + 2 * ((j + 1 == pos.len() || !pos[j + 1]) as usize);
-                            stats.update(cat, self.gross[j], 1);
+                            stats.update(cat, self.gross[j], self.terms[j][0][0], 1);
                         }
                     }
                     next += 1;
                 }
-                for (ci, &cost) in costs.iter().enumerate() {
-                    out[ci][qi] = stats.render(self.len, cost);
+                for (ci, scenario) in scenarios.iter().enumerate() {
+                    out[ci][qi] = stats.render(self.len, scenario);
                 }
             }
         }
@@ -450,6 +451,22 @@ pub fn metrics_from_ledger(rows: &[Period], interval: i64) -> Result<Metrics> {
         },
     })
 }
+/// These transcendental terms depend on prices/scenarios, never the candidate.
+struct Scenario {
+    multipliers: [f64; 4],
+    log_entry: f64,
+    log_exit: f64,
+}
+impl Scenario {
+    fn new(cost: Costs) -> Self {
+        let (en, ex) = cost.multipliers();
+        Self {
+            multipliers: [1.0, en, ex, en * ex],
+            log_entry: en.ln(),
+            log_exit: ex.ln(),
+        }
+    }
+}
 #[derive(Clone, Copy, Default)]
 struct FreeStats {
     count: [isize; 4],
@@ -458,16 +475,15 @@ struct FreeStats {
     log: Kahan,
 }
 impl FreeStats {
-    fn update(&mut self, cat: usize, growth: f64, sign: isize) {
+    fn update(&mut self, cat: usize, growth: f64, log_growth: f64, sign: isize) {
         let r = growth - 1.0;
         self.count[cat] += sign;
         self.returns[cat].add(sign as f64 * r);
         self.squares[cat].add(sign as f64 * r * r);
-        self.log.add(sign as f64 * growth.ln());
+        self.log.add(sign as f64 * log_growth);
     }
-    fn render(&self, periods: usize, cost: Costs) -> Lite {
-        let (en, ex) = cost.multipliers();
-        let multipliers = [1.0, en, ex, en * ex];
+    fn render(&self, periods: usize, scenario: &Scenario) -> Lite {
+        let multipliers = scenario.multipliers;
         let entries = (self.count[1] + self.count[3]) as usize;
         let exits = (self.count[2] + self.count[3]) as usize;
         let (mut sum, mut sum_sq) = (0.0, 0.0);
@@ -483,7 +499,9 @@ impl FreeStats {
             periods,
             entries,
             active: self.count.iter().sum::<isize>() as usize,
-            log_return: self.log.sum + entries as f64 * en.ln() + exits as f64 * ex.ln(),
+            log_return: self.log.sum
+                + entries as f64 * scenario.log_entry
+                + exits as f64 * scenario.log_exit,
             sum,
             sum_sq,
         }

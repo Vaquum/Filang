@@ -451,6 +451,7 @@ pub fn run(c: &WalkConfig) -> Result<String> {
     let first_page = c.address_start / c.page_size as u64;
     let pages = c.page_count();
     let mut next = 0;
+    let mut next_report = 1u64;
     while next < pages {
         let width = (pages - next).min(c.threads as u64);
         let chunks =
@@ -487,13 +488,18 @@ pub fn run(c: &WalkConfig) -> Result<String> {
             }
         }
         next += width;
-        eprintln!(
-            "walk addresses {}/{}; physical windows {}; native backend {}",
-            total.addresses,
-            c.addresses,
-            total.contexts,
-            c.backend.name()
-        );
+        if next >= next_report || next == pages {
+            eprintln!(
+                "walk addresses {}/{}; physical windows {}; native backend {}",
+                total.addresses,
+                c.addresses,
+                total.contexts,
+                c.backend.name()
+            );
+            while next_report <= next && next_report < u64::MAX {
+                next_report = next_report.saturating_mul(2);
+            }
+        }
     }
     // Partial-address campaigns still evaluate the known indicator bank once.
     if first_page != 0 {

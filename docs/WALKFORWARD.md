@@ -39,7 +39,8 @@ pages and native workers. Its data identity and full structural node identities
 are checked before reuse. Worker numerical payloads and per-fold ranked archives
 are bounded; no per-readout records are written by default. Peak process RSS is
 measured separately from the numerical-vector budget. Generation metadata is
-bounded by page size, not by the campaign address count.
+bounded by page size, not by the campaign address count. Progress logging is
+exponentially spaced in page count rather than writing a line per page.
 
 Overlapping outer folds reuse identical historical validation windows. The example
 needs 11 distinct windows rather than 32 fold-window requests. Training-prefix
@@ -49,7 +50,8 @@ order statistics at each as-of depend only on its historical prefix; direct-sort
 and future-perturbation tests check this property.
 
 Threshold activation updates cost-independent category counts, return moments and
-log growth. Primary/stress costs apply to those statistics without sorting or
+log growth. Price logarithms and scenario logarithms are precomputed outside the
+activation/query loops. Primary/stress costs apply to those statistics without sorting or
 scanning the feature again. Summation uses compensated updates; this is a matched
 mathematical calculation, not guaranteed bit-identical floating-point reductions.
 The direct scanner remains available for differential tests and benchmarks.
