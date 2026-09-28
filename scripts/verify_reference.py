@@ -28,11 +28,11 @@ def parse_expr(text: str):
         op = next(tokens)
         if op == 'constant':
             answer = (op, int(next(tokens), 16))
-        elif op in ('lag','diff','mean','std','min','max','ema','wilder'):
+        elif op in ('lag','skip','diff','mean','mean_sum','std_sum','std','min','max','ema','wilder'):
             answer = (op, int(next(tokens)), expression())
         elif op in ('abs','neg'):
             answer = (op, expression())
-        elif op in ('add','sub','mul','div','min2','max2'):
+        elif op in ('add','sub','mul','div','div0','min2','max2'):
             answer = (op, expression(), expression())
         else:
             raise ValueError(op)
@@ -57,12 +57,13 @@ def feature(expr, columns, cache):
     elif op in ('abs','neg'):
         a = feature(expr[1], columns, cache)
         out = np.abs(a) if op == 'abs' else -a
-    elif op in ('add','sub','mul','div','min2','max2'):
+    elif op in ('add','sub','mul','div','div0','min2','max2'):
         a, b = (feature(e, columns, cache) for e in expr[1:])
         with np.errstate(invalid='ignore', divide='ignore', over='ignore'):
             if op == 'add': out = a + b
             elif op == 'sub': out = a - b
             elif op == 'mul': out = a * b
+            elif op == 'div0': out = np.where(np.abs(b) > 1e-12, a / b, 0.0)
             elif op == 'div': out = np.where(np.abs(b) > 1e-12, a / b, np.nan)
             elif op == 'min2': out = np.minimum(a, b)
             else: out = np.maximum(a, b)
@@ -70,9 +71,22 @@ def feature(expr, columns, cache):
         w, child = expr[1:]
         a = feature(child, columns, cache)
         out = np.full(n, np.nan)
-        if op in ('lag','diff'):
+        if op == 'skip':
+            out[w:] = a[w:]
+        elif op in ('lag','diff'):
             if w < n:
                 out[w:] = a[:-w] if op == 'lag' else a[w:] - a[:-w]
+        elif op in ('mean_sum','std_sum'):
+            total = squares = 0.0
+            run = 0
+            for t,value in enumerate(a):
+                if not np.isfinite(value):
+                    total = squares = 0.0; run = 0; continue
+                run += 1; total += value; squares += value*value
+                if run >= w:
+                    mean = total/w; variance = squares/w - mean*mean
+                    total -= a[t+1-w]; squares -= a[t+1-w]*a[t+1-w]
+                    out[t] = mean if op == 'mean_sum' else (0.0 if variance < 1e-14 else np.sqrt(variance))
         elif op in ('mean','std','min','max'):
             if w <= n:
                 windows = np.lib.stride_tricks.sliding_window_view(a, w)

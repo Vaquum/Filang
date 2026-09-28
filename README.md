@@ -22,6 +22,30 @@ study, but remained far behind the strongest fixed trend controls. This is not f
 untouched evidence or a claim of a robust generated edge.
 The original 0.1 campaign below is retained unchanged as historical evidence.
 
+## Current workflow: known-indicator parity first
+
+The next research step is not novel-topology generation. Filang reconstructs
+established indicator definitions using ordinary atoms, verifies values, signals,
+trade events, complete equity paths and PnL/risk against pinned TA-Lib plus
+independent cash/share accounting, then unlocks bounded period/threshold
+neighborhoods. See [the parity and benchmark contract](docs/ANCHOR_PARITY.md).
+
+```sh
+cargo build --release --locked --offline
+.venv/bin/python -m pip install -r requirements-parity.txt
+./target/release/filang anchor-parity --data data/btc4h/evaluation.csv --out runs/parity
+.venv/bin/python scripts/anchor_reference.py --data data/btc4h/evaluation.csv \
+  --manifest runs/parity/manifest.json --native runs/parity --out runs/parity-ref --gate
+./target/release/filang anchor-sweep --data data/btc4h/evaluation.csv \
+  --gate runs/parity/gate.txt --radius 4 --thresholds 129 --out runs/neighbors
+```
+
+This is an explicitly listed first coverage cohort, not all TA-Lib functions or
+proof that every indicator is profitable. The compiler has no indicator-name
+shortcuts: grouped statistics, coefficient-lane SIMD, tiled atom execution and
+full-risk threshold sweeps also accept anonymous atom programs. Stored market
+outcomes are regression evidence, never answers embedded in the native engine.
+
 ## Run without market data
 
 Rust 1.63 or later. The native package has **no third-party dependencies**; the committed Cargo.lock builds offline.

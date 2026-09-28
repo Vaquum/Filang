@@ -223,6 +223,129 @@ impl Market {
         }
         Ok(out)
     }
+    /// All chronological metrics for a threshold family. A position activation
+    /// updates three return leaves; an associative tree retains full drawdown.
+    /// Trade components are merged by endpoints under this exact ledger contract.
+    pub fn full_thresholds(&self, x: &[f64], rules: &[Rule]) -> Result<Vec<Metrics>> {
+        self.validate_series(x, rules)?;
+        let mut sorted = (0..self.len)
+            .filter_map(|t| {
+                let v = x[self.start + t];
+                if v.is_finite() {
+                    Some((v, t))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        sorted.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap().then(a.1.cmp(&b.1)));
+        let zero = metrics_from_ledger(&vec![Period::default(); self.len], self.interval)?;
+        let mut answers = vec![zero; rules.len()];
+        let mut prefix = vec![0.0; self.len + 1];
+        for t in 0..self.len {
+            prefix[t + 1] = prefix[t] + self.gross[t].ln();
+        }
+        // Cost multiplier recovered from prepared single-period terms: no pricing
+        // parameters or target result are hard-coded into the family evaluator.
+        let trade_cost = (self.terms[0][3][0] - self.gross[0].ln()).exp();
+        for greater in [false, true] {
+            let mut queries = (0..rules.len())
+                .filter(|i| rules[*i].greater == greater)
+                .collect::<Vec<_>>();
+            queries.sort_unstable_by(|i, j| {
+                let o = rules[*i]
+                    .threshold
+                    .partial_cmp(&rules[*j].threshold)
+                    .unwrap();
+                if greater {
+                    o.reverse()
+                } else {
+                    o
+                }
+            });
+            let mut active = vec![false; self.len];
+            let mut components = Components::new(self.len);
+            let mut tree = PathTree::new(self.len);
+            let mut next = 0;
+            let mut gains = Kahan::default();
+            for qi in queries {
+                while next < sorted.len() {
+                    let vi = if greater {
+                        sorted.len() - 1 - next
+                    } else {
+                        next
+                    };
+                    let (v, t) = sorted[vi];
+                    if !rules[qi].active(v) {
+                        break;
+                    }
+                    let left = if t > 0 && active[t - 1] {
+                        Some(components.root(t - 1))
+                    } else {
+                        None
+                    };
+                    let right = if t + 1 < self.len && active[t + 1] {
+                        Some(components.root(t + 1))
+                    } else {
+                        None
+                    };
+                    for r in [left, right].into_iter().flatten() {
+                        let lo = components.lo[r];
+                        let hi = components.hi[r];
+                        gains.add(-((prefix[hi + 1] - prefix[lo]).exp() * trade_cost - 1.0));
+                    }
+                    active[t] = true;
+                    let mut r = t;
+                    if let Some(l) = left {
+                        r = components.join(r, l);
+                    }
+                    if let Some(b) = right {
+                        r = components.join(r, b);
+                    }
+                    gains.add(
+                        (prefix[components.hi[r] + 1] - prefix[components.lo[r]]).exp()
+                            * trade_cost
+                            - 1.0,
+                    );
+                    for j in t.saturating_sub(1)..(t + 2).min(self.len) {
+                        let leaf = if active[j] {
+                            let entry = j == 0 || !active[j - 1];
+                            let exit = j + 1 == self.len || !active[j + 1];
+                            let c = self.terms[j][entry as usize + 2 * exit as usize];
+                            PathNode::leaf(c, self.gross[j].ln(), entry)
+                        } else {
+                            PathNode::default()
+                        };
+                        tree.set(j, leaf);
+                    }
+                    next += 1;
+                }
+                let a = tree.nodes[1];
+                let lite = Lite {
+                    periods: self.len,
+                    entries: a.entries,
+                    active: a.active,
+                    log_return: a.total,
+                    sum: a.sum,
+                    sum_sq: a.sum_sq,
+                };
+                answers[qi] = Metrics {
+                    lite,
+                    gross_return_pct: a.gross.exp_m1() * 100.0,
+                    max_drawdown_pct: -(-a.drawdown).exp_m1() * 100.0,
+                    cagr_pct: (a.total * 31557600.0 / (self.len as f64 * self.interval as f64))
+                        .exp_m1()
+                        * 100.0,
+                    mean_trade_bps: if a.entries > 0 {
+                        gains.sum / a.entries as f64 * 10000.0
+                    } else {
+                        f64::NAN
+                    },
+                };
+            }
+        }
+        Ok(answers)
+    }
     /// Explicit complete-period ledger, used by chronological portfolio replay.
     pub fn position_ledger(&self, p: &[bool]) -> Result<Vec<Period>> {
         if p.len() != self.len {
@@ -508,6 +631,101 @@ impl FreeStats {
     }
 }
 #[derive(Clone, Copy, Default)]
+struct PathNode {
+    total: f64,
+    high: f64,
+    low: f64,
+    drawdown: f64,
+    gross: f64,
+    sum: f64,
+    sum_sq: f64,
+    active: usize,
+    entries: usize,
+}
+impl PathNode {
+    fn leaf(c: [f64; 3], gross: f64, entry: bool) -> Self {
+        Self {
+            total: c[0],
+            high: c[0].max(0.0),
+            low: c[0].min(0.0),
+            drawdown: (-c[0]).max(0.0),
+            gross,
+            sum: c[1],
+            sum_sq: c[2],
+            active: 1,
+            entries: entry as usize,
+        }
+    }
+    fn merge(a: Self, b: Self) -> Self {
+        Self {
+            total: a.total + b.total,
+            high: a.high.max(a.total + b.high),
+            low: a.low.min(a.total + b.low),
+            drawdown: a.drawdown.max(b.drawdown).max(a.high - a.total - b.low),
+            gross: a.gross + b.gross,
+            sum: a.sum + b.sum,
+            sum_sq: a.sum_sq + b.sum_sq,
+            active: a.active + b.active,
+            entries: a.entries + b.entries,
+        }
+    }
+}
+struct PathTree {
+    base: usize,
+    nodes: Vec<PathNode>,
+}
+impl PathTree {
+    fn new(n: usize) -> Self {
+        let base = n.next_power_of_two();
+        Self {
+            base,
+            nodes: vec![PathNode::default(); 2 * base],
+        }
+    }
+    fn set(&mut self, t: usize, n: PathNode) {
+        let mut i = t + self.base;
+        self.nodes[i] = n;
+        while i > 1 {
+            i /= 2;
+            self.nodes[i] = PathNode::merge(self.nodes[2 * i], self.nodes[2 * i + 1]);
+        }
+    }
+}
+struct Components {
+    parent: Vec<usize>,
+    size: Vec<usize>,
+    lo: Vec<usize>,
+    hi: Vec<usize>,
+}
+impl Components {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            size: vec![1; n],
+            lo: (0..n).collect(),
+            hi: (0..n).collect(),
+        }
+    }
+    fn root(&mut self, mut i: usize) -> usize {
+        while self.parent[i] != i {
+            self.parent[i] = self.parent[self.parent[i]];
+            i = self.parent[i];
+        }
+        i
+    }
+    fn join(&mut self, a: usize, b: usize) -> usize {
+        let (mut a, mut b) = (self.root(a), self.root(b));
+        if self.size[a] < self.size[b] {
+            std::mem::swap(&mut a, &mut b);
+        }
+        self.parent[b] = a;
+        self.size[a] += self.size[b];
+        self.lo[a] = self.lo[a].min(self.lo[b]);
+        self.hi[a] = self.hi[a].max(self.hi[b]);
+        a
+    }
+}
+#[derive(Clone, Copy, Default)]
 struct Kahan {
     sum: f64,
     c: f64,
@@ -577,6 +795,62 @@ mod tests {
                         assert!((exact.log_return - f.log_return).abs() < 1e-12);
                         assert!((exact.sum - f.sum).abs() < 1e-12);
                         assert!((exact.sum_sq - f.sum_sq).abs() < 1e-12);
+                    }
+                }
+            }
+        }
+    }
+    #[test]
+    fn full_path_family_matches_every_chronological_metric() {
+        let d = data();
+        for fee in [0.0, 5.0, 80.0] {
+            let m = Market::new(
+                &d,
+                0,
+                d.len(),
+                Costs {
+                    fee_bps: fee,
+                    slip_bps: fee / 2.0,
+                },
+            )
+            .unwrap();
+            for seed in 0..40 {
+                let x = (0..d.len())
+                    .map(|i| {
+                        if (i + seed) % 17 == 0 {
+                            f64::NAN
+                        } else {
+                            ((i * 7 + seed) % 13) as f64
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                let rules = (-1..=14)
+                    .flat_map(|j| {
+                        [false, true].map(move |greater| Rule {
+                            threshold: j as f64,
+                            greater,
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                let got = m.full_thresholds(&x, &rules).unwrap();
+                for (r, a) in rules.iter().zip(got) {
+                    let b = m.score(&x, *r).unwrap();
+                    assert_eq!(
+                        (a.lite.active, a.lite.entries),
+                        (b.lite.active, b.lite.entries)
+                    );
+                    for (x, y) in [
+                        (a.lite.log_return, b.lite.log_return),
+                        (a.lite.sum, b.lite.sum),
+                        (a.lite.sum_sq, b.lite.sum_sq),
+                        (a.max_drawdown_pct, b.max_drawdown_pct),
+                        (a.gross_return_pct, b.gross_return_pct),
+                        (a.mean_trade_bps, b.mean_trade_bps),
+                    ] {
+                        assert!(
+                            (x - y).abs() < 1e-8 || (x.is_nan() && y.is_nan()),
+                            "{x} {y}"
+                        );
                     }
                 }
             }

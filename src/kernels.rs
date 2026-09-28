@@ -68,25 +68,36 @@ fn scalar_binary(op: &Op, x: f64, y: f64) -> f64 {
     }
 }
 pub fn binary(op: &Op, a: &[f64], b: &[f64], backend: Backend) -> Result<Vec<f64>> {
-    if a.len() != b.len() || !matches!(op, Op::Add | Op::Sub | Op::Mul | Op::Div) {
+    let mut out = vec![f64::NAN; a.len()];
+    binary_into(op, a, b, &mut out, backend)?;
+    Ok(out)
+}
+/// Reusable tile output. The caller cannot alias output with either input.
+pub fn binary_into(op: &Op, a: &[f64], b: &[f64], out: &mut [f64], backend: Backend) -> Result<()> {
+    if a.len() != b.len()
+        || a.len() != out.len()
+        || !matches!(op, Op::Add | Op::Sub | Op::Mul | Op::Div)
+    {
         return Err("binary kernel contract".into());
     }
     backend.checked()?;
-    let mut out = vec![f64::NAN; a.len()];
     let mut done = 0;
     #[cfg(target_arch = "aarch64")]
     if backend == Backend::Neon {
-        done = unsafe { neon_binary(op, a, b, &mut out) };
+        // SAFETY: runtime ISA check above, equal slices, and loops check lane bounds.
+        done = unsafe { neon_binary(op, a, b, out) };
     }
     #[cfg(target_arch = "x86_64")]
     if backend == Backend::Avx2 {
-        done = unsafe { avx_binary(op, a, b, &mut out) };
+        // SAFETY: runtime ISA check above, equal slices, and loops check lane bounds.
+        done = unsafe { avx_binary(op, a, b, out) };
     }
     for i in done..a.len() {
         out[i] = scalar_binary(op, a[i], b[i]);
     }
-    Ok(out)
+    Ok(())
 }
+
 #[cfg(target_arch = "aarch64")]
 #[target_feature(enable = "neon")]
 unsafe fn neon_binary(op: &Op, a: &[f64], b: &[f64], out: &mut [f64]) -> usize {

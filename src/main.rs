@@ -1,6 +1,6 @@
 use filang::{backtest::Costs, config::Config, data, report, search, Result};
 use std::{collections::HashMap, env, fs, path::Path};
-const HELP:&str="Filang 0.2.0 (research prototype)\n\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
+const HELP:&str="Filang 0.3.0 (research prototype)\n\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
 fn arguments() -> Result<(String, HashMap<String, String>)> {
     let mut it = env::args().skip(1);
     let command = it.next().unwrap_or_else(|| "help".into());
@@ -37,6 +37,56 @@ fn entry() -> Result<()> {
     match cmd.as_str() {
         "help" | "--help" | "-h" => {
             print!("{HELP}");
+        }
+        "anchor-parity" | "anchor-sweep" => {
+            let data = take(&mut flags, "--data")?;
+            let out = take(&mut flags, "--out")?;
+            let mode = flags.remove("--mode").unwrap_or_else(|| "family".into());
+            let backend = filang::kernels::Backend::resolve(
+                &flags.remove("--backend").unwrap_or_else(|| "auto".into()),
+            )?;
+            let capture = flags
+                .remove("--capture")
+                .unwrap_or_else(|| {
+                    if cmd == "anchor-parity" {
+                        "true"
+                    } else {
+                        "false"
+                    }
+                    .into()
+                })
+                .parse::<bool>()
+                .map_err(|_| "bad capture flag")?;
+            let gate = if cmd == "anchor-sweep" {
+                Some(take(&mut flags, "--gate")?)
+            } else {
+                None
+            };
+            let (g, requests) = if cmd == "anchor-sweep" {
+                let radius = take(&mut flags, "--radius")?
+                    .parse::<usize>()
+                    .map_err(|_| "bad radius")?;
+                let thresholds = take(&mut flags, "--thresholds")?
+                    .parse::<usize>()
+                    .map_err(|_| "bad thresholds")?;
+                filang::anchors::neighborhood(radius, thresholds)?
+            } else {
+                filang::anchors::catalog()?
+            };
+            finish(&flags)?;
+            let options = filang::anchor_run::Options {
+                data,
+                out,
+                mode,
+                backend,
+                capture,
+                batch: 32,
+                memory: 128 * 1024 * 1024,
+            };
+            println!(
+                "{}",
+                filang::anchor_run::run(&g, &requests, &options, gate.as_deref())?
+            );
         }
         "walk-search" | "walk-inspect" => {
             let path = take(&mut flags, "--config")?;
