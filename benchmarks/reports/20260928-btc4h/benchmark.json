@@ -1,0 +1,511 @@
+{
+  "status": "PASS",
+  "scope": "identical discovery inputs/genomes/readouts/costs/metrics/frozen outputs; no holdout access",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "threads": 1,
+  "affinity": "not pinned",
+  "os_file_cache": "not flushed",
+  "git_commit": "8902ce957ef875ce96f1658ad205d6be79a5c2dd",
+  "rustc": "rustc 1.63.0 (4b91a6ea7 2022-08-08)",
+  "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+  "input_config_sha256": "ea4f773bcb88e29c66305e302cffe5fe8d99b727756a043dad4a65a636475139",
+  "repeats": 3,
+  "median_wall_seconds": {
+    "direct": 9.448674458981259,
+    "shared": 7.786365042004036,
+    "events": 7.175135917001171
+  },
+  "median_direct_over_events": 1.3168634808147728,
+  "runs": [
+    {
+      "variant": "direct",
+      "repeat": 1,
+      "wall_seconds": 9.448674458981259,
+      "peak_rss_bytes": 28442624,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 0,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 98417,
+        "numerical_payload_peak_bytes": 4919328,
+        "batch_size": 1,
+        "scorer": "scan",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.1583385,
+        "numerical_seconds": 3.0880364899999955,
+        "scoring_seconds": 4.5226060760000095,
+        "search_and_output_seconds": 9.267810291,
+        "total_internal_seconds": 9.426149208,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    },
+    {
+      "variant": "shared",
+      "repeat": 1,
+      "wall_seconds": 7.786365042004036,
+      "peak_rss_bytes": 101875712,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 0,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 43728,
+        "numerical_payload_peak_bytes": 36046800,
+        "batch_size": 32,
+        "scorer": "scan",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.1613085,
+        "numerical_seconds": 1.5550004570000002,
+        "scoring_seconds": 4.423056936000008,
+        "search_and_output_seconds": 7.598724708,
+        "total_internal_seconds": 7.760033916,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    },
+    {
+      "variant": "events",
+      "repeat": 1,
+      "wall_seconds": 7.1933729170123115,
+      "peak_rss_bytes": 98238464,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 24930,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 43728,
+        "numerical_payload_peak_bytes": 36046800,
+        "batch_size": 32,
+        "scorer": "events",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.163274208,
+        "numerical_seconds": 1.5438447889999998,
+        "scoring_seconds": 3.839227582000003,
+        "search_and_output_seconds": 7.006603333,
+        "total_internal_seconds": 7.169878583,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    },
+    {
+      "variant": "shared",
+      "repeat": 2,
+      "wall_seconds": 7.931545625004219,
+      "peak_rss_bytes": 98566144,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 0,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 43728,
+        "numerical_payload_peak_bytes": 36046800,
+        "batch_size": 32,
+        "scorer": "scan",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.172317416,
+        "numerical_seconds": 1.5540335459999999,
+        "scoring_seconds": 4.4416551030000155,
+        "search_and_output_seconds": 7.734508291,
+        "total_internal_seconds": 7.906827,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    },
+    {
+      "variant": "events",
+      "repeat": 2,
+      "wall_seconds": 7.175135917001171,
+      "peak_rss_bytes": 107823104,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 24930,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 43728,
+        "numerical_payload_peak_bytes": 36046800,
+        "batch_size": 32,
+        "scorer": "events",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.162246375,
+        "numerical_seconds": 1.5503331699999994,
+        "scoring_seconds": 3.8200536779999954,
+        "search_and_output_seconds": 6.995599708,
+        "total_internal_seconds": 7.157847333,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    },
+    {
+      "variant": "direct",
+      "repeat": 2,
+      "wall_seconds": 9.457831749983598,
+      "peak_rss_bytes": 33538048,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 0,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 98417,
+        "numerical_payload_peak_bytes": 4919328,
+        "batch_size": 1,
+        "scorer": "scan",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.163376458,
+        "numerical_seconds": 3.0785745669999995,
+        "scoring_seconds": 4.448462790000001,
+        "search_and_output_seconds": 9.275591916,
+        "total_internal_seconds": 9.438968916,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    },
+    {
+      "variant": "events",
+      "repeat": 3,
+      "wall_seconds": 7.129197792004561,
+      "peak_rss_bytes": 102678528,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 24930,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 43728,
+        "numerical_payload_peak_bytes": 36046800,
+        "batch_size": 32,
+        "scorer": "events",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.162801916,
+        "numerical_seconds": 1.5494326259999995,
+        "scoring_seconds": 3.8079992050000047,
+        "search_and_output_seconds": 6.941219375,
+        "total_internal_seconds": 7.104021666,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    },
+    {
+      "variant": "direct",
+      "repeat": 3,
+      "wall_seconds": 8.936349458002951,
+      "peak_rss_bytes": 27164672,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 0,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 98417,
+        "numerical_payload_peak_bytes": 4919328,
+        "batch_size": 1,
+        "scorer": "scan",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.161030541,
+        "numerical_seconds": 2.9322440380000048,
+        "scoring_seconds": 4.246714029999999,
+        "search_and_output_seconds": 8.755018125,
+        "total_internal_seconds": 8.916049291,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    },
+    {
+      "variant": "shared",
+      "repeat": 3,
+      "wall_seconds": 7.507432165992213,
+      "peak_rss_bytes": 98566144,
+      "summary": {
+        "engine_version": "0.1.0",
+        "execution_contract": "spot_open_v1",
+        "status": "discovery_complete_holdout_not_read",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "1fd9ef26a3e7bb112ca021bc6149bb4011907322052826d3754ccda902bb859e",
+        "seed": 20260928,
+        "source_rows": 10602,
+        "canonical_feature_programs": 4153,
+        "generated_features": 4096,
+        "generation_proposals": 4342,
+        "readouts_evaluated": 157594,
+        "market_metric_queries": 945564,
+        "threshold_sweeps": 0,
+        "eligible_readouts": 24552,
+        "eligible_features": 3137,
+        "invalid_or_constant_fit_features": 0,
+        "physical_numerical_node_evaluations": 43728,
+        "numerical_payload_peak_bytes": 36046800,
+        "batch_size": 32,
+        "scorer": "scan",
+        "selected_candidates": 14,
+        "full_validation_replays": 14,
+        "frozen_sha256": "9735b3c49b07e5919504217168abf2203508bea0ee0a6cf94be639452dc57c61",
+        "setup_seconds": 0.155466791,
+        "numerical_seconds": 1.4939232479999998,
+        "scoring_seconds": 4.25700219,
+        "search_and_output_seconds": 7.3300202500000005,
+        "total_internal_seconds": 7.485487666,
+        "validation_block_row_ranges": [
+          [
+            8406,
+            8955
+          ],
+          [
+            8955,
+            9504
+          ],
+          [
+            9504,
+            10053
+          ],
+          [
+            10053,
+            10602
+          ]
+        ]
+      }
+    }
+  ],
+  "runner_sha256": "4ae16c9f27e9be1ca01534c29c37fbef3057b393adfb7b469144385df2183688",
+  "cpu": "Apple M1 Max",
+  "host_memory_bytes": 68719476736
+}

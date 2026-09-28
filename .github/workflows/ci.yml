@@ -1,0 +1,27 @@
+name: Native correctness
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install pinned toolchain
+        run: rustup toolchain install 1.63.0 --profile minimal --component rustfmt --component clippy
+      - name: Format
+        run: cargo +1.63.0 fmt --all -- --check
+      - name: Tests (including offline synthetic discovery and sealed replay)
+        run: cargo +1.63.0 test --locked --offline
+      - name: Lint
+        run: cargo +1.63.0 clippy --locked --offline --all-targets -- -D warnings
+      - name: Release build
+        run: cargo +1.63.0 build --release --locked --offline
+      - name: Adapter syntax
+        run: python3 -m py_compile scripts/*.py

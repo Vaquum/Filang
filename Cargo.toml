@@ -1,0 +1,19 @@
+[package]
+name = "filang"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.63"
+publish = false
+description = "Parametric financial feature programs and bounded shared-DAG discovery"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "filang"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"

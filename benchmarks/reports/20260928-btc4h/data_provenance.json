@@ -1,0 +1,38 @@
+{
+  "adapter_version": 1,
+  "source": {
+    "version": 1,
+    "repo": "vaquum/binance_btcusdt_4h_klines",
+    "revision": "8f3ea31abe50e7aa14d1f269a65734f56dca4798",
+    "filename": "btcusdt_4h_kline_20200101_to_20260927.parquet",
+    "sha256": "afad1a9dd4660206f0c2ad7057846b035000261b05d4f7f29fdc5ac09d237a20",
+    "expected_source_rows": 14771,
+    "interval_seconds": 14400,
+    "history_start": "2020-03-01",
+    "discovery_end": "2025-01-01",
+    "evaluation_end": "2026-09-28",
+    "output_dir": "data/btc4h",
+    "timestamp_interpretation": "datetime is interpreted as UTC bar opening time",
+    "history_start_reason": "Exclude the single missing 4h source bar before 2020-02-19 16:00 UTC; this cutoff is chosen from data quality, before performance inspection. Training still starts 2021-01-01."
+  },
+  "resolved_url": "https://huggingface.co/datasets/vaquum/binance_btcusdt_4h_klines/resolve/8f3ea31abe50e7aa14d1f269a65734f56dca4798/btcusdt_4h_kline_20200101_to_20260927.parquet",
+  "polars_version": "1.42.1",
+  "source_sha256": "afad1a9dd4660206f0c2ad7057846b035000261b05d4f7f29fdc5ac09d237a20",
+  "outputs": {
+    "discovery": {
+      "file": "discovery.csv",
+      "rows": 10602,
+      "sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+      "first_open_timestamp": 1583020800,
+      "last_open_timestamp": 1735675200
+    },
+    "evaluation": {
+      "file": "evaluation.csv",
+      "rows": 14412,
+      "sha256": "7844ae10462b6ddd6b17ea21a0626153b6786cbb0fd828bf2593e574a7578625",
+      "first_open_timestamp": 1583020800,
+      "last_open_timestamp": 1790539200
+    }
+  },
+  "policy": "discovery CSV excludes all final-evaluation bars; evaluation CSV includes identical causal warm-up prefix"
+}

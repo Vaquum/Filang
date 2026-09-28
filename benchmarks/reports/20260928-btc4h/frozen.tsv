@@ -1,0 +1,25 @@
+# filang-selection-v1
+# execution=spot_open_v1
+# interval=14400
+# fee_bps=5
+# slip_bps=5
+# evaluation_start=1735689600
+# evaluation_end=1790553600
+# discovery_sha256=6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98
+# discovery_rows=10602
+# selection_resolution=0.000000001
+id	group	name	greater	threshold_bits	expression
+dfa6c35109b10781cea6035039ac1af6208765ff288a566a6a0c9375011b1f02	generated	f_802d96541c0a513a	true	bf844f19c66a94d1	(mean 128 (mul (add (sub (div close (mean 128 close)) (constant 3ff0000000000000)) (sub (div volume (lag 1 (mean 128 volume))) (constant 3ff0000000000000))) (constant 3fe0000000000000)))
+dee06978eb75653292d19ab687f6af508014d41707746ea8c0e76811670c2dd3	generated	f_df9077813100ac0b	true	3fc02a38b0831c14	(mean 32 (mul (add (div (sub (div close (lag 32 close)) (constant 3ff0000000000000)) (add (constant 3ff0000000000000) (abs (div (sub (div close (lag 1 close)) (constant 3ff0000000000000)) (std 4 (sub (div close (lag 1 close)) (constant 3ff0000000000000))))))) (sub (div volume (lag 1 (mean 64 volume))) (constant 3ff0000000000000))) (constant 3fe0000000000000)))
+61a41e4bd54c4b299b44bb622e192ca48c5480d2a0bb56773b2980bd86456d63	generated	f_65dbcefdbfbe5489	false	bfc24c36fafc9152	(mean 128 (mul (add (div (sub (add (div (sub close (mean 64 close)) (wilder 64 (max2 (max2 (sub high low) (abs (sub high (lag 1 close)))) (abs (sub low (lag 1 close)))))) (sub (div volume (lag 1 (mean 8 volume))) (constant 3ff0000000000000))) (mean 64 (add (div (sub close (mean 64 close)) (wilder 64 (max2 (max2 (sub high low) (abs (sub high (lag 1 close)))) (abs (sub low (lag 1 close)))))) (sub (div volume (lag 1 (mean 8 volume))) (constant 3ff0000000000000))))) (std 64 (add (div (sub close (mean 64 close)) (wilder 64 (max2 (max2 (sub high low) (abs (sub high (lag 1 close)))) (abs (sub low (lag 1 close)))))) (sub (div volume (lag 1 (mean 8 volume))) (constant 3ff0000000000000))))) (sub (div volume (lag 1 (mean 4 volume))) (constant 3ff0000000000000))) (constant 3fe0000000000000)))
+34f2b2701d2e5e272a94fb7fd2ba97b81ccdf8786125076b653032cd498754f7	generated	f_521a26232a9352af	true	3f55c14b36dba9ef	(mul (abs (sub (div close (lag 64 close)) (constant 3ff0000000000000))) (std 32 (sub (div close (lag 1 close)) (constant 3ff0000000000000))))
+efea63228fb6e7a499b705ae0e3ec0438a21f74656025450024464ffd94fc428	generated	f_3a33880cbaa64f2f	false	bf48f44aeea7f0c9	(mul (abs (std 64 (sub (div close (lag 1 close)) (constant 3ff0000000000000)))) (sub (div close (mean 128 close)) (constant 3ff0000000000000)))
+112595062d8414573e92b762f51349a0d969c2d919790d9fdd47a68001bf7eb1	tuned_indicator	SMA_distance(128)	false	bfa7c7fdcc915e44	(sub (div close (mean 128 close)) (constant 3ff0000000000000))
+23c6596b3eaa471eb0669e505bc61372e83e23a66dddeed5904f04d3477c18e0	fixed_indicator	RSI(14)>50	true	0000000000000000	(sub (div (wilder 14 (add (abs (diff 1 close)) (diff 1 close))) (wilder 14 (abs (diff 1 close)))) (constant 3ff0000000000000))
+027095eebc449ba2f912950b45bdd994274e0891548fc8451f94d2397ec90383	fixed_indicator	RSI(14)<30	false	bfd999999999999a	(sub (div (wilder 14 (add (abs (diff 1 close)) (diff 1 close))) (wilder 14 (abs (diff 1 close)))) (constant 3ff0000000000000))
+e991318d2567ffa1e413e88aaa68195fd99d46fb701e711b9d7da1e44b333618	fixed_indicator	EMA(24)>EMA(96)	true	0000000000000000	(sub (div (ema 24 close) (ema 96 close)) (constant 3ff0000000000000))
+3d699b473163e5f553a400439f62b80847bf932dfcba8ad3bee571a2b373afab	fixed_indicator	MACD(12,26,9)_hist>0	true	0000000000000000	(div (sub (sub (ema 12 close) (ema 26 close)) (ema 9 (sub (ema 12 close) (ema 26 close)))) close)
+2b65673a73d8859479a28b3a4213cbb3e65cbd3f88b6bd39b22fe9fbf404ec77	fixed_indicator	Close>SMA(200)	true	0000000000000000	(sub (div close (mean 200 close)) (constant 3ff0000000000000))
+18ee4d39729a82a833f7950385067308820d87e94eacf937f0d625ec945c5662	fixed_indicator	Bollinger(20)_z<-2	false	c000000000000000	(div (sub close (mean 20 close)) (std 20 close))
+7741dffd319644cd52ae39cd95b51d62c5ac6698bc7640babc88d3028314d624	control	Buy_and_hold	true	0000000000000000	(constant 3ff0000000000000)
+cc8c5636294dcf284d8b2d67effc3d1517acaf7da915ce76c6588e5d4f424cc7	control	Cash	true	4000000000000000	(constant 3ff0000000000000)
