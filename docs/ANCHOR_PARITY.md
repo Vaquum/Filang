@@ -126,3 +126,34 @@ verification; output differences and verification time are never smuggled into a
 speedup denominator. No GPU, extra threads, shortened history or cheaper risk
 metric is used to manufacture the family speedup. A logical threshold grid is
 not counted as that many distinct numerical features.
+
+
+Reproduce the benchmark's small repeated sweep or larger application pair:
+
+```sh
+.venv/bin/python scripts/benchmark_anchors.py --gate runs/parity/gate.txt \
+  --out runs/benchmark-small --radius 4 --thresholds 129 --repeats 3 --verify-capture
+.venv/bin/python scripts/benchmark_anchors.py --gate runs/parity/gate.txt \
+  --out runs/benchmark-large --radius 10 --thresholds 257 --repeats 1 \
+  --paths talib_numpy,family_simd --verify-capture
+```
+
+The large reproduction runs the external value/mask verification in full; the
+retained final-build evidence additionally documents byte-for-byte equivalence to
+the predecessor full verification. Both routes preserve the declared tolerance
+and exact decisions. See the committed report for the exact measured build and
+repetition counts; another machine's timings are new measurements.
+
+
+## Reference implementation provenance
+
+The externally checked contracts are tied to the installed wrapper/C-library
+versions recorded in every verification report. Relevant primary source paths:
+
+- [TA-Lib v0.6.4 rolling variance](https://github.com/TA-Lib/ta-lib/blob/v0.6.4/src/ta_func/ta_VAR.c)
+- [TA-Lib v0.6.4 deviation from a prepared moving average](https://github.com/TA-Lib/ta-lib/blob/v0.6.4/src/ta_func/ta_STDDEV.c)
+- [TA-Lib v0.6.4 zero/negative comparison thresholds](https://github.com/TA-Lib/ta-lib/blob/v0.6.4/src/ta_func/ta_utility.h)
+
+The generic rolling-total profile is independently implemented mathematical
+arithmetic; TA-Lib source is not copied into the native runtime. Profile selection
+is explicit in the serialized program and available outside the anchor catalog.

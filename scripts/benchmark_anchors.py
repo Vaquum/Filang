@@ -14,7 +14,9 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--data',default='data/btc4h/evaluation.csv');p.add_argument('--gate',required=True)
     p.add_argument('--out',required=True);p.add_argument('--radius',type=int,default=4);p.add_argument('--thresholds',type=int,default=129)
-    p.add_argument('--repeats',type=int,default=3);p.add_argument('--verify-capture',action='store_true');a=p.parse_args()
+    p.add_argument('--repeats',type=int,default=3);p.add_argument('--verify-capture',action='store_true')
+    p.add_argument('--paths',default='talib_numpy,native_direct,native_shared,family_scalar,family_simd')
+    a=p.parse_args()
     root=Path(a.out)
     if root.exists():raise ValueError('output exists')
     root.mkdir(parents=True)
@@ -28,7 +30,10 @@ def main():
     execute('proof',common+['--out',str(proof),'--capture',str(a.verify_capture).lower()])
     execute('reference-proof',[sys.executable,'scripts/anchor_reference.py','--data',a.data,'--manifest',str(proof/'manifest.json'),'--native',str(proof),'--out',str(root/'reference-proof')])
     proof_values=np.fromfile(proof/'metrics.bin',dtype='<f8').reshape(-1,10)
-    results=[];variants=['talib_numpy','native_direct','native_shared','family_scalar','family_simd']
+    results=[];variants=a.paths.split(',')
+    supported={'talib_numpy','native_direct','native_shared','family_scalar','family_simd'}
+    if a.repeats<1 or len(variants)!=len(set(variants)) or not set(variants)<=supported or not {'talib_numpy','family_simd'}<=set(variants):
+        raise ValueError('paths must include talib_numpy and family_simd without duplicates; repeats must be positive')
     for rep in range(a.repeats):
         order=variants[rep%len(variants):]+variants[:rep%len(variants)]
         for name in order:
@@ -53,6 +58,6 @@ def main():
        'threads_per_native_process':1,'cpu_affinity':'not pinned','os_file_cache':'not flushed','radius':a.radius,'thresholds_per_direction':a.thresholds,'repeats':a.repeats,
        'engine_sha256':hashlib.sha256(bin.read_bytes()).hexdigest(),'gate_sha256':hashlib.sha256(Path(a.gate).read_bytes()).hexdigest(),'full_metric_queries':len(proof_values),
        'all_metric_columns':json.loads((proof/'manifest.json').read_text())['metric_columns'],'all_timed_metrics_verified':True,'capture_verification':a.verify_capture,
-       'median_wall_seconds':med,'talib_pipeline_over_family':med['talib_numpy']/med['family_simd'],'native_direct_over_family':med['native_direct']/med['family_simd'],'measurements':results}
+       'median_wall_seconds':med,'talib_pipeline_over_family':med['talib_numpy']/med['family_simd'],'native_direct_over_family':med['native_direct']/med['family_simd'] if 'native_direct' in med else None,'measurements':results}
     (root/'benchmark.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:v for k,v in result.items() if k!='measurements'},indent=2))
 if __name__=='__main__':main()

@@ -1,0 +1,26 @@
+{
+  "repeated": {
+    "native_shared-2": 81543168,
+    "native_shared-3": 85098496,
+    "native_direct-3": 44580864,
+    "native_direct-2": 45252608,
+    "talib_numpy-3": 137723904,
+    "talib_numpy-2": 137887744,
+    "family_simd-1": 73170944,
+    "family_scalar-3": 67010560,
+    "family_scalar-2": 75202560,
+    "talib_numpy-1": 137871360,
+    "family_simd-3": 69009408,
+    "family_simd-2": 70451200,
+    "proof": 73007104,
+    "native_shared-1": 78954496,
+    "native_direct-1": 43827200,
+    "reference-proof": 177651712,
+    "family_scalar-1": 61931520
+  },
+  "million": {
+    "talib_numpy": 415236096,
+    "family": 301744128,
+    "proof": 301334528
+  }
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "local_reproduction_path": "runs/anchor-release/features.bin",
+    "bytes": 2075328,
+    "sha256": "fe4dadee1d2add1a074871291fb508f5d3ce3be29b7b98e3105f82df872928bd"
+  },
+  {
+    "local_reproduction_path": "runs/anchor-release/traces.bin",
+    "bytes": 40380032,
+    "sha256": "48d5092563472bdc3a5bc27bd14ff5c853cd64577dc9e40d9d835d088f7bec12"
+  },
+  {
+    "local_reproduction_path": "runs/anchor-release/metrics.bin",
+    "bytes": 7040,
+    "sha256": "ef5d9100e09387fefa197b18d182005aec2d3fb5eadfa438ca6fc94df2d1660a"
+  },
+  {
+    "local_reproduction_path": "runs/anchor-release-bench/proof/features.bin",
+    "bytes": 29054592,
+    "sha256": "eab856a9dde5934ff5209d67c7680f05aa72a6215fe00f5bc6878c03ef12ce1b"
+  },
+  {
+    "local_reproduction_path": "runs/anchor-release-bench/proof/metrics.bin",
+    "bytes": 9666560,
+    "sha256": "465cbaf2b6c52958ce12565ad75ac6831c467838324f20257701d1c290bbed31"
+  },
+  {
+    "local_reproduction_path": "runs/anchor-release-million/proof/features.bin",
+    "bytes": 119907840,
+    "sha256": "3d8ebe5b20dee75813019b7b8f8ed507b2d54e2d7fda975766446b181e1eecf6"
+  },
+  {
+    "local_reproduction_path": "runs/anchor-release-million/proof/metrics.bin",
+    "bytes": 84056320,
+    "sha256": "c436e1b7dd1c4fd6142912ddcb1c543f463cd78d8fb3d406c7183e3b1d772e63"
+  },
+  {
+    "local_reproduction_path": "runs/anchor-million/proof/features.bin",
+    "bytes": 119907840,
+    "sha256": "3d8ebe5b20dee75813019b7b8f8ed507b2d54e2d7fda975766446b181e1eecf6"
+  },
+  {
+    "local_reproduction_path": "runs/anchor-million/proof/metrics.bin",
+    "bytes": 84056320,
+    "sha256": "c436e1b7dd1c4fd6142912ddcb1c543f463cd78d8fb3d406c7183e3b1d772e63"
+  }
+]

@@ -1,0 +1,799 @@
+{
+  "reference_wrapper": "0.6.8",
+  "reference_c": "0.6.4 (Oct 20 2025 20:23:07)",
+  "scope": "finite positive pinned BTCUSDT OHLCV; listed constructions/parameters, not whole-function universal equivalence",
+  "tested_api_count": 8,
+  "installed_api_count": 158,
+  "functions": [
+    {
+      "function": "HT_DCPERIOD",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "HT_DCPHASE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "HT_PHASOR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "HT_SINE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "HT_TRENDMODE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ADD",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "DIV",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MAX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MAXINDEX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MIN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MININDEX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MINMAX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MINMAXINDEX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MULT",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "SUB",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "SUM",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ACOS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ASIN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ATAN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CEIL",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "COS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "COSH",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "EXP",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "FLOOR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "LN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "LOG10",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "SIN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "SINH",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "SQRT",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "TAN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "TANH",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ADX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ADXR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "APO",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "AROON",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "AROONOSC",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "BOP",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CCI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CMO",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "DX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MACD",
+      "status": "construction_tested",
+      "construction": "aligned-seed histogram / close"
+    },
+    {
+      "function": "MACDEXT",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MACDFIX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MFI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MINUS_DI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MINUS_DM",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MOM",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "PLUS_DI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "PLUS_DM",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "PPO",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ROC",
+      "status": "construction_tested",
+      "construction": "ROC / 100"
+    },
+    {
+      "function": "ROCP",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ROCR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ROCR100",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "RSI",
+      "status": "construction_tested",
+      "construction": "RSI / 50 - 1"
+    },
+    {
+      "function": "STOCH",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "STOCHF",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "STOCHRSI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "TRIX",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ULTOSC",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "WILLR",
+      "status": "construction_tested",
+      "construction": "WILLR / 100 + 1 (channel position)"
+    },
+    {
+      "function": "BBANDS",
+      "status": "construction_tested",
+      "construction": "normalized position relative to SMA bands"
+    },
+    {
+      "function": "DEMA",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "EMA",
+      "status": "construction_tested",
+      "construction": "close / EMA - 1 and paired EMA ratios"
+    },
+    {
+      "function": "HT_TRENDLINE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "KAMA",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MA",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MAMA",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MAVP",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MIDPOINT",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MIDPRICE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "SAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "SAREXT",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "SMA",
+      "status": "construction_tested",
+      "construction": "close / SMA - 1; periods 20 and 200 plus neighborhoods"
+    },
+    {
+      "function": "T3",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "TEMA",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "TRIMA",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "WMA",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDL2CROWS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDL3BLACKCROWS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDL3INSIDE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDL3LINESTRIKE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDL3OUTSIDE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDL3STARSINSOUTH",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDL3WHITESOLDIERS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLABANDONEDBABY",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLADVANCEBLOCK",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLBELTHOLD",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLBREAKAWAY",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLCLOSINGMARUBOZU",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLCONCEALBABYSWALL",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLCOUNTERATTACK",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLDARKCLOUDCOVER",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLDOJI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLDOJISTAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLDRAGONFLYDOJI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLENGULFING",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLEVENINGDOJISTAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLEVENINGSTAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLGAPSIDESIDEWHITE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLGRAVESTONEDOJI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLHAMMER",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLHANGINGMAN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLHARAMI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLHARAMICROSS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLHIGHWAVE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLHIKKAKE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLHIKKAKEMOD",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLHOMINGPIGEON",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLIDENTICAL3CROWS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLINNECK",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLINVERTEDHAMMER",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLKICKING",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLKICKINGBYLENGTH",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLLADDERBOTTOM",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLLONGLEGGEDDOJI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLLONGLINE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLMARUBOZU",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLMATCHINGLOW",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLMATHOLD",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLMORNINGDOJISTAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLMORNINGSTAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLONNECK",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLPIERCING",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLRICKSHAWMAN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLRISEFALL3METHODS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLSEPARATINGLINES",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLSHOOTINGSTAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLSHORTLINE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLSPINNINGTOP",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLSTALLEDPATTERN",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLSTICKSANDWICH",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLTAKURI",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLTASUKIGAP",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLTHRUSTING",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLTRISTAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLUNIQUE3RIVER",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLUPSIDEGAP2CROWS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CDLXSIDEGAP3METHODS",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "AVGPRICE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "MEDPRICE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "TYPPRICE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "WCLPRICE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "BETA",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "CORREL",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "LINEARREG",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "LINEARREG_ANGLE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "LINEARREG_INTERCEPT",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "LINEARREG_SLOPE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "STDDEV",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "TSF",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "VAR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ATR",
+      "status": "construction_tested",
+      "construction": "ATR / close"
+    },
+    {
+      "function": "NATR",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "TRANGE",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "AD",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "ADOSC",
+      "status": "not_claimed",
+      "construction": null
+    },
+    {
+      "function": "OBV",
+      "status": "not_claimed",
+      "construction": null
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+{
+  "data_sha256": "7844ae10462b6ddd6b17ea21a0626153b6786cbb0fd828bf2593e574a7578625",
+  "legacy_profile_regressions": [
+    {
+      "key": "fixed_0",
+      "expression": "(sub (div (wilder 14 (add (abs (diff 1 close)) (diff 1 close))) (wilder 14 (abs (diff 1 close)))) (constant 3ff0000000000000))",
+      "rules": [
+        {
+          "greater": true,
+          "threshold": 0.0
+        }
+      ],
+      "primary": {
+        "net_return_pct": 62.46987051615653,
+        "gross_return_pct": 271.8507787369604,
+        "cagr_pct": 13.860103085403669,
+        "max_drawdown_pct": 59.344926107485726,
+        "sharpe_annualized_naive": 0.5569148037943662,
+        "trades": 414.0,
+        "exposure_pct": 53.014400781059315,
+        "mean_bps_per_bar": 0.8425368167961103,
+        "mean_trade_bps": 19.42556389371805,
+        "periods": 8194.0
+      },
+      "stress": {
+        "net_return_pct": -29.013331672842135,
+        "gross_return_pct": 271.8507787369604,
+        "cagr_pct": -8.757544071867834,
+        "max_drawdown_pct": 72.71292765177093,
+        "sharpe_annualized_naive": -0.10442741452696787,
+        "trades": 414.0,
+        "exposure_pct": 53.014400781059315,
+        "mean_bps_per_bar": -0.16031611635494228,
+        "mean_trade_bps": -0.5932734014798369,
+        "periods": 8194.0
+      }
+    },
+    {
+      "key": "fixed_1",
+      "expression": "(sub (div (wilder 14 (add (abs (diff 1 close)) (diff 1 close))) (wilder 14 (abs (diff 1 close)))) (constant 3ff0000000000000))",
+      "rules": [
+        {
+          "greater": false,
+          "threshold": -0.4
+        }
+      ],
+      "primary": {
+        "net_return_pct": -22.024600733496484,
+        "gross_return_pct": -3.8034590251098384,
+        "cagr_pct": -6.43705824136213,
+        "max_drawdown_pct": 28.02270780053356,
+        "sharpe_annualized_naive": -0.42684812540654077,
+        "trades": 105.0,
+        "exposure_pct": 4.198193800341713,
+        "mean_bps_per_bar": -0.2620078722100256,
+        "mean_trade_bps": -20.060891547763582,
+        "periods": 8194.0
+      },
+      "stress": {
+        "net_return_pct": -36.79437752403052,
+        "gross_return_pct": -3.8034590251098384,
+        "cagr_pct": -11.54716481397973,
+        "max_drawdown_pct": 38.712894297714215,
+        "sharpe_annualized_naive": -0.8572033566496725,
+        "trades": 105.0,
+        "exposure_pct": 4.198193800341713,
+        "mean_bps_per_bar": -0.5193040286431979,
+        "mean_trade_bps": -40.000834806391524,
+        "periods": 8194.0
+      }
+    },
+    {
+      "key": "fixed_2",
+      "expression": "(sub (div (ema 24 close) (ema 96 close)) (constant 3ff0000000000000))",
+      "rules": [
+        {
+          "greater": true,
+          "threshold": 0.0
+        }
+      ],
+      "primary": {
+        "net_return_pct": 257.9544176009997,
+        "gross_return_pct": 294.0215728231559,
+        "cagr_pct": 40.64432692823118,
+        "max_drawdown_pct": 33.222018237984074,
+        "sharpe_annualized_naive": 1.2322477408687667,
+        "trades": 48.0,
+        "exposure_pct": 54.57651940444227,
+        "mean_bps_per_bar": 1.7862752328906377,
+        "mean_trade_bps": 349.86421406517456,
+        "periods": 8194.0
+      },
+      "stress": {
+        "net_return_pct": 225.18868957276297,
+        "gross_return_pct": 294.0215728231559,
+        "cagr_pct": 37.07919331975051,
+        "max_drawdown_pct": 34.281964383215254,
+        "sharpe_annualized_naive": 1.1508432534356505,
+        "trades": 48.0,
+        "exposure_pct": 54.57651940444227,
+        "mean_bps_per_bar": 1.669438063939608,
+        "mean_trade_bps": 329.1851595218281,
+        "periods": 8194.0
+      }
+    },
+    {
+      "key": "fixed_3",
+      "expression": "(div (sub (sub (ema 12 close) (ema 26 close)) (ema 9 (sub (ema 12 close) (ema 26 close)))) close)",
+      "rules": [
+        {
+          "greater": true,
+          "threshold": 0.0
+        }
+      ],
+      "primary": {
+        "net_return_pct": 71.20850301078235,
+        "gross_return_pct": 214.46795537820273,
+        "cagr_pct": 15.466703839781037,
+        "max_drawdown_pct": 45.45322545952611,
+        "sharpe_annualized_naive": 0.6115072700364717,
+        "trades": 304.0,
+        "exposure_pct": 49.60947034415426,
+        "mean_bps_per_bar": 0.885233357385101,
+        "mean_trade_bps": 25.601150236337205,
+        "periods": 8194.0
+      },
+      "stress": {
+        "net_return_pct": -6.7875054010533775,
+        "gross_return_pct": 214.46795537820273,
+        "cagr_pct": -1.8623166958402844,
+        "max_drawdown_pct": 61.76811952978305,
+        "sharpe_annualized_naive": 0.10077351330887552,
+        "trades": 304.0,
+        "exposure_pct": 49.60947034415426,
+        "mean_bps_per_bar": 0.14708056359945906,
+        "mean_trade_bps": 5.5699741042064606,
+        "periods": 8194.0
+      }
+    },
+    {
+      "key": "fixed_4",
+      "expression": "(sub (div close (mean 200 close)) (constant 3ff0000000000000))",
+      "rules": [
+        {
+          "greater": true,
+          "threshold": 0.0
+        }
+      ],
+      "primary": {
+        "net_return_pct": 286.26195378777777,
+        "gross_return_pct": 389.074972499416,
+        "cagr_pct": 43.53659044251047,
+        "max_drawdown_pct": 30.964904060962883,
+        "sharpe_annualized_naive": 1.273458207301282,
+        "trades": 118.0,
+        "exposure_pct": 55.821332682450574,
+        "mean_bps_per_bar": 1.8905093700711426,
+        "mean_trade_bps": 155.57168060885675,
+        "periods": 8194.0
+      },
+      "stress": {
+        "net_return_pct": 205.06218418019145,
+        "gross_return_pct": 389.074972499416,
+        "cagr_pct": 34.75675361921404,
+        "max_drawdown_pct": 38.771366846945234,
+        "sharpe_annualized_naive": 1.0763781062901578,
+        "trades": 118.0,
+        "exposure_pct": 55.821332682450574,
+        "mean_bps_per_bar": 1.6044833079359164,
+        "mean_trade_bps": 135.2808230325048,
+        "periods": 8194.0
+      }
+    },
+    {
+      "key": "fixed_5",
+      "expression": "(div (sub close (mean 20 close)) (std 20 close))",
+      "rules": [
+        {
+          "greater": false,
+          "threshold": -2.0
+        }
+      ],
+      "primary": {
+        "net_return_pct": -48.5110792197732,
+        "gross_return_pct": -17.28783463701324,
+        "cagr_pct": -16.26686807998295,
+        "max_drawdown_pct": 49.70477666041689,
+        "sharpe_annualized_naive": -1.3205733109412934,
+        "trades": 237.0,
+        "exposure_pct": 6.321698804002929,
+        "mean_bps_per_bar": -0.7724479353312441,
+        "mean_trade_bps": -26.428187288453042,
+        "periods": 8194.0
+      },
+      "stress": {
+        "net_return_pct": -67.94778224987009,
+        "gross_return_pct": -17.28783463701324,
+        "cagr_pct": -26.236611612262017,
+        "max_drawdown_pct": 67.96636693135986,
+        "sharpe_annualized_naive": -2.3497978681180003,
+        "trades": 237.0,
+        "exposure_pct": 6.321698804002929,
+        "mean_bps_per_bar": -1.3520249454588027,
+        "mean_trade_bps": -46.35540867429188,
+        "periods": 8194.0
+      }
+    },
+    {
+      "key": "buy_hold",
+      "expression": "(constant 3ff0000000000000)",
+      "rules": [
+        {
+          "greater": true,
+          "threshold": 0.0
+        }
+      ],
+      "primary": {
+        "net_return_pct": 395.498332878246,
+        "gross_return_pct": 403.49007027980315,
+        "cagr_pct": 53.42293360809835,
+        "max_drawdown_pct": 53.900945566380166,
+        "sharpe_annualized_naive": 1.1699704664069541,
+        "trades": 8.0,
+        "exposure_pct": 99.82914327556749,
+        "mean_bps_per_bar": 2.4228606878421637,
+        "mean_trade_bps": 2792.731426694467,
+        "periods": 8194.0
+      },
+      "stress": {
+        "net_return_pct": 387.6334418760822,
+        "gross_return_pct": 403.49007027980315,
+        "cagr_pct": 52.76780412875589,
+        "max_drawdown_pct": 54.08497359004618,
+        "sharpe_annualized_naive": 1.1605188128428694,
+        "trades": 8.0,
+        "exposure_pct": 99.82914327556749,
+        "mean_bps_per_bar": 2.4033574636449995,
+        "mean_trade_bps": 2767.171517360439,
+        "periods": 8194.0
+      }
+    },
+    {
+      "key": "cash",
+      "expression": "(constant 3ff0000000000000)",
+      "rules": [
+        {
+          "greater": true,
+          "threshold": 2.0
+        }
+      ],
+      "primary": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0.0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 8194.0
+      },
+      "stress": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0.0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 8194.0
+      }
+    }
+  ]
+}
