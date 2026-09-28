@@ -1,0 +1,52 @@
+   Compiling filang v0.2.0 (/private/tmp/filang-walk-fresh-KwneXo/repo)
+    Finished test [unoptimized + debuginfo] target(s) in 2.88s
+     Running unittests src/lib.rs (target/debug/deps/filang-b66acd79887f459f)
+
+running 17 tests
+test engine::tests::warmup_and_invalid ... ok
+test backtest::tests::cash_and_cash_funded_buy_hold ... ok
+test data::tests::dates ... ok
+test backtest::tests::no_same_bar_return ... ok
+test data::tests::reject_gaps_and_bad_prices ... ok
+test lang::tests::types_and_roundtrip ... ok
+test engine::tests::prepared_bank_identity_and_backend_parity ... ok
+test engine::tests::future_append_and_batch_identity ... ok
+test kernels::tests::simd_matches_scalar_boundaries ... ok
+test report::tests::escaping ... ok
+test quantiles::tests::fenwick_matches_sorts_and_future_perturbation ... ok
+test packed::tests::packed_append_correlation_and_votes ... ok
+test engine::tests::rolling_oracle ... ok
+test backtest::tests::shared_cost_scenarios_match_independent_ledgers ... ok
+test hash::tests::standard_vectors ... ok
+test walk::tests::random_access_last_trillion_page_is_bounded_and_deterministic ... ok
+test backtest::tests::sweep_matches_direct_ties_costs_and_invalid ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running unittests src/main.rs (target/debug/deps/filang-fa5e1b15d8e2d688)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-5cb4b26adbd458f2)
+
+running 2 tests
+test public_scorer_rejects_invalid_requests ... ok
+test cli_end_to_end_and_integrity_guards ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.57s
+
+     Running tests/walk.rs (target/debug/deps/walk-9a8e5136bb15a082)
+
+running 1 test
+test native_walk_reference_future_invariance_and_sealed_replay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.14s
+
+   Doc-tests filang
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

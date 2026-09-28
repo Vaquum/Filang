@@ -1,0 +1,23 @@
+walk addresses 256/4096; physical windows 9824; native backend scalar
+walk addresses 512/4096; physical windows 18016; native backend scalar
+walk addresses 1024/4096; physical windows 34400; native backend scalar
+walk addresses 2048/4096; physical windows 67168; native backend scalar
+walk addresses 4096/4096; physical windows 132704; native backend scalar
+       39.16 real        38.86 user         0.14 sys
+            19070976  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                1364  page reclaims
+                   2  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   0  voluntary context switches
+               10948  involuntary context switches
+        526078071107  instructions retired
+        121920017615  cycles elapsed
+            17170768  peak memory footprint

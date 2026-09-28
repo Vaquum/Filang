@@ -15,6 +15,11 @@ An address-space plan is not a completed trillion-feature backtest.
 See [the runnable walk-forward/performance contract](docs/WALKFORWARD.md).
 `examples/btc4h-walk.cfg` runs the measured-scale campaign;
 `examples/trillion-plan.cfg` is for **planning**, not a completed scale result.
+[The 0.2 walk-forward and performance report](benchmarks/reports/20260928-walkforward/README.md)
+records all portfolio outcomes, matched execution ablations, and bounded-memory probes.
+The diverse generated policy was positive under both cost scenarios in this retrospective
+study, but remained far behind the strongest fixed trend controls. This is not fresh
+untouched evidence or a claim of a robust generated edge.
 The original 0.1 campaign below is retained unchanged as historical evidence.
 
 ## Run without market data

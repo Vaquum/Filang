@@ -46,11 +46,40 @@ Portfolios are listed in stable identifier order, not ordered by final return. D
 
 Independent NumPy direct-window arithmetic, strict-vote reconstruction and explicit cash/share accounting checked all **112 fold-portfolios and 15 aggregate portfolios per cost scenario**, with **zero position disagreements**. Maximum absolute metric discrepancy was below **6e-10**. Full primary and stress JSON reports are retained.
 
+A fresh clone passed **20 native tests**, a locked offline release build, formatting and warning-free Clippy on Rust 1.63.0. Exact-source-head CI passed on macOS and Ubuntu; the CI logs explicitly recorded NEON and AVX2 execution respectively. See `fresh_checkout.json`, retained logs and `source_ci.json`.
+
 Native tests cover direct/shared/SIMD/parallel frozen-selection equality, future-price perturbation, later-fold addition, prefix order statistics against direct sorting, multi-cost moments against direct ledgers, bitmap tails/invalids/votes, prepared-bank identity and bounded random access to the last trillion-domain page.
 
 ## Runtime evidence
 
-The repeated matched-ablation results will be added after their execution. The first recorded discovery completed in about 3.27 internal seconds on four M1 Max workers with NEON; this is one measurement, not the comparative benchmark. No trillion feature evaluation has occurred.
+Three fresh-process repetitions per execution path on an Apple M1 Max (64 GiB), with rotated path order. No CPU pinning; OS file caches were not flushed. Whole-process times include data loading, planning, generation, all historical selection work, diversity selection and artifact output. The four-worker path uses four native workers; the other paths use one.
+
+| Native execution path | Median wall time | Maximum measured RSS | Workers |
+|---|---:|---:|---:|
+| Direct scalar, independent folds/costs/prefix sorts | 39.594 s | 18.9 MiB | 1 |
+| Shared basis/folds/costs/prefix statistics, scalar | 11.429 s | 65.5 MiB | 1 |
+| Same factorization with NEON | 11.366 s | 66.9 MiB | 1 |
+| Same factorization with NEON and parallel pages | 3.177 s | 128.8 MiB | 4 |
+
+The matched speedup is **12.462×** from direct scalar to the four-worker path. Factorization alone gives **3.464×** on one worker. The scalar-to-NEON whole-process difference is small in this workload; these three repetitions do not establish an independent material SIMD speedup. SIMD is implemented and correctness-tested, but the dominant benefit here is less repeated work and parallel page execution.
+
+All twelve processes returned **byte-identical frozen selections**. Numerical arithmetic retains f64 precision; different reduction strategies are compared under the declared numerical/ranking contract. Benchmark source commit and executable hash are in `final_benchmark/benchmark.json`. The earlier complete benchmark is retained under `before_log_hoist/`; it is not substituted for the final-build measurements.
+
+For 4,096 generated addresses plus the indicator bank, the search resolves 3,466,892 historical scenario/readout metric requests. Shared windows reduce 132,704 fold-context requests to 45,617 physical contexts. Worker numerical work is 12,168 freshly computed nodes plus 19,476 prepared-bank hits; 6,991 arithmetic nodes use NEON. These node counts exclude initial basis construction and the explicitly counted 93 diversity-mask replays. The prepared basis payload is 25.4 MiB and maximum individual worker numerical payload 14.1 MiB; neither is process RSS.
+
+No per-readout result ledger is written by this path. Bounded archives retain 173 final member rows. The separate trillion-address plan and far-page unit test validate addressability and bounded generation only; **no trillion-feature throughput or completion is asserted**.
+
+## Bounded-memory scaling probes
+
+These are separate **systems-only** runs, one fresh process per size, without outer-result replay or research promotion. The native page size (256), four workers, archive size (128), dataset and selection policy stay fixed. No candidates from these larger runs replace the frozen research portfolio.
+
+| Generated addresses visited | Whole-process time | Maximum RSS | Per-readout records written |
+|---|---:|---:|---:|
+| 1,024 | 1.100 s | 111.9 MiB | 0 |
+| 16,384 | 12.531 s | 138.4 MiB | 0 |
+| 65,536 | 47.650 s | 139.0 MiB | 0 |
+
+Memory remained roughly flat across the 16,384-to-65,536-address increase in this measurement. Runtime still grows with distinct program pages: this confirms bounded working state, **not near-zero marginal cost for arbitrary programs**. A trillion-address plan is supported without materializing the domain, but a trillion completed evaluations remains unmeasured and requires further elimination of physical program work. Full counters and raw process resource logs are in `memory_scaling/`.
 
 ## Reproduce
 

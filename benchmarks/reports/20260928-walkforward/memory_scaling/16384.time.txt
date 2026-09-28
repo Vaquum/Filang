@@ -1,0 +1,23 @@
+walk addresses 1024/16384; physical windows 11825; native backend neon
+walk addresses 2048/16384; physical windows 23089; native backend neon
+walk addresses 4096/16384; physical windows 45617; native backend neon
+walk addresses 8192/16384; physical windows 90673; native backend neon
+walk addresses 16384/16384; physical windows 180785; native backend neon
+       12.52 real        46.03 user         0.22 sys
+           145145856  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                9178  page reclaims
+                   2  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   0  voluntary context switches
+               26713  involuntary context switches
+        314819822823  instructions retired
+        140578053672  cycles elapsed
+           144343472  peak memory footprint

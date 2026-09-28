@@ -1,0 +1,34 @@
+{
+  "direct_scalar": {
+    "peak_rss_bytes": 19808256,
+    "all_rss_bytes": [
+      19808256,
+      19070976,
+      19087360
+    ]
+  },
+  "factorized_scalar": {
+    "peak_rss_bytes": 68665344,
+    "all_rss_bytes": [
+      65159168,
+      68665344,
+      67633152
+    ]
+  },
+  "factorized_simd": {
+    "peak_rss_bytes": 70123520,
+    "all_rss_bytes": [
+      68648960,
+      70123520,
+      66404352
+    ]
+  },
+  "factorized_parallel": {
+    "peak_rss_bytes": 135020544,
+    "all_rss_bytes": [
+      135020544,
+      126746624,
+      127107072
+    ]
+  }
+}

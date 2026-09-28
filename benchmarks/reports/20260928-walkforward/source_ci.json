@@ -1,0 +1,24 @@
+{
+  "source_commit": "931fd11e948a1aa29e158595f9aaf5a43a02ae9b",
+  "checks": [
+    {
+      "name": "test (macos-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "931fd11e948a1aa29e158595f9aaf5a43a02ae9b",
+      "html_url": "https://github.com/mikkokotila/Filang/actions/runs/36442487598/job/108996264713"
+    },
+    {
+      "name": "test (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "931fd11e948a1aa29e158595f9aaf5a43a02ae9b",
+      "html_url": "https://github.com/mikkokotila/Filang/actions/runs/36442487598/job/108996264367"
+    }
+  ],
+  "previous_confirmed_backends": {
+    "ubuntu-latest": "avx2",
+    "macos-latest": "neon"
+  },
+  "backend_log_run": 36441710088
+}
