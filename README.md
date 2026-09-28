@@ -2,7 +2,25 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.1 research vertical slice.** It generates unfamiliar typed expressions, shares their numerical dependencies, searches threshold readouts, freezes selected programs and evaluates them on a later period. The broader factory specification and trillion-feature scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1). Delivery of this slice is tracked in [issue #2](https://github.com/mikkokotila/Filang/issues/2).
+**Status: runnable 0.2 research engine; the founding campaign below used 0.1.** It generates unfamiliar typed expressions, shares their numerical dependencies, searches threshold readouts, freezes selected programs and evaluates them on a later period. The broader factory specification and trillion-feature scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1). Delivery of this slice is tracked in [issue #2](https://github.com/mikkokotila/Filang/issues/2).
+
+## New: factorized walk-forward discovery
+
+The 0.2 native path adds paged generation, a shared numerical basis across workers,
+reused fold and cost statistics, prefix-quantile factorization, NEON/AVX2 kernels,
+packed behavior diversity, and sealed top-one/voting policies. It is designed to
+avoid allocations and per-readout logging proportional to a trillion-address domain.
+An address-space plan is not a completed trillion-feature backtest.
+
+See [the runnable walk-forward/performance contract](docs/WALKFORWARD.md).
+`examples/btc4h-walk.cfg` runs the measured-scale campaign;
+`examples/trillion-plan.cfg` is for **planning**, not a completed scale result.
+[The 0.2 walk-forward and performance report](benchmarks/reports/20260928-walkforward/README.md)
+records all portfolio outcomes, matched execution ablations, and bounded-memory probes.
+The diverse generated policy was positive under both cost scenarios in this retrospective
+study, but remained far behind the strongest fixed trend controls. This is not fresh
+untouched evidence or a claim of a robust generated edge.
+The original 0.1 campaign below is retained unchanged as historical evidence.
 
 ## Run without market data
 

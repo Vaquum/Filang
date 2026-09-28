@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "source_commit": "931fd11e948a1aa29e158595f9aaf5a43a02ae9b",
+  "offline_tests_passed": 20,
+  "offline_release_build": true,
+  "format_check": true,
+  "warning_free_clippy": true,
+  "trillion_plan": {
+    "feature_addresses": "1000000000000",
+    "address_start": "0",
+    "generation_pages": "3906250000",
+    "page_size": 256,
+    "outer_folds": 8,
+    "unique_inner_windows": 11,
+    "naive_fold_windows": 32,
+    "threads": 4,
+    "backend": "neon",
+    "status": "plan_only_no_feature_evaluation"
+  },
+  "runtime_dependencies": 0,
+  "rustc": "rustc 1.63.0 (4b91a6ea7 2022-08-08)",
+  "fresh_checkout": "/tmp/filang-walk-fresh-KwneXo/repo"
+}

@@ -1,0 +1,2501 @@
+{
+  "version": 2,
+  "role": "retrospective_walkforward_not_untouched",
+  "execution": "spot_open_v1",
+  "cost_scenario": "stress",
+  "fee_bps": 10.0,
+  "slip_bps": 10.0,
+  "interval_seconds": 14400,
+  "folds": 8,
+  "rebalance_gap_intervals": 14,
+  "selection_sha256": "0f329672f5a9c0d3950ec6b7feaade56578811a58764d6916753fc0c2ccf63a5",
+  "data_sha256": "7844ae10462b6ddd6b17ea21a0626153b6786cbb0fd828bf2593e574a7578625",
+  "backend": "neon",
+  "numerical_nodes_computed": 389,
+  "simd_arithmetic_nodes": 219,
+  "total_seconds": 0.10576375,
+  "portfolios": [
+    {
+      "portfolio": "buy_hold",
+      "positive_folds": 6,
+      "metrics": {
+        "net_return_pct": 387.6334418760822,
+        "gross_return_pct": 403.49007027980315,
+        "cagr_pct": 52.76780412875589,
+        "max_drawdown_pct": 54.08497359004618,
+        "sharpe_annualized_naive": 1.1605188128428694,
+        "trades": 8,
+        "exposure_pct": 99.82914327556749,
+        "mean_bps_per_bar": 2.4033574636449995,
+        "mean_trade_bps": 2767.171517360439,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "buy_hold_continuous",
+      "positive_folds": null,
+      "metrics": {
+        "net_return_pct": 410.47933587944385,
+        "gross_return_pct": 412.52534319157894,
+        "cagr_pct": 54.65003789917877,
+        "max_drawdown_pct": 53.44739049587417,
+        "sharpe_annualized_naive": 1.1872871876788558,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": 2.4595269987276707,
+        "mean_trade_bps": 41047.93358794438,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "cash",
+      "positive_folds": 0,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "fixed_0",
+      "positive_folds": 4,
+      "metrics": {
+        "net_return_pct": -29.013331672842135,
+        "gross_return_pct": 271.8507787369604,
+        "cagr_pct": -8.757544071867834,
+        "max_drawdown_pct": 72.71292765177093,
+        "sharpe_annualized_naive": -0.10442741452696787,
+        "trades": 414,
+        "exposure_pct": 53.014400781059315,
+        "mean_bps_per_bar": -0.16031611635494228,
+        "mean_trade_bps": -0.5932734014798369,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "fixed_1",
+      "positive_folds": 3,
+      "metrics": {
+        "net_return_pct": -36.79437752403052,
+        "gross_return_pct": -3.8034590251098384,
+        "cagr_pct": -11.54716481397973,
+        "max_drawdown_pct": 38.712894297714215,
+        "sharpe_annualized_naive": -0.8572033566496725,
+        "trades": 105,
+        "exposure_pct": 4.198193800341713,
+        "mean_bps_per_bar": -0.5193040286431979,
+        "mean_trade_bps": -40.000834806391524,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "fixed_2",
+      "positive_folds": 5,
+      "metrics": {
+        "net_return_pct": 225.18868957276297,
+        "gross_return_pct": 294.0215728231559,
+        "cagr_pct": 37.07919331975051,
+        "max_drawdown_pct": 34.281964383215254,
+        "sharpe_annualized_naive": 1.1508432534356505,
+        "trades": 48,
+        "exposure_pct": 54.57651940444227,
+        "mean_bps_per_bar": 1.669438063939608,
+        "mean_trade_bps": 329.1851595218281,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "fixed_3",
+      "positive_folds": 4,
+      "metrics": {
+        "net_return_pct": -6.7875054010533775,
+        "gross_return_pct": 214.46795537820273,
+        "cagr_pct": -1.8623166958402844,
+        "max_drawdown_pct": 61.76811952978305,
+        "sharpe_annualized_naive": 0.10077351330887552,
+        "trades": 304,
+        "exposure_pct": 49.60947034415426,
+        "mean_bps_per_bar": 0.14708056359945906,
+        "mean_trade_bps": 5.5699741042064606,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "fixed_4",
+      "positive_folds": 5,
+      "metrics": {
+        "net_return_pct": 205.06218418019145,
+        "gross_return_pct": 389.074972499416,
+        "cagr_pct": 34.75675361921404,
+        "max_drawdown_pct": 38.771366846945234,
+        "sharpe_annualized_naive": 1.0763781062901578,
+        "trades": 118,
+        "exposure_pct": 55.821332682450574,
+        "mean_bps_per_bar": 1.6044833079359164,
+        "mean_trade_bps": 135.2808230325048,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "fixed_5",
+      "positive_folds": 1,
+      "metrics": {
+        "net_return_pct": -67.94778224987009,
+        "gross_return_pct": -17.28783463701324,
+        "cagr_pct": -26.236611612262017,
+        "max_drawdown_pct": 67.96636693135986,
+        "sharpe_annualized_naive": -2.3497978681180003,
+        "trades": 237,
+        "exposure_pct": 6.321698804002929,
+        "mean_bps_per_bar": -1.3520249454588027,
+        "mean_trade_bps": -46.35540867429188,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "generated_diverse",
+      "positive_folds": 3,
+      "metrics": {
+        "net_return_pct": 1.4773174912723974,
+        "gross_return_pct": 28.48798257982151,
+        "cagr_pct": 0.39299131261006154,
+        "max_drawdown_pct": 40.068279451580814,
+        "sharpe_annualized_naive": 0.14490466532654325,
+        "trades": 59,
+        "exposure_pct": 24.896265560165975,
+        "mean_bps_per_bar": 0.17193110068719566,
+        "mean_trade_bps": 13.39728425146932,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "generated_top1",
+      "positive_folds": 3,
+      "metrics": {
+        "net_return_pct": -31.010109553524213,
+        "gross_return_pct": -12.99548133989278,
+        "cagr_pct": -9.451162134627834,
+        "max_drawdown_pct": 55.263665139297046,
+        "sharpe_annualized_naive": -0.28474715103676107,
+        "trades": 58,
+        "exposure_pct": 23.492799609470342,
+        "mean_bps_per_bar": -0.31709146138601285,
+        "mean_trade_bps": -43.30619594719032,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "indicator_diverse",
+      "positive_folds": 1,
+      "metrics": {
+        "net_return_pct": -23.744668875057883,
+        "gross_return_pct": -7.233331950573013,
+        "cagr_pct": -6.993573800831547,
+        "max_drawdown_pct": 59.860887664191,
+        "sharpe_annualized_naive": -0.1486818276628198,
+        "trades": 49,
+        "exposure_pct": 32.963143763729555,
+        "mean_bps_per_bar": -0.17643653550315183,
+        "mean_trade_bps": -19.507064082425607,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "indicator_top1",
+      "positive_folds": 2,
+      "metrics": {
+        "net_return_pct": -6.57789884844797,
+        "gross_return_pct": 4.912638015831665,
+        "cagr_pct": -1.8033435009964571,
+        "max_drawdown_pct": 44.92443808930544,
+        "sharpe_annualized_naive": 0.05182784587164505,
+        "trades": 29,
+        "exposure_pct": 29.240907981449844,
+        "mean_bps_per_bar": 0.05900433667093728,
+        "mean_trade_bps": 34.94808252856524,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "matched_generated_diverse",
+      "positive_folds": 1,
+      "metrics": {
+        "net_return_pct": -28.982139658038896,
+        "gross_return_pct": -16.32573574365103,
+        "cagr_pct": -8.746822974706616,
+        "max_drawdown_pct": 57.30488099635894,
+        "sharpe_annualized_naive": -0.16600770231869527,
+        "trades": 41,
+        "exposure_pct": 41.55479619233586,
+        "mean_bps_per_bar": -0.2218754210150918,
+        "mean_trade_bps": -24.84546017932143,
+        "periods": 8194
+      }
+    },
+    {
+      "portfolio": "matched_generated_top1",
+      "positive_folds": 1,
+      "metrics": {
+        "net_return_pct": -21.015905429603304,
+        "gross_return_pct": -13.404614553519897,
+        "cagr_pct": -6.114873888909814,
+        "max_drawdown_pct": 50.58968693877431,
+        "sharpe_annualized_naive": -0.05954999918780125,
+        "trades": 23,
+        "exposure_pct": 42.79960947034415,
+        "mean_bps_per_bar": -0.08167393785437413,
+        "mean_trade_bps": 9.842934979172288,
+        "periods": 8194
+      }
+    }
+  ],
+  "fold_results": [
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "buy_hold",
+      "name": "Buy_and_hold",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 82.9737491409743,
+        "gross_return_pct": 83.70711012614755,
+        "cagr_pct": 239.20784793288067,
+        "max_drawdown_pct": 21.184620544999834,
+        "sharpe_annualized_naive": 2.7781871107782496,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": 6.101576008687444,
+        "mean_trade_bps": 8297.37491409743,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "cash",
+      "name": "Cash",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "fixed_0",
+      "name": "RSI(14)>50",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 30.999797514353123,
+        "gross_return_pct": 61.93513408649962,
+        "cagr_pct": 72.61699610451586,
+        "max_drawdown_pct": 34.74502745828167,
+        "sharpe_annualized_naive": 1.5272826193129632,
+        "trades": 53,
+        "exposure_pct": 55.81180811808119,
+        "mean_bps_per_bar": 2.8783559956881724,
+        "mean_trade_bps": 66.78292125041341,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "fixed_1",
+      "name": "RSI(14)<30",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -10.362638833749143,
+        "gross_return_pct": -5.95510953892958,
+        "cagr_pct": -19.841766519445102,
+        "max_drawdown_pct": 12.690843444006678,
+        "sharpe_annualized_naive": -2.1280155046714797,
+        "trades": 12,
+        "exposure_pct": 5.07380073800738,
+        "mean_bps_per_bar": -0.9854103852305177,
+        "mean_trade_bps": -88.49186235172604,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "fixed_2",
+      "name": "EMA(24)>EMA(96)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 36.53141410113729,
+        "gross_return_pct": 40.40831836004217,
+        "cagr_pct": 87.67087529858144,
+        "max_drawdown_pct": 20.387607448777416,
+        "sharpe_annualized_naive": 1.9010889905667938,
+        "trades": 7,
+        "exposure_pct": 58.76383763837638,
+        "mean_bps_per_bar": 3.178715288314214,
+        "mean_trade_bps": 529.8181597179993,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "fixed_3",
+      "name": "MACD(12,26,9)_hist>0",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 30.790670039888006,
+        "gross_return_pct": 51.653476116778485,
+        "cagr_pct": 72.0603464965891,
+        "max_drawdown_pct": 20.31783451400099,
+        "sharpe_annualized_naive": 1.643924336463457,
+        "trades": 37,
+        "exposure_pct": 48.800738007380076,
+        "mean_bps_per_bar": 2.790148330970568,
+        "mean_trade_bps": 88.64555517090406,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "fixed_4",
+      "name": "Close>SMA(200)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 38.92569202948773,
+        "gross_return_pct": 48.70124457533257,
+        "cagr_pct": 94.38400065846771,
+        "max_drawdown_pct": 21.083944943265582,
+        "sharpe_annualized_naive": 1.8661264324629339,
+        "trades": 17,
+        "exposure_pct": 59.132841328413285,
+        "mean_bps_per_bar": 3.3967652815592615,
+        "mean_trade_bps": 227.90011792023657,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "fixed_5",
+      "name": "Bollinger(20)_z<-2",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -19.28873804765054,
+        "gross_return_pct": -8.26736896266135,
+        "cagr_pct": -35.15885074996686,
+        "max_drawdown_pct": 19.28873804765054,
+        "sharpe_annualized_naive": -4.632177891082138,
+        "trades": 32,
+        "exposure_pct": 6.826568265682657,
+        "mean_bps_per_bar": -1.9569569882222921,
+        "mean_trade_bps": -65.87702002157444,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "generated_diverse",
+      "name": "generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": 10.11246042907028,
+        "gross_return_pct": 12.787127998908199,
+        "cagr_pct": 21.501014789139415,
+        "max_drawdown_pct": 7.264582295038426,
+        "sharpe_annualized_naive": 1.588129031906163,
+        "trades": 6,
+        "exposure_pct": 3.505535055350553,
+        "mean_bps_per_bar": 0.92545487991163,
+        "mean_trade_bps": 174.36023539174772,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "generated_top1",
+      "name": "f_6bf6f4a12ac74574",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 10.550650541946602,
+        "gross_return_pct": 15.062309712200248,
+        "cagr_pct": 22.4805052267848,
+        "max_drawdown_pct": 6.65246778943696,
+        "sharpe_annualized_naive": 1.6983602185573623,
+        "trades": 10,
+        "exposure_pct": 8.856088560885608,
+        "mean_bps_per_bar": 0.9603066831755456,
+        "mean_trade_bps": 105.64175284341383,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "indicator_diverse",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "indicator_top1",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "matched_generated_diverse",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 0,
+      "start": 1672531200,
+      "end": 1688169600,
+      "portfolio": "matched_generated_top1",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "buy_hold",
+      "name": "Buy_and_hold",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 39.64364876913925,
+        "gross_return_pct": 40.20334219136676,
+        "cagr_pct": 94.26626878491685,
+        "max_drawdown_pct": 20.83572739353273,
+        "sharpe_annualized_naive": 2.0700847571999246,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": 3.309592708258971,
+        "mean_trade_bps": 3964.3648769139245,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "cash",
+      "name": "Cash",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "fixed_0",
+      "name": "RSI(14)>50",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -6.13734126089521,
+        "gross_return_pct": 17.42886092301271,
+        "cagr_pct": -11.83469433108251,
+        "max_drawdown_pct": 29.87986179275644,
+        "sharpe_annualized_naive": -0.2926149596228301,
+        "trades": 56,
+        "exposure_pct": 53.901996370235935,
+        "mean_bps_per_bar": -0.38532331914925144,
+        "mean_trade_bps": -3.654490059259918,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "fixed_1",
+      "name": "RSI(14)<30",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -9.203794952336468,
+        "gross_return_pct": -5.498330270587784,
+        "cagr_pct": -17.470154407503138,
+        "max_drawdown_pct": 10.545486574246974,
+        "sharpe_annualized_naive": -2.223449551818022,
+        "trades": 10,
+        "exposure_pct": 4.174228675136116,
+        "mean_bps_per_bar": -0.8594240642123209,
+        "mean_trade_bps": -91.65205365435894,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "fixed_2",
+      "name": "EMA(24)>EMA(96)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 34.983561134533765,
+        "gross_return_pct": 37.710410869104585,
+        "cagr_pct": 81.58667872227852,
+        "max_drawdown_pct": 12.284359064223777,
+        "sharpe_annualized_naive": 2.15036436959353,
+        "trades": 5,
+        "exposure_pct": 66.33393829401089,
+        "mean_bps_per_bar": 2.924291760238423,
+        "mean_trade_bps": 770.3730751766176,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "fixed_3",
+      "name": "MACD(12,26,9)_hist>0",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 15.571308729426562,
+        "gross_return_pct": 33.4714742596743,
+        "cagr_pct": 33.34819879149164,
+        "max_drawdown_pct": 13.682849153156202,
+        "sharpe_annualized_naive": 1.2266292461474864,
+        "trades": 36,
+        "exposure_pct": 50.27223230490018,
+        "mean_bps_per_bar": 1.4691471301326389,
+        "mean_trade_bps": 46.5359343517546,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "fixed_4",
+      "name": "Close>SMA(200)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 35.47944063540764,
+        "gross_return_pct": 44.433604931119895,
+        "cagr_pct": 82.91568515595586,
+        "max_drawdown_pct": 16.82022551729765,
+        "sharpe_annualized_naive": 2.1265637649252973,
+        "trades": 16,
+        "exposure_pct": 66.42468239564428,
+        "mean_bps_per_bar": 2.9684023444378185,
+        "mean_trade_bps": 264.82802116201896,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "fixed_5",
+      "name": "Bollinger(20)_z<-2",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -14.765667005358646,
+        "gross_return_pct": -5.044880079414918,
+        "cagr_pct": -27.219309152732844,
+        "max_drawdown_pct": 15.735584493540358,
+        "sharpe_annualized_naive": -2.7992379367455666,
+        "trades": 27,
+        "exposure_pct": 6.0798548094373865,
+        "mean_bps_per_bar": -1.4210577933107906,
+        "mean_trade_bps": -57.45873399370296,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "generated_diverse",
+      "name": "generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -0.4799009725649546,
+        "gross_return_pct": 0.7215348137611889,
+        "cagr_pct": -0.9520943688548438,
+        "max_drawdown_pct": 2.818773821690887,
+        "sharpe_annualized_naive": -0.22473286559475625,
+        "trades": 3,
+        "exposure_pct": 1.0889292196007259,
+        "mean_bps_per_bar": -0.04014772985286342,
+        "mean_trade_bps": -15.975703049278124,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "generated_top1",
+      "name": "f_184638cbc615017e",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "indicator_diverse",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "indicator_top1",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "matched_generated_diverse",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 1,
+      "start": 1688169600,
+      "end": 1704067200,
+      "portfolio": "matched_generated_top1",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "buy_hold",
+      "name": "Buy_and_hold",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 45.94492895503045,
+        "gross_return_pct": 46.52987798395933,
+        "cagr_pct": 113.85050900285094,
+        "max_drawdown_pct": 22.44500420181587,
+        "sharpe_annualized_naive": 1.7395272767798287,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": 4.069161752474448,
+        "mean_trade_bps": 4594.4928955030455,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "cash",
+      "name": "Cash",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "fixed_0",
+      "name": "RSI(14)>50",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 5.178942654036773,
+        "gross_return_pct": 28.465859222404273,
+        "cagr_pct": 10.685048609010721,
+        "max_drawdown_pct": 26.248237308272593,
+        "sharpe_annualized_naive": 0.45941137014002176,
+        "trades": 50,
+        "exposure_pct": 53.21100917431193,
+        "mean_bps_per_bar": 0.7817927103861697,
+        "mean_trade_bps": 18.144981559560037,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "fixed_1",
+      "name": "RSI(14)<30",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 2.4451017505630923,
+        "gross_return_pct": 7.482396258139258,
+        "cagr_pct": 4.976740332933812,
+        "max_drawdown_pct": 6.44641596756022,
+        "sharpe_annualized_naive": 0.5000006427281648,
+        "trades": 12,
+        "exposure_pct": 2.7522935779816518,
+        "mean_bps_per_bar": 0.24874220120978438,
+        "mean_trade_bps": 20.924983069802916,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "fixed_2",
+      "name": "EMA(24)>EMA(96)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 14.888557145132564,
+        "gross_return_pct": 18.15089746020069,
+        "cagr_pct": 32.18722884692601,
+        "max_drawdown_pct": 32.56651990225418,
+        "sharpe_annualized_naive": 0.8976522476113715,
+        "trades": 7,
+        "exposure_pct": 58.256880733944946,
+        "mean_bps_per_bar": 1.6402972369779911,
+        "mean_trade_bps": 313.4396788409308,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "fixed_3",
+      "name": "MACD(12,26,9)_hist>0",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -18.169637682781588,
+        "gross_return_pct": -0.8485562419764744,
+        "cagr_pct": -33.17943308485806,
+        "max_drawdown_pct": 36.614353110903174,
+        "sharpe_annualized_naive": -0.9373837571108113,
+        "trades": 48,
+        "exposure_pct": 48.1651376146789,
+        "mean_bps_per_bar": -1.5419056677809158,
+        "mean_trade_bps": -33.12162597218764,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "fixed_4",
+      "name": "Close>SMA(200)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 27.567521997285873,
+        "gross_return_pct": 37.64058539995354,
+        "cagr_pct": 63.15329368907597,
+        "max_drawdown_pct": 17.593418783480132,
+        "sharpe_annualized_naive": 1.3857040268983425,
+        "trades": 19,
+        "exposure_pct": 59.082568807339456,
+        "mean_bps_per_bar": 2.628633298083642,
+        "mean_trade_bps": 187.82035499634642,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "fixed_5",
+      "name": "Bollinger(20)_z<-2",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -8.478827958237943,
+        "gross_return_pct": 4.4355754011094195,
+        "cagr_pct": -16.317011523476182,
+        "max_drawdown_pct": 9.890314972477498,
+        "sharpe_annualized_naive": -1.2523856262081854,
+        "trades": 33,
+        "exposure_pct": 6.238532110091743,
+        "mean_bps_per_bar": -0.7711339120163297,
+        "mean_trade_bps": -25.755180095184674,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "generated_diverse",
+      "name": "generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -5.091202507162137,
+        "gross_return_pct": -3.5604478557849415,
+        "cagr_pct": -9.972847360736392,
+        "max_drawdown_pct": 5.091202507162137,
+        "sharpe_annualized_naive": -2.543170976816595,
+        "trades": 4,
+        "exposure_pct": 0.7339449541284404,
+        "mean_bps_per_bar": -0.4755091693249851,
+        "mean_trade_bps": -129.29740590654012,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "generated_top1",
+      "name": "f_d0dc8f10ec1cdb5f",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -5.006456163969878,
+        "gross_return_pct": -1.1296947784717073,
+        "cagr_pct": -9.811151506026384,
+        "max_drawdown_pct": 6.366681042294843,
+        "sharpe_annualized_naive": -1.5086203409857026,
+        "trades": 10,
+        "exposure_pct": 2.5688073394495414,
+        "mean_bps_per_bar": -0.4609642349491259,
+        "mean_trade_bps": -50.817127527527425,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "indicator_diverse",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "indicator_top1",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "matched_generated_diverse",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 2,
+      "start": 1704067200,
+      "end": 1719792000,
+      "portfolio": "matched_generated_top1",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1090
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "buy_hold",
+      "name": "Buy_and_hold",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 47.84738329302677,
+        "gross_return_pct": 48.4399573818023,
+        "cagr_pct": 117.62114283261809,
+        "max_drawdown_pct": 26.214440038166142,
+        "sharpe_annualized_naive": 1.742029275630987,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": 4.177783489884666,
+        "mean_trade_bps": 4784.738329302678,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "cash",
+      "name": "Cash",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "fixed_0",
+      "name": "RSI(14)>50",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 37.0779558841524,
+        "gross_return_pct": 64.76988207633738,
+        "cagr_pct": 87.23266274736487,
+        "max_drawdown_pct": 18.1749422447805,
+        "sharpe_annualized_naive": 1.8089891245926173,
+        "trades": 46,
+        "exposure_pct": 58.348457350272234,
+        "mean_bps_per_bar": 3.203943902309473,
+        "mean_trade_bps": 85.86516685564307,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "fixed_1",
+      "name": "RSI(14)<30",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -1.698455522544819,
+        "gross_return_pct": 5.218565363506283,
+        "cagr_pct": -3.34928507259591,
+        "max_drawdown_pct": 12.34971378493182,
+        "sharpe_annualized_naive": -0.10503135113081181,
+        "trades": 17,
+        "exposure_pct": 2.631578947368421,
+        "mean_bps_per_bar": -0.0842280985754185,
+        "mean_trade_bps": -7.964677974797707,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "fixed_2",
+      "name": "EMA(24)>EMA(96)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 50.40983015734014,
+        "gross_return_pct": 53.44831130270422,
+        "cagr_pct": 125.18610821889082,
+        "max_drawdown_pct": 14.541847751304216,
+        "sharpe_annualized_naive": 2.2924308051028897,
+        "trades": 5,
+        "exposure_pct": 61.705989110707804,
+        "mean_bps_per_bar": 4.044060152375385,
+        "mean_trade_bps": 1047.4511275261996,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "fixed_3",
+      "name": "MACD(12,26,9)_hist>0",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 26.792365424311697,
+        "gross_return_pct": 49.98733941034778,
+        "cagr_pct": 60.330749119559414,
+        "max_drawdown_pct": 18.86068919596339,
+        "sharpe_annualized_naive": 1.5430120188335688,
+        "trades": 42,
+        "exposure_pct": 49.09255898366606,
+        "mean_bps_per_bar": 2.4223318061024743,
+        "mean_trade_bps": 64.87033419440877,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "fixed_4",
+      "name": "Close>SMA(200)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 37.322916377957895,
+        "gross_return_pct": 42.356605828674184,
+        "cagr_pct": 87.89863079920255,
+        "max_drawdown_pct": 18.302751138233432,
+        "sharpe_annualized_naive": 1.8743876012202163,
+        "trades": 9,
+        "exposure_pct": 64.15607985480943,
+        "mean_bps_per_bar": 3.195275589939325,
+        "mean_trade_bps": 482.14853745854776,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "fixed_5",
+      "name": "Bollinger(20)_z<-2",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 3.876048738012197,
+        "gross_return_pct": 19.96480370220223,
+        "cagr_pct": 7.855800953994965,
+        "max_drawdown_pct": 6.989618017155405,
+        "sharpe_annualized_naive": 0.5721067042550205,
+        "trades": 36,
+        "exposure_pct": 6.170598911070781,
+        "mean_bps_per_bar": 0.3972120985271609,
+        "mean_trade_bps": 11.220375504118923,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "generated_diverse",
+      "name": "generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": 13.175961933935202,
+        "gross_return_pct": 19.694637430293334,
+        "cagr_pct": 27.9082786539541,
+        "max_drawdown_pct": 23.37967838996612,
+        "sharpe_annualized_naive": 0.8572038961299282,
+        "trades": 14,
+        "exposure_pct": 38.02177858439201,
+        "mean_bps_per_bar": 1.4247294635652326,
+        "mean_trade_bps": 95.45383867045892,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "generated_top1",
+      "name": "f_b8188ded25696957",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -2.9012720022677105,
+        "gross_return_pct": -0.5427122367692384,
+        "cagr_pct": -5.686878664079159,
+        "max_drawdown_pct": 18.14629583851877,
+        "sharpe_annualized_naive": -0.0600078627289431,
+        "trades": 6,
+        "exposure_pct": 22.0508166969147,
+        "mean_bps_per_bar": -0.07865023448387035,
+        "mean_trade_bps": -47.59289459466191,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "indicator_diverse",
+      "name": "indicator_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": 44.55844308483014,
+        "gross_return_pct": 49.85735698180347,
+        "cagr_pct": 108.09974560615234,
+        "max_drawdown_pct": 20.127247533893712,
+        "sharpe_annualized_naive": 1.7288648918046927,
+        "trades": 9,
+        "exposure_pct": 97.1869328493648,
+        "mean_bps_per_bar": 3.900809697039395,
+        "mean_trade_bps": 536.954751942576,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "indicator_top1",
+      "name": "Bollinger_z(128)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 31.719662476688043,
+        "gross_return_pct": 37.095245706658986,
+        "cagr_pct": 72.95934024742058,
+        "max_drawdown_pct": 27.186293249053378,
+        "sharpe_annualized_naive": 1.362883363083857,
+        "trades": 10,
+        "exposure_pct": 96.46098003629764,
+        "mean_bps_per_bar": 3.046350323972009,
+        "mean_trade_bps": 395.06140646665426,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "matched_generated_diverse",
+      "name": "matched_generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": 42.41203528127674,
+        "gross_return_pct": 46.45592385985916,
+        "cagr_pct": 102.00015575257567,
+        "max_drawdown_pct": 19.07404511434631,
+        "sharpe_annualized_naive": 1.6827579528737073,
+        "trades": 7,
+        "exposure_pct": 95.28130671506352,
+        "mean_bps_per_bar": 3.751688420362887,
+        "mean_trade_bps": 676.8414548424404,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 3,
+      "start": 1719792000,
+      "end": 1735689600,
+      "portfolio": "matched_generated_top1",
+      "name": "f_506bfd108665de21",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 39.81293393210249,
+        "gross_return_pct": 40.935923747877766,
+        "cagr_pct": 94.73488268039166,
+        "max_drawdown_pct": 26.214440038166142,
+        "sharpe_annualized_naive": 1.537337219343633,
+        "trades": 2,
+        "exposure_pct": 98.4573502722323,
+        "mean_bps_per_bar": 3.6622456721792185,
+        "mean_trade_bps": 2460.5985691285414,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "buy_hold",
+      "name": "Buy_and_hold",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 14.362839203088743,
+        "gross_return_pct": 14.821206836800835,
+        "cagr_pct": 31.16966654624657,
+        "max_drawdown_pct": 30.64125849426632,
+        "sharpe_annualized_naive": 0.7966693661249987,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": 1.7906756989211683,
+        "mean_trade_bps": 1436.2839203088743,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "cash",
+      "name": "Cash",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "fixed_0",
+      "name": "RSI(14)>50",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -23.17256468904001,
+        "gross_return_pct": -2.723067440800134,
+        "cagr_pct": -41.311800810793244,
+        "max_drawdown_pct": 39.59201517859255,
+        "sharpe_annualized_naive": -1.3853003347388873,
+        "trades": 59,
+        "exposure_pct": 55.1660516605166,
+        "mean_bps_per_bar": -2.163703814558727,
+        "mean_trade_bps": -41.413908479327645,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "fixed_1",
+      "name": "RSI(14)<30",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 6.53048093235599,
+        "gross_return_pct": 13.571338381248271,
+        "cagr_pct": 13.643180787520578,
+        "max_drawdown_pct": 9.003359921817776,
+        "sharpe_annualized_naive": 0.8798675690519199,
+        "trades": 16,
+        "exposure_pct": 3.782287822878229,
+        "mean_bps_per_bar": 0.6420595664578128,
+        "mean_trade_bps": 41.59307605316231,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "fixed_2",
+      "name": "EMA(24)>EMA(96)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -0.36726160266242613,
+        "gross_return_pct": 2.461879151221933,
+        "cagr_pct": -0.7410921053728787,
+        "max_drawdown_pct": 17.540023284096215,
+        "sharpe_annualized_naive": 0.115644442461256,
+        "trades": 7,
+        "exposure_pct": 48.33948339483395,
+        "mean_bps_per_bar": 0.15001374415068378,
+        "mean_trade_bps": 31.064993091424373,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "fixed_3",
+      "name": "MACD(12,26,9)_hist>0",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -11.413009076286295,
+        "gross_return_pct": 3.9578024218487875,
+        "cagr_pct": -21.729350981929326,
+        "max_drawdown_pct": 31.454693954861877,
+        "sharpe_annualized_naive": -0.6026316325143246,
+        "trades": 40,
+        "exposure_pct": 47.140221402214024,
+        "mean_bps_per_bar": -0.8826970368549086,
+        "mean_trade_bps": -25.63049564706009,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "fixed_4",
+      "name": "Close>SMA(200)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -4.685963183861122,
+        "gross_return_pct": 2.4297414870733736,
+        "cagr_pct": -9.246816303879928,
+        "max_drawdown_pct": 23.36675308278017,
+        "sharpe_annualized_naive": -0.17346929719488483,
+        "trades": 18,
+        "exposure_pct": 51.38376383763838,
+        "mean_bps_per_bar": -0.23742674776299644,
+        "mean_trade_bps": -14.181203638971008,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "fixed_5",
+      "name": "Bollinger(20)_z<-2",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -13.6578856237373,
+        "gross_return_pct": -3.4252310494054714,
+        "cagr_pct": -25.687352700532085,
+        "max_drawdown_pct": 17.303400100965387,
+        "sharpe_annualized_naive": -2.2111584738684416,
+        "trades": 28,
+        "exposure_pct": 5.07380073800738,
+        "mean_bps_per_bar": -1.3155532973340467,
+        "mean_trade_bps": -50.77897590998938,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "generated_diverse",
+      "name": "generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": 20.542415869586176,
+        "gross_return_pct": 26.469567475802364,
+        "cagr_pct": 45.89446353192604,
+        "max_drawdown_pct": 17.490876684754763,
+        "sharpe_annualized_naive": 1.1318886927311727,
+        "trades": 12,
+        "exposure_pct": 48.523985239852394,
+        "mean_bps_per_bar": 2.0986731317653153,
+        "mean_trade_bps": 169.05608123120902,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "generated_top1",
+      "name": "f_f46687f553433379",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 16.767868399065836,
+        "gross_return_pct": 20.083573061468567,
+        "cagr_pct": 36.806333968326214,
+        "max_drawdown_pct": 18.125975229726073,
+        "sharpe_annualized_naive": 0.9879455267897796,
+        "trades": 7,
+        "exposure_pct": 44.74169741697417,
+        "mean_bps_per_bar": 1.7867048811497543,
+        "mean_trade_bps": 268.4062005750566,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "indicator_diverse",
+      "name": "indicator_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -12.142849874238019,
+        "gross_return_pct": -7.08247979283341,
+        "cagr_pct": -23.02753953104641,
+        "max_drawdown_pct": 29.06666249934676,
+        "sharpe_annualized_naive": -0.6526100212719919,
+        "trades": 14,
+        "exposure_pct": 58.94833948339483,
+        "mean_bps_per_bar": -0.9578707620120597,
+        "mean_trade_bps": -72.78871849982515,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "indicator_top1",
+      "name": "EMA_cross(32,128)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 1.5688114456964857,
+        "gross_return_pct": 4.45292833746203,
+        "cagr_pct": 3.197053784309034,
+        "max_drawdown_pct": 22.916151812812206,
+        "sharpe_annualized_naive": 0.261244491893983,
+        "trades": 7,
+        "exposure_pct": 63.19188191881919,
+        "mean_bps_per_bar": 0.39839233124537105,
+        "mean_trade_bps": 51.768133887549524,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "matched_generated_diverse",
+      "name": "matched_generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -7.309904227694345,
+        "gross_return_pct": -3.140484024413883,
+        "cagr_pct": -14.22672780160393,
+        "max_drawdown_pct": 34.634039785513124,
+        "sharpe_annualized_naive": -0.17013449628969116,
+        "trades": 11,
+        "exposure_pct": 81.54981549815497,
+        "mean_bps_per_bar": -0.31783178479092794,
+        "mean_trade_bps": -28.44974339229593,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 4,
+      "start": 1735689600,
+      "end": 1751328000,
+      "portfolio": "matched_generated_top1",
+      "name": "f_32b22f535ed68a29",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -3.837905334530384,
+        "gross_return_pct": 0.08654553121692055,
+        "cagr_pct": -7.606935485206863,
+        "max_drawdown_pct": 36.591281640247175,
+        "sharpe_annualized_naive": 0.00606863032416851,
+        "trades": 10,
+        "exposure_pct": 83.4870848708487,
+        "mean_bps_per_bar": 0.01118133711727354,
+        "mean_trade_bps": 6.270323195395142,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "buy_hold",
+      "name": "Buy_and_hold",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -18.65804849980768,
+        "gross_return_pct": -18.332028980788415,
+        "cagr_pct": -33.67970066100035,
+        "max_drawdown_pct": 34.36795714563653,
+        "sharpe_annualized_naive": -0.87001904641494,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": -1.5330874713498739,
+        "mean_trade_bps": -1865.804849980768,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "cash",
+      "name": "Cash",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "fixed_0",
+      "name": "RSI(14)>50",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -43.427532375724425,
+        "gross_return_pct": -24.54605085025743,
+        "cagr_pct": -67.78809212379984,
+        "max_drawdown_pct": 48.13310223183855,
+        "sharpe_annualized_naive": -4.373828432252926,
+        "trades": 72,
+        "exposure_pct": 45.28130671506352,
+        "mean_bps_per_bar": -5.022581403765539,
+        "mean_trade_bps": -77.03041960910022,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "fixed_1",
+      "name": "RSI(14)<30",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -3.176058064294076,
+        "gross_return_pct": 6.154367128905225,
+        "cagr_pct": -6.216914432039884,
+        "max_drawdown_pct": 6.301920129196578,
+        "sharpe_annualized_naive": -0.5105757919482651,
+        "trades": 23,
+        "exposure_pct": 4.99092558983666,
+        "mean_bps_per_bar": -0.26352859844434917,
+        "mean_trade_bps": -13.000920222431652,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "fixed_2",
+      "name": "EMA(24)>EMA(96)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -13.437730150737485,
+        "gross_return_pct": -10.97973442243949,
+        "cagr_pct": -24.94698310940886,
+        "max_drawdown_pct": 24.481628039255686,
+        "sharpe_annualized_naive": -1.3001877059992457,
+        "trades": 7,
+        "exposure_pct": 39.01996370235935,
+        "mean_bps_per_bar": -1.2137159805007225,
+        "mean_trade_bps": -195.4279567886405,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "fixed_3",
+      "name": "MACD(12,26,9)_hist>0",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -32.55321475793226,
+        "gross_return_pct": -18.927891949632215,
+        "cagr_pct": -54.305639511727655,
+        "max_drawdown_pct": 35.361281252166386,
+        "sharpe_annualized_naive": -2.576073155908602,
+        "trades": 46,
+        "exposure_pct": 52.08711433756806,
+        "mean_bps_per_bar": -3.383977696003422,
+        "mean_trade_bps": -80.64162903881503,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "fixed_4",
+      "name": "Close>SMA(200)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -14.019612063808019,
+        "gross_return_pct": -7.600714402107765,
+        "cagr_pct": -25.946957054388214,
+        "max_drawdown_pct": 24.254032569235292,
+        "sharpe_annualized_naive": -1.4443633270558474,
+        "trades": 18,
+        "exposure_pct": 36.66061705989111,
+        "mean_bps_per_bar": -1.2838164958600664,
+        "mean_trade_bps": -81.6481002500643,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "fixed_5",
+      "name": "Bollinger(20)_z<-2",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -18.748350387960063,
+        "gross_return_pct": -8.021839292541618,
+        "cagr_pct": -33.82603633210886,
+        "max_drawdown_pct": 19.407738163658845,
+        "sharpe_annualized_naive": -3.313217965170687,
+        "trades": 31,
+        "exposure_pct": 6.715063520871143,
+        "mean_bps_per_bar": -1.8494623044636627,
+        "mean_trade_bps": -65.47141905108981,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "generated_diverse",
+      "name": "generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -11.896682401069182,
+        "gross_return_pct": -6.82213363853902,
+        "cagr_pct": -22.266454220308173,
+        "max_drawdown_pct": 31.39270495938845,
+        "sharpe_annualized_naive": -0.5703472085357153,
+        "trades": 14,
+        "exposure_pct": 76.22504537205081,
+        "mean_bps_per_bar": -0.885285306004582,
+        "mean_trade_bps": -82.03693242142138,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "generated_top1",
+      "name": "f_a2bf35ff7a3394c3",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -24.071675997865395,
+        "gross_return_pct": -18.076178007804362,
+        "cagr_pct": -42.1685331080155,
+        "max_drawdown_pct": 39.43801937083723,
+        "sharpe_annualized_naive": -1.6228708198260011,
+        "trades": 19,
+        "exposure_pct": 59.528130671506354,
+        "mean_bps_per_bar": -2.281663131255229,
+        "mean_trade_bps": -134.12127446043988,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "indicator_diverse",
+      "name": "indicator_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -24.53167739920252,
+        "gross_return_pct": -21.13693337247915,
+        "cagr_pct": -42.86320034085666,
+        "max_drawdown_pct": 34.30150845327888,
+        "sharpe_annualized_naive": -1.9095234149792537,
+        "trades": 11,
+        "exposure_pct": 63.52087114337568,
+        "mean_bps_per_bar": -2.382615606452775,
+        "mean_trade_bps": -248.91344433745476,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "indicator_top1",
+      "name": "EMA_cross(32,128)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -14.58009653178458,
+        "gross_return_pct": -12.154539089701304,
+        "cagr_pct": -26.90385408105575,
+        "max_drawdown_pct": 25.31739578601615,
+        "sharpe_annualized_naive": -1.3876034160861113,
+        "trades": 7,
+        "exposure_pct": 41.01633393829401,
+        "mean_bps_per_bar": -1.3291602443301043,
+        "mean_trade_bps": -215.39510550368715,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "matched_generated_diverse",
+      "name": "matched_generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -19.05778284151804,
+        "gross_return_pct": -15.75446717115782,
+        "cagr_pct": -34.32625780929845,
+        "max_drawdown_pct": 29.246620125636667,
+        "sharpe_annualized_naive": -1.777721898948574,
+        "trades": 10,
+        "exposure_pct": 42.28675136116152,
+        "mean_bps_per_bar": -1.8050781361919574,
+        "mean_trade_bps": -202.82659372237146,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 5,
+      "start": 1751328000,
+      "end": 1767225600,
+      "portfolio": "matched_generated_top1",
+      "name": "f_fcd8181e76009e58",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -14.58009653178458,
+        "gross_return_pct": -12.154539089701304,
+        "cagr_pct": -26.90385408105575,
+        "max_drawdown_pct": 25.31739578601615,
+        "sharpe_annualized_naive": -1.3876034160861113,
+        "trades": 7,
+        "exposure_pct": 41.01633393829401,
+        "mean_bps_per_bar": -1.3291602443301043,
+        "mean_trade_bps": -215.39510550368715,
+        "periods": 1102
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "buy_hold",
+      "name": "Buy_and_hold",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -33.31148695413257,
+        "gross_return_pct": -33.04419859251425,
+        "cagr_pct": -55.915321661725336,
+        "max_drawdown_pct": 39.97784664176345,
+        "sharpe_annualized_naive": -1.602841231169659,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": -3.277922830860179,
+        "mean_trade_bps": -3331.148695413257,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "cash",
+      "name": "Cash",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "fixed_0",
+      "name": "RSI(14)>50",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -19.633460213472706,
+        "gross_return_pct": -1.0516509633334366,
+        "cagr_pct": -35.717513106381446,
+        "max_drawdown_pct": 26.559302657879556,
+        "sharpe_annualized_naive": -1.4453101517257931,
+        "trades": 52,
+        "exposure_pct": 45.75645756457565,
+        "mean_bps_per_bar": -1.8392219907676834,
+        "mean_trade_bps": -40.2485982490872,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "fixed_1",
+      "name": "RSI(14)<30",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -25.252046948814677,
+        "gross_return_pct": -20.946736513352025,
+        "cagr_pct": -44.4788603816733,
+        "max_drawdown_pct": 27.505649142149096,
+        "sharpe_annualized_naive": -3.1137544049233217,
+        "trades": 14,
+        "exposure_pct": 8.025830258302582,
+        "mean_bps_per_bar": -2.6069252143508272,
+        "mean_trade_bps": -193.28137869072808,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "fixed_2",
+      "name": "EMA(24)>EMA(96)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -0.16358375959948432,
+        "gross_return_pct": 1.8532463109474557,
+        "cagr_pct": -0.33043748819034807,
+        "max_drawdown_pct": 18.385707298296136,
+        "sharpe_annualized_naive": 0.10299682454932695,
+        "trades": 5,
+        "exposure_pct": 41.32841328413284,
+        "mean_bps_per_bar": 0.11039580076875113,
+        "mean_trade_bps": 16.92200508781841,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "fixed_3",
+      "name": "MACD(12,26,9)_hist>0",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -18.926031828936253,
+        "gross_return_pct": -5.616905263406522,
+        "cagr_pct": -34.56840549405075,
+        "max_drawdown_pct": 26.614528855087865,
+        "sharpe_annualized_naive": -1.2516671794458116,
+        "trades": 38,
+        "exposure_pct": 53.59778597785978,
+        "mean_bps_per_bar": -1.7268780059759794,
+        "mean_trade_bps": -51.63179673560806,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "fixed_4",
+      "name": "Close>SMA(200)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -3.3960895267708984,
+        "gross_return_pct": 0.14500978769928263,
+        "cagr_pct": -6.746720409490335,
+        "max_drawdown_pct": 17.292177297401796,
+        "sharpe_annualized_naive": -0.1781321398698986,
+        "trades": 9,
+        "exposure_pct": 42.25092250922509,
+        "mean_bps_per_bar": -0.19183141764408745,
+        "mean_trade_bps": -33.48178441262111,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "fixed_5",
+      "name": "Bollinger(20)_z<-2",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -27.880632265457635,
+        "gross_return_pct": -17.04297703347757,
+        "cagr_pct": -48.355207914093754,
+        "max_drawdown_pct": 28.632182666924024,
+        "sharpe_annualized_naive": -4.153747929914966,
+        "trades": 35,
+        "exposure_pct": 8.025830258302582,
+        "mean_bps_per_bar": -2.958487451672685,
+        "mean_trade_bps": -88.92957190702681,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "generated_diverse",
+      "name": "generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -18.823767177380976,
+        "gross_return_pct": -16.85197001177201,
+        "cagr_pct": -34.40144121605366,
+        "max_drawdown_pct": 25.338836109446294,
+        "sharpe_annualized_naive": -1.4122591315758561,
+        "trades": 6,
+        "exposure_pct": 18.173431734317344,
+        "mean_bps_per_bar": -1.7539400317312503,
+        "mean_trade_bps": -317.8524285001396,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "generated_top1",
+      "name": "f_7d0913b20c9bdd08",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -32.04199275133966,
+        "gross_return_pct": -30.669149477162915,
+        "cagr_pct": -54.202220562793066,
+        "max_drawdown_pct": 36.54183601330006,
+        "sharpe_annualized_naive": -2.5004420632543627,
+        "trades": 5,
+        "exposure_pct": 36.99261992619926,
+        "mean_bps_per_bar": -3.3636096431408684,
+        "mean_trade_bps": -666.8369916283193,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "indicator_diverse",
+      "name": "indicator_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -20.441801558324403,
+        "gross_return_pct": -15.522195627764098,
+        "cagr_pct": -37.01794418628126,
+        "max_drawdown_pct": 28.920642389821626,
+        "sharpe_annualized_naive": -1.459621669183457,
+        "trades": 15,
+        "exposure_pct": 26.845018450184504,
+        "mean_bps_per_bar": -1.919224127046318,
+        "mean_trade_bps": -135.42326405416557,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "indicator_top1",
+      "name": "EMA_cross(16,64)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -18.251540973031602,
+        "gross_return_pct": -16.600111999565044,
+        "cagr_pct": -33.46321728781513,
+        "max_drawdown_pct": 25.338836109446294,
+        "sharpe_annualized_naive": -1.404828029706791,
+        "trades": 5,
+        "exposure_pct": 18.081180811808117,
+        "mean_bps_per_bar": -1.6980804613964036,
+        "mean_trade_bps": -358.3461740050373,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "matched_generated_diverse",
+      "name": "matched_generated_diverse",
+      "members": 5,
+      "metrics": {
+        "net_return_pct": -33.5320226668001,
+        "gross_return_pct": -29.98424380967219,
+        "cagr_pct": -56.20955609579049,
+        "max_drawdown_pct": 40.176337022821954,
+        "sharpe_annualized_naive": -1.6883430002901931,
+        "trades": 13,
+        "exposure_pct": 92.71217712177122,
+        "mean_bps_per_bar": -3.338267599853008,
+        "mean_trade_bps": -262.71853359309927,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 6,
+      "start": 1767225600,
+      "end": 1782864000,
+      "portfolio": "matched_generated_top1",
+      "name": "f_9438b4883ba4e808",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -31.225205164049978,
+        "gross_return_pct": -30.115957761557226,
+        "cagr_pct": -53.082567021052185,
+        "max_drawdown_pct": 38.100115083006,
+        "sharpe_annualized_naive": -1.4777229279232624,
+        "trades": 4,
+        "exposure_pct": 98.24723247232473,
+        "mean_bps_per_bar": -3.000384647328035,
+        "mean_trade_bps": -812.4367817910658,
+        "periods": 1084
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "buy_hold",
+      "name": "Buy_and_hold",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 42.57070748151589,
+        "gross_return_pct": 43.14213259023423,
+        "cagr_pct": 331.0289247352451,
+        "max_drawdown_pct": 7.474649078268908,
+        "sharpe_annualized_naive": 4.355649407167518,
+        "trades": 1,
+        "exposure_pct": 100.0,
+        "mean_bps_per_bar": 6.9439211796767655,
+        "mean_trade_bps": 4257.070748151589,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "cash",
+      "name": "Cash",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "fixed_0",
+      "name": "RSI(14)>50",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 14.635774374501285,
+        "gross_return_pct": 27.19991180514513,
+        "cagr_pct": 75.5339739275345,
+        "max_drawdown_pct": 14.656882335209739,
+        "sharpe_annualized_naive": 1.961940323789664,
+        "trades": 26,
+        "exposure_pct": 61.8421052631579,
+        "mean_bps_per_bar": 2.7857409515443394,
+        "mean_trade_bps": 63.27048448401914,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "fixed_1",
+      "name": "RSI(14)<30",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.02106208762642225,
+        "gross_return_pct": 0.4219477063286847,
+        "cagr_pct": 0.08679084606766292,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": 2.0296208764830044,
+        "trades": 1,
+        "exposure_pct": 0.18796992481203006,
+        "mean_bps_per_bar": 0.00395903902752298,
+        "mean_trade_bps": 2.1062087626422255,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "fixed_2",
+      "name": "EMA(24)>EMA(96)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 18.590330604655232,
+        "gross_return_pct": 20.98601500365897,
+        "cagr_pct": 101.85323219557559,
+        "max_drawdown_pct": 9.834177266921635,
+        "sharpe_annualized_naive": 2.405704666671001,
+        "trades": 5,
+        "exposure_pct": 72.74436090225564,
+        "mean_bps_per_bar": 3.424495096242867,
+        "mean_trade_bps": 374.97849881251324,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "fixed_3",
+      "name": "MACD(12,26,9)_hist>0",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 22.695072686279737,
+        "gross_return_pct": 31.32855230145701,
+        "cagr_pct": 132.2260709632028,
+        "max_drawdown_pct": 8.312054565213659,
+        "sharpe_annualized_naive": 3.2875576180254127,
+        "trades": 17,
+        "exposure_pct": 46.99248120300752,
+        "mean_bps_per_bar": 4.005352452888023,
+        "mean_trade_bps": 135.30117634194056,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "fixed_4",
+      "name": "Close>SMA(200)",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 16.86872433362792,
+        "gross_return_pct": 22.61523805789182,
+        "cagr_pct": 90.05256918906315,
+        "max_drawdown_pct": 11.144710048318723,
+        "sharpe_annualized_naive": 2.1225426671559493,
+        "trades": 12,
+        "exposure_pct": 81.01503759398496,
+        "mean_bps_per_bar": 3.1720693818814216,
+        "mean_trade_bps": 164.16056018816263,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "fixed_5",
+      "name": "Bollinger(20)_z<-2",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": -3.135284336112116,
+        "gross_return_pct": 2.854497219731566,
+        "cagr_pct": -12.297666987095432,
+        "max_drawdown_pct": 3.780940751711601,
+        "sharpe_annualized_naive": -3.889840165349692,
+        "trades": 15,
+        "exposure_pct": 4.6992481203007515,
+        "mean_bps_per_bar": -0.5961832268136305,
+        "mean_trade_bps": -21.122242632304957,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "generated_diverse",
+      "name": "generated_diverse",
+      "members": 2,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "generated_top1",
+      "name": "f_f33b698e4fa0c807",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 12.29197518336628,
+        "gross_return_pct": 12.742042769203794,
+        "cagr_pct": 61.21466784931353,
+        "max_drawdown_pct": 1.6277070772741213,
+        "sharpe_annualized_naive": 4.43645000477275,
+        "trades": 1,
+        "exposure_pct": 3.007518796992481,
+        "mean_bps_per_bar": 2.2061301277784233,
+        "mean_trade_bps": 1229.1975183366278,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "indicator_diverse",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "indicator_top1",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "matched_generated_diverse",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 532
+      }
+    },
+    {
+      "fold": 7,
+      "start": 1782864000,
+      "end": 1790553600,
+      "portfolio": "matched_generated_top1",
+      "name": "Cash fallback: no eligible/diverse candidate",
+      "members": 1,
+      "metrics": {
+        "net_return_pct": 0.0,
+        "gross_return_pct": 0.0,
+        "cagr_pct": 0.0,
+        "max_drawdown_pct": 0.0,
+        "sharpe_annualized_naive": null,
+        "trades": 0,
+        "exposure_pct": 0.0,
+        "mean_bps_per_bar": 0.0,
+        "mean_trade_bps": null,
+        "periods": 532
+      }
+    }
+  ]
+}

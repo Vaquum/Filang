@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "role": "independent direct-window features / Boolean votes / cash-share ledger",
+  "fold_portfolios_checked": 112,
+  "aggregate_portfolios_checked": 15,
+  "position_disagreements": 0,
+  "max_absolute_metric_error": 5.893525667488575e-10,
+  "numpy_version": "2.5.1",
+  "selection_sha256": "0f329672f5a9c0d3950ec6b7feaade56578811a58764d6916753fc0c2ccf63a5",
+  "report": "runs/btc4h-walk-primary/evaluation.json"
+}

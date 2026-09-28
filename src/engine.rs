@@ -1,5 +1,6 @@
 use crate::{
     data::Data,
+    kernels::{self, Backend},
     lang::{Graph, Id, Op},
     Result,
 };
@@ -9,17 +10,67 @@ pub struct Batch {
     pub values: HashMap<Id, Vec<f64>>,
     pub nodes_computed: usize,
     pub payload_bytes: usize,
+    pub cached_nodes: usize,
+    pub simd_nodes: usize,
 }
-/// Materialize only the dependency closure of a bounded batch. No cross-data cache.
+/// Immutable source/basis bank shared by bounded generation pages and workers.
+pub struct Prepared {
+    nodes: Vec<crate::lang::Node>,
+    digest: String,
+    rows: usize,
+    pub batch: Batch,
+}
+impl Batch {
+    pub fn series<'a>(&'a self, id: Id, bank: Option<&'a Prepared>) -> Result<&'a [f64]> {
+        self.values
+            .get(&id)
+            .or_else(|| bank.and_then(|p| p.batch.values.get(&id)))
+            .map(Vec::as_slice)
+            .ok_or_else(|| format!("missing evaluated root {id}"))
+    }
+}
+pub fn prepare(g: &Graph, d: &Data, budget: usize, backend: Backend) -> Result<Prepared> {
+    let roots = (0..g.nodes.len()).collect::<Vec<_>>();
+    let batch = evaluate_with(g, d, &roots, budget, backend, None)?;
+    Ok(Prepared {
+        nodes: g.nodes.clone(),
+        digest: d.digest.clone(),
+        rows: d.len(),
+        batch,
+    })
+}
+/// Backward-compatible scalar oracle; the new path explicitly selects its backend.
 pub fn evaluate(g: &Graph, d: &Data, roots: &[Id], budget: usize) -> Result<Batch> {
+    evaluate_with(g, d, roots, budget, Backend::Scalar, None)
+}
+pub fn evaluate_with(
+    g: &Graph,
+    d: &Data,
+    roots: &[Id],
+    budget: usize,
+    backend: Backend,
+    bank: Option<&Prepared>,
+) -> Result<Batch> {
     if roots.iter().any(|r| *r >= g.nodes.len()) {
         return Err("unknown output node".into());
     }
+    Backend::resolve(backend.name())?;
+    if let Some(p) = bank {
+        if p.digest != d.digest
+            || p.rows != d.len()
+            || g.nodes.get(..p.nodes.len()) != Some(p.nodes.as_slice())
+        {
+            return Err("prepared bank data/graph identity mismatch".into());
+        }
+    }
     let deps = g.dependencies(roots);
-    // Four series of reserve cover extrema queues and scorer working buffers.
-    let bytes = (deps.len() + 4)
+    let cached = deps
+        .iter()
+        .filter(|i| bank.map_or(false, |p| p.batch.values.contains_key(i)))
+        .count();
+    let bytes = (deps.len() - cached + 4)
         .checked_mul(d.len())
-        .and_then(|x| x.checked_mul(8))
+        .and_then(|n| n.checked_mul(8))
         .ok_or("payload overflow")?;
     if bytes > budget {
         return Err(format!(
@@ -27,17 +78,37 @@ pub fn evaluate(g: &Graph, d: &Data, roots: &[Id], budget: usize) -> Result<Batc
         ));
     }
     let mut values: HashMap<Id, Vec<f64>> = HashMap::new();
+    let mut simd_nodes = 0;
     for id in &deps {
+        if bank.map_or(false, |p| p.batch.values.contains_key(id)) {
+            continue;
+        }
         let node = &g.nodes[*id];
-        let a = node.args.first().map(|i| values[i].as_slice());
-        let b = node.args.get(1).map(|i| values[i].as_slice());
-        let out = kernel(&node.op, a, b, d);
+        let lookup = |i: &Id| {
+            values
+                .get(i)
+                .or_else(|| bank.and_then(|p| p.batch.values.get(i)))
+                .map(Vec::as_slice)
+                .expect("topological dependency present")
+        };
+        let a = node.args.first().map(lookup);
+        let b = node.args.get(1).map(lookup);
+        let out = if matches!(node.op, Op::Add | Op::Sub | Op::Mul | Op::Div) {
+            if backend != Backend::Scalar {
+                simd_nodes += 1;
+            }
+            kernels::binary(&node.op, a.unwrap(), b.unwrap(), backend)?
+        } else {
+            kernel(&node.op, a, b, d)
+        };
         values.insert(*id, out);
     }
     Ok(Batch {
         values,
-        nodes_computed: deps.len(),
+        nodes_computed: deps.len() - cached,
         payload_bytes: bytes,
+        cached_nodes: cached,
+        simd_nodes,
     })
 }
 fn kernel(op: &Op, a: Option<&[f64]>, b: Option<&[f64]>, d: &Data) -> Vec<f64> {
@@ -191,6 +262,40 @@ mod tests {
             interval: 1,
             digest: "fixture".into(),
         }
+    }
+    #[test]
+    fn prepared_bank_identity_and_backend_parity() {
+        let d = fixture(600);
+        let mut base = Graph::new();
+        let src = base.source(3);
+        let mean = base.unary(Op::Mean(8), src);
+        let backend = Backend::resolve("auto").unwrap();
+        let bank = prepare(&base, &d, 64 * 1024 * 1024, backend).unwrap();
+        let root = base.binary(Op::Div, src, mean);
+        let cached =
+            evaluate_with(&base, &d, &[root], 64 * 1024 * 1024, backend, Some(&bank)).unwrap();
+        let direct = evaluate(&base, &d, &[root], 64 * 1024 * 1024).unwrap();
+        for (a, b) in cached
+            .series(root, Some(&bank))
+            .unwrap()
+            .iter()
+            .zip(direct.series(root, None).unwrap())
+        {
+            assert!(a.to_bits() == b.to_bits() || (a.is_nan() && b.is_nan()));
+        }
+        assert_eq!(cached.nodes_computed, 1);
+        assert_eq!(cached.cached_nodes, 2);
+        let mut changed = d;
+        changed.digest = "different".into();
+        assert!(evaluate_with(
+            &base,
+            &changed,
+            &[root],
+            64 * 1024 * 1024,
+            backend,
+            Some(&bank)
+        )
+        .is_err());
     }
     #[test]
     fn rolling_oracle() {

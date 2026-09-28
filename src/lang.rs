@@ -26,7 +26,7 @@ pub enum Op {
     Ema(usize),
     Wilder(usize),
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Node {
     pub op: Op,
     pub args: Vec<Id>,
