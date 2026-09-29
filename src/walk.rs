@@ -86,7 +86,7 @@ fn mix(mut x: u64) -> u64 {
     x = (x ^ (x >> 27)).wrapping_mul(0x94d049bb133111eb);
     x ^ (x >> 31)
 }
-fn page(c: &WalkConfig, index: u64, count: usize) -> Result<(Graph, Vec<Candidate>, usize)> {
+pub fn page(c: &WalkConfig, index: u64, count: usize) -> Result<(Graph, Vec<Candidate>, usize)> {
     let mut cfg = c.base.clone();
     cfg.generated = count;
     cfg.seed = mix(c.base.seed ^ index.wrapping_mul(0x9e3779b97f4a7c15));

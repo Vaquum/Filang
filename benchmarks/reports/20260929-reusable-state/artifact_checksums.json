@@ -1,0 +1,30 @@
+{
+  "runs/state-v04-parity/traces.bin": {
+    "bytes": 40380032,
+    "sha256": "48d5092563472bdc3a5bc27bd14ff5c853cd64577dc9e40d9d835d088f7bec12"
+  },
+  "runs/state-v04-parity/features.bin": {
+    "bytes": 2075328,
+    "sha256": "fe4dadee1d2add1a074871291fb508f5d3ce3be29b7b98e3105f82df872928bd"
+  },
+  "runs/state-v04-parity/metrics.bin": {
+    "bytes": 7040,
+    "sha256": "aaa3ba248fc6584c0bfb753bf99864fd3bd5aa315549b01a28b4e60527481d03"
+  },
+  "runs/state-v04-program-proof/features.bin": {
+    "bytes": 236010912,
+    "sha256": "a6bd59ca932f298bd3765bc286275d2c6f232dbe4ad9623d951615c24cf3be5f"
+  },
+  "runs/state-v04-program-proof/metrics.bin": {
+    "bytes": 327520,
+    "sha256": "9531653169fdd2f0989469a39057535e25f01c41c546d21a49b3f462fd010292"
+  },
+  "runs/state-v04-threshold-proof/features.bin": {
+    "bytes": 29054592,
+    "sha256": "eab856a9dde5934ff5209d67c7680f05aa72a6215fe00f5bc6878c03ef12ce1b"
+  },
+  "runs/state-v04-threshold-proof/metrics.bin": {
+    "bytes": 9666560,
+    "sha256": "58ab58cb5b31f8356c09a4fe582f8371af19bb9c06f66e34b80db4c059570915"
+  }
+}

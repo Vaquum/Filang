@@ -9,18 +9,53 @@ const K: [u32; 64] = [
     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ];
-pub fn sha256(bytes: &[u8]) -> String {
-    let mut h: [u32; 8] = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
-        0x5be0cd19,
-    ];
-    let mut msg = bytes.to_vec();
-    msg.push(0x80);
-    while msg.len() % 64 != 56 {
-        msg.push(0);
+#[derive(Clone)]
+pub struct Sha256 {
+    h: [u32; 8],
+    buffer: [u8; 64],
+    used: usize,
+    bytes: u64,
+}
+impl Default for Sha256 {
+    fn default() -> Self {
+        Self {
+            h: [
+                0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
+                0x5be0cd19,
+            ],
+            buffer: [0; 64],
+            used: 0,
+            bytes: 0,
+        }
     }
-    msg.extend_from_slice(&(bytes.len() as u64 * 8).to_be_bytes());
-    for chunk in msg.chunks_exact(64) {
+}
+impl Sha256 {
+    pub fn update(&mut self, mut input: &[u8]) {
+        self.bytes = self
+            .bytes
+            .checked_add(input.len() as u64)
+            .expect("SHA byte count overflow");
+        if self.used > 0 {
+            let count = (64 - self.used).min(input.len());
+            self.buffer[self.used..self.used + count].copy_from_slice(&input[..count]);
+            self.used += count;
+            input = &input[count..];
+            if self.used == 64 {
+                let block = self.buffer;
+                self.block(&block);
+                self.used = 0;
+            } else {
+                return;
+            }
+        }
+        while input.len() >= 64 {
+            self.block(&input[..64]);
+            input = &input[64..];
+        }
+        self.buffer[..input.len()].copy_from_slice(input);
+        self.used = input.len();
+    }
+    fn block(&mut self, chunk: &[u8]) {
         let mut w = [0u32; 64];
         for (i, b) in chunk.chunks_exact(4).enumerate() {
             w[i] = u32::from_be_bytes([b[0], b[1], b[2], b[3]]);
@@ -33,7 +68,7 @@ pub fn sha256(bytes: &[u8]) -> String {
                 .wrapping_add(w[i - 7])
                 .wrapping_add(s1);
         }
-        let [mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut hh] = h;
+        let [mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut hh] = self.h;
         for i in 0..64 {
             let s1 = e.rotate_right(6) ^ e.rotate_right(11) ^ e.rotate_right(25);
             let ch = (e & f) ^ (!e & g);
@@ -54,11 +89,31 @@ pub fn sha256(bytes: &[u8]) -> String {
             b = a;
             a = t1.wrapping_add(t2);
         }
-        for (x, y) in h.iter_mut().zip([a, b, c, d, e, f, g, hh]) {
+        for (x, y) in self.h.iter_mut().zip([a, b, c, d, e, f, g, hh]) {
             *x = x.wrapping_add(y);
         }
     }
-    h.iter().map(|x| format!("{x:08x}")).collect()
+    pub fn finish(mut self) -> String {
+        let bits = self.bytes.wrapping_mul(8);
+        self.buffer[self.used] = 0x80;
+        self.used += 1;
+        if self.used > 56 {
+            self.buffer[self.used..].fill(0);
+            let b = self.buffer;
+            self.block(&b);
+            self.used = 0;
+        }
+        self.buffer[self.used..56].fill(0);
+        self.buffer[56..].copy_from_slice(&bits.to_be_bytes());
+        let b = self.buffer;
+        self.block(&b);
+        self.h.iter().map(|x| format!("{x:08x}")).collect()
+    }
+}
+pub fn sha256(bytes: &[u8]) -> String {
+    let mut s = Sha256::default();
+    s.update(bytes);
+    s.finish()
 }
 #[cfg(test)]
 mod tests {
@@ -78,4 +133,40 @@ mod tests {
             "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"
         );
     }
+}
+
+#[cfg(test)]
+mod chunk_tests {
+    use super::*;
+    #[test]
+    fn chunk_boundaries_match_one_shot() {
+        for n in [0, 1, 55, 56, 63, 64, 65, 1000, 100001] {
+            let b = (0..n).map(|i| (i % 251) as u8).collect::<Vec<_>>();
+            let expected = sha256(&b);
+            for width in [1, 7, 63, 64, 65, 1024] {
+                let mut h = Sha256::default();
+                for part in b.chunks(width) {
+                    h.update(part);
+                    h.update(&[]);
+                }
+                assert_eq!(expected, h.finish());
+            }
+        }
+    }
+}
+
+/// Hash a stream with fixed-size storage; never materialize an output ledger.
+pub fn file_sha256(path: impl AsRef<std::path::Path>) -> crate::Result<String> {
+    use std::io::Read;
+    let mut file = std::fs::File::open(path.as_ref()).map_err(|e| e.to_string())?;
+    let mut h = Sha256::default();
+    let mut buf = [0u8; 65536];
+    loop {
+        let n = file.read(&mut buf).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        h.update(&buf[..n]);
+    }
+    Ok(h.finish())
 }

@@ -2,7 +2,22 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.3, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #6](https://github.com/mikkokotila/Filang/issues/6) tracks this slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
+**Status: runnable 0.4, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
+
+## Current: paged full-risk state (0.4)
+
+Known-indicator parity and parameter neighborhoods now use the shared page executor.
+It accepts the same ordinary programs as the paged open generator, retains full
+backtest state across program changes, shares event plans across cost scenarios,
+and falls back to chronological replay when changes are dense. All ten metrics
+remain intact. See [the state contract and commands](docs/REUSABLE_STATE.md).
+
+[The measured shared-state report](benchmarks/reports/20260929-reusable-state/README.md)
+separates distinct-period-program gains, threshold-family gains, weak-reuse fallback,
+full reference parity, and bounded output.
+
+The earlier commands and benchmark reports below are retained as versioned evidence;
+no historical winning result or external reference kernel is embedded in this path.
 
 ## Earlier delivery: factorized walk-forward discovery
 

@@ -1,0 +1,9 @@
+{
+  "source_commit": "a314e8decb6f403d99371245d29898fc1bed752c",
+  "offline_tests_passed": 37,
+  "offline_release_build": true,
+  "format": true,
+  "clippy_warnings_denied": true,
+  "runtime_external_dependencies": 0,
+  "rustc": "rustc 1.63.0 (4b91a6ea7 2022-08-08)"
+}
