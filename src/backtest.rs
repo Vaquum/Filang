@@ -977,3 +977,7 @@ mod tests {
         assert_eq!(before.lite.log_return, after.lite.log_return);
     }
 }
+
+#[path = "execution_state.rs"]
+mod execution_state;
+pub use execution_state::{ChangeWork, ReusableExecution, TransitionMode};

@@ -1,6 +1,7 @@
 use filang::{backtest::Costs, config::Config, data, report, search, Result};
 use std::{collections::HashMap, env, fs, path::Path};
-const HELP:&str="Filang 0.3.0 (research prototype)\n\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
+const HELP:&str="Filang 0.4.0 (research prototype)\n\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
+  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
 fn arguments() -> Result<(String, HashMap<String, String>)> {
     let mut it = env::args().skip(1);
     let command = it.next().unwrap_or_else(|| "help".into());
@@ -38,10 +39,22 @@ fn entry() -> Result<()> {
         "help" | "--help" | "-h" => {
             print!("{HELP}");
         }
+        "program-sweep" => {
+            println!("{}", filang::program_run::run(flags)?);
+        }
         "anchor-parity" | "anchor-sweep" => {
             let data = take(&mut flags, "--data")?;
             let out = take(&mut flags, "--out")?;
-            let mode = flags.remove("--mode").unwrap_or_else(|| "family".into());
+            let mode = flags.remove("--mode").unwrap_or_else(|| "state".into());
+            let batch = flags
+                .remove("--batch")
+                .unwrap_or_else(|| "32".into())
+                .parse::<usize>()
+                .map_err(|_| "bad batch")?;
+            let output_policy = flags.remove("--output").unwrap_or_else(|| "all".into());
+            if output_policy != "all" && output_policy != "summary" {
+                return Err("output all/summary".into());
+            }
             let backend = filang::kernels::Backend::resolve(
                 &flags.remove("--backend").unwrap_or_else(|| "auto".into()),
             )?;
@@ -62,6 +75,8 @@ fn entry() -> Result<()> {
             } else {
                 None
             };
+            let mut neighborhood = None;
+            let state_mode = mode.starts_with("state");
             let (g, requests) = if cmd == "anchor-sweep" {
                 let radius = take(&mut flags, "--radius")?
                     .parse::<usize>()
@@ -69,7 +84,12 @@ fn entry() -> Result<()> {
                 let thresholds = take(&mut flags, "--thresholds")?
                     .parse::<usize>()
                     .map_err(|_| "bad thresholds")?;
-                filang::anchors::neighborhood(radius, thresholds)?
+                neighborhood = Some((radius, thresholds));
+                if state_mode {
+                    (filang::lang::Graph::new(), vec![])
+                } else {
+                    filang::anchors::neighborhood(radius, thresholds)?
+                }
             } else {
                 filang::anchors::catalog()?
             };
@@ -80,13 +100,24 @@ fn entry() -> Result<()> {
                 mode,
                 backend,
                 capture,
-                batch: 32,
+                batch,
                 memory: 128 * 1024 * 1024,
             };
-            println!(
-                "{}",
+            let result = if state_mode {
+                filang::paged_anchors::run(
+                    &options,
+                    gate.as_deref(),
+                    neighborhood.map(|p| p.0),
+                    neighborhood.map_or(3, |p| p.1),
+                    output_policy == "all",
+                )?
+            } else {
+                if output_policy != "all" {
+                    return Err("legacy oracle modes require exhaustive output".into());
+                }
                 filang::anchor_run::run(&g, &requests, &options, gate.as_deref())?
-            );
+            };
+            println!("{result}");
         }
         "walk-search" | "walk-inspect" => {
             let path = take(&mut flags, "--config")?;

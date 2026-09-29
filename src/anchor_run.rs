@@ -114,7 +114,7 @@ pub struct Options {
     pub batch: usize,
     pub memory: usize,
 }
-fn anchor_json(g: &Graph, a: &Anchor) -> String {
+pub(crate) fn anchor_json(g: &Graph, a: &Anchor) -> String {
     format!("{{\"key\":{},\"profile\":{},\"kind\":{},\"periods\":[{},{},{}],\"parent\":{},\"feature_id\":{},\"expression\":{},\"rules\":[{}]}}",quote(&a.key),quote(&a.profile),quote(&a.kind),a.periods[0],a.periods[1],a.periods[2],quote(&a.reference_key),quote(&g.identity(a.root)),quote(&g.expression(a.root)),a.rules.iter().map(|r|format!("{{\"greater\":{},\"threshold\":{}}}",r.greater,num(r.threshold))).collect::<Vec<_>>().join(","))
 }
 /// Generic graph runner. Metadata are emitted, never used to choose a kernel.
