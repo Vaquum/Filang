@@ -1,0 +1,73 @@
+{
+  "role": "descriptive_discovery_surface_not_selected_out_of_sample_results",
+  "minimum_stress_drawdown_pct": 46.56048287293216,
+  "primary_return_range_pct": [
+    207.32097723644182,
+    321.71343610682055
+  ],
+  "stress_return_range_pct": [
+    133.66595904575337,
+    235.73625253025926
+  ],
+  "logical_addresses_per_region": 23.28317162930746,
+  "best_at_fixed_cutoff_one": {
+    "base": 1517.0,
+    "window": 199.0,
+    "source_weight": 0.0085,
+    "mean_weight": 0.0,
+    "regions": 83.0,
+    "eligible_addresses": 0.0,
+    "at_one_net_pct": 280.6205990280925,
+    "at_one_stress_pct": 199.40672577437098,
+    "at_one_stress_drawdown": 46.56048287293217,
+    "at_one_trades": 120.0,
+    "best_stress_pct": 232.14763279788556,
+    "best_offset": 1.000843,
+    "worst_stress_pct": 165.6532052419373
+  },
+  "best_weights_only_period200_cutoff1": {
+    "base": 2485.0,
+    "window": 200.0,
+    "source_weight": -0.0005,
+    "mean_weight": 0.0625,
+    "regions": 82.0,
+    "eligible_addresses": 0.0,
+    "at_one_net_pct": 269.1401706459281,
+    "at_one_stress_pct": 187.48661203700388,
+    "at_one_stress_drawdown": 46.56048287293217,
+    "at_one_trades": 125.0,
+    "best_stress_pct": 222.9101050896908,
+    "best_offset": 1.00058,
+    "worst_stress_pct": 149.5448167660283
+  },
+  "offset_only_best": {
+    "offset_range_inclusive": [
+      1.000987,
+      1.001
+    ],
+    "primary_metrics": [
+      313.2539522218607,
+      422.2060907912586,
+      42.59011198011383,
+      45.480932380526504,
+      1.0340734063219206,
+      117.0,
+      52.156549520766774,
+      2.049033828258429,
+      169.13447537784324,
+      8764.0
+    ],
+    "stress_metrics": [
+      227.0333534162382,
+      422.2060907912586,
+      34.48609091484086,
+      46.56048287293217,
+      0.8979152701080702,
+      117.0,
+      52.156549520766774,
+      1.7847732460875663,
+      148.81651930367664,
+      8764.0
+    ]
+  }
+}

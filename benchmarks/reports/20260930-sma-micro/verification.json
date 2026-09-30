@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "role": "independent_TA_Lib_source_means_and_exact_transition_verification",
+  "upstream_programs": 5043,
+  "addresses_covered": 10091043,
+  "physical_regions": 433405,
+  "all_position_paths_verified_by_exact_event_records": true,
+  "all_region_metrics_checked": true,
+  "metric_sets_checked": 866810,
+  "extra_cash_share_replays": 20,
+  "max_metric_absolute_error": 1.1368683772161603e-12,
+  "talib_wrapper": "0.6.8",
+  "talib_c": "0.6.4 (Oct 20 2025 20:23:07)",
+  "elapsed_seconds": 220.86184187501203
+}

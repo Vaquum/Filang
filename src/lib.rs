@@ -26,3 +26,6 @@ pub mod paged;
 pub mod paged_anchors;
 
 pub mod program_run;
+
+pub mod micro;
+pub mod regions;

@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "source_commit": "bc8dd2660f0b023ad628234d3f678e2feeb1c63a",
+  "native_computational_source": "3bbe54810393e85c2e32d1a6cbce398c7f355fe9",
+  "native_tests_passed": 42,
+  "offline_tests": true,
+  "offline_release_build": true,
+  "format_and_clippy": true,
+  "later_final_change": "CLI help text only; final-source CI and full-output equivalence retained separately"
+}

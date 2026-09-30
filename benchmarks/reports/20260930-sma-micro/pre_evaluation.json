@@ -1,0 +1,10 @@
+{
+  "recorded_utc": "2026-09-30T17:34:21.086630+00:00",
+  "native_source": "3bbe54810393e85c2e32d1a6cbce398c7f355fe9",
+  "engine_sha256": "0ccaa525f56ae19fcdd550284ba564e046121e2d4bb88445ed81b9ff3c923fad",
+  "frozen_sha256": "6b11d2587d5d8846f23b6f6672498e0cecfbdc277b78549d7bb0abcdb35d52be",
+  "later_replay_performed": false,
+  "selected_candidate_count": 0,
+  "reason": "No grid point satisfied the predeclared 40% stress drawdown gate. Only the unchanged anchor is frozen.",
+  "external_full_grid_verification": "not yet completed"
+}

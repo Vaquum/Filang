@@ -156,6 +156,11 @@ pub struct Executor<'a> {
     scorer: Scorer,
     budget: usize,
     pub work: Work,
+    bank: Option<family::Store>,
+    pub bank_builds: u64,
+    pub bank_nodes: u64,
+    pub bank_hits: u64,
+    pub bank_peak_bytes: usize,
 }
 impl<'a> Executor<'a> {
     pub fn new(
@@ -186,6 +191,11 @@ impl<'a> Executor<'a> {
             scorer,
             budget,
             work: Work::default(),
+            bank: None,
+            bank_builds: 0,
+            bank_nodes: 0,
+            bank_hits: 0,
+            bank_peak_bytes: 0,
         })
     }
     pub fn state_work(&self) -> &crate::backtest::ChangeWork {
@@ -259,39 +269,7 @@ impl<'a> Executor<'a> {
         self.work.pages += 1;
         self.work.programs += req.len() as u64;
         self.work.rules += rule_count as u64;
-        let timer = Instant::now();
-        let store = family::prepare(
-            &page.graph,
-            self.d,
-            &family::boundaries(&page.graph, &roots),
-            self.budget,
-            self.backend,
-            None,
-        )?;
-        self.work.nodes += store.work.nodes as u64;
-        self.work.materialized_peak = self
-            .work
-            .materialized_peak
-            .max(store.work.payload + roots.len() * self.d.len() * 8 + result_bytes);
-        let mut xs = Vec::with_capacity(req.len());
-        for r in req {
-            let p = family::Program::compile(&page.graph, r.root, &store, None)?;
-            self.work.fused_nodes += p.point_nodes as u64;
-            let mut x = p
-                .execute(&store, None, &[], self.backend, true)?
-                .1
-                .ok_or("missing numeric output")?;
-            if let Some(w) = capture.as_mut() {
-                for v in &x {
-                    w.write_all(&v.to_le_bytes()).map_err(|e| e.to_string())?;
-                }
-            }
-            for &j in &self.gaps {
-                x[j] = f64::NAN;
-            }
-            xs.push(x);
-        }
-        self.work.numeric_seconds += timer.elapsed().as_secs_f64();
+        let xs = self.numerical_roots(&page.graph, &roots, capture)?;
         let timer = Instant::now();
         let mut results = req
             .iter()
@@ -379,6 +357,143 @@ impl<'a> Executor<'a> {
         }
         self.work.emission_seconds += timer.elapsed().as_secs_f64();
         Ok(())
+    }
+    /// Explicit, bounded graph/data-scoped bank. Any caller can supply common
+    /// atom dependencies; no numeric rewrite or indicator-name recognition.
+    pub fn prepare_shared(&mut self, g: &Graph, roots: &[Id]) -> Result<()> {
+        self.bank = None;
+        let timer = Instant::now();
+        let bank = family::prepare(g, self.d, roots, self.budget / 4, self.backend, None)?;
+        self.bank_builds += 1;
+        self.bank_nodes += bank.work.nodes as u64;
+        self.bank_peak_bytes = self.bank_peak_bytes.max(bank.work.payload);
+        self.work.numeric_seconds += timer.elapsed().as_secs_f64();
+        self.bank = Some(bank);
+        Ok(())
+    }
+    pub fn clear_shared(&mut self) {
+        self.bank = None;
+    }
+    /// Shared numerical path for standard requests AND parametric region queries.
+    pub fn numerical_roots(
+        &mut self,
+        g: &Graph,
+        roots: &[Id],
+        mut capture: Option<&mut dyn Write>,
+    ) -> Result<Vec<Vec<f64>>> {
+        if roots.is_empty() || roots.len() > 4096 || roots.iter().any(|r| *r >= g.nodes.len()) {
+            return Err("invalid numerical root batch".into());
+        }
+        let timer = Instant::now();
+        let store = family::prepare(
+            g,
+            self.d,
+            &family::boundaries(g, roots),
+            self.budget,
+            self.backend,
+            self.bank.as_ref(),
+        )?;
+        self.work.nodes += store.work.nodes as u64;
+        self.bank_hits += store.work.cached as u64;
+        self.work.materialized_peak = self
+            .work
+            .materialized_peak
+            .max(store.work.payload + roots.len() * self.d.len() * 8);
+        let mut xs = Vec::with_capacity(roots.len());
+        for &r in roots {
+            let p = family::Program::compile(g, r, &store, self.bank.as_ref())?;
+            self.work.fused_nodes += p.point_nodes as u64;
+            let mut x = p
+                .execute(&store, self.bank.as_ref(), &[], self.backend, true)?
+                .1
+                .ok_or("missing numeric output")?;
+            if let Some(w) = capture.as_mut() {
+                for v in &x {
+                    w.write_all(&v.to_le_bytes()).map_err(|e| e.to_string())?;
+                }
+            }
+            for &j in &self.gaps {
+                x[j] = f64::NAN;
+            }
+            xs.push(x);
+        }
+        self.work.numeric_seconds += timer.elapsed().as_secs_f64();
+        Ok(xs)
+    }
+    /// The compiler accepts ordinary `(sub x constant)` / `>0` roots. Grid
+    /// values bind the terminal constant. This is reusable by anonymous programs.
+    pub fn constant_regions<F>(
+        &mut self,
+        g: &Graph,
+        root: Id,
+        grid: crate::regions::Grid,
+        expanded: bool,
+        mut emit: F,
+    ) -> Result<crate::regions::RegionWork>
+    where
+        F: FnMut(u64, u64, &[Metrics]) -> Result<()>,
+    {
+        use crate::lang::Op;
+        let node = g.nodes.get(root).ok_or("unknown offset root")?;
+        if node.op != Op::Sub
+            || node.args.len() != 2
+            || !matches!(g.nodes[node.args[1]].op, Op::Constant(_))
+        {
+            return Err("region root must be ordinary sub(series,constant), read out >0".into());
+        }
+        let xs = self.numerical_roots(g, &[node.args[0]], None)?;
+        let x = &xs[0];
+        let timer = Instant::now();
+        let result = if expanded {
+            grid.validate()?;
+            if grid.count > 100000 {
+                return Err("expanded reference grid exceeds 100000; use regions".into());
+            }
+            for q in 0..grid.count {
+                let c = grid.value(q);
+                let f: Vec<_> = x
+                    .iter()
+                    .map(|v| {
+                        let y = *v - c;
+                        if v.is_finite() && y.is_finite() {
+                            y
+                        } else {
+                            f64::NAN
+                        }
+                    })
+                    .collect();
+                let metrics = self
+                    .state
+                    .reference_markets()
+                    .iter()
+                    .map(|m| {
+                        m.score(
+                            &f,
+                            crate::backtest::Rule {
+                                threshold: 0.,
+                                greater: true,
+                            },
+                        )
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                emit(q, q + 1, &metrics)?;
+            }
+            self.work.replay_calls += grid.count * self.state.scenarios() as u64;
+            crate::regions::RegionWork {
+                input_rows: (self.end - self.start - 2) as u64,
+                crossing_events: 0,
+                regions: grid.count,
+                addresses: grid.count,
+                proof: Vec::new(),
+            }
+        } else {
+            crate::regions::sweep(&x[self.start..self.end - 2], grid, &mut self.state, emit)?
+        };
+        self.work.scoring_seconds += timer.elapsed().as_secs_f64();
+        self.work.programs += 1;
+        self.work.rules += result.addresses;
+        self.work.emitted += result.regions * self.state.scenarios() as u64;
+        Ok(result)
     }
     fn events(&mut self, x: &[f64], rules: &[crate::backtest::Rule]) -> Result<Vec<Vec<Metrics>>> {
         let detect = Instant::now();

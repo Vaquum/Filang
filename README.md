@@ -2,9 +2,18 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.4, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
+**Status: runnable 0.5, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
 
-## Current: paged full-risk state (0.4)
+## Current: fine atom-neighborhood sweeps (0.5)
+
+The new `micro-sweep` keeps the exact SMA anchor, varies ordinary source/mixture/
+subtraction constants on explicit rational grids, shares input/mean dependencies,
+and returns exact parameter regions rather than independently replaying every
+constant. It uses the common paged executor and full-risk state, with independent
+reference checks and a separately sealed later replay. See
+[the family, research protocol and commands](docs/ATOM_MICRO_SWEEP.md).
+
+## Earlier: paged full-risk state (0.4)
 
 Known-indicator parity and parameter neighborhoods now use the shared page executor.
 It accepts the same ordinary programs as the paged open generator, retains full

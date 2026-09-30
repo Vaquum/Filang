@@ -1,0 +1,18 @@
+{
+  "regions.bin": {
+    "bytes": 79746520,
+    "sha256": "dc58e704cc92ae9c115e233caacd73e739db6073c175387986d4494babd5dcf0"
+  },
+  "transitions.bin": {
+    "bytes": 12722432,
+    "sha256": "c015245e5535fdc1efbf113396216c3ed48a4a1b768a360c8bf96ec0d5709880"
+  },
+  "surface.csv": {
+    "bytes": 944571,
+    "sha256": "8bc1ed59d6498448227e7c36f1e8d4da1c0b5d873a757539f87831d733097726"
+  },
+  "frozen.tsv": {
+    "bytes": 536,
+    "sha256": "6b11d2587d5d8846f23b6f6672498e0cecfbdc277b78549d7bb0abcdb35d52be"
+  }
+}

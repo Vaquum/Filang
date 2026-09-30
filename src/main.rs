@@ -1,6 +1,6 @@
 use filang::{backtest::Costs, config::Config, data, report, search, Result};
 use std::{collections::HashMap, env, fs, path::Path};
-const HELP:&str="Filang 0.4.0 (research prototype)\n\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
+const HELP:&str="Filang 0.5.0 (research prototype)\n\n  filang micro-inspect --config FILE\n  filang micro-sweep --config FILE --gate FILE --out DIR [--plan regions|expanded]\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
   filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
 fn arguments() -> Result<(String, HashMap<String, String>)> {
     let mut it = env::args().skip(1);
@@ -41,6 +41,38 @@ fn entry() -> Result<()> {
         }
         "program-sweep" => {
             println!("{}", filang::program_run::run(flags)?);
+        }
+        "micro-sweep" | "micro-inspect" => {
+            let config_path = take(&mut flags, "--config")?;
+            let raw = fs::read_to_string(config_path).map_err(|e| e.to_string())?;
+            let mut c = filang::micro::Config::parse(&raw)?;
+            if let Some(out) = flags.remove("--out") {
+                c.out = out;
+            }
+            if cmd == "micro-inspect" {
+                finish(&flags)?;
+                println!("{{\"upstream_constructions\":{},\"parameter_addresses\":{},\"status\":\"plan_only\"}}",c.bases()?,c.count()?);
+            } else {
+                let gate = take(&mut flags, "--gate")?;
+                let plan = flags.remove("--plan").unwrap_or_else(|| "regions".into());
+                let backend = filang::kernels::Backend::resolve(
+                    &flags.remove("--backend").unwrap_or_else(|| "auto".into()),
+                )?;
+                let keep = flags.remove("--output").unwrap_or_else(|| "regions".into());
+                if keep != "regions" && keep != "summary" {
+                    return Err("micro output regions/summary".into());
+                }
+                let shared = flags
+                    .remove("--shared")
+                    .unwrap_or_else(|| "true".into())
+                    .parse::<bool>()
+                    .map_err(|_| "bad shared flag")?;
+                finish(&flags)?;
+                println!(
+                    "{}",
+                    filang::micro::run(&c, &raw, &gate, &plan, backend, keep == "regions", shared)?
+                );
+            }
         }
         "anchor-parity" | "anchor-sweep" => {
             let data = take(&mut flags, "--data")?;

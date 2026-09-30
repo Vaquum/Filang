@@ -1,0 +1,92 @@
+   Compiling filang v0.5.0 (/private/tmp/filang-micro-fresh-iKebDg/repo)
+    Finished test [unoptimized + debuginfo] target(s) in 4.65s
+     Running unittests src/lib.rs (target/debug/deps/filang-1b7449710b38347a)
+
+running 27 tests
+test backtest::execution_state::tests::node_join_and_split_identity ... ok
+test backtest::tests::cash_and_cash_funded_buy_hold ... ok
+test data::tests::dates ... ok
+test backtest::tests::no_same_bar_return ... ok
+test data::tests::reject_gaps_and_bad_prices ... ok
+test engine::tests::warmup_and_invalid ... ok
+test engine::tests::prepared_bank_identity_and_backend_parity ... ok
+test engine::tests::future_append_and_batch_identity ... ok
+test family::tests::budget_and_context_are_not_optional ... ok
+test kernels::tests::simd_matches_scalar_boundaries ... ok
+test lang::tests::types_and_roundtrip ... ok
+test family_kernels::tests::multi_output_matches_reference_bits ... ok
+test family::tests::arbitrary_atom_programs_fuse_and_group_without_labels ... ok
+test quantiles::tests::fenwick_matches_sorts_and_future_perturbation ... ok
+test packed::tests::packed_append_correlation_and_votes ... ok
+test regions::tests::grids_ties_invalids_and_all_region_endpoints ... ok
+test report::tests::escaping ... ok
+test regions::tests::trillion_constant_grid_is_resolved_without_enumeration ... ok
+test engine::tests::rolling_oracle ... ok
+test backtest::tests::full_path_family_matches_every_chronological_metric ... ok
+test backtest::tests::shared_cost_scenarios_match_independent_ledgers ... ok
+test backtest::execution_state::tests::arbitrary_flips_splits_joins_scenarios_and_tails ... ok
+test hash::tests::standard_vectors ... ok
+test hash::chunk_tests::chunk_boundaries_match_one_shot ... ok
+test paged_anchors::tests::paged_anchors_equal_finite_catalog_without_global_seen_set ... ok
+test walk::tests::random_access_last_trillion_page_is_bounded_and_deterministic ... ok
+test backtest::tests::sweep_matches_direct_ties_costs_and_invalid ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+     Running unittests src/main.rs (target/debug/deps/filang-0830afb1b732305d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/anchors.rs (target/debug/deps/anchors-77ea887bb267e8d6)
+
+running 4 tests
+test raw_profile_is_explicit_and_zero_cases_keep_their_contract ... ok
+test anchored_profiles_keep_every_legacy_definition_and_immutable_neighbors ... ok
+test existing_open_generator_uses_the_same_family_compiler ... ok
+test parity_gate_binds_evidence_catalog_engine_and_data ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
+
+     Running tests/cli.rs (target/debug/deps/cli-428d2812687da304)
+
+running 2 tests
+test public_scorer_rejects_invalid_requests ... ok
+test cli_end_to_end_and_integrity_guards ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.75s
+
+     Running tests/micro.rs (target/debug/deps/micro-a2abc571c2780a93)
+
+running 3 tests
+test anonymous_programs_use_same_region_plan_and_shared_context_guards ... ok
+test config_domain_and_future_causality ... ok
+test exact_anchor_expression_and_expanded_neighbors ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.88s
+
+     Running tests/paged.rs (target/debug/deps/paged-148e0edaa9f72fef)
+
+running 5 tests
+test bounded_source_has_no_eager_domain_or_bad_budget ... ok
+test output_summary_matches_streamed_binary_digest ... ok
+test earlier_metrics_ignore_appended_future_and_chunking ... ok
+test real_open_generator_runs_same_executor_near_trillion_boundary ... ok
+test periods_all_backends_pages_and_full_metrics ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.34s
+
+     Running tests/walk.rs (target/debug/deps/walk-8fa418671f6b2f36)
+
+running 1 test
+test native_walk_reference_future_invariance_and_sealed_replay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.26s
+
+   Doc-tests filang
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
