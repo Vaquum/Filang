@@ -1,0 +1,165 @@
+{
+  "role": "descriptive_in_sample_not_promotion",
+  "families": [
+    {
+      "family": "sma",
+      "minimum_stress_drawdown_pct": 46.56048287293216,
+      "primary_return_range": [
+        207.32097723644182,
+        321.71343610682055
+      ],
+      "stress_return_range": [
+        133.66595904575337,
+        235.73625253025926
+      ],
+      "positive_primary_addresses": 10091043,
+      "positive_stress_addresses": 10091043,
+      "strictly_better_stress_addresses": 5580645,
+      "max_rss_bytes": 49266688
+    },
+    {
+      "family": "ema",
+      "minimum_stress_drawdown_pct": 77.59877785421016,
+      "primary_return_range": [
+        25.15661994979434,
+        129.80321262871038
+      ],
+      "stress_return_range": [
+        -52.0784474246248,
+        -4.13773655957638
+      ],
+      "positive_primary_addresses": 10091043,
+      "positive_stress_addresses": 0,
+      "strictly_better_stress_addresses": 3787979,
+      "max_rss_bytes": 49709056
+    },
+    {
+      "family": "rsi",
+      "minimum_stress_drawdown_pct": 77.93967595130957,
+      "primary_return_range": [
+        53.42766359347879,
+        101.83913318940783
+      ],
+      "stress_return_range": [
+        -37.32870394361695,
+        -15.945071253804288
+      ],
+      "positive_primary_addresses": 10091043,
+      "positive_stress_addresses": 0,
+      "strictly_better_stress_addresses": 3649216,
+      "max_rss_bytes": 50610176
+    },
+    {
+      "family": "macd",
+      "minimum_stress_drawdown_pct": 75.79584569128147,
+      "primary_return_range": [
+        -37.48225716058132,
+        10.267438719542291
+      ],
+      "stress_return_range": [
+        -67.68763362430788,
+        -45.242832804348865
+      ],
+      "positive_primary_addresses": 49402,
+      "positive_stress_addresses": 0,
+      "strictly_better_stress_addresses": 9765632,
+      "max_rss_bytes": 50823168
+    },
+    {
+      "family": "bollinger",
+      "minimum_stress_drawdown_pct": 76.55038518828616,
+      "primary_return_range": [
+        -50.656619430224914,
+        -32.8462954363043
+      ],
+      "stress_return_range": [
+        -71.24524026449463,
+        -61.41768800264661
+      ],
+      "positive_primary_addresses": 0,
+      "positive_stress_addresses": 0,
+      "strictly_better_stress_addresses": 3031993,
+      "max_rss_bytes": 50724864
+    },
+    {
+      "family": "stochastic",
+      "minimum_stress_drawdown_pct": 97.45866856137366,
+      "primary_return_range": [
+        -79.7414940276388,
+        -64.74286498992716
+      ],
+      "stress_return_range": [
+        -97.59734708118536,
+        -95.66523803911176
+      ],
+      "positive_primary_addresses": 0,
+      "positive_stress_addresses": 0,
+      "strictly_better_stress_addresses": 5937831,
+      "max_rss_bytes": 50757632
+    },
+    {
+      "family": "atr",
+      "minimum_stress_drawdown_pct": 77.82167512414281,
+      "primary_return_range": [
+        111.65624424415861,
+        139.0938797659031
+      ],
+      "stress_return_range": [
+        86.79997307164332,
+        110.40000738761168
+      ],
+      "positive_primary_addresses": 10091043,
+      "positive_stress_addresses": 10091043,
+      "strictly_better_stress_addresses": 1000349,
+      "max_rss_bytes": 52854784
+    },
+    {
+      "family": "roc",
+      "minimum_stress_drawdown_pct": 80.8224043237404,
+      "primary_return_range": [
+        -39.670731649258286,
+        65.41313643099772
+      ],
+      "stress_return_range": [
+        -80.39437118866427,
+        -40.1946272821215
+      ],
+      "positive_primary_addresses": 3577844,
+      "positive_stress_addresses": 0,
+      "strictly_better_stress_addresses": 9704155,
+      "max_rss_bytes": 49774592
+    },
+    {
+      "family": "cci",
+      "minimum_stress_drawdown_pct": 63.57231901494369,
+      "primary_return_range": [
+        -10.24494525484458,
+        28.777222092671945
+      ],
+      "stress_return_range": [
+        -59.58973323363176,
+        -39.53386175459349
+      ],
+      "positive_primary_addresses": 8287938,
+      "positive_stress_addresses": 0,
+      "strictly_better_stress_addresses": 9221965,
+      "max_rss_bytes": 50774016
+    },
+    {
+      "family": "vwap",
+      "minimum_stress_drawdown_pct": 75.58876546476661,
+      "primary_return_range": [
+        9.659041123132686,
+        100.14982569259112
+      ],
+      "stress_return_range": [
+        -60.6457557125832,
+        -26.01788616521592
+      ],
+      "positive_primary_addresses": 10091043,
+      "positive_stress_addresses": 0,
+      "strictly_better_stress_addresses": 4556481,
+      "max_rss_bytes": 50233344
+    }
+  ]
+}
