@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "change": "native help text only after the fully verified numerical build",
+  "exhaustive_reference_verification": "/Users/mikkokotila/dev/Filang/runs/sma-micro-v05/verification.json",
+  "verified_engine_sha256": "0ccaa525f56ae19fcdd550284ba564e046121e2d4bb88445ed81b9ff3c923fad",
+  "final_engine_sha256": "c2ce0e260c3b97990ed90f263482cbc12ccf1e0f43cabae32ce289165c3b757b",
+  "full_file_content_comparisons": {
+    "regions.bin": true,
+    "transitions.bin": true,
+    "frozen.tsv": true,
+    "surface.csv": true
+  },
+  "all_position_paths_and_metric_records_identical": true
+}

@@ -2,7 +2,7 @@
   "version": 1,
   "role": "retrospective_discovery_frozen_before_later_replay",
   "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
-  "engine_sha256": "0ccaa525f56ae19fcdd550284ba564e046121e2d4bb88445ed81b9ff3c923fad",
+  "engine_sha256": "c2ce0e260c3b97990ed90f263482cbc12ccf1e0f43cabae32ce289165c3b757b",
   "plan": "regions",
   "backend": "neon",
   "upstream_parameter_constructions": 5043,
@@ -100,8 +100,8 @@
     "event_sorts": 0,
     "full_metric_sets": 866810,
     "numeric_payload_peak": 763344,
-    "numeric_seconds": 0.18136758199999994,
-    "scoring_seconds": 1.0858479669999999,
+    "numeric_seconds": 0.17742181299999973,
+    "scoring_seconds": 1.0645584250000002,
     "detection_seconds": 0,
     "output_seconds": 0,
     "replay_calls": 0,
@@ -139,6 +139,6 @@
       1
     ]
   },
-  "output_seconds_included_in_scoring": 0.5449668639997475,
-  "total_internal_seconds": 1.331259416
+  "output_seconds_included_in_scoring": 0.5355963439986964,
+  "total_internal_seconds": 1.303840791
 }
