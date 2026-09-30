@@ -1,0 +1,60 @@
+{
+  "reference": "TA-Lib raw APIs; rolling VWAP uses independent weighted SUMs",
+  "talib": "0.6.8",
+  "c": "0.6.4 (Oct 20 2025 20:23:07)",
+  "rows": 320,
+  "families": [
+    [
+      "sma",
+      200,
+      1
+    ],
+    [
+      "ema",
+      24,
+      1
+    ],
+    [
+      "rsi",
+      14,
+      1
+    ],
+    [
+      "macd",
+      12,
+      0
+    ],
+    [
+      "bollinger",
+      20,
+      2
+    ],
+    [
+      "stochastic",
+      14,
+      0
+    ],
+    [
+      "atr",
+      14,
+      0.01
+    ],
+    [
+      "roc",
+      14,
+      1
+    ],
+    [
+      "cci",
+      20,
+      1
+    ],
+    [
+      "vwap",
+      20,
+      1
+    ]
+  ],
+  "data_sha256": "ed96c666e905cb440987945706c316ae52b6cbdc762f707a7be94ac456543eb2",
+  "values_sha256": "79fbc884c57b7eddeba3cb35dea1fffadb99ad0ed1348d29491ecb0934db1a0a"
+}

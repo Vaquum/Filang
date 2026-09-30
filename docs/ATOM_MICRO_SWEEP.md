@@ -42,7 +42,7 @@ and window stripe. All b/c descendants reuse exactly those node values. The grap
 prefix and data context must match; incompatible state is rejected.
 `Executor::constant_regions` recognizes an ordinary `sub(series,constant)` root
 read out strictly above zero. It does not recognize an indicator name. For the
-supported finite nonnegative operands, `(x-c)>0` and `x>c` have identical decisions:
+supported finite bounded operands (signed support extended in 0.6), `(x-c)>0` and `x>c` have identical decisions:
 subtraction cannot overflow or reverse a nonzero difference's sign. Nonfinite x
 remains invalid/flat. An unsupported domain fails this plan; the expanded reference
 remains available. No approximate margin or epsilon licenses a changed trade.

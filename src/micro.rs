@@ -21,6 +21,8 @@ use std::{
 };
 #[derive(Clone, Debug)]
 pub struct Config {
+    pub family: String,
+    pub cohort_gate: Option<String>,
     pub data: String,
     pub out: String,
     pub interval: i64,
@@ -63,6 +65,8 @@ impl Config {
             return Err("micro config version".into());
         }
         let c = Self {
+            family: m.remove("family").unwrap_or_else(|| "sma".into()),
+            cohort_gate: m.remove("cohort_gate"),
             data: take(&mut m, "data")?,
             out: take(&mut m, "out")?,
             interval: n(&mut m, "interval_seconds")?,
@@ -122,16 +126,19 @@ impl Config {
         if w.len() != c.windows.len() {
             return Err("duplicate windows".into());
         }
+        crate::cohort::defaults(&c.family)?;
+        if c.family == "macd" && c.windows.iter().any(|n| *n >= 26) {
+            return Err("MACD fast period must be below 26".into());
+        }
         c.alpha.member(0.)?;
         c.beta.member(0.)?;
-        c.offset.member(1.)?;
+        c.offset.member(c.center())?;
         if c.alpha.value(0) < -0.25
             || c.alpha.value(c.alpha.count - 1) > 0.25
             || c.beta.value(0) < 0.
             || c.beta.value(c.beta.count - 1) > 1.
-            || c.offset.value(0) <= 0.
         {
-            return Err("micro domains: alpha [-.25,.25], beta [0,1], positive offset".into());
+            return Err("micro domains: alpha [-.25,.25], beta [0,1]".into());
         }
         if !c.max_drawdown.is_finite()
             || c.max_drawdown < 0.
@@ -146,6 +153,11 @@ impl Config {
         }
         c.count()?;
         Ok(c)
+    }
+    pub fn center(&self) -> f64 {
+        crate::cohort::defaults(&self.family)
+            .expect("validated family")
+            .1
     }
     pub fn bases(&self) -> Result<u64> {
         (self.windows.len() as u64)
@@ -178,13 +190,17 @@ impl Config {
             .abs()
             .max(self.alpha.value(self.alpha.count - 1).abs());
         let bw = self.beta.value(self.beta.count - 1).abs();
-        let cw = (self.offset.value(0) - 1.)
+        let cw = (self.offset.value(0) - self.center())
             .abs()
-            .max((self.offset.value(self.offset.count - 1) - 1.).abs());
+            .max((self.offset.value(self.offset.count - 1) - self.center()).abs());
         (n as f64 - self.anchor as f64).abs()
             + if aw > 0. { a.abs() / aw } else { 0. }
             + if bw > 0. { b.abs() / bw } else { 0. }
-            + if cw > 0. { (c - 1.).abs() / cw } else { 0. }
+            + if cw > 0. {
+                (c - self.center()).abs() / cw
+            } else {
+                0.
+            }
     }
 }
 /// Prefix shared by all beta/offset descendants for this source/window stripe.
@@ -263,8 +279,8 @@ fn pair_metrics(
     b: f64,
     offset: f64,
 ) -> Result<Vec<Metrics>> {
-    let (mut g, ids) = stripe(n, a)?;
-    let r = output(&mut g, ids, b, offset)?;
+    let (mut g, ids) = crate::cohort::stripe(&c.family, n, a)?;
+    let r = crate::cohort::output(&mut g, &c.family, ids, b, offset)?;
     let batch = crate::engine::evaluate(&g, d, &[r], c.memory)?;
     c.costs
         .iter()
@@ -292,8 +308,8 @@ fn gate(path: &str, digest: &str) -> Result<()> {
 fn freeze(c: &Config, d: &Data, picks: &[(&str, Pick)], dir: &Path) -> Result<()> {
     let mut text=format!("# filang-selection-v1\n# execution=spot_open_v1\n# interval={}\n# fee_bps={}\n# slip_bps={}\n# evaluation_start={}\n# evaluation_end={}\n# discovery_sha256={}\n# discovery_rows={}\n# research_role=retrospective_micro_neighborhood\nid\tgroup\tname\tgreater\tthreshold_bits\texpression\n",c.interval,c.costs[0].fee_bps,c.costs[0].slip_bps,c.evaluation_start,c.evaluation_end,d.digest,d.len());
     for (label, p) in picks {
-        let (mut g, ids) = stripe(p.n, p.a)?;
-        let root = output(&mut g, ids, p.b, p.c)?;
+        let (mut g, ids) = crate::cohort::stripe(&c.family, p.n, p.a)?;
+        let root = crate::cohort::output(&mut g, &c.family, ids, p.b, p.c)?;
         let fid = g.identity(root);
         let id = sha256(format!("filang-readout-v1|{fid}|true|0000000000000000").as_bytes());
         writeln!(
@@ -337,6 +353,11 @@ pub fn run(
         );
     }
     gate(gate_path, &d.digest)?;
+    if let Some(path) = &c.cohort_gate {
+        crate::cohort::validate_gate(path, &d.digest)?;
+    } else if c.family != "sma" {
+        return Err("new cohort families require independent cohort_gate".into());
+    }
     report::create_out(&c.out)?;
     let dir = Path::new(&c.out);
     report::write(dir.join("experiment.cfg"), raw)?;
@@ -350,12 +371,12 @@ pub fn run(
             + c.alpha.member(0.)?)
             * c.beta.count
             + c.beta.member(0.)?,
-        q: c.offset.member(1.)?,
+        q: c.offset.member(c.center())?,
         n: c.anchor,
         a: 0.,
         b: 0.,
-        c: 1.,
-        ms: pair_metrics(c, &d, c.anchor, 0., 0., 1.)?,
+        c: c.center(),
+        ms: pair_metrics(c, &d, c.anchor, 0., 0., c.center())?,
         distance: 0.,
     };
     let mut executor = Executor::new(
@@ -383,17 +404,19 @@ pub fn run(
     };
     let mut surface =
         BufWriter::new(fs::File::create(dir.join("surface.csv")).map_err(|e| e.to_string())?);
-    writeln!(surface,"base,window,source_weight,mean_weight,regions,eligible_addresses,at_one_net_pct,at_one_stress_pct,at_one_stress_drawdown,at_one_trades,best_stress_pct,best_offset,worst_stress_pct").map_err(|e|e.to_string())?;
+    writeln!(surface,"{}",if c.family=="sma" {"base,window,source_weight,mean_weight,regions,eligible_addresses,at_one_net_pct,at_one_stress_pct,at_one_stress_drawdown,at_one_trades,best_stress_pct,best_offset,worst_stress_pct"} else {"base,window,source_weight,mean_weight,regions,eligible_addresses,at_anchor_cutoff_net_pct,at_anchor_cutoff_stress_pct,at_anchor_cutoff_stress_drawdown,at_anchor_cutoff_trades,best_stress_pct,best_offset,worst_stress_pct"}).map_err(|e|e.to_string())?;
     let (mut hasher, mut covered, mut regions, mut events) = (Sha256::default(), 0u64, 0u64, 0u64);
     let (mut positive, mut outperform, mut eligible_total) = (0u64, 0u64, 0u64);
     let (mut winner, mut descriptive): (Option<Pick>, Option<Pick>) = (None, None);
+    let (mut atoms, mut weights, mut cutoff): (Option<Pick>, Option<Pick>, Option<Pick>) =
+        (None, None, None);
     let mut base = 0;
-    let c_one = c.offset.member(1.)?;
+    let c_one = c.offset.member(c.center())?;
     let mut output_seconds = 0.;
     for &n in &c.windows {
         for ia in 0..c.alpha.count {
             let a = c.alpha.value(ia);
-            let (base_graph, ids) = stripe(n, a)?;
+            let (base_graph, ids) = crate::cohort::stripe(&c.family, n, a)?;
             if shared {
                 executor.prepare_shared(&base_graph, &ids)?;
             } else {
@@ -402,7 +425,7 @@ pub fn run(
             for ib in 0..c.beta.count {
                 let b = c.beta.value(ib);
                 let mut g = base_graph.clone();
-                let root = output(&mut g, ids, b, 1.)?;
+                let root = crate::cohort::output(&mut g, &c.family, ids, b, c.center())?;
                 let (mut local_regions, mut local_eligible, mut local_next) = (0u64, 0u64, 0u64);
                 let mut at_one = None;
                 let mut best: Option<Pick> = None;
@@ -441,6 +464,24 @@ pub fn run(
                         }
                         if lo <= c_one && c_one < hi {
                             at_one = Some(ms.to_vec());
+                            let mut fixed = p.clone();
+                            fixed.q = c_one;
+                            fixed.c = c.center();
+                            fixed.distance = c.distance(n, a, b, c.center());
+                            if atoms.as_ref().map_or(true, |v| better(&fixed, v)) {
+                                atoms = Some(fixed.clone());
+                            }
+                            if n == c.anchor && weights.as_ref().map_or(true, |v| better(&fixed, v))
+                            {
+                                weights = Some(fixed);
+                            }
+                        }
+                        if n == c.anchor
+                            && a == 0.
+                            && b == 0.
+                            && cutoff.as_ref().map_or(true, |v| better(&p, v))
+                        {
+                            cutoff = Some(p.clone());
                         }
                         let ok = eligible(c, ms);
                         if ok {
@@ -504,13 +545,14 @@ pub fn run(
     }
     let mut picks = vec![("anchor", anchor.clone())];
     if let Some(p) = &winner {
-        if !(p.n == anchor.n && p.a == 0. && p.b == 0. && p.c == 1.) {
+        if !(p.n == anchor.n && p.a == 0. && p.b == 0. && p.c == c.center()) {
             picks.push(("selected", p.clone()));
         }
     }
     freeze(c, &d, &picks, dir)?;
     let summary=format!("{{\"version\":1,\"role\":\"retrospective_discovery_frozen_before_later_replay\",\"data_sha256\":{},\"engine_sha256\":{},\"plan\":{},\"backend\":{},\"upstream_parameter_constructions\":{},\"full_parameter_addresses_resolved\":{},\"logical_scenario_metric_sets\":{},\"physical_result_regions\":{},\"crossing_events\":{},\"coverage_complete\":true,\"distinct_full_programs_not_asserted\":true,\"offset_is_readout_equivalent\":true,\"positive_stress_addresses\":{},\"beats_anchor_stress_addresses\":{},\"eligible_addresses\":{},\"region_bytes_computed\":{},\"region_bytes_written\":{},\"region_sha256\":{},\"anchor\":{},\"selected\":{},\"descriptive_best_not_additionally_selected\":{},\"prepared_banks\":{},\"prepared_nodes\":{},\"prepared_hits\":{},\"bank_peak_bytes\":{},\"state_bytes\":{},\"page_work\":{},\"transition_work\":{},\"output_seconds_included_in_scoring\":{},\"total_internal_seconds\":{}}}\n",
         quote(&d.digest),quote(&crate::anchor_run::engine_id()?),quote(plan),quote(backend.name()),base,covered,(covered as u128)*2,regions,events,positive,outperform,eligible_total,(regions as u128)*184,if keep_regions{(regions as u128)*184}else{0},quote(&hasher.finish()),anchor.json(c.interval),winner.as_ref().map_or_else(||"null".into(),|p|p.json(c.interval)),descriptive.as_ref().map_or_else(||"null".into(),|p|p.json(c.interval)),executor.bank_builds,executor.bank_nodes,executor.bank_hits,executor.bank_peak_bytes,executor.state_bytes(),executor.work.json(),executor.state_work().json(),num(output_seconds),num(clock.elapsed().as_secs_f64()));
+    report::write(dir.join("comparisons.json"), &format!("{{\"family\":{},\"baseline_cutoff\":{},\"atom_only\":{},\"weights_only\":{},\"cutoff_only\":{}}}\n",quote(&c.family),num(c.center()),atoms.as_ref().map_or_else(||"null".into(),|v|v.json(c.interval)),weights.as_ref().map_or_else(||"null".into(),|v|v.json(c.interval)),cutoff.as_ref().map_or_else(||"null".into(),|v|v.json(c.interval))))?;
     report::write(dir.join("summary.json"), &summary)?;
     Ok(summary)
 }
