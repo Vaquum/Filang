@@ -42,8 +42,12 @@ fn entry() -> Result<()> {
         "cohort-parity" => {
             let data = take(&mut flags, "--data")?;
             let out = take(&mut flags, "--out")?;
+            let begin = flags
+                .remove("--start")
+                .unwrap_or_else(|| "2021-01-01".into());
+            let end = flags.remove("--end").unwrap_or_else(|| "2025-01-01".into());
             finish(&flags)?;
-            filang::cohort_parity::run(&data, &out)?;
+            filang::cohort_parity::run_range(&data, &out, &begin, &end)?;
             println!("Ten-cohort reference outputs: {out}");
         }
         "program-sweep" => {

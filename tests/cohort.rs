@@ -236,3 +236,68 @@ fn independent_talib_reference_fixtures_on_each_native_backend() {
         }
     }
 }
+
+#[test]
+fn explicit_parity_range_keeps_warmup_and_rejects_future_rows() {
+    use std::{
+        fs,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+    let tag = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("filang-year-parity-{}-{tag}", std::process::id()));
+    fs::create_dir(&dir).unwrap();
+    let input = dir.join("input.csv");
+    let csv = include_str!("fixtures/cohort_ohlcv.csv")
+        .lines()
+        .take(301)
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+    fs::write(&input, csv).unwrap();
+    let a = dir.join("a");
+    let b = dir.join("b");
+    filang::cohort_parity::run_range(
+        input.to_str().unwrap(),
+        a.to_str().unwrap(),
+        "1970-02-10",
+        "1970-02-20",
+    )
+    .unwrap();
+    filang::cohort_parity::run_range(
+        input.to_str().unwrap(),
+        b.to_str().unwrap(),
+        "1970-02-15",
+        "1970-02-20",
+    )
+    .unwrap();
+    assert_eq!(
+        fs::read(a.join("features.bin")).unwrap(),
+        fs::read(b.join("features.bin")).unwrap()
+    );
+    let manifest = fs::read_to_string(b.join("manifest.json")).unwrap();
+    assert!(manifest.contains("\"start_index\":270"));
+    assert!(manifest.contains("\"end_index\":300"));
+    let invalid = dir.join("invalid");
+    assert!(filang::cohort_parity::run_range(
+        input.to_str().unwrap(),
+        invalid.to_str().unwrap(),
+        "1970-02-10",
+        "1970-02-19"
+    )
+    .is_err());
+    assert!(!invalid.exists());
+    assert!(filang::cohort_parity::run_range(
+        input.to_str().unwrap(),
+        invalid.to_str().unwrap(),
+        "1970-02-21",
+        "1970-02-20"
+    )
+    .is_err());
+    assert!(
+        filang::cohort_parity::run(input.to_str().unwrap(), invalid.to_str().unwrap()).is_err()
+    );
+    fs::remove_dir_all(dir).unwrap();
+}
