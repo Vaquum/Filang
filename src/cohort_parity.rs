@@ -14,11 +14,20 @@ use std::{
     path::Path,
 };
 pub fn run(data_path: &str, out: &str) -> Result<()> {
+    run_range(data_path, out, "2021-01-01", "2025-01-01")
+}
+/// Preserve all earlier warmup rows while binding parity to an explicit scored range.
+/// Input must end at the exclusive end, so a later row cannot enter this gate.
+pub fn run_range(data_path: &str, out: &str, begin: &str, end: &str) -> Result<()> {
     let d = Data::read(data_path, 14400)?;
-    let start = d.index(data::date("2021-01-01")?);
-    if d.timestamps.last().unwrap() + d.interval != data::date("2025-01-01")? {
-        return Err("cohort parity requires sealed discovery prefix".into());
+    let begin = data::date(begin)?;
+    let end = data::date(end)?;
+    if begin >= end || d.timestamps[0] > begin || d.timestamps.last().unwrap() + d.interval != end {
+        return Err(
+            "cohort parity requires a covered range and sealed end-exclusive prefix".into(),
+        );
     }
+    let start = d.index(begin);
     report::create_out(out)?;
     let dir = Path::new(out);
     let mut features =

@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "role": "annual_same_year_in_sample_tuning",
+  "source_commit": "2bd5951fcd841eec8ab16fbdb1b9f30a565d5458",
+  "engine_sha256": "9336e1b1590a1102825a1045812eaedcd3216b762f6a86d6ebbfb479a13d3e5c",
+  "full_data_sha256": "7844ae10462b6ddd6b17ea21a0626153b6786cbb0fd828bf2593e574a7578625",
+  "reported_fee_bps_per_side": 10,
+  "reported_slippage_bps_per_side": 10,
+  "difference_definition": "tuned_return_pct - reference_return_pct (percentage points)",
+  "parameter_addresses_per_family_year": 10091043,
+  "years": {}
+}

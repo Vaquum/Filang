@@ -159,3 +159,11 @@ After full verification, repeat all ten matched small-grid and full-grid ablatio
 The later verifier expects per-family evaluate output directories named family-primary
 and family-stress under the supplied later root; it checks all frozen candidates,
 timestamps, feature values, signals and metrics with independent accounting.
+
+## Independent annual tables (2024, 2025, 2026)
+
+`cohort-parity` also accepts `--start YYYY-MM-DD --end YYYY-MM-DD`; the defaults remain 2021-01-01 through 2025-01-01 exclusive. The input must end exactly at the requested exclusive end and retains all earlier rows for warmup.
+
+Run `scripts/run_annual_cohort.py discover --out runs/annual-micro-2024-2026` and then `scripts/run_annual_cohort.py verify --out runs/annual-micro-2024-2026 --workers 4` with the repository virtual environment. The runner rechecks both reference gates, creates immutable historical prefixes, and repeats the unchanged ten grids independently for each year.
+
+The annual tables report only 10 bps fees plus 10 bps slippage per side. Tuned means the same-year unrestricted descriptive stress-return maximum, not an eligible or out-of-sample winner. Delta is tuned minus reference in percentage points; normalized relative differences are separately retained in JSON. 2026 ends September 28 exclusive and is not annualized. The runner does not conduct subsequent validation or promote strategies.

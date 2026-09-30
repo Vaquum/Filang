@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "family": "roc",
+  "upstream_constructions": 5043,
+  "addresses_covered": 10091043,
+  "physical_regions": 223451,
+  "all_position_paths_verified_by_exact_event_arrays": true,
+  "all_physical_scenario_metric_sets_checked": true,
+  "cash_share_metric_sets_checked": 446902,
+  "numpy_chronological_crosschecks": 120,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 1.751487843648647e-12,
+  "data_sha256": "7844ae10462b6ddd6b17ea21a0626153b6786cbb0fd828bf2593e574a7578625",
+  "engine_sha256": "9336e1b1590a1102825a1045812eaedcd3216b762f6a86d6ebbfb479a13d3e5c",
+  "oracle_c_sha256": "b867e5bc4a871ec1ae8f8ca469268a574fe0e9c5e9697f7e5e36b6d467652a53",
+  "oracle_library_sha256": "7ee81006e1df3ca8682d31f7caca55ddecc612b14ac26f40e76d6f5e03658931",
+  "regions_sha256": "44c9b221896624bab07a95b7737b78663f03888a81185c6df8ebd5464c690807",
+  "transitions_sha256": "65088b297ba0e4b20dfcda076bee342370de40104fee3b1081d2864203267956",
+  "seconds": 4.565052707999712
+}
