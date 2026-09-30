@@ -2,9 +2,16 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.5, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
+**Status: runnable 0.6, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
 
-## Current: fine atom-neighborhood sweeps (0.5)
+## Current: ten-family atom micro-sweeps (0.6)
+
+Ten declared known-feature families now use the same fine-grid engine, with signed
+result-region support, an independent cohort parity gate and full response surfaces.
+See [the exact cohort, configurations and experiment commands](docs/TEN_INDICATOR_SWEEP.md).
+The selection is a practical mainstream cohort, not a measured global usage ranking.
+
+## Earlier: fine atom-neighborhood sweeps (0.5)
 
 The new `micro-sweep` keeps the exact SMA anchor, varies ordinary source/mixture/
 subtraction constants on explicit rational grids, shares input/mean dependencies,

@@ -24,6 +24,7 @@ pub enum Op {
     Mean(usize),
     MeanSum(usize),
     StdSum(usize),
+    MeanAbsDev(usize),
     Std(usize),
     Min(usize),
     Max(usize),
@@ -61,8 +62,8 @@ impl Graph {
             Constant(b) if !f64::from_bits(b).is_finite() => {
                 return Err("constant must be finite".into())
             }
-            Lag(n) | Skip(n) | Diff(n) | Mean(n) | MeanSum(n) | StdSum(n) | Std(n) | Min(n)
-            | Max(n) | Ema(n) | Wilder(n)
+            Lag(n) | Skip(n) | Diff(n) | Mean(n) | MeanSum(n) | StdSum(n) | MeanAbsDev(n)
+            | Std(n) | Min(n) | Max(n) | Ema(n) | Wilder(n)
                 if n == 0 || n > 100_000 =>
             {
                 return Err("window/lag outside 1..100000".into())
@@ -157,6 +158,7 @@ impl Graph {
             Mean(n) => format!("mean {n}"),
             MeanSum(n) => format!("mean_sum {n}"),
             StdSum(n) => format!("std_sum {n}"),
+            MeanAbsDev(n) => format!("mad_mean {n}"),
             Std(n) => format!("std {n}"),
             Min(n) => format!("min {n}"),
             Max(n) => format!("max {n}"),
@@ -233,8 +235,8 @@ impl Graph {
                         Op::Neg
                     }
                 }
-                "lag" | "skip" | "diff" | "mean" | "mean_sum" | "std_sum" | "std" | "min"
-                | "max" | "ema" | "wilder" => {
+                "lag" | "skip" | "diff" | "mean" | "mean_sum" | "std_sum" | "mad_mean" | "std"
+                | "min" | "max" | "ema" | "wilder" => {
                     let n = take(ts, at)?.parse::<usize>().map_err(|_| "bad window")?;
                     args.push(expr(g, ts, at, depth + 1)?);
                     match name {
@@ -244,6 +246,7 @@ impl Graph {
                         "mean" => Op::Mean(n),
                         "mean_sum" => Op::MeanSum(n),
                         "std_sum" => Op::StdSum(n),
+                        "mad_mean" => Op::MeanAbsDev(n),
                         "std" => Op::Std(n),
                         "min" => Op::Min(n),
                         "max" => Op::Max(n),

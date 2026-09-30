@@ -46,6 +46,7 @@ fn temporal(o: &Op) -> bool {
             | Op::Mean(_)
             | Op::MeanSum(_)
             | Op::StdSum(_)
+            | Op::MeanAbsDev(_)
             | Op::Std(_)
             | Op::Min(_)
             | Op::Max(_)

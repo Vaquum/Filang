@@ -90,14 +90,22 @@ pub struct RegionWork {
     pub proof: Vec<u8>,
 }
 
-/// Certificate for (x-c)>0 iff x>c: both finite operands are nonnegative,
-/// subtraction cannot overflow or reverse the sign of an exact nonzero difference.
-/// Nonfinite x remains an inactive signal, matching the ordinary pointwise atom.
-/// This is NOT a generic license to reassociate floating-point expressions.
+/// Certificate for (x-c)>0 iff x>c on a bounded signed binary64 domain.
+/// Magnitudes <= MAX/2 prevent subtraction overflow; a distinct finite binary64
+/// pair cannot round its difference across zero, including gradual underflow.
+/// Ties/signed zeros remain false. Nonfinite inputs remain inactive.
+/// This does not permit reassociation or flush-to-zero arithmetic.
 pub fn certificate(x: &[f64], grid: Grid) -> Result<()> {
     grid.validate()?;
-    if grid.value(0) < 0.0 || x.iter().any(|v| v.is_finite() && *v < 0.0) {
-        return Err("constant-subtraction region plan requires nonnegative finite operands; use expanded replay".into());
+    let bound = f64::MAX / 2.0;
+    if grid.value(0).abs() > bound
+        || grid.value(grid.count - 1).abs() > bound
+        || x.iter().any(|v| v.is_finite() && v.abs() > bound)
+    {
+        return Err(
+            "constant-subtraction operands exceed bounded signed certificate; use expanded replay"
+                .into(),
+        );
     }
     Ok(())
 }
@@ -269,7 +277,8 @@ mod tests {
         .unwrap();
         assert_eq!(w.addresses, 1_000_000_000_000);
         assert!(n <= x.len() + 1);
-        assert!(certificate(&[-1.], g).is_err());
+        assert!(certificate(&[-1.], g).is_ok());
+        assert!(certificate(&[f64::MAX], g).is_err());
         assert!(Grid::parse("0:0:1:1").is_err());
     }
 }

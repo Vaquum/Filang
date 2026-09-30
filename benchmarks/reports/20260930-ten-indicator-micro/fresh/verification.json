@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "source_commit": "4d726459033d8db7b405c59091db37a4472ca839",
+  "native_source_commit": "7be7d5917f07922c17b3009adc2a600518bda8b1",
+  "native_tests_passed": 48,
+  "offline_test": true,
+  "offline_release_build": true,
+  "format": true,
+  "warning_free_clippy": true,
+  "note": "Build/tests ran concurrently with external correctness checks; these logs are not timing evidence."
+}

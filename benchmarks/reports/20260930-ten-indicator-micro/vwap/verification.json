@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "family": "vwap",
+  "upstream_constructions": 5043,
+  "addresses_covered": 10091043,
+  "physical_regions": 1501274,
+  "all_position_paths_verified_by_exact_event_arrays": true,
+  "all_physical_scenario_metric_sets_checked": true,
+  "cash_share_metric_sets_checked": 3002548,
+  "numpy_chronological_crosschecks": 120,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 6.59383658785373e-12,
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "engine_sha256": "194dce74012b586a4994a5a8e0d834e649af42abe8f51f1cee733f1a07de34c6",
+  "oracle_c_sha256": "b867e5bc4a871ec1ae8f8ca469268a574fe0e9c5e9697f7e5e36b6d467652a53",
+  "oracle_library_sha256": "c8417e0d73d83732abf4553a7ea078a5ddfb5395ebd9bce68c65045b6b0c6665",
+  "regions_sha256": "b01588641692cbfd11cf1437eda98cb58491cc16e5d8c0c1c0e9b7333c97330f",
+  "transitions_sha256": "6c73e9e53db1ce6a46ae1f6b0867fa57e6a988ffc2c9d581ff24ec9e85bb0428",
+  "seconds": 153.68777120899176
+}

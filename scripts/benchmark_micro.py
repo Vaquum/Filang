@@ -7,11 +7,14 @@ from pathlib import Path
 import numpy as np
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--gate',required=True);p.add_argument('--out',required=True);p.add_argument('--repeats',type=int,default=3);a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--gate',required=True);p.add_argument('--config',default='examples/sma-micro.cfg');p.add_argument('--out',required=True);p.add_argument('--repeats',type=int,default=3);a=p.parse_args()
     out=Path(a.out)
     if out.exists() or a.repeats<1:raise ValueError('new output and positive repeats required')
     out.mkdir(parents=True)
-    raw=Path('examples/sma-micro.cfg').read_text().replace('source_grid=-20:1:41:2000','source_grid=-1:1:3:2000').replace('mean_grid=0:1:41:400','mean_grid=0:1:3:400').replace('offset_grid=999000:1:2001:1000000','offset_grid=999000:10:201:1000000')
+    raw=Path(a.config).read_text().replace('source_grid=-20:1:41:2000','source_grid=-1:1:3:2000').replace('mean_grid=0:1:41:400','mean_grid=0:1:3:400')
+    line=next(l for l in raw.splitlines() if l.startswith('offset_grid='));start,step,count,den=map(int,line.split('=')[1].split(':'))
+    if count!=2001:raise ValueError('matched grid requires 2001 initial offsets')
+    raw=raw.replace(line,f'offset_grid={start}:{step*10}:201:{den}')
     cfg=out/'experiment.cfg';cfg.write_text(raw);binary=str(Path('target/release/filang').resolve());common=[binary,'micro-sweep','--config',str(cfg),'--gate',a.gate]
     dtype=np.dtype([('base','<u8'),('lo','<u8'),('hi','<u8'),('metrics','<f8',(2,10))])
     def execute(name,plan,shared,output):

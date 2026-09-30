@@ -29,3 +29,7 @@ pub mod program_run;
 
 pub mod micro;
 pub mod regions;
+
+pub mod cohort;
+
+pub mod cohort_parity;

@@ -125,6 +125,7 @@ pub(crate) fn kernel(op: &Op, a: Option<&[f64]>, b: Option<&[f64]>, d: &Data) ->
                 s
             }
         }
+        MeanAbsDev(w) => mean_absolute_deviation(a.unwrap(), w),
         Mean(w) | Std(w) => moments(a.unwrap(), w, matches!(op, Std(_))),
         Min(w) | Max(w) => extrema(a.unwrap(), w, matches!(op, Max(_))),
         Ema(w) | Wilder(w) => smooth(
@@ -170,6 +171,25 @@ pub(crate) fn kernel(op: &Op, a: Option<&[f64]>, b: Option<&[f64]>, d: &Data) ->
             out
         }
     }
+}
+/// Full-window mean absolute deviation about that window's arithmetic mean.
+/// Generic O(T*w) atom; finite windows only, population denominator.
+fn mean_absolute_deviation(a: &[f64], w: usize) -> Vec<f64> {
+    let mut out = vec![f64::NAN; a.len()];
+    if w > a.len() {
+        return out;
+    }
+    for t in w - 1..a.len() {
+        let v = &a[t + 1 - w..=t];
+        if v.iter().all(|x| x.is_finite()) {
+            let mean = v.iter().sum::<f64>() / w as f64;
+            let value = v.iter().map(|x| (x - mean).abs()).sum::<f64>() / w as f64;
+            if value.is_finite() {
+                out[t] = value;
+            }
+        }
+    }
+    out
 }
 /// Sliding Welford moments; periodic deterministic rebasing bounds roundoff drift.
 fn moments(a: &[f64], w: usize, std: bool) -> Vec<f64> {
