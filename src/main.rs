@@ -42,6 +42,38 @@ fn entry() -> Result<()> {
         "program-sweep" => {
             println!("{}", filang::program_run::run(flags)?);
         }
+        "micro-sweep" | "micro-inspect" => {
+            let config_path = take(&mut flags, "--config")?;
+            let raw = fs::read_to_string(config_path).map_err(|e| e.to_string())?;
+            let mut c = filang::micro::Config::parse(&raw)?;
+            if let Some(out) = flags.remove("--out") {
+                c.out = out;
+            }
+            if cmd == "micro-inspect" {
+                finish(&flags)?;
+                println!("{{\"upstream_constructions\":{},\"parameter_addresses\":{},\"status\":\"plan_only\"}}",c.bases()?,c.count()?);
+            } else {
+                let gate = take(&mut flags, "--gate")?;
+                let plan = flags.remove("--plan").unwrap_or_else(|| "regions".into());
+                let backend = filang::kernels::Backend::resolve(
+                    &flags.remove("--backend").unwrap_or_else(|| "auto".into()),
+                )?;
+                let keep = flags.remove("--output").unwrap_or_else(|| "regions".into());
+                if keep != "regions" && keep != "summary" {
+                    return Err("micro output regions/summary".into());
+                }
+                let shared = flags
+                    .remove("--shared")
+                    .unwrap_or_else(|| "true".into())
+                    .parse::<bool>()
+                    .map_err(|_| "bad shared flag")?;
+                finish(&flags)?;
+                println!(
+                    "{}",
+                    filang::micro::run(&c, &raw, &gate, &plan, backend, keep == "regions", shared)?
+                );
+            }
+        }
         "anchor-parity" | "anchor-sweep" => {
             let data = take(&mut flags, "--data")?;
             let out = take(&mut flags, "--out")?;
