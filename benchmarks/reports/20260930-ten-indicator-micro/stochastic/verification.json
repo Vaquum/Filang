@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "family": "stochastic",
+  "upstream_constructions": 5043,
+  "addresses_covered": 10091043,
+  "physical_regions": 637190,
+  "all_position_paths_verified_by_exact_event_arrays": true,
+  "all_physical_scenario_metric_sets_checked": true,
+  "cash_share_metric_sets_checked": 1274380,
+  "numpy_chronological_crosschecks": 120,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 3.751665644813329e-12,
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "engine_sha256": "194dce74012b586a4994a5a8e0d834e649af42abe8f51f1cee733f1a07de34c6",
+  "oracle_c_sha256": "b867e5bc4a871ec1ae8f8ca469268a574fe0e9c5e9697f7e5e36b6d467652a53",
+  "oracle_library_sha256": "0b87f8da03ac8b019b52c985ce45194181cab52885c693508c2cc670dbe19e8a",
+  "regions_sha256": "d3f1f50959900508001250f7686e77dca4a780028f8fc865b797e264d6616782",
+  "transitions_sha256": "8e2d48ef7d4b74b13631af72c979ce9dcd562d426261aa96326c1c943bfb5ab4",
+  "seconds": 120.0630296249874
+}

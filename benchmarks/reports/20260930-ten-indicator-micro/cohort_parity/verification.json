@@ -1,0 +1,168 @@
+{
+  "status": "PASS",
+  "families": 10,
+  "programs": 30,
+  "metric_sets": 60,
+  "all_values_validity_masks_and_traces_checked": true,
+  "mask_disagreements": 0,
+  "trade_event_disagreements": 0,
+  "max_feature_error": 4.902989125810109e-11,
+  "max_metric_error": 4.078515303262975e-12,
+  "max_trace_error": 4.574118861455645e-14,
+  "oracle_c_sha256": "b867e5bc4a871ec1ae8f8ca469268a574fe0e9c5e9697f7e5e36b6d467652a53",
+  "talib_wrapper": "0.6.8",
+  "talib_c": "0.6.4 (Oct 20 2025 20:23:07)",
+  "seconds": 1.4752206670091255,
+  "cases": [
+    {
+      "family": "sma",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "sma",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "sma",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "ema",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "ema",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "ema",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "rsi",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "rsi",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "rsi",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "macd",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "macd",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "macd",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "bollinger",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "bollinger",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "bollinger",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "stochastic",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "stochastic",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "stochastic",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "atr",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "atr",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "atr",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "roc",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "roc",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "roc",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "cci",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "cci",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "cci",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "vwap",
+      "case": "anchor",
+      "status": "PASS"
+    },
+    {
+      "family": "vwap",
+      "case": "lower_endpoint",
+      "status": "PASS"
+    },
+    {
+      "family": "vwap",
+      "case": "upper_endpoint",
+      "status": "PASS"
+    }
+  ]
+}

@@ -148,3 +148,14 @@ No assertion of universal profitability or trillion distinct-program completion.
 
 Reference verification may run in separate processes using --workers1..8; this is
 not native engine parallelism and never runs concurrently with timing benchmarks.
+
+After full verification, repeat all ten matched small-grid and full-grid ablations:
+
+```sh
+.venv/bin/python scripts/benchmark_cohort.py --gate runs/ten-legacy-parity/micro_gate.txt --verified runs/ten-experiment --out runs/ten-benchmarks --repeats 3
+.venv/bin/python scripts/verify_cohort_later.py --discovery runs/ten-experiment --later runs/ten-later
+```
+
+The later verifier expects per-family evaluate output directories named family-primary
+and family-stress under the supplied later root; it checks all frozen candidates,
+timestamps, feature values, signals and metrics with independent accounting.
