@@ -1,0 +1,202 @@
+[
+  {
+    "path": "runs/ten-v06/sma/regions.bin",
+    "bytes": 79746520,
+    "sha256": "dc58e704cc92ae9c115e233caacd73e739db6073c175387986d4494babd5dcf0"
+  },
+  {
+    "path": "runs/ten-v06/sma/transitions.bin",
+    "bytes": 12722432,
+    "sha256": "c015245e5535fdc1efbf113396216c3ed48a4a1b768a360c8bf96ec0d5709880"
+  },
+  {
+    "path": "runs/ten-v06/sma/surface.csv",
+    "bytes": 944571,
+    "sha256": "8bc1ed59d6498448227e7c36f1e8d4da1c0b5d873a757539f87831d733097726"
+  },
+  {
+    "path": "runs/ten-v06/sma/frozen.tsv",
+    "bytes": 536,
+    "sha256": "6b11d2587d5d8846f23b6f6672498e0cecfbdc277b78549d7bb0abcdb35d52be"
+  },
+  {
+    "path": "runs/ten-v06/ema/regions.bin",
+    "bytes": 279475208,
+    "sha256": "248ce6a2f650856c9643027dda458e710d457dc5aed02bc2bc0436fb2b0a0176"
+  },
+  {
+    "path": "runs/ten-v06/ema/transitions.bin",
+    "bytes": 31968960,
+    "sha256": "41eca0d5c1f821685d3d9c543cee9161815d8e04452355e700dc1ad961c0ac04"
+  },
+  {
+    "path": "runs/ten-v06/ema/surface.csv",
+    "bytes": 937221,
+    "sha256": "2e787acec333a0912e13e7d9e1a23ca1ff40bb05dab08e8533c795b62b6a742a"
+  },
+  {
+    "path": "runs/ten-v06/ema/frozen.tsv",
+    "bytes": 530,
+    "sha256": "9f21d50fbbb1e0479df210800271951efdc5960751ba2755ae4d9721ed3240d5"
+  },
+  {
+    "path": "runs/ten-v06/rsi/regions.bin",
+    "bytes": 47422136,
+    "sha256": "2b3ce30af56ffcedfbeda46a29d73e1b0c29c272912f43afd8430e37e42388ee"
+  },
+  {
+    "path": "runs/ten-v06/rsi/transitions.bin",
+    "bytes": 9825712,
+    "sha256": "9946cff027c70ae0a25cbba24da90b556a8c4b27cabb78e9b162f74582d17cb5"
+  },
+  {
+    "path": "runs/ten-v06/rsi/surface.csv",
+    "bytes": 934525,
+    "sha256": "661546ebdbb9f46bcc1dd6a0df6aa82ea4306feeb24a0a116a77184e7cffa2a5"
+  },
+  {
+    "path": "runs/ten-v06/rsi/frozen.tsv",
+    "bytes": 597,
+    "sha256": "2caad978ba047e6415da90d33b605c929ea929ed080e65678f4c7feb12ab6173"
+  },
+  {
+    "path": "runs/ten-v06/macd/regions.bin",
+    "bytes": 202529904,
+    "sha256": "7d6e632ef2a41381293679bad046c4f7f2edba9c7305a0cc77baa01ad8f758e9"
+  },
+  {
+    "path": "runs/ten-v06/macd/transitions.bin",
+    "bytes": 24288624,
+    "sha256": "de076ba6e42b5d3781197b59fb08317ce2ae3f0f5a896a1d637f38702c207eb0"
+  },
+  {
+    "path": "runs/ten-v06/macd/surface.csv",
+    "bytes": 947687,
+    "sha256": "bc955ca09a3fd30bfd1487fa53c17ad9b9fddd246afb5733dc71d29196fb178d"
+  },
+  {
+    "path": "runs/ten-v06/macd/frozen.tsv",
+    "bytes": 621,
+    "sha256": "8adcfe96f1b5acef33ea1b619c2fe9e560f49dda2665b69c76b8ebdc571366c3"
+  },
+  {
+    "path": "runs/ten-v06/bollinger/regions.bin",
+    "bytes": 39039280,
+    "sha256": "a3aa1de76d0493a7c69d5f4c1760fbc12f77d453acd105d0066a20bf3e016f99"
+  },
+  {
+    "path": "runs/ten-v06/bollinger/transitions.bin",
+    "bytes": 9079232,
+    "sha256": "cb55d3814c3a0c0bc4b57c6c9764bdcba47a948d8260d285f2888bb43481b806"
+  },
+  {
+    "path": "runs/ten-v06/bollinger/surface.csv",
+    "bytes": 939568,
+    "sha256": "c3a2263780cbedd329a0eeb4f7ac55da59c00ab67cf97dcc4d685c369c8d0b0b"
+  },
+  {
+    "path": "runs/ten-v06/bollinger/frozen.tsv",
+    "bytes": 560,
+    "sha256": "afdb013346fd24592d685cd1e1b4ec4b43847ef497bd30f5452118f21adc527b"
+  },
+  {
+    "path": "runs/ten-v06/stochastic/regions.bin",
+    "bytes": 117242960,
+    "sha256": "d3f1f50959900508001250f7686e77dca4a780028f8fc865b797e264d6616782"
+  },
+  {
+    "path": "runs/ten-v06/stochastic/transitions.bin",
+    "bytes": 16170592,
+    "sha256": "8e2d48ef7d4b74b13631af72c979ce9dcd562d426261aa96326c1c943bfb5ab4"
+  },
+  {
+    "path": "runs/ten-v06/stochastic/surface.csv",
+    "bytes": 951851,
+    "sha256": "ad0172656d8e655a1e2d03cb1ed5ee0277a63688e68c9f4a620ab9fb5f36dd3b"
+  },
+  {
+    "path": "runs/ten-v06/stochastic/frozen.tsv",
+    "bytes": 780,
+    "sha256": "d7f25e1992338ecc58e303e367e72724bae11ad05f9081ed4d88873204fa3a92"
+  },
+  {
+    "path": "runs/ten-v06/atr/regions.bin",
+    "bytes": 67210784,
+    "sha256": "6969318650a01ff29e59b3caed51f32ac77ba5d0abdd584beba1db42941dcf61"
+  },
+  {
+    "path": "runs/ten-v06/atr/transitions.bin",
+    "bytes": 11602928,
+    "sha256": "a1fe4e6c6e1b548aeb70ea64ad2b9c159f995708f6289242b152b3343e8461ca"
+  },
+  {
+    "path": "runs/ten-v06/atr/surface.csv",
+    "bytes": 927980,
+    "sha256": "2398f7ed928e1cf05005fd1082eaa60cef264a4c2f7d40a6a38ffdc6f1a6c3a7"
+  },
+  {
+    "path": "runs/ten-v06/atr/frozen.tsv",
+    "bytes": 617,
+    "sha256": "cb4822a3ee7c8009d963b180c182607acce1fd392efb1982b8b2402c23776ab0"
+  },
+  {
+    "path": "runs/ten-v06/roc/regions.bin",
+    "bytes": 211209368,
+    "sha256": "4af6266033108d47fad0991311cb32d295c47bd8b9154e3ba8a6fd2e3e667b1c"
+  },
+  {
+    "path": "runs/ten-v06/roc/transitions.bin",
+    "bytes": 25131760,
+    "sha256": "d2d9c3f43d65c38f9564b60a24a025232ae6981c7fd66bb73d7b53ccd1ef800f"
+  },
+  {
+    "path": "runs/ten-v06/roc/surface.csv",
+    "bytes": 942473,
+    "sha256": "2eb52c643c3b0e99de92f7b70e3709ba2bc5f4cd92711eb9560bf3aff15ecbb2"
+  },
+  {
+    "path": "runs/ten-v06/roc/frozen.tsv",
+    "bytes": 530,
+    "sha256": "34a57cd143851759d6d84051df01d805faf69afe9090874e2d2f972245b1cedc"
+  },
+  {
+    "path": "runs/ten-v06/cci/regions.bin",
+    "bytes": 46586408,
+    "sha256": "89213c6c46f40599190f06b8f048bec75b9d64d64ed84d9ad9ed1af06b14a34b"
+  },
+  {
+    "path": "runs/ten-v06/cci/transitions.bin",
+    "bytes": 9752784,
+    "sha256": "9f52ba5fdba045d9f66754245303eaddf42525ecdba2a53fdea146c23602b235"
+  },
+  {
+    "path": "runs/ten-v06/cci/surface.csv",
+    "bytes": 932690,
+    "sha256": "a33352c14e33ce7edb47cbb06719db7f9a7e636eb6d86ee1bccc26fe4a9f2352"
+  },
+  {
+    "path": "runs/ten-v06/cci/frozen.tsv",
+    "bytes": 795,
+    "sha256": "ca552b189548662333f4eaf80a467988b000774786bc1004f42d0418f146db42"
+  },
+  {
+    "path": "runs/ten-v06/vwap/regions.bin",
+    "bytes": 276234416,
+    "sha256": "b01588641692cbfd11cf1437eda98cb58491cc16e5d8c0c1c0e9b7333c97330f"
+  },
+  {
+    "path": "runs/ten-v06/vwap/transitions.bin",
+    "bytes": 31657344,
+    "sha256": "6c73e9e53db1ce6a46ae1f6b0867fa57e6a988ffc2c9d581ff24ec9e85bb0428"
+  },
+  {
+    "path": "runs/ten-v06/vwap/surface.csv",
+    "bytes": 939568,
+    "sha256": "ae2c2d98752f45dd3c5543af36ac8b813fc25c01f712ee343c5d6f5a4b480091"
+  },
+  {
+    "path": "runs/ten-v06/vwap/frozen.tsv",
+    "bytes": 630,
+    "sha256": "9b5ac4342793b666a5ca5bfc0c4f2e37fff330b19c6bdc327c9f74d9f2ec036c"
+  }
+]

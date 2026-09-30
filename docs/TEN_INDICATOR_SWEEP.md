@@ -40,7 +40,7 @@ fixed; its signal mixture covers EMA9 and EMA10. Stochastic smoothing is explici
 3 with the signal mixture 3 to 4. This study does not claim to sweep every available
 parameter of these indicators.
 
-Source a: -0.01..0.01 by .0005, 41 values. Internal b: 0...1 by .0025, 41 values.
+Source a: -0.01..0.01 by .0005, 41 values. Internal b: 0.0 to 0.1 by .0025, 41 values.
 Each terminal cutoff has 2,001 rational-grid values:
 
 - SMA, EMA, ROC, rolling VWAP: 1 +/- .001, step .000001.

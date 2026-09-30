@@ -32,7 +32,9 @@ The final constant is mathematically readout-equivalent, not an additional sourc
 of independent signal innovation. Configurable grids use
 `start_tick:step_tick:count:denominator`, with exact integer construction followed
 by one f64 division. Grids must contain the original anchor settings.
-The authoring limits are a in [-.25,.25], b in [0,1], positive c, and integer
+The original study uses positive c. In 0.6, the generic authoring limits permit
+signed cutoff grids that include the family baseline. Limits are a in [-.25,.25],
+b in [0,1], and integer
 windows 2..99999. Experiment domains and declared assumptions remain finite.
 
 ## Generic work elimination
