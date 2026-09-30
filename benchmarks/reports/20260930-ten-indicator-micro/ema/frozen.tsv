@@ -1,0 +1,12 @@
+# filang-selection-v1
+# execution=spot_open_v1
+# interval=14400
+# fee_bps=5
+# slip_bps=5
+# evaluation_start=1735689600
+# evaluation_end=1790553600
+# discovery_sha256=6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98
+# discovery_rows=10602
+# research_role=retrospective_micro_neighborhood
+id	group	name	greater	threshold_bits	expression
+00d340082718a6b99d9d3a193d32feaa887ddce7b8d2d9dc5d7085ba8c7febf4	anchor	anchor_f792b2de9a1ba292	true	0000000000000000	(sub (div close (ema 24 close)) (constant 3ff0000000000000))

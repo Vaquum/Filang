@@ -5,14 +5,19 @@ import argparse,json,subprocess,sys,time
 from pathlib import Path
 from cohort_reference import KINDS,digest
 
+def verify_one(run):
+    from verify_cohort_micro import verify
+    return verify(run,Path(run)/"verification.json")
+
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('stage',choices=['discover','verify']);p.add_argument('--out',required=True);p.add_argument('--gate');p.add_argument('--cohort-gate');a=p.parse_args();root=Path(a.out)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('stage',choices=['discover','verify']);p.add_argument('--out',required=True);p.add_argument('--gate');p.add_argument('--cohort-gate');p.add_argument('--workers',type=int,default=1);a=p.parse_args();root=Path(a.out)
     if a.stage=='verify':
         from verify_cohort_micro import verify
         if not (root/'discovery_index.json').exists():raise ValueError('discovery missing')
-        results=[]
-        for kind in KINDS:results.append(verify(root/kind,root/kind/'verification.json'))
-        (root/'verification_index.json').write_text(json.dumps({'status':'PASS','all_ten_families_verified':True,'families':results},indent=2)+'\n');return
+        if not 1<=a.workers<=8:raise ValueError('reference workers must be 1..8')
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=a.workers) as pool:results=list(pool.map(verify_one,[str(root/k) for k in KINDS]))
+        (root/'verification_index.json').write_text(json.dumps({'status':'PASS','all_ten_families_verified':True,'external_reference_workers':a.workers,'families':results},indent=2)+'\n');return
     if not a.gate or not a.cohort_gate:raise ValueError('both independent gates required')
     if root.exists():raise ValueError('use a new output directory')
     root.mkdir(parents=True);binary=str(Path('target/release/filang').resolve());records=[];clock=time.perf_counter()

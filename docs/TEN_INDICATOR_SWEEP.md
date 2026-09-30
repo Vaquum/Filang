@@ -109,7 +109,7 @@ cargo build --release --locked --offline
 ./target/release/filang cohort-parity --data data/btc4h/discovery.csv --out runs/cohort-v06-parity
 .venv/bin/python scripts/cohort_reference.py --data data/btc4h/discovery.csv --run runs/cohort-v06-parity
 .venv/bin/python scripts/run_cohort.py discover --gate runs/ten-legacy-parity/micro_gate.txt --cohort-gate runs/cohort-v06-parity/gate.txt --out runs/ten-experiment
-.venv/bin/python scripts/run_cohort.py verify --out runs/ten-experiment
+.venv/bin/python scripts/run_cohort.py verify --out runs/ten-experiment --workers 4
 ```
 
 Then preserve the complete discoveries and exact frozen.tsv files before separate
@@ -145,3 +145,6 @@ RSS and exact workload counters. Verification and timing runs must not be concur
 Sources for terminology (not usage ranking): official TA-Lib function catalog and
 v0.6.4 C source; Fidelity CCI/stochastic indicator guides; TradingView VWAP documentation.
 No assertion of universal profitability or trillion distinct-program completion.
+
+Reference verification may run in separate processes using --workers1..8; this is
+not native engine parallelism and never runs concurrently with timing benchmarks.

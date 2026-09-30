@@ -1,0 +1,49 @@
+{
+  "role": "all_ten_discoveries_frozen_before_any_later_replay",
+  "source_commit": "7be7d5917f07922c17b3009adc2a600518bda8b1",
+  "engine_sha256": "194dce74012b586a4994a5a8e0d834e649af42abe8f51f1cee733f1a07de34c6",
+  "no_eligible_variants": true,
+  "families": [
+    {
+      "family": "sma",
+      "frozen_sha256": "6b11d2587d5d8846f23b6f6672498e0cecfbdc277b78549d7bb0abcdb35d52be"
+    },
+    {
+      "family": "ema",
+      "frozen_sha256": "9f21d50fbbb1e0479df210800271951efdc5960751ba2755ae4d9721ed3240d5"
+    },
+    {
+      "family": "rsi",
+      "frozen_sha256": "2caad978ba047e6415da90d33b605c929ea929ed080e65678f4c7feb12ab6173"
+    },
+    {
+      "family": "macd",
+      "frozen_sha256": "8adcfe96f1b5acef33ea1b619c2fe9e560f49dda2665b69c76b8ebdc571366c3"
+    },
+    {
+      "family": "bollinger",
+      "frozen_sha256": "afdb013346fd24592d685cd1e1b4ec4b43847ef497bd30f5452118f21adc527b"
+    },
+    {
+      "family": "stochastic",
+      "frozen_sha256": "d7f25e1992338ecc58e303e367e72724bae11ad05f9081ed4d88873204fa3a92"
+    },
+    {
+      "family": "atr",
+      "frozen_sha256": "cb4822a3ee7c8009d963b180c182607acce1fd392efb1982b8b2402c23776ab0"
+    },
+    {
+      "family": "roc",
+      "frozen_sha256": "34a57cd143851759d6d84051df01d805faf69afe9090874e2d2f972245b1cedc"
+    },
+    {
+      "family": "cci",
+      "frozen_sha256": "ca552b189548662333f4eaf80a467988b000774786bc1004f42d0418f146db42"
+    },
+    {
+      "family": "vwap",
+      "frozen_sha256": "9b5ac4342793b666a5ca5bfc0c4f2e37fff330b19c6bdc327c9f74d9f2ec036c"
+    }
+  ],
+  "selection_rule": "unchanged predeclared <=40pct stress drawdown,>=12 trades,2..98pct exposure; no relaxed gate"
+}

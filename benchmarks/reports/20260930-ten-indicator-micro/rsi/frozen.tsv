@@ -1,0 +1,12 @@
+# filang-selection-v1
+# execution=spot_open_v1
+# interval=14400
+# fee_bps=5
+# slip_bps=5
+# evaluation_start=1735689600
+# evaluation_end=1790553600
+# discovery_sha256=6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98
+# discovery_rows=10602
+# research_role=retrospective_micro_neighborhood
+id	group	name	greater	threshold_bits	expression
+6f58a41af461fe53c4cdb67f4b548977ed7d75c4f9f7f4df35233aec9539c874	anchor	anchor_70e41079a82ee365	true	0000000000000000	(sub (div0 (wilder 14 (add (abs (diff 1 close)) (diff 1 close))) (wilder 14 (abs (diff 1 close)))) (constant 3ff0000000000000))
