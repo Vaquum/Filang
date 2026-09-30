@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "family": "atr",
+  "upstream_constructions": 5043,
+  "addresses_covered": 10091043,
+  "physical_regions": 257618,
+  "all_position_paths_verified_by_exact_event_arrays": true,
+  "all_physical_scenario_metric_sets_checked": true,
+  "cash_share_metric_sets_checked": 515236,
+  "numpy_chronological_crosschecks": 120,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 1.5774048733874224e-12,
+  "data_sha256": "e5e1142768c19e3e04c1c6f37a595f2348daf6d8849f1603dda1b4b978554805",
+  "engine_sha256": "9336e1b1590a1102825a1045812eaedcd3216b762f6a86d6ebbfb479a13d3e5c",
+  "oracle_c_sha256": "b867e5bc4a871ec1ae8f8ca469268a574fe0e9c5e9697f7e5e36b6d467652a53",
+  "oracle_library_sha256": "bdd400255371c45d713ca3621897e21d00133737df7e098ba2dcd5c61dea435e",
+  "regions_sha256": "6abc9807948f917566195bae2aad92c3ad3c1324b5271fbff4f5d8502efe4156",
+  "transitions_sha256": "7c6e7f356e88576b5ba0446948ca439c5bddd328c75ed7e3f292851808774d4d",
+  "seconds": 7.58496799999557
+}

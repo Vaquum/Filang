@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "family": "ema",
+  "upstream_constructions": 5043,
+  "addresses_covered": 10091043,
+  "physical_regions": 601929,
+  "all_position_paths_verified_by_exact_event_arrays": true,
+  "all_physical_scenario_metric_sets_checked": true,
+  "cash_share_metric_sets_checked": 1203858,
+  "numpy_chronological_crosschecks": 120,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 1.3145040611561853e-12,
+  "data_sha256": "e5e1142768c19e3e04c1c6f37a595f2348daf6d8849f1603dda1b4b978554805",
+  "engine_sha256": "9336e1b1590a1102825a1045812eaedcd3216b762f6a86d6ebbfb479a13d3e5c",
+  "oracle_c_sha256": "b867e5bc4a871ec1ae8f8ca469268a574fe0e9c5e9697f7e5e36b6d467652a53",
+  "oracle_library_sha256": "5b55bcd3216d094ee4c6b1f471b035221cdd2dcf8ec2634fb713e2347cddc39b",
+  "regions_sha256": "19d0da80bdd09cd14d4dc0dd905571b44e739ffa2b9dc15ab39d2c3e4a732ff0",
+  "transitions_sha256": "e31d09df3404fb4a70c7bd4be65d904aca0aa5426a4efab0308ffee422a6947b",
+  "seconds": 20.266008582999348
+}

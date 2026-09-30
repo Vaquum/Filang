@@ -1,0 +1,186 @@
+{
+  "status": "PASS",
+  "all_30_baselines_and_maxima_verified": true,
+  "checks": [
+    {
+      "year": "2024",
+      "family": "sma",
+      "status": "PASS",
+      "maximum_stress_return_pct": 86.55545912339285
+    },
+    {
+      "year": "2024",
+      "family": "ema",
+      "status": "PASS",
+      "maximum_stress_return_pct": 69.76232438519354
+    },
+    {
+      "year": "2024",
+      "family": "rsi",
+      "status": "PASS",
+      "maximum_stress_return_pct": 60.86433106313302
+    },
+    {
+      "year": "2024",
+      "family": "macd",
+      "status": "PASS",
+      "maximum_stress_return_pct": 30.976356773053304
+    },
+    {
+      "year": "2024",
+      "family": "bollinger",
+      "status": "PASS",
+      "maximum_stress_return_pct": -4.510513461772045
+    },
+    {
+      "year": "2024",
+      "family": "stochastic",
+      "status": "PASS",
+      "maximum_stress_return_pct": -48.64110846511711
+    },
+    {
+      "year": "2024",
+      "family": "atr",
+      "status": "PASS",
+      "maximum_stress_return_pct": 107.9776928539555
+    },
+    {
+      "year": "2024",
+      "family": "roc",
+      "status": "PASS",
+      "maximum_stress_return_pct": 65.65758591682471
+    },
+    {
+      "year": "2024",
+      "family": "cci",
+      "status": "PASS",
+      "maximum_stress_return_pct": 20.730396418301147
+    },
+    {
+      "year": "2024",
+      "family": "vwap",
+      "status": "PASS",
+      "maximum_stress_return_pct": 26.028804283907984
+    },
+    {
+      "year": "2025",
+      "family": "sma",
+      "status": "PASS",
+      "maximum_stress_return_pct": -12.891765411104789
+    },
+    {
+      "year": "2025",
+      "family": "ema",
+      "status": "PASS",
+      "maximum_stress_return_pct": -51.20398335038274
+    },
+    {
+      "year": "2025",
+      "family": "rsi",
+      "status": "PASS",
+      "maximum_stress_return_pct": -50.20067405044152
+    },
+    {
+      "year": "2025",
+      "family": "macd",
+      "status": "PASS",
+      "maximum_stress_return_pct": -34.318607656267524
+    },
+    {
+      "year": "2025",
+      "family": "bollinger",
+      "status": "PASS",
+      "maximum_stress_return_pct": -22.298869352006324
+    },
+    {
+      "year": "2025",
+      "family": "stochastic",
+      "status": "PASS",
+      "maximum_stress_return_pct": -56.11809484664918
+    },
+    {
+      "year": "2025",
+      "family": "atr",
+      "status": "PASS",
+      "maximum_stress_return_pct": -35.87154244343523
+    },
+    {
+      "year": "2025",
+      "family": "roc",
+      "status": "PASS",
+      "maximum_stress_return_pct": -46.222333772569236
+    },
+    {
+      "year": "2025",
+      "family": "cci",
+      "status": "PASS",
+      "maximum_stress_return_pct": -36.19081347965796
+    },
+    {
+      "year": "2025",
+      "family": "vwap",
+      "status": "PASS",
+      "maximum_stress_return_pct": -52.3483334991835
+    },
+    {
+      "year": "2026",
+      "family": "sma",
+      "status": "PASS",
+      "maximum_stress_return_pct": 17.328326653548338
+    },
+    {
+      "year": "2026",
+      "family": "ema",
+      "status": "PASS",
+      "maximum_stress_return_pct": -3.133284634560613
+    },
+    {
+      "year": "2026",
+      "family": "rsi",
+      "status": "PASS",
+      "maximum_stress_return_pct": -1.4091281751558018
+    },
+    {
+      "year": "2026",
+      "family": "macd",
+      "status": "PASS",
+      "maximum_stress_return_pct": 6.479008692652395
+    },
+    {
+      "year": "2026",
+      "family": "bollinger",
+      "status": "PASS",
+      "maximum_stress_return_pct": -27.002789945349836
+    },
+    {
+      "year": "2026",
+      "family": "stochastic",
+      "status": "PASS",
+      "maximum_stress_return_pct": -23.949911103902153
+    },
+    {
+      "year": "2026",
+      "family": "atr",
+      "status": "PASS",
+      "maximum_stress_return_pct": -11.534160846453197
+    },
+    {
+      "year": "2026",
+      "family": "roc",
+      "status": "PASS",
+      "maximum_stress_return_pct": -10.799964045827014
+    },
+    {
+      "year": "2026",
+      "family": "cci",
+      "status": "PASS",
+      "maximum_stress_return_pct": -17.689259244948506
+    },
+    {
+      "year": "2026",
+      "family": "vwap",
+      "status": "PASS",
+      "maximum_stress_return_pct": -6.713287207805026
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "family": "bollinger",
+  "upstream_constructions": 5043,
+  "addresses_covered": 10091043,
+  "physical_regions": 50969,
+  "all_position_paths_verified_by_exact_event_arrays": true,
+  "all_physical_scenario_metric_sets_checked": true,
+  "cash_share_metric_sets_checked": 101938,
+  "numpy_chronological_crosschecks": 120,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 1.5205614545266144e-12,
+  "data_sha256": "e5e1142768c19e3e04c1c6f37a595f2348daf6d8849f1603dda1b4b978554805",
+  "engine_sha256": "9336e1b1590a1102825a1045812eaedcd3216b762f6a86d6ebbfb479a13d3e5c",
+  "oracle_c_sha256": "b867e5bc4a871ec1ae8f8ca469268a574fe0e9c5e9697f7e5e36b6d467652a53",
+  "oracle_library_sha256": "0349c4421944467fda6bfde05ab4da4d3275068def01cc3b5660670ca22936c1",
+  "regions_sha256": "52e64dcc7c8652b9cde15e70f7d9a50929b589197bea92619f7f3545833a2f17",
+  "transitions_sha256": "1f439db7d9eab0ddf122e6bb73443615212a644707148c358c938d7596a2e07b",
+  "seconds": 3.507863750011893
+}
