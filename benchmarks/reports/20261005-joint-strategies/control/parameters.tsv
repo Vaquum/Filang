@@ -1,0 +1,10 @@
+# public generic control inputs
+0	ema_relative	trend	relative:gt	plain	0:1:1:1	(ema 24 close)	(ema 96 close)
+0	ema_cross	trend	cross:above	recent:3	0:1:1:1	(ema 24 close)	(ema 96 close)
+0	sma_slope	trend	slope:rising:3	persist:2	0:1:1:1	(mean_sum 20 close)	-
+1	rsi_gt	momentum	threshold:gt	plain	98:1:5:100	(div0 (wilder 14 (add (abs (diff 1 close)) (diff 1 close))) (wilder 14 (abs (diff 1 close))))	-
+1	rsi_inclusive	momentum	threshold:ge	recent:2	98:1:5:100	(div0 (wilder 14 (add (abs (diff 1 close)) (diff 1 close))) (wilder 14 (abs (diff 1 close))))	-
+1	rsi_onset	momentum	threshold:lt	onset	98:1:5:100	(div0 (wilder 14 (add (abs (diff 1 close)) (diff 1 close))) (wilder 14 (abs (diff 1 close))))	-
+2	relative_volume	activity	threshold:gt	plain	98:1:5:100	(div volume (lag 1 (mean_sum 20 volume)))	-
+2	volume_comparison	activity	relative:ge	persist:2	0:1:1:1	volume	(mean_sum 20 volume)
+2	volume_inequality	activity	threshold:ne	recent:2	98:1:5:100	(div volume (lag 1 (mean_sum 20 volume)))	-

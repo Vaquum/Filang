@@ -1,0 +1,12 @@
+{
+  "native_source": "ec9e1350f8e8efed9957e1255aa3f6203b9064b3",
+  "benchmark_source": "8bd575ef4739bb68e498d2e3366db1a208e91c15",
+  "engine_sha256": "0415c7462ed745a900e8b5ed742b9ba22324cd58f730c06a45b2b580917ea5e7",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "boxes_sha256": "50b43cdbc6125084928e9000fa44bc495d207a465e1a3985fea15846f50aaa80",
+  "predicate_cells_sha256": "6a983eaaca7918a061968fc37a71d176193b6826b679b410edc56f0b986dbc11",
+  "captured_result_bytes": 1229126928,
+  "logical_addresses": 8748874821870,
+  "exact_output_boxes": 9037698,
+  "working_trees_clean_for_benchmarks": true
+}

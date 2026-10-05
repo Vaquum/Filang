@@ -1,7 +1,7 @@
 use filang::{backtest::Costs, config::Config, data, report, search, Result};
 use std::{collections::HashMap, env, fs, path::Path};
-const HELP:&str="Filang 0.6.0 (research prototype)\n\n  filang micro-inspect --config FILE\n  filang cohort-parity --data CSV --out DIR\n  filang micro-sweep --config FILE --gate FILE --out DIR [--plan regions|expanded]\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
-  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
+const HELP:&str="Filang 0.7.0 (research prototype)\n\n  filang micro-inspect --config FILE\n  filang cohort-parity --data CSV --out DIR\n  filang micro-sweep --config FILE --gate FILE --out DIR [--plan regions|expanded]\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
+  filang strategy-example --out DIR [--grid-count N --neighbors true --qualifiers true --slots 2]\n  filang strategy-inspect --config FILE\n  filang strategy-sweep --config FILE [--out DIR --plan expanded|cells|cofactor --gate FILE]\n  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
 fn arguments() -> Result<(String, HashMap<String, String>)> {
     let mut it = env::args().skip(1);
     let command = it.next().unwrap_or_else(|| "help".into());
@@ -36,6 +36,9 @@ fn main() {
 fn entry() -> Result<()> {
     let (cmd, mut flags) = arguments()?;
     match cmd.as_str() {
+        "strategy-example" | "strategy-inspect" | "strategy-sweep" => {
+            println!("{}", filang::joint_run::cli(&cmd, flags)?);
+        }
         "help" | "--help" | "-h" => {
             print!("{HELP}");
         }

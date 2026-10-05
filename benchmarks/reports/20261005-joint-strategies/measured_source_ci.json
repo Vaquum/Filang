@@ -1,0 +1,16 @@
+[
+  {
+    "name": "test (ubuntu-latest)",
+    "head_sha": "8bd575ef4739bb68e498d2e3366db1a208e91c15",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/mikkokotila/Filang/actions/runs/37282388549/job/111673247614"
+  },
+  {
+    "name": "test (macos-latest)",
+    "head_sha": "8bd575ef4739bb68e498d2e3366db1a208e91c15",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/mikkokotila/Filang/actions/runs/37282388549/job/111673247194"
+  }
+]

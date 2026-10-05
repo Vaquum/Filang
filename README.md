@@ -2,9 +2,17 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.6, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
+**Status: runnable 0.7, with native joint indicator/rule sweeps.** Known-indicator atoms, shared numerical and predicate calculations, Boolean/temporal rule graphs, and full-risk execution now support jointly parameterized strategies. [Issue #16](https://github.com/mikkokotila/Filang/issues/16) and [PR #17](https://github.com/mikkokotila/Filang/pull/17) deliver a verified 8.748-trillion-address restricted parameter-family campaign—not trillions of independent indicators. The broader factory and scaling obligations remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
 
-## Current: ten-family atom micro-sweeps (0.6)
+## Current: joint indicator and rule sweeps (0.7)
+
+`strategy-sweep` jointly varies predicate alternatives, their feature/threshold/
+temporal parameters, and compound AND/OR/NOT/temporal rules. It uses packed validity
+and truth planes, shared numerical/predicate plans, Boolean cofactors, exact result
+boxes and the existing full-risk execution engine. No single-feature shortlist is
+required. See [the language, commands and limitations](docs/JOINT_STRATEGY_SWEEP.md).
+
+## Earlier: ten-family atom micro-sweeps (0.6)
 
 Ten declared known-feature families now use the same fine-grid engine, with signed
 result-region support, an independent cohort parity gate and full response surfaces.
@@ -162,3 +170,13 @@ python3 scripts/benchmark.py --out runs/benchmark --repeats 3
 **Terasweep is the performance prototype:** a starting point for eliminating repeated work, not a prescribed kernel stack or performance ceiling. Filang combines shared numerical DAGs with parameter-event scoring in this slice; broader algorithms remain open.
 
 Neither prototype is a runtime dependency or compatibility obligation. Correctness is defined here and checked with independent reference calculations. This repository contains no copied prototype implementation or market dataset.
+
+## Joint strategy sweep evidence
+
+The joint rule layer and its first complete **8.748-trillion-address** parameter
+campaign are documented in [the measured report](benchmarks/reports/20261005-joint-strategies/README.md).
+This is exact result-box coverage of a declared two-condition family, not trillions
+of independent indicators or a general arbitrary trillion-program throughput claim.
+All combined positions and full backtest metrics were independently verified.
+[Rule syntax, contracts and commands](docs/JOINT_STRATEGY_SWEEP.md) include a
+summary-output mode that avoids retaining the large result-box file.

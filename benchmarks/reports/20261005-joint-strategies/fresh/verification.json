@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "source_commit": "af3ec810954c16c67fcfc0addb4fff3535ea0771",
+  "native_tests": 58,
+  "locked_offline_build": true,
+  "fmt": "PASS",
+  "clippy": "PASS",
+  "checkout_kind": "clean local clone with shared Git object store; separate source and target directory"
+}

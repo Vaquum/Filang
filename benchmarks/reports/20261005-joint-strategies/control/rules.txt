@@ -1,0 +1,3 @@
+(and s0 (or s1 s2))
+(recent 3 (and s0 (and s1 (not s2))))
+(or (persist 2 s0) (and s1 (onset s2)))
