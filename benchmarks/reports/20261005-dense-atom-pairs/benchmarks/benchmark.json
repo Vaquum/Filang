@@ -1,0 +1,2779 @@
+{
+  "status": "PASS",
+  "source_commit": "dd7c66251c9bb7087a694fb4ca8fc6eb40f29117",
+  "working_tree_dirty": true,
+  "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+  "repeats": 3,
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "cpu_pinned": false,
+  "os_cache_flushed": false,
+  "output": "summary; original joint per-address encoding versus dense set-product encoding; all full metrics retained semantically",
+  "median_wall_seconds": {
+    "small": {
+      "leaf_scalar": 0.33662554202601314,
+      "envelope_scalar": 0.3376133329584263,
+      "envelope_native": 0.3365228340262547,
+      "envelope_parallel": 0.31679337500827387,
+      "expanded": 10.33843533298932
+    },
+    "all-small": {
+      "leaf_scalar": 14.814417958958074,
+      "envelope_scalar": 14.195526124967728,
+      "envelope_native": 13.633532000007108,
+      "envelope_parallel": 14.245120458013844
+    },
+    "mixed": {
+      "leaf_scalar": 14.235232167004142,
+      "envelope_scalar": 11.138814750011079,
+      "envelope_native": 11.444808916014154,
+      "envelope_parallel": 4.671545875025913
+    }
+  },
+  "measurements": [
+    {
+      "case": "small",
+      "mode": "leaf_scalar",
+      "repeat": 1,
+      "whole_process_seconds": 0.3178638340323232,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "e51b942a47fd8bf301f0ddffe0880a950902029924366fdce64d5ccad420f03e",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "80730",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 40368,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "f430ffe297e0d4bcc0a988a410c562d1c965ecaab34b2f496c64be7b27857c49",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.168173666,
+        "whole_seconds_this_invocation": 0.300260541,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_scalar",
+      "repeat": 1,
+      "whole_process_seconds": 0.33585683396086097,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "c0e692a1a5bc19c76b924e126eb6feacf51cfc3e5734f1e8812482dbd7317760",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "af15fba8fb47b1134c03d5c4754007b8c1504a0e79eb9f83d446956bf3aa0a95",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.182147416,
+        "whole_seconds_this_invocation": 0.315502833,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_native",
+      "repeat": 1,
+      "whole_process_seconds": 0.34876212500967085,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "77462be5ea11a29c553b6cff9a7b22cdd94941d4fb275e15fe936c03d22e0a38",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "e90701dd074cfe87eae3e8c3c7cbb43f9b565df69a1d1abf3ffecfc0ee0360a5",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.198738166,
+        "whole_seconds_this_invocation": 0.331522833,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_parallel",
+      "repeat": 1,
+      "whole_process_seconds": 0.31274895899696276,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "77462be5ea11a29c553b6cff9a7b22cdd94941d4fb275e15fe936c03d22e0a38",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "e90701dd074cfe87eae3e8c3c7cbb43f9b565df69a1d1abf3ffecfc0ee0360a5",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.159734083,
+        "whole_seconds_this_invocation": 0.289749041,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "expanded",
+      "repeat": 1,
+      "whole_process_seconds": 10.358265041955747,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 354294,
+        "numerical_roots": 54,
+        "predicate_options": 324,
+        "unique_predicate_plans": 162,
+        "predicate_plan_reuses": 162,
+        "predicate_cells": 486,
+        "predicate_payload_bytes": 334368,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 48183984,
+        "result_bytes_written": 0,
+        "result_sha256": "23572e08ce7c18354013a639e7749af9f20cdee59f385e34fdcbc51ee60e5318",
+        "mixed_position_addresses": 354294,
+        "all_flat_addresses": 0,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 39366,
+          "cartesian_cells_visited": 354294,
+          "rule_graph_evaluations": 354294,
+          "cofactor_builds": 0,
+          "mux_words": 0,
+          "result_boxes": 354294,
+          "logical_addresses_resolved": 354294,
+          "state_calls": 0,
+          "chronological_replays": 354294,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 0,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 0,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 0,
+          "replay_periods": 0,
+          "decoded_changes": 0,
+          "all_off": 0,
+          "all_on": 0,
+          "requests": 0,
+          "identical": 0,
+          "rebuilds": 0,
+          "deltas": 0,
+          "words_compared": 0,
+          "flips": 0,
+          "activations": 0,
+          "deactivations": 0,
+          "interval_joins": 0,
+          "interval_splits": 0,
+          "dirty_leaves": 0,
+          "tree_merges": 0,
+          "scenario_leaf_updates": 0,
+          "scenario_tree_merges": 0,
+          "flip_histogram": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "numerical_seconds": 0.002552291,
+        "predicate_seconds": 0.059209041,
+        "solve_and_output_seconds": 10.196218916,
+        "whole_internal_seconds": 10.341218333,
+        "best_descriptive_not_validated": {
+          "template": 0,
+          "choices": [
+            56,
+            269
+          ],
+          "ranges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 116.23538028268214,
+              "gross_return_pct": 150.72772445696035,
+              "cagr_pct": 116.04544534276047,
+              "max_drawdown_pct": 15.322747749918515,
+              "sharpe_annualized_naive": 2.4032596329665146,
+              "trades": 37,
+              "exposure_pct": 50.18231540565178,
+              "mean_bps_per_bar": 3.7868069056645757,
+              "mean_trade_bps": 235.2623467956389,
+              "periods": 2194
+            }
+          ]
+        }
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_scalar",
+      "repeat": 2,
+      "whole_process_seconds": 0.3440800420357846,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "c0e692a1a5bc19c76b924e126eb6feacf51cfc3e5734f1e8812482dbd7317760",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "af15fba8fb47b1134c03d5c4754007b8c1504a0e79eb9f83d446956bf3aa0a95",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.194561541,
+        "whole_seconds_this_invocation": 0.328821875,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_native",
+      "repeat": 2,
+      "whole_process_seconds": 0.33120324998162687,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "77462be5ea11a29c553b6cff9a7b22cdd94941d4fb275e15fe936c03d22e0a38",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "e90701dd074cfe87eae3e8c3c7cbb43f9b565df69a1d1abf3ffecfc0ee0360a5",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.173472083,
+        "whole_seconds_this_invocation": 0.307889458,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_parallel",
+      "repeat": 2,
+      "whole_process_seconds": 0.31679337500827387,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "77462be5ea11a29c553b6cff9a7b22cdd94941d4fb275e15fe936c03d22e0a38",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "e90701dd074cfe87eae3e8c3c7cbb43f9b565df69a1d1abf3ffecfc0ee0360a5",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.164336541,
+        "whole_seconds_this_invocation": 0.301626375,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "leaf_scalar",
+      "repeat": 2,
+      "whole_process_seconds": 0.33662554202601314,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "e51b942a47fd8bf301f0ddffe0880a950902029924366fdce64d5ccad420f03e",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "80730",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 40368,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "f430ffe297e0d4bcc0a988a410c562d1c965ecaab34b2f496c64be7b27857c49",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.172124458,
+        "whole_seconds_this_invocation": 0.31381475,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "expanded",
+      "repeat": 2,
+      "whole_process_seconds": 10.33843533298932,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 354294,
+        "numerical_roots": 54,
+        "predicate_options": 324,
+        "unique_predicate_plans": 162,
+        "predicate_plan_reuses": 162,
+        "predicate_cells": 486,
+        "predicate_payload_bytes": 334368,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 48183984,
+        "result_bytes_written": 0,
+        "result_sha256": "23572e08ce7c18354013a639e7749af9f20cdee59f385e34fdcbc51ee60e5318",
+        "mixed_position_addresses": 354294,
+        "all_flat_addresses": 0,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 39366,
+          "cartesian_cells_visited": 354294,
+          "rule_graph_evaluations": 354294,
+          "cofactor_builds": 0,
+          "mux_words": 0,
+          "result_boxes": 354294,
+          "logical_addresses_resolved": 354294,
+          "state_calls": 0,
+          "chronological_replays": 354294,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 0,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 0,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 0,
+          "replay_periods": 0,
+          "decoded_changes": 0,
+          "all_off": 0,
+          "all_on": 0,
+          "requests": 0,
+          "identical": 0,
+          "rebuilds": 0,
+          "deltas": 0,
+          "words_compared": 0,
+          "flips": 0,
+          "activations": 0,
+          "deactivations": 0,
+          "interval_joins": 0,
+          "interval_splits": 0,
+          "dirty_leaves": 0,
+          "tree_merges": 0,
+          "scenario_leaf_updates": 0,
+          "scenario_tree_merges": 0,
+          "flip_histogram": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "numerical_seconds": 0.002597125,
+        "predicate_seconds": 0.059167333,
+        "solve_and_output_seconds": 10.175016875,
+        "whole_internal_seconds": 10.320968708,
+        "best_descriptive_not_validated": {
+          "template": 0,
+          "choices": [
+            56,
+            269
+          ],
+          "ranges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 116.23538028268214,
+              "gross_return_pct": 150.72772445696035,
+              "cagr_pct": 116.04544534276047,
+              "max_drawdown_pct": 15.322747749918515,
+              "sharpe_annualized_naive": 2.4032596329665146,
+              "trades": 37,
+              "exposure_pct": 50.18231540565178,
+              "mean_bps_per_bar": 3.7868069056645757,
+              "mean_trade_bps": 235.2623467956389,
+              "periods": 2194
+            }
+          ]
+        }
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_native",
+      "repeat": 3,
+      "whole_process_seconds": 0.3365228340262547,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "77462be5ea11a29c553b6cff9a7b22cdd94941d4fb275e15fe936c03d22e0a38",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "e90701dd074cfe87eae3e8c3c7cbb43f9b565df69a1d1abf3ffecfc0ee0360a5",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.186817708,
+        "whole_seconds_this_invocation": 0.32141,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_parallel",
+      "repeat": 3,
+      "whole_process_seconds": 0.32615624996833503,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "77462be5ea11a29c553b6cff9a7b22cdd94941d4fb275e15fe936c03d22e0a38",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "e90701dd074cfe87eae3e8c3c7cbb43f9b565df69a1d1abf3ffecfc0ee0360a5",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.165753458,
+        "whole_seconds_this_invocation": 0.307167041,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "leaf_scalar",
+      "repeat": 3,
+      "whole_process_seconds": 0.33722387498710304,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "e51b942a47fd8bf301f0ddffe0880a950902029924366fdce64d5ccad420f03e",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "80730",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 40368,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "f430ffe297e0d4bcc0a988a410c562d1c965ecaab34b2f496c64be7b27857c49",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.179676416,
+        "whole_seconds_this_invocation": 0.320425625,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "envelope_scalar",
+      "repeat": 3,
+      "whole_process_seconds": 0.3376133329584263,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "c0e692a1a5bc19c76b924e126eb6feacf51cfc3e5734f1e8812482dbd7317760",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 54,
+        "requested_strategy_addresses": "354294",
+        "resolved_strategy_addresses": "354294",
+        "signature_pair_products_resolved": "40368",
+        "tree_node_pairs_visited": "67666",
+        "certified_nonleaf_products": "5137",
+        "metric_regions_evaluated": 33836,
+        "completed_tasks": 6,
+        "new_tasks": 6,
+        "reused_tasks": 0,
+        "result_digest": "af15fba8fb47b1134c03d5c4754007b8c1504a0e79eb9f83d446956bf3aa0a95",
+        "best": {
+          "families": [
+            "sma",
+            "ema"
+          ],
+          "template": "(and s0 s1)",
+          "coordinates": [
+            [
+              18,
+              2,
+              0
+            ],
+            [
+              8,
+              2,
+              1
+            ]
+          ],
+          "log_return": 0.7711973519093187,
+          "metrics": [
+            116.23538028268223,
+            150.7277244569604,
+            116.04544534276057,
+            15.322747749918515,
+            2.4032596329665155,
+            37.0,
+            50.18231540565178,
+            3.7868069056645757,
+            235.26234679563885,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.173238958,
+        "whole_seconds_this_invocation": 0.319121791,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "small",
+      "mode": "expanded",
+      "repeat": 3,
+      "whole_process_seconds": 9.964215792017058,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 354294,
+        "numerical_roots": 54,
+        "predicate_options": 324,
+        "unique_predicate_plans": 162,
+        "predicate_plan_reuses": 162,
+        "predicate_cells": 486,
+        "predicate_payload_bytes": 334368,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 48183984,
+        "result_bytes_written": 0,
+        "result_sha256": "23572e08ce7c18354013a639e7749af9f20cdee59f385e34fdcbc51ee60e5318",
+        "mixed_position_addresses": 354294,
+        "all_flat_addresses": 0,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 39366,
+          "cartesian_cells_visited": 354294,
+          "rule_graph_evaluations": 354294,
+          "cofactor_builds": 0,
+          "mux_words": 0,
+          "result_boxes": 354294,
+          "logical_addresses_resolved": 354294,
+          "state_calls": 0,
+          "chronological_replays": 354294,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 0,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 0,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 0,
+          "replay_periods": 0,
+          "decoded_changes": 0,
+          "all_off": 0,
+          "all_on": 0,
+          "requests": 0,
+          "identical": 0,
+          "rebuilds": 0,
+          "deltas": 0,
+          "words_compared": 0,
+          "flips": 0,
+          "activations": 0,
+          "deactivations": 0,
+          "interval_joins": 0,
+          "interval_splits": 0,
+          "dirty_leaves": 0,
+          "tree_merges": 0,
+          "scenario_leaf_updates": 0,
+          "scenario_tree_merges": 0,
+          "flip_histogram": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "numerical_seconds": 0.002794875,
+        "predicate_seconds": 0.057832916,
+        "solve_and_output_seconds": 9.79808075,
+        "whole_internal_seconds": 9.941926708,
+        "best_descriptive_not_validated": {
+          "template": 0,
+          "choices": [
+            56,
+            269
+          ],
+          "ranges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 116.23538028268214,
+              "gross_return_pct": 150.72772445696035,
+              "cagr_pct": 116.04544534276047,
+              "max_drawdown_pct": 15.322747749918515,
+              "sharpe_annualized_naive": 2.4032596329665146,
+              "trades": 37,
+              "exposure_pct": 50.18231540565178,
+              "mean_bps_per_bar": 3.7868069056645757,
+              "mean_trade_bps": 235.2623467956389,
+              "periods": 2194
+            }
+          ]
+        }
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "leaf_scalar",
+      "repeat": 1,
+      "whole_process_seconds": 14.814417958958074,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "b7a1a46ac81ffac9f9386bfac7cf9f5f81d25335ecc1bd5ee8bc92d75fb3db92",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "11398698",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 5699484,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "b13c95f435eb71079790a9e57ac48186c78ce67c3afc2d427fc5fe62aa2a1c47",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.568583125,
+        "whole_seconds_this_invocation": 14.800760125,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_scalar",
+      "repeat": 1,
+      "whole_process_seconds": 14.195526124967728,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "4e0cc41ad12c8fcb286e8cb96ec946395a0d15c7d67e30992f8ee7fd68991e00",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "e3702d44e5c9881ca54b8ef3a35b4f3cd9397e765eb681b683d6c0ecaa6813cf",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.549653666,
+        "whole_seconds_this_invocation": 14.145161166,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_native",
+      "repeat": 1,
+      "whole_process_seconds": 13.633532000007108,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "beac5daedd982b770370ddf0ad8666f43aa118b1891f765fa8e7460c3ddf8b95",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "3ba91e01f0ae49d5570de9ae5fae82b972f2284e4fcac3fc920207c7012108c9",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.516575833,
+        "whole_seconds_this_invocation": 13.604474791,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_parallel",
+      "repeat": 1,
+      "whole_process_seconds": 14.600085707963444,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "beac5daedd982b770370ddf0ad8666f43aa118b1891f765fa8e7460c3ddf8b95",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "3ba91e01f0ae49d5570de9ae5fae82b972f2284e4fcac3fc920207c7012108c9",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.38290225,
+        "whole_seconds_this_invocation": 14.549072916,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_scalar",
+      "repeat": 2,
+      "whole_process_seconds": 13.876876708003692,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "4e0cc41ad12c8fcb286e8cb96ec946395a0d15c7d67e30992f8ee7fd68991e00",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "e3702d44e5c9881ca54b8ef3a35b4f3cd9397e765eb681b683d6c0ecaa6813cf",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.545554958,
+        "whole_seconds_this_invocation": 13.828027083,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_native",
+      "repeat": 2,
+      "whole_process_seconds": 13.627937250013929,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "beac5daedd982b770370ddf0ad8666f43aa118b1891f765fa8e7460c3ddf8b95",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "3ba91e01f0ae49d5570de9ae5fae82b972f2284e4fcac3fc920207c7012108c9",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.514981083,
+        "whole_seconds_this_invocation": 13.578234125,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_parallel",
+      "repeat": 2,
+      "whole_process_seconds": 14.090177624952048,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "beac5daedd982b770370ddf0ad8666f43aa118b1891f765fa8e7460c3ddf8b95",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "3ba91e01f0ae49d5570de9ae5fae82b972f2284e4fcac3fc920207c7012108c9",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.396404333,
+        "whole_seconds_this_invocation": 14.040754916,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "leaf_scalar",
+      "repeat": 2,
+      "whole_process_seconds": 14.581200124986935,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "b7a1a46ac81ffac9f9386bfac7cf9f5f81d25335ecc1bd5ee8bc92d75fb3db92",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "11398698",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 5699484,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "b13c95f435eb71079790a9e57ac48186c78ce67c3afc2d427fc5fe62aa2a1c47",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.532067625,
+        "whole_seconds_this_invocation": 14.533876375,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_native",
+      "repeat": 3,
+      "whole_process_seconds": 14.139384541020263,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "beac5daedd982b770370ddf0ad8666f43aa118b1891f765fa8e7460c3ddf8b95",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "3ba91e01f0ae49d5570de9ae5fae82b972f2284e4fcac3fc920207c7012108c9",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.57658475,
+        "whole_seconds_this_invocation": 14.086113958,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_parallel",
+      "repeat": 3,
+      "whole_process_seconds": 14.245120458013844,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "beac5daedd982b770370ddf0ad8666f43aa118b1891f765fa8e7460c3ddf8b95",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "3ba91e01f0ae49d5570de9ae5fae82b972f2284e4fcac3fc920207c7012108c9",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.428313541,
+        "whole_seconds_this_invocation": 14.198975791,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "leaf_scalar",
+      "repeat": 3,
+      "whole_process_seconds": 15.977466667012777,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "b7a1a46ac81ffac9f9386bfac7cf9f5f81d25335ecc1bd5ee8bc92d75fb3db92",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "11398698",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 5699484,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "b13c95f435eb71079790a9e57ac48186c78ce67c3afc2d427fc5fe62aa2a1c47",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.551305333,
+        "whole_seconds_this_invocation": 15.944584541,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "all-small",
+      "mode": "envelope_scalar",
+      "repeat": 3,
+      "whole_process_seconds": 15.507617208000738,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "4e0cc41ad12c8fcb286e8cb96ec946395a0d15c7d67e30992f8ee7fd68991e00",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 3,
+        "upstream_constructions": 270,
+        "requested_strategy_addresses": "15943230",
+        "resolved_strategy_addresses": "15943230",
+        "signature_pair_products_resolved": "5699484",
+        "tree_node_pairs_visited": "9478394",
+        "certified_nonleaf_products": "613301",
+        "metric_regions_evaluated": 4739332,
+        "completed_tasks": 270,
+        "new_tasks": 270,
+        "reused_tasks": 0,
+        "result_digest": "e3702d44e5c9881ca54b8ef3a35b4f3cd9397e765eb681b683d6c0ecaa6813cf",
+        "best": {
+          "families": [
+            "macd",
+            "atr"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              9,
+              1,
+              0
+            ],
+            [
+              10,
+              1,
+              0
+            ]
+          ],
+          "log_return": 0.9192226657120834,
+          "metrics": [
+            150.73405903990584,
+            158.88730789637538,
+            150.4715707007316,
+            26.214440038166142,
+            2.0366859624920934,
+            8.0,
+            97.67547857793983,
+            4.798815949703769,
+            1424.4152771463575,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.622698083,
+        "whole_seconds_this_invocation": 15.488636125,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "leaf_scalar",
+      "repeat": 1,
+      "whole_process_seconds": 14.26191183301853,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "b67dac33e22d0147b9dc4c14ee0dfdea5a939322eced61ddc4d465e029b38f6c",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "15056472",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 7528266,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9ba8a7609e73d88db5ab94d6fbbbdf7f07e12cf641cc04a290efef0df8e60161",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.350369791,
+        "whole_seconds_this_invocation": 14.227737041,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_scalar",
+      "repeat": 1,
+      "whole_process_seconds": 11.183717625041027,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "0cd312758fad65921681ded14c2b002be4a58aaea7ed455b9e8234b4a3dff2e7",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "152a65c02a94623cba2a6a4800ced2ed8ac8d025617915ee1737927614dd1e8c",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.3333775,
+        "whole_seconds_this_invocation": 11.150371375,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_native",
+      "repeat": 1,
+      "whole_process_seconds": 11.78476170799695,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "dea2931cc6fefe17caec8442903a74148e9f8b6ce12370850d280fde99d0be89",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9e0cddf78f593faf4ed064ae8fe220c2cff589dba96d1dc5605e5e25532d7a09",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.548991333,
+        "whole_seconds_this_invocation": 11.75897875,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_parallel",
+      "repeat": 1,
+      "whole_process_seconds": 4.560880540986545,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "dea2931cc6fefe17caec8442903a74148e9f8b6ce12370850d280fde99d0be89",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9e0cddf78f593faf4ed064ae8fe220c2cff589dba96d1dc5605e5e25532d7a09",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.299627583,
+        "whole_seconds_this_invocation": 4.528854291,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_scalar",
+      "repeat": 2,
+      "whole_process_seconds": 11.138814750011079,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "0cd312758fad65921681ded14c2b002be4a58aaea7ed455b9e8234b4a3dff2e7",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "152a65c02a94623cba2a6a4800ced2ed8ac8d025617915ee1737927614dd1e8c",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.419910041,
+        "whole_seconds_this_invocation": 11.104219958,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_native",
+      "repeat": 2,
+      "whole_process_seconds": 11.444808916014154,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "dea2931cc6fefe17caec8442903a74148e9f8b6ce12370850d280fde99d0be89",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9e0cddf78f593faf4ed064ae8fe220c2cff589dba96d1dc5605e5e25532d7a09",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.282177875,
+        "whole_seconds_this_invocation": 11.415720291,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_parallel",
+      "repeat": 2,
+      "whole_process_seconds": 4.671545875025913,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "dea2931cc6fefe17caec8442903a74148e9f8b6ce12370850d280fde99d0be89",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9e0cddf78f593faf4ed064ae8fe220c2cff589dba96d1dc5605e5e25532d7a09",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.223273875,
+        "whole_seconds_this_invocation": 4.644652875,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "leaf_scalar",
+      "repeat": 2,
+      "whole_process_seconds": 12.544941708038095,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "b67dac33e22d0147b9dc4c14ee0dfdea5a939322eced61ddc4d465e029b38f6c",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "15056472",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 7528266,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9ba8a7609e73d88db5ab94d6fbbbdf7f07e12cf641cc04a290efef0df8e60161",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.367006958,
+        "whole_seconds_this_invocation": 12.516700125,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_native",
+      "repeat": 3,
+      "whole_process_seconds": 11.438872124999762,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "dea2931cc6fefe17caec8442903a74148e9f8b6ce12370850d280fde99d0be89",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9e0cddf78f593faf4ed064ae8fe220c2cff589dba96d1dc5605e5e25532d7a09",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.307025666,
+        "whole_seconds_this_invocation": 11.3828335,
+        "native_workers": 1,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_parallel",
+      "repeat": 3,
+      "whole_process_seconds": 5.147658459027298,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "dea2931cc6fefe17caec8442903a74148e9f8b6ce12370850d280fde99d0be89",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9e0cddf78f593faf4ed064ae8fe220c2cff589dba96d1dc5605e5e25532d7a09",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.309973958,
+        "whole_seconds_this_invocation": 5.122445708,
+        "native_workers": 4,
+        "backend": "neon",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "leaf_scalar",
+      "repeat": 3,
+      "whole_process_seconds": 14.235232167004142,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "b67dac33e22d0147b9dc4c14ee0dfdea5a939322eced61ddc4d465e029b38f6c",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "15056472",
+        "certified_nonleaf_products": "0",
+        "metric_regions_evaluated": 7528266,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "9ba8a7609e73d88db5ab94d6fbbbdf7f07e12cf641cc04a290efef0df8e60161",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.356143666,
+        "whole_seconds_this_invocation": 14.205390458,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": false,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    },
+    {
+      "case": "mixed",
+      "mode": "envelope_scalar",
+      "repeat": 3,
+      "whole_process_seconds": 9.617815833014902,
+      "summary": {
+        "version": 1,
+        "status": "PASS",
+        "coverage_complete": true,
+        "context_sha256": "0cd312758fad65921681ded14c2b002be4a58aaea7ed455b9e8234b4a3dff2e7",
+        "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+        "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8",
+        "coefficient_count": 3,
+        "cutoff_count": 21,
+        "upstream_constructions": 81,
+        "requested_strategy_addresses": "52081218",
+        "resolved_strategy_addresses": "52081218",
+        "signature_pair_products_resolved": "7528266",
+        "tree_node_pairs_visited": "11249864",
+        "certified_nonleaf_products": "1121624",
+        "metric_regions_evaluated": 5624962,
+        "completed_tasks": 60,
+        "new_tasks": 60,
+        "reused_tasks": 0,
+        "result_digest": "152a65c02a94623cba2a6a4800ced2ed8ac8d025617915ee1737927614dd1e8c",
+        "best": {
+          "families": [
+            "rsi",
+            "vwap"
+          ],
+          "template": "(or s0 s1)",
+          "coordinates": [
+            [
+              3,
+              2,
+              12
+            ],
+            [
+              15,
+              1,
+              1
+            ]
+          ],
+          "log_return": 0.7373555812234559,
+          "metrics": [
+            109.04003051967295,
+            167.87644548003607,
+            108.86446978722518,
+            26.2693672852368,
+            2.013583217203749,
+            62.0,
+            66.18049225159525,
+            3.7378263472324775,
+            139.5061072768694,
+            2194.0
+          ]
+        },
+        "prepare_seconds_this_invocation": 0.257566208,
+        "whole_seconds_this_invocation": 9.604147666,
+        "native_workers": 1,
+        "backend": "scalar",
+        "proof": true,
+        "capture": false,
+        "role": "retrospective_systems_discovery_not_validation"
+      },
+      "all_task_result_hashes_match_verified_capture": true
+    }
+  ]
+}

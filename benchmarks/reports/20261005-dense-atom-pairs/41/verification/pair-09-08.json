@@ -1,0 +1,16 @@
+{
+  "families": [
+    "vwap",
+    "cci"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 96,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "21413940",
+  "metric_regions_in_domain": 18073158,
+  "independently_replayed_metrics": 96,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.673328142715036e-12,
+  "seconds": 1.9585705419885926
+}

@@ -1,0 +1,16 @@
+{
+  "families": [
+    "macd",
+    "roc"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 96,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "101196750",
+  "metric_regions_in_domain": 81368155,
+  "independently_replayed_metrics": 96,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.7337242752546445e-12,
+  "seconds": 7.13415666698711
+}

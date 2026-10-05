@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "family": "roc",
+  "numerical_parameter_constructions": 27,
+  "predicate_regions_verified": 3291,
+  "distinct_states_verified": 2776,
+  "logical_condition_addresses": "1620081",
+  "all_membership_masks_validity_and_counts_checked": true,
+  "mask_disagreements": 0,
+  "unsimplified_temporal_crosschecks": 9,
+  "bank_body_sha256": "2583738cf9fcc12bc504f4cc28698f6605849583ef0edb721481c24bf5f1004f",
+  "members_body_sha256": "b0c5184b6a0a498ab80da52f49723f5dab53559faae96dbf4f4e3e7061f9f201",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "seconds": 0.05986099998699501
+}

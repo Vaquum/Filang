@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "committed_reference_source_sha256": "1360b1bae788a48574fdfebe5bc517ee994a72d7dae759c84bdd9d47a2c12b56",
+  "all_captured_checks_reproduced": true,
+  "regions_checked": 4739332
+}

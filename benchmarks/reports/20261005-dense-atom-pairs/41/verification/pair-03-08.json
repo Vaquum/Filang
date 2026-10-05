@@ -1,0 +1,16 @@
+{
+  "families": [
+    "macd",
+    "cci"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 96,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "23785770",
+  "metric_regions_in_domain": 19486006,
+  "independently_replayed_metrics": 96,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.4637180356658064e-12,
+  "seconds": 2.32546199997887
+}

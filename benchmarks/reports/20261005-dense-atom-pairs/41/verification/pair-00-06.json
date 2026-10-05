@@ -1,0 +1,16 @@
+{
+  "families": [
+    "sma",
+    "atr"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 3,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "98697",
+  "metric_regions_in_domain": 72669,
+  "independently_replayed_metrics": 3,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.000444171950221e-11,
+  "seconds": 0.9472068329923786
+}

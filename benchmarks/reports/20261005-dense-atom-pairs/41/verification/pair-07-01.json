@@ -1,0 +1,16 @@
+{
+  "families": [
+    "roc",
+    "ema"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 192,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "67709205",
+  "metric_regions_in_domain": 52992649,
+  "independently_replayed_metrics": 192,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.0108359422010835e-12,
+  "seconds": 5.082013749983162
+}

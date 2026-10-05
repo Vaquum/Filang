@@ -1,0 +1,51 @@
+{
+  "status": "PASS",
+  "all_memberships_checked": true,
+  "families": [
+    {
+      "status": "PASS",
+      "family": "rsi",
+      "numerical_parameter_constructions": 27,
+      "predicate_regions_verified": 740,
+      "distinct_states_verified": 425,
+      "logical_condition_addresses": "1701",
+      "all_membership_masks_validity_and_counts_checked": true,
+      "mask_disagreements": 0,
+      "unsimplified_temporal_crosschecks": 9,
+      "bank_body_sha256": "9a8c6fec07dae323c6aa3f0c678e9f80a254c4e4eee7d59123772dbe84de2c03",
+      "members_body_sha256": "8e1f3dadb5ce64fe6fc0b3d245fa7cd0f2232cd4c65fea715706bf103a0cb0bd",
+      "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+      "seconds": 0.31600345799233764
+    },
+    {
+      "status": "PASS",
+      "family": "cci",
+      "numerical_parameter_constructions": 27,
+      "predicate_regions_verified": 930,
+      "distinct_states_verified": 639,
+      "logical_condition_addresses": "1701",
+      "all_membership_masks_validity_and_counts_checked": true,
+      "mask_disagreements": 0,
+      "unsimplified_temporal_crosschecks": 9,
+      "bank_body_sha256": "595191bcba1404f4269880424f5670baace80df076be43621caffe2ac48ddd3f",
+      "members_body_sha256": "23f282c534eb9963b267ebb53905b41c7f4b9c33f90cec9719aabb245fb5740f",
+      "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+      "seconds": 0.05929775000549853
+    },
+    {
+      "status": "PASS",
+      "family": "vwap",
+      "numerical_parameter_constructions": 27,
+      "predicate_regions_verified": 1560,
+      "distinct_states_verified": 924,
+      "logical_condition_addresses": "1701",
+      "all_membership_masks_validity_and_counts_checked": true,
+      "mask_disagreements": 0,
+      "unsimplified_temporal_crosschecks": 9,
+      "bank_body_sha256": "780b60a4a393c6377d7868f53848fcb810b9afe71465eb6b063993fd2a17657d",
+      "members_body_sha256": "4c1a9e84fdf2f6b0db8828c489ed1f8ea02886f77c21d9af2c238c9a6d21f415",
+      "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+      "seconds": 0.060433041013311595
+    }
+  ]
+}

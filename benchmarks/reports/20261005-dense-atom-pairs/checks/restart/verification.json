@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "graceful_resume_exact": true,
+  "interrupted_precommit_resume_exact": true,
+  "worker_count_changes_preserve_every_artifact": true,
+  "corrupt_checkpoint_rejected": true,
+  "changed_context_rejected": true,
+  "reference": "runs/dense-v08-closeout/proof-small",
+  "engine_sha256": "2cf001e596eed87d6c12485caa9602aa476c34c093678539d54335e33945cca8"
+}

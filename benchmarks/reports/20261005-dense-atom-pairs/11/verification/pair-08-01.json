@@ -1,0 +1,16 @@
+{
+  "families": [
+    "cci",
+    "ema"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 24,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "9877824",
+  "metric_regions_in_domain": 5746892,
+  "independently_replayed_metrics": 24,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.552535877635819e-12,
+  "seconds": 0.9986844589584507
+}

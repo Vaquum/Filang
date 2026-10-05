@@ -1,0 +1,16 @@
+{
+  "families": [
+    "vwap",
+    "bollinger"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 48,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "4597272",
+  "metric_regions_in_domain": 2677004,
+  "independently_replayed_metrics": 48,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.1600499167107046e-12,
+  "seconds": 0.670881083002314
+}

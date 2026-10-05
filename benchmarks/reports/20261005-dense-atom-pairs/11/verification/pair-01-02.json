@@ -1,0 +1,16 @@
+{
+  "families": [
+    "ema",
+    "rsi"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 48,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "4656960",
+  "metric_regions_in_domain": 3699608,
+  "independently_replayed_metrics": 48,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.0179413695586845e-12,
+  "seconds": 0.9951725829741918
+}

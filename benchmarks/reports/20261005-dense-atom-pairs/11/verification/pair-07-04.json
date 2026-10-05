@@ -1,0 +1,16 @@
+{
+  "families": [
+    "roc",
+    "bollinger"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 96,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "9572022",
+  "metric_regions_in_domain": 5541022,
+  "independently_replayed_metrics": 96,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 3.367972567502875e-12,
+  "seconds": 0.9539645420154557
+}
