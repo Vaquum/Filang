@@ -1,0 +1,16 @@
+{
+  "families": [
+    "macd",
+    "vwap"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 96,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "48603000",
+  "metric_regions_in_domain": 36191962,
+  "independently_replayed_metrics": 96,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.6058265828178264e-12,
+  "seconds": 3.317823584016878
+}

@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "family": "rsi",
+  "numerical_parameter_constructions": 27,
+  "predicate_regions_verified": 934,
+  "distinct_states_verified": 527,
+  "logical_condition_addresses": "1620081",
+  "all_membership_masks_validity_and_counts_checked": true,
+  "mask_disagreements": 0,
+  "unsimplified_temporal_crosschecks": 9,
+  "bank_body_sha256": "6d924ddeb8bfa0d2fcf7f29746141297081c8825c0173c7ecb52470c50fd85b3",
+  "members_body_sha256": "dff333c328a9ab04e9e548873c2151934c9ef6591c41ca578d8c5767cbc71cf9",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "seconds": 0.3375439579831436
+}

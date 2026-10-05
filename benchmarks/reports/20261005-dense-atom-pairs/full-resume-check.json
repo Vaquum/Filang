@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "same_all_task_digest_and_selected_result": true,
+  "new_tasks": 0,
+  "reused_tasks": 6048,
+  "worker_change": "4 to 1",
+  "not_a_new_full_timing": true
+}

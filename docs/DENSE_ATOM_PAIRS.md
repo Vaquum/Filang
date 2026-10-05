@@ -114,3 +114,21 @@ sorted state ranges in the left/right banks,u128 logical multiplicity,ten f64
 metrics. State ordering is lexicographic truth words,then validity,then original
 state ID. Task checkpoints specify its family pair/template and retain the best
 coordinates,complete weighted coverage,work counters and result digest.
+
+## Verification and measured delivery
+
+The completed density ladder and matched repeated comparisons are recorded in
+`benchmarks/reports/20261005-dense-atom-pairs/README.md`. Full density calculated
+50,430 numerical constructions; every predicate membership and complete pair-product
+coverage were independently checked. Sequential cash/share checks cover every
+retained task winner, not all 2.1 billion large-run metric records. Exhaustive
+region-metric parity is verified on separately captured bounded domains spanning
+all ten families. Keep these verification levels distinct.
+
+`verify_dense.py --run DIR` checks the large-run memberships, independently rebuilt
+product coverage and task-winner ledgers. `verify_dense_capture.py --run DIR` checks
+every retained metric region in bounded captured domains. Reference C programs
+are optional verification accelerators, never linked to native sweep execution.
+`prepare_dense_controls.py`, `benchmark_dense.py`, and `check_dense_resume.py`
+reproduce the matched control domains, full-output parity and interrupted restart
+checks. Every benchmark timing mode is tied to its verified metric digests.

@@ -1,0 +1,16 @@
+{
+  "families": [
+    "macd",
+    "bollinger"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 96,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "5815827",
+  "metric_regions_in_domain": 3267651,
+  "independently_replayed_metrics": 96,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 4.440892098500626e-12,
+  "seconds": 1.4313186660292558
+}

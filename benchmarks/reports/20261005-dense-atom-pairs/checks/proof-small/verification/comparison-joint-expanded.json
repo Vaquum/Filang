@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "all_logical_metrics_compared": "354294",
+  "joint_boxes": 354294,
+  "max_metric_absolute_error": 3.836930773104541e-13,
+  "joint_result_sha256": "23572e08ce7c18354013a639e7749af9f20cdee59f385e34fdcbc51ee60e5318"
+}

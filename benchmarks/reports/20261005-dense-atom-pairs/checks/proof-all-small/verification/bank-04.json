@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "family": "bollinger",
+  "numerical_parameter_constructions": 27,
+  "predicate_regions_verified": 241,
+  "distinct_states_verified": 120,
+  "logical_condition_addresses": "243",
+  "all_membership_masks_validity_and_counts_checked": true,
+  "mask_disagreements": 0,
+  "unsimplified_temporal_crosschecks": 9,
+  "bank_body_sha256": "585dadd582b5d4c77142a0e2494ad4977394445e97dad62f327adf100532b973",
+  "members_body_sha256": "a0e6f5e884ac656583479914ddfdb52be413c538feea70225a187f56fe24c6a5",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "seconds": 0.03935925004770979
+}

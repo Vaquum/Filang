@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "family": "sma",
+  "numerical_parameter_constructions": 363,
+  "predicate_regions_verified": 14308,
+  "distinct_states_verified": 167,
+  "logical_condition_addresses": "21781089",
+  "all_membership_masks_validity_and_counts_checked": true,
+  "mask_disagreements": 0,
+  "unsimplified_temporal_crosschecks": 27,
+  "bank_body_sha256": "e7e26231f90133ce569ce0818cecf7a4172848981b2e629675a4a7987128c6aa",
+  "members_body_sha256": "26a185fc54ae2d4eb13f055022613cf999bce1fa702d766baaf856f4a5b17ac0",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "seconds": 0.4086242080084048
+}

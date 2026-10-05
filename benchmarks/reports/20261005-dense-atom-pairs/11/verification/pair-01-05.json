@@ -1,0 +1,16 @@
+{
+  "families": [
+    "ema",
+    "stochastic"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 48,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "42343488",
+  "metric_regions_in_domain": 34814286,
+  "independently_replayed_metrics": 48,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.3945290195115376e-12,
+  "seconds": 3.8026538330013864
+}

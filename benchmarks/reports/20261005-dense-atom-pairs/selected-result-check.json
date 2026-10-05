@@ -1,0 +1,20 @@
+[
+  {
+    "coefficient_count": 3,
+    "status": "PASS",
+    "checked_task_winners": 2052,
+    "selected_from_all_retained_task_winners": true
+  },
+  {
+    "coefficient_count": 11,
+    "status": "PASS",
+    "checked_task_winners": 3888,
+    "selected_from_all_retained_task_winners": true
+  },
+  {
+    "coefficient_count": 41,
+    "status": "PASS",
+    "checked_task_winners": 6048,
+    "selected_from_all_retained_task_winners": true
+  }
+]

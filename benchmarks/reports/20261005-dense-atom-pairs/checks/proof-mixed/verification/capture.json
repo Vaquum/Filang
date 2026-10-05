@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "all_captured_region_masks_metrics_and_coverage_checked": true,
+  "logical_addresses": "52081218",
+  "regions_checked": 5624962,
+  "task_count": 60,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 2.9558577807620168e-12,
+  "seconds": 139.10132650000742,
+  "state_metric_tables": {
+    "0:1:0": "runs/dense-v08-closeout/proof-mixed/verification/metrics-0-1-0.npy",
+    "0:1:1": "runs/dense-v08-closeout/proof-mixed/verification/metrics-0-1-1.npy",
+    "0:1:2": "runs/dense-v08-closeout/proof-mixed/verification/metrics-0-1-2.npy",
+    "0:2:0": "runs/dense-v08-closeout/proof-mixed/verification/metrics-0-2-0.npy",
+    "0:2:1": "runs/dense-v08-closeout/proof-mixed/verification/metrics-0-2-1.npy",
+    "0:2:2": "runs/dense-v08-closeout/proof-mixed/verification/metrics-0-2-2.npy",
+    "1:0:0": "runs/dense-v08-closeout/proof-mixed/verification/metrics-1-0-0.npy",
+    "1:0:1": "runs/dense-v08-closeout/proof-mixed/verification/metrics-1-0-1.npy",
+    "1:0:2": "runs/dense-v08-closeout/proof-mixed/verification/metrics-1-0-2.npy",
+    "1:2:0": "runs/dense-v08-closeout/proof-mixed/verification/metrics-1-2-0.npy",
+    "1:2:1": "runs/dense-v08-closeout/proof-mixed/verification/metrics-1-2-1.npy",
+    "1:2:2": "runs/dense-v08-closeout/proof-mixed/verification/metrics-1-2-2.npy",
+    "2:0:0": "runs/dense-v08-closeout/proof-mixed/verification/metrics-2-0-0.npy",
+    "2:0:1": "runs/dense-v08-closeout/proof-mixed/verification/metrics-2-0-1.npy",
+    "2:0:2": "runs/dense-v08-closeout/proof-mixed/verification/metrics-2-0-2.npy",
+    "2:1:0": "runs/dense-v08-closeout/proof-mixed/verification/metrics-2-1-0.npy",
+    "2:1:1": "runs/dense-v08-closeout/proof-mixed/verification/metrics-2-1-1.npy",
+    "2:1:2": "runs/dense-v08-closeout/proof-mixed/verification/metrics-2-1-2.npy"
+  }
+}

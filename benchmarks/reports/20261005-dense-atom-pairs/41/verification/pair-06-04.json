@@ -1,0 +1,16 @@
+{
+  "families": [
+    "atr",
+    "bollinger"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 3,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "249993",
+  "metric_regions_in_domain": 204874,
+  "independently_replayed_metrics": 3,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.6147972675971687e-12,
+  "seconds": 0.4734343749587424
+}

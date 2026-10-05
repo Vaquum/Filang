@@ -1,0 +1,16 @@
+{
+  "families": [
+    "bollinger",
+    "ema"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 6,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "2795607",
+  "metric_regions_in_domain": 1613641,
+  "independently_replayed_metrics": 6,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.5347723092418164e-12,
+  "seconds": 0.5586942499503493
+}

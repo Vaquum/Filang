@@ -2,9 +2,18 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.7, with native joint indicator/rule sweeps.** Known-indicator atoms, shared numerical and predicate calculations, Boolean/temporal rule graphs, and full-risk execution now support jointly parameterized strategies. [Issue #16](https://github.com/mikkokotila/Filang/issues/16) and [PR #17](https://github.com/mikkokotila/Filang/pull/17) deliver a verified 8.748-trillion-address restricted parameter-family campaign—not trillions of independent indicators. The broader factory and scaling obligations remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
+**Status: runnable 0.8, with dense independent atom-pair sweeps.** Both conditions can independently traverse complete period/source/component grids across the ten known families. Exact predicate-state interning, set-product certificates, native full-risk scoring and durable local task restart reduce physical work without a standalone-profitability shortlist. The full 50,430-construction campaign is complete; the [report](benchmarks/reports/20261005-dense-atom-pairs/README.md) distinguishes exhaustive coverage checks, large checkpoint metric audits and exhaustive captured-control metric parity. Broader factory requirements remain open in issue #1.
 
-## Current: joint indicator and rule sweeps (0.7)
+## Current: dense atom pairs (0.8)
+
+`dense-sweep` independently varies both numerical neighborhoods, shares exact
+truth/validity signatures across atom coordinates, and evaluates certified products
+through the same full-risk engine. Bounded banks, checked u128 coverage, restartable
+task commits and worker-count-independent reduction are explicit. See
+[the contracts and commands](docs/DENSE_ATOM_PAIRS.md). Large summary output is
+not mislabeled as exhaustive independent replay of every metric record.
+
+## Earlier: joint indicator and rule sweeps (0.7)
 
 `strategy-sweep` jointly varies predicate alternatives, their feature/threshold/
 temporal parameters, and compound AND/OR/NOT/temporal rules. It uses packed validity

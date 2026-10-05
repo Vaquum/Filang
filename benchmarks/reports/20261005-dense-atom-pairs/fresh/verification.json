@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "source_commit": "dd7c66251c9bb7087a694fb4ca8fc6eb40f29117",
+  "native_tests": 65,
+  "locked_offline_build": true,
+  "format_clippy": "PASS"
+}

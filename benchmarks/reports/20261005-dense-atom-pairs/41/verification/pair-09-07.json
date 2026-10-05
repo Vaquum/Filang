@@ -1,0 +1,16 @@
+{
+  "families": [
+    "vwap",
+    "roc"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 96,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "126812610",
+  "metric_regions_in_domain": 104288416,
+  "independently_replayed_metrics": 96,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.8047785488306545e-12,
+  "seconds": 9.152104459004477
+}

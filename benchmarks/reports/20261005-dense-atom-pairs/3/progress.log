@@ -1,0 +1,100 @@
+Prepared sma: 27 atom constructions, 164 states from 1072 cells
+Prepared rsi: 27 atom constructions, 527 states from 934 cells
+Prepared ema: 27 atom constructions, 1680 states from 4096 cells
+Prepared macd: 27 atom constructions, 2788 states from 4467 cells
+Prepared atr: 27 atom constructions, 197 states from 1285 cells
+Prepared bollinger: 27 atom constructions, 306 states from 722 cells
+Prepared stochastic: 27 atom constructions, 1800 states from 1866 cells
+Prepared roc: 27 atom constructions, 2776 states from 3291 cells
+Prepared cci: 27 atom constructions, 918 states from 1326 cells
+Prepared vwap: 27 atom constructions, 2450 states from 4135 cells
+Dense pair sma / ema committed; 3 total tasks
+Dense pair sma / rsi committed; 6 total tasks
+Dense pair sma / macd committed; 9 total tasks
+Dense pair sma / bollinger committed; 12 total tasks
+Dense pair sma / stochastic committed; 15 total tasks
+Dense pair sma / atr committed; 18 total tasks
+Dense pair sma / roc committed; 21 total tasks
+Dense pair sma / cci committed; 24 total tasks
+Dense pair sma / vwap committed; 27 total tasks
+Dense pair ema / sma committed; 51 total tasks
+Dense pair ema / rsi committed; 75 total tasks
+Dense pair ema / macd committed; 99 total tasks
+Dense pair ema / bollinger committed; 123 total tasks
+Dense pair ema / stochastic committed; 147 total tasks
+Dense pair ema / atr committed; 171 total tasks
+Dense pair ema / roc committed; 195 total tasks
+Dense pair ema / cci committed; 219 total tasks
+Dense pair ema / vwap committed; 243 total tasks
+Dense pair rsi / sma committed; 255 total tasks
+Dense pair rsi / ema committed; 267 total tasks
+Dense pair rsi / macd committed; 279 total tasks
+Dense pair rsi / bollinger committed; 291 total tasks
+Dense pair rsi / stochastic committed; 303 total tasks
+Dense pair rsi / atr committed; 315 total tasks
+Dense pair rsi / roc committed; 327 total tasks
+Dense pair rsi / cci committed; 339 total tasks
+Dense pair rsi / vwap committed; 351 total tasks
+Dense pair macd / sma committed; 399 total tasks
+Dense pair macd / ema committed; 447 total tasks
+Dense pair macd / rsi committed; 495 total tasks
+Dense pair macd / bollinger committed; 543 total tasks
+Dense pair macd / stochastic committed; 591 total tasks
+Dense pair macd / atr committed; 639 total tasks
+Dense pair macd / roc committed; 687 total tasks
+Dense pair macd / cci committed; 735 total tasks
+Dense pair macd / vwap committed; 783 total tasks
+Dense pair bollinger / sma committed; 789 total tasks
+Dense pair bollinger / ema committed; 795 total tasks
+Dense pair bollinger / rsi committed; 801 total tasks
+Dense pair bollinger / macd committed; 807 total tasks
+Dense pair bollinger / stochastic committed; 813 total tasks
+Dense pair bollinger / atr committed; 819 total tasks
+Dense pair bollinger / roc committed; 825 total tasks
+Dense pair bollinger / cci committed; 831 total tasks
+Dense pair bollinger / vwap committed; 837 total tasks
+Dense pair stochastic / sma committed; 861 total tasks
+Dense pair stochastic / ema committed; 885 total tasks
+Dense pair stochastic / rsi committed; 909 total tasks
+Dense pair stochastic / macd committed; 933 total tasks
+Dense pair stochastic / bollinger committed; 957 total tasks
+Dense pair stochastic / atr committed; 981 total tasks
+Dense pair stochastic / roc committed; 1005 total tasks
+Dense pair stochastic / cci committed; 1029 total tasks
+Dense pair stochastic / vwap committed; 1053 total tasks
+Dense pair atr / sma committed; 1056 total tasks
+Dense pair atr / ema committed; 1059 total tasks
+Dense pair atr / rsi committed; 1062 total tasks
+Dense pair atr / macd committed; 1065 total tasks
+Dense pair atr / bollinger committed; 1068 total tasks
+Dense pair atr / stochastic committed; 1071 total tasks
+Dense pair atr / roc committed; 1074 total tasks
+Dense pair atr / cci committed; 1077 total tasks
+Dense pair atr / vwap committed; 1080 total tasks
+Dense pair roc / sma committed; 1128 total tasks
+Dense pair roc / ema committed; 1176 total tasks
+Dense pair roc / rsi committed; 1224 total tasks
+Dense pair roc / macd committed; 1272 total tasks
+Dense pair roc / bollinger committed; 1320 total tasks
+Dense pair roc / stochastic committed; 1368 total tasks
+Dense pair roc / atr committed; 1416 total tasks
+Dense pair roc / cci committed; 1464 total tasks
+Dense pair roc / vwap committed; 1512 total tasks
+Dense pair cci / sma committed; 1524 total tasks
+Dense pair cci / ema committed; 1536 total tasks
+Dense pair cci / rsi committed; 1548 total tasks
+Dense pair cci / macd committed; 1560 total tasks
+Dense pair cci / bollinger committed; 1572 total tasks
+Dense pair cci / stochastic committed; 1584 total tasks
+Dense pair cci / atr committed; 1596 total tasks
+Dense pair cci / roc committed; 1608 total tasks
+Dense pair cci / vwap committed; 1620 total tasks
+Dense pair vwap / sma committed; 1668 total tasks
+Dense pair vwap / ema committed; 1716 total tasks
+Dense pair vwap / rsi committed; 1764 total tasks
+Dense pair vwap / macd committed; 1812 total tasks
+Dense pair vwap / bollinger committed; 1860 total tasks
+Dense pair vwap / stochastic committed; 1908 total tasks
+Dense pair vwap / atr committed; 1956 total tasks
+Dense pair vwap / roc committed; 2004 total tasks
+Dense pair vwap / cci committed; 2052 total tasks
