@@ -2,9 +2,17 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.6, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
+**Status: runnable 0.7, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
 
-## Current: ten-family atom micro-sweeps (0.6)
+## Current: joint indicator and rule sweeps (0.7)
+
+`strategy-sweep` jointly varies predicate alternatives, their feature/threshold/
+temporal parameters, and compound AND/OR/NOT/temporal rules. It uses packed validity
+and truth planes, shared numerical/predicate plans, Boolean cofactors, exact result
+boxes and the existing full-risk execution engine. No single-feature shortlist is
+required. See [the language, commands and limitations](docs/JOINT_STRATEGY_SWEEP.md).
+
+## Earlier: ten-family atom micro-sweeps (0.6)
 
 Ten declared known-feature families now use the same fine-grid engine, with signed
 result-region support, an independent cohort parity gate and full response surfaces.

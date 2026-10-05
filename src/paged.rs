@@ -198,6 +198,11 @@ impl<'a> Executor<'a> {
             bank_peak_bytes: 0,
         })
     }
+    /// Shared full-risk backend for already compiled compound-rule positions.
+    /// The fixed context and all validity/decision timing belong to this Executor.
+    pub fn score_positions(&mut self, words: &[u64]) -> Result<Vec<Metrics>> {
+        self.state.score(words, TransitionMode::Auto)
+    }
     pub fn state_work(&self) -> &crate::backtest::ChangeWork {
         &self.state.work
     }
