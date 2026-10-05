@@ -1,0 +1,3 @@
+(and s0 s1)
+(or s0 s1)
+(and s0 (not s1))

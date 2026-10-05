@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "templates_verified": [
+    0,
+    1,
+    2
+  ],
+  "full_campaign": true,
+  "logical_addresses_verified": 196830,
+  "boxes_verified": 177384,
+  "cartesian_predicate_cells_verified": 196830,
+  "alternative_tuples_verified": 21870,
+  "predicate_options_verified": 180,
+  "unique_predicate_plans_verified": 90,
+  "all_compound_positions_verified": true,
+  "all_box_metrics_verified": true,
+  "cash_share_metric_sets": 177384,
+  "numpy_crosschecks": 4,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 1.5916157281026244e-11,
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "engine_sha256": "0415c7462ed745a900e8b5ed742b9ba22324cd58f730c06a45b2b580917ea5e7",
+  "boxes_sha256": "a6ee4c72323787e6d3beee322e71be8bbe2b4cfacba86b45a491d229c0680fe8",
+  "predicate_cells_sha256": "31837efa803e9983724a0f07f43d7a5acd728f276c3332373f6b4f3ad2b14b1c",
+  "oracle_source_sha256": "275d6353479591d0dc0b95d0a4cd8908a9c524157cd8af6958824375a0f0100d",
+  "seconds": 3.8687162499991246
+}

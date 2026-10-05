@@ -1,0 +1,1751 @@
+{
+  "status": "PASS",
+  "source_commit": "8bd575ef4739bb68e498d2e3366db1a208e91c15",
+  "working_tree_dirty": false,
+  "engine_sha256": "0415c7462ed745a900e8b5ed742b9ba22324cd58f730c06a45b2b580917ea5e7",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "native_workers": 1,
+  "cpu_pinned": false,
+  "os_caches_flushed": false,
+  "repeats": 3,
+  "reference_run": "runs/joint-v07-final",
+  "compact_proofs": true,
+  "mode": "full-domain box-parity",
+  "logical_addresses": 8748874821870,
+  "all_timed_metrics_verified": true,
+  "output_contract": "summary; all results computed; expanded addresses versus exact boxes differ physically",
+  "median_wall_seconds": {
+    "cells_scalar": 18.791524083004333,
+    "cofactor_scalar": 14.344616290996782,
+    "cofactor_native": 14.451085791981313,
+    "cofactor_cached": 14.830336457991507
+  },
+  "proof_summaries": {
+    "cells_scalar": {
+      "status": "PASS",
+      "coverage_complete": true,
+      "logical_strategy_addresses": 8748874821870,
+      "numerical_roots": 30,
+      "predicate_options": 180,
+      "unique_predicate_plans": 90,
+      "predicate_plan_reuses": 90,
+      "predicate_cells": 2556,
+      "predicate_payload_bytes": 1758528,
+      "cache_budget_bytes": 0,
+      "execution_payload_bytes": 1303648,
+      "result_bytes_computed": 1229126928,
+      "result_bytes_written": 1229126928,
+      "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+      "mixed_position_addresses": 8540193892643,
+      "all_flat_addresses": 208680929227,
+      "backend": "scalar",
+      "native_workers": 1,
+      "work": {
+        "alternative_tuples": 21870,
+        "cartesian_cells_visited": 16904022,
+        "rule_graph_evaluations": 16904022,
+        "cofactor_builds": 0,
+        "mux_words": 0,
+        "result_boxes": 9037698,
+        "logical_addresses_resolved": 8748874821870,
+        "state_calls": 9037698,
+        "chronological_replays": 0,
+        "exact_cache_hits": 0,
+        "exact_cache_comparisons": 0,
+        "cache_peak_entries": 0,
+        "coalesced_last_axis_cells": 7866324,
+        "constant_cofactor_regions": 0,
+        "all_flat_boxes": 11855,
+        "all_invested_boxes": 0
+      },
+      "execution_work": {
+        "full_replays": 3533,
+        "replay_periods": 7751402,
+        "decoded_changes": 21675992,
+        "all_off": 11855,
+        "all_on": 0,
+        "requests": 9037698,
+        "identical": 21211,
+        "rebuilds": 3598,
+        "deltas": 9009356,
+        "words_compared": 316319430,
+        "flips": 23336100,
+        "activations": 11668440,
+        "deactivations": 11667660,
+        "interval_joins": 1820208,
+        "interval_splits": 1864172,
+        "dirty_leaves": 63683912,
+        "tree_merges": 211828703,
+        "scenario_leaf_updates": 63683912,
+        "scenario_tree_merges": 211828703,
+        "flip_histogram": [
+          21211,
+          8192653,
+          629643,
+          184582,
+          4805,
+          3896,
+          860,
+          48
+        ]
+      },
+      "numerical_seconds": 0.00878225,
+      "predicate_seconds": 1.021139375,
+      "solve_and_output_seconds": 19.646063958,
+      "whole_internal_seconds": 20.763948,
+      "best_descriptive_not_validated": {
+        "template": 1,
+        "choices": [
+          34,
+          145
+        ],
+        "ranges": [
+          [
+            0,
+            112
+          ],
+          [
+            641,
+            3043
+          ]
+        ],
+        "metrics": [
+          {
+            "net_return_pct": 152.2367432723274,
+            "gross_return_pct": 161.4826977508818,
+            "cagr_pct": 151.97096622137764,
+            "max_drawdown_pct": 26.214440038166142,
+            "sharpe_annualized_naive": 2.0487487771198034,
+            "trades": 9,
+            "exposure_pct": 97.58432087511395,
+            "mean_bps_per_bar": 4.8256637631044645,
+            "mean_trade_bps": 1272.0104690827463,
+            "periods": 2194
+          }
+        ]
+      }
+    },
+    "cofactor_scalar": {
+      "status": "PASS",
+      "coverage_complete": true,
+      "logical_strategy_addresses": 8748874821870,
+      "numerical_roots": 30,
+      "predicate_options": 180,
+      "unique_predicate_plans": 90,
+      "predicate_plan_reuses": 90,
+      "predicate_cells": 2556,
+      "predicate_payload_bytes": 1758528,
+      "cache_budget_bytes": 0,
+      "execution_payload_bytes": 1303648,
+      "result_bytes_computed": 1229126928,
+      "result_bytes_written": 1229126928,
+      "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+      "mixed_position_addresses": 8540193892643,
+      "all_flat_addresses": 208680929227,
+      "backend": "scalar",
+      "native_workers": 1,
+      "work": {
+        "alternative_tuples": 21870,
+        "cartesian_cells_visited": 16904022,
+        "rule_graph_evaluations": 1242216,
+        "cofactor_builds": 621108,
+        "mux_words": 591640770,
+        "result_boxes": 9037698,
+        "logical_addresses_resolved": 8748874821870,
+        "state_calls": 9037698,
+        "chronological_replays": 0,
+        "exact_cache_hits": 0,
+        "exact_cache_comparisons": 0,
+        "cache_peak_entries": 0,
+        "coalesced_last_axis_cells": 7866324,
+        "constant_cofactor_regions": 0,
+        "all_flat_boxes": 11855,
+        "all_invested_boxes": 0
+      },
+      "execution_work": {
+        "full_replays": 3533,
+        "replay_periods": 7751402,
+        "decoded_changes": 21675992,
+        "all_off": 11855,
+        "all_on": 0,
+        "requests": 9037698,
+        "identical": 21211,
+        "rebuilds": 3598,
+        "deltas": 9009356,
+        "words_compared": 316319430,
+        "flips": 23336100,
+        "activations": 11668440,
+        "deactivations": 11667660,
+        "interval_joins": 1820208,
+        "interval_splits": 1864172,
+        "dirty_leaves": 63683912,
+        "tree_merges": 211828703,
+        "scenario_leaf_updates": 63683912,
+        "scenario_tree_merges": 211828703,
+        "flip_histogram": [
+          21211,
+          8192653,
+          629643,
+          184582,
+          4805,
+          3896,
+          860,
+          48
+        ]
+      },
+      "numerical_seconds": 0.011645166,
+      "predicate_seconds": 1.038030875,
+      "solve_and_output_seconds": 15.342770458,
+      "whole_internal_seconds": 16.480262666,
+      "best_descriptive_not_validated": {
+        "template": 1,
+        "choices": [
+          34,
+          145
+        ],
+        "ranges": [
+          [
+            0,
+            112
+          ],
+          [
+            641,
+            3043
+          ]
+        ],
+        "metrics": [
+          {
+            "net_return_pct": 152.2367432723274,
+            "gross_return_pct": 161.4826977508818,
+            "cagr_pct": 151.97096622137764,
+            "max_drawdown_pct": 26.214440038166142,
+            "sharpe_annualized_naive": 2.0487487771198034,
+            "trades": 9,
+            "exposure_pct": 97.58432087511395,
+            "mean_bps_per_bar": 4.8256637631044645,
+            "mean_trade_bps": 1272.0104690827463,
+            "periods": 2194
+          }
+        ]
+      }
+    },
+    "cofactor_native": {
+      "status": "PASS",
+      "coverage_complete": true,
+      "logical_strategy_addresses": 8748874821870,
+      "numerical_roots": 30,
+      "predicate_options": 180,
+      "unique_predicate_plans": 90,
+      "predicate_plan_reuses": 90,
+      "predicate_cells": 2556,
+      "predicate_payload_bytes": 1758528,
+      "cache_budget_bytes": 0,
+      "execution_payload_bytes": 1303648,
+      "result_bytes_computed": 1229126928,
+      "result_bytes_written": 1229126928,
+      "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+      "mixed_position_addresses": 8540193892643,
+      "all_flat_addresses": 208680929227,
+      "backend": "neon",
+      "native_workers": 1,
+      "work": {
+        "alternative_tuples": 21870,
+        "cartesian_cells_visited": 16904022,
+        "rule_graph_evaluations": 1242216,
+        "cofactor_builds": 621108,
+        "mux_words": 591640770,
+        "result_boxes": 9037698,
+        "logical_addresses_resolved": 8748874821870,
+        "state_calls": 9037698,
+        "chronological_replays": 0,
+        "exact_cache_hits": 0,
+        "exact_cache_comparisons": 0,
+        "cache_peak_entries": 0,
+        "coalesced_last_axis_cells": 7866324,
+        "constant_cofactor_regions": 0,
+        "all_flat_boxes": 11855,
+        "all_invested_boxes": 0
+      },
+      "execution_work": {
+        "full_replays": 3533,
+        "replay_periods": 7751402,
+        "decoded_changes": 21675992,
+        "all_off": 11855,
+        "all_on": 0,
+        "requests": 9037698,
+        "identical": 21211,
+        "rebuilds": 3598,
+        "deltas": 9009356,
+        "words_compared": 316319430,
+        "flips": 23336100,
+        "activations": 11668440,
+        "deactivations": 11667660,
+        "interval_joins": 1820208,
+        "interval_splits": 1864172,
+        "dirty_leaves": 63683912,
+        "tree_merges": 211828703,
+        "scenario_leaf_updates": 63683912,
+        "scenario_tree_merges": 211828703,
+        "flip_histogram": [
+          21211,
+          8192653,
+          629643,
+          184582,
+          4805,
+          3896,
+          860,
+          48
+        ]
+      },
+      "numerical_seconds": 0.006640458,
+      "predicate_seconds": 1.010950791,
+      "solve_and_output_seconds": 15.42133975,
+      "whole_internal_seconds": 16.527235625,
+      "best_descriptive_not_validated": {
+        "template": 1,
+        "choices": [
+          34,
+          145
+        ],
+        "ranges": [
+          [
+            0,
+            112
+          ],
+          [
+            641,
+            3043
+          ]
+        ],
+        "metrics": [
+          {
+            "net_return_pct": 152.2367432723274,
+            "gross_return_pct": 161.4826977508818,
+            "cagr_pct": 151.97096622137764,
+            "max_drawdown_pct": 26.214440038166142,
+            "sharpe_annualized_naive": 2.0487487771198034,
+            "trades": 9,
+            "exposure_pct": 97.58432087511395,
+            "mean_bps_per_bar": 4.8256637631044645,
+            "mean_trade_bps": 1272.0104690827463,
+            "periods": 2194
+          }
+        ]
+      }
+    },
+    "cofactor_cached": {
+      "status": "PASS",
+      "coverage_complete": true,
+      "logical_strategy_addresses": 8748874821870,
+      "numerical_roots": 30,
+      "predicate_options": 180,
+      "unique_predicate_plans": 90,
+      "predicate_plan_reuses": 90,
+      "predicate_cells": 2556,
+      "predicate_payload_bytes": 1758528,
+      "cache_budget_bytes": 8388608,
+      "execution_payload_bytes": 1303648,
+      "result_bytes_computed": 1229126928,
+      "result_bytes_written": 1229126928,
+      "result_sha256": "50b43cdbc6125084928e9000fa44bc495d207a465e1a3985fea15846f50aaa80",
+      "mixed_position_addresses": 8540193892643,
+      "all_flat_addresses": 208680929227,
+      "backend": "neon",
+      "native_workers": 1,
+      "work": {
+        "alternative_tuples": 21870,
+        "cartesian_cells_visited": 16904022,
+        "rule_graph_evaluations": 1242216,
+        "cofactor_builds": 621108,
+        "mux_words": 591640770,
+        "result_boxes": 9037698,
+        "logical_addresses_resolved": 8748874821870,
+        "state_calls": 4499248,
+        "chronological_replays": 0,
+        "exact_cache_hits": 4538450,
+        "exact_cache_comparisons": 4546607,
+        "cache_peak_entries": 13617,
+        "coalesced_last_axis_cells": 7866324,
+        "constant_cofactor_regions": 0,
+        "all_flat_boxes": 11855,
+        "all_invested_boxes": 0
+      },
+      "execution_work": {
+        "full_replays": 3467,
+        "replay_periods": 7606598,
+        "decoded_changes": 11604667,
+        "all_off": 44,
+        "all_on": 0,
+        "requests": 4499248,
+        "identical": 0,
+        "rebuilds": 3533,
+        "deltas": 4492248,
+        "words_compared": 157473680,
+        "flips": 13242548,
+        "activations": 6621664,
+        "deactivations": 6620884,
+        "interval_joins": 962178,
+        "interval_splits": 997647,
+        "dirty_leaves": 37531284,
+        "tree_merges": 117263766,
+        "scenario_leaf_updates": 37531284,
+        "scenario_tree_merges": 117263766,
+        "flip_histogram": [
+          0,
+          4073309,
+          320764,
+          95644,
+          4780,
+          3844,
+          859,
+          48
+        ]
+      },
+      "numerical_seconds": 0.006859041,
+      "predicate_seconds": 1.152655,
+      "solve_and_output_seconds": 15.623525583,
+      "whole_internal_seconds": 16.871224541,
+      "best_descriptive_not_validated": {
+        "template": 1,
+        "choices": [
+          34,
+          145
+        ],
+        "ranges": [
+          [
+            0,
+            112
+          ],
+          [
+            641,
+            3043
+          ]
+        ],
+        "metrics": [
+          {
+            "net_return_pct": 152.2367432723274,
+            "gross_return_pct": 161.4826977508818,
+            "cagr_pct": 151.97096622137764,
+            "max_drawdown_pct": 26.214440038166142,
+            "sharpe_annualized_naive": 2.0487487771198034,
+            "trades": 9,
+            "exposure_pct": 97.58432087511395,
+            "mean_bps_per_bar": 4.8256637631044645,
+            "mean_trade_bps": 1272.0104690827463,
+            "periods": 2194
+          }
+        ]
+      }
+    }
+  },
+  "measurements": [
+    {
+      "mode": "cells_scalar",
+      "repeat": 1,
+      "wall_seconds": 19.35835104197031,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "scalar",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 16904022,
+          "cofactor_builds": 0,
+          "mux_words": 0,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.008333125,
+        "predicate_seconds": 1.005817583,
+        "solve_and_output_seconds": 18.23208425,
+        "whole_internal_seconds": 19.33016625,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_scalar",
+      "repeat": 1,
+      "wall_seconds": 14.31724512501387,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "scalar",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.008464875,
+        "predicate_seconds": 1.012824166,
+        "solve_and_output_seconds": 13.199824,
+        "whole_internal_seconds": 14.303336541,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_native",
+      "repeat": 1,
+      "wall_seconds": 14.375522707996424,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.006965875,
+        "predicate_seconds": 0.995781375,
+        "solve_and_output_seconds": 13.275936375,
+        "whole_internal_seconds": 14.360810916,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_cached",
+      "repeat": 1,
+      "wall_seconds": 14.728042208007537,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 8388608,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "50b43cdbc6125084928e9000fa44bc495d207a465e1a3985fea15846f50aaa80",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 4499248,
+          "chronological_replays": 0,
+          "exact_cache_hits": 4538450,
+          "exact_cache_comparisons": 4546607,
+          "cache_peak_entries": 13617,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3467,
+          "replay_periods": 7606598,
+          "decoded_changes": 11604667,
+          "all_off": 44,
+          "all_on": 0,
+          "requests": 4499248,
+          "identical": 0,
+          "rebuilds": 3533,
+          "deltas": 4492248,
+          "words_compared": 157473680,
+          "flips": 13242548,
+          "activations": 6621664,
+          "deactivations": 6620884,
+          "interval_joins": 962178,
+          "interval_splits": 997647,
+          "dirty_leaves": 37531284,
+          "tree_merges": 117263766,
+          "scenario_leaf_updates": 37531284,
+          "scenario_tree_merges": 117263766,
+          "flip_histogram": [
+            0,
+            4073309,
+            320764,
+            95644,
+            4780,
+            3844,
+            859,
+            48
+          ]
+        },
+        "numerical_seconds": 0.006853208,
+        "predicate_seconds": 1.014570291,
+        "solve_and_output_seconds": 13.611124958,
+        "whole_internal_seconds": 14.714627,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_scalar",
+      "repeat": 2,
+      "wall_seconds": 14.861628374957945,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "scalar",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.008537416,
+        "predicate_seconds": 1.11658925,
+        "solve_and_output_seconds": 13.63873825,
+        "whole_internal_seconds": 14.845968,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_native",
+      "repeat": 2,
+      "wall_seconds": 14.451085791981313,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.007073291,
+        "predicate_seconds": 1.01092375,
+        "solve_and_output_seconds": 13.338431125,
+        "whole_internal_seconds": 14.438368333,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_cached",
+      "repeat": 2,
+      "wall_seconds": 14.84344416600652,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 8388608,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "50b43cdbc6125084928e9000fa44bc495d207a465e1a3985fea15846f50aaa80",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 4499248,
+          "chronological_replays": 0,
+          "exact_cache_hits": 4538450,
+          "exact_cache_comparisons": 4546607,
+          "cache_peak_entries": 13617,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3467,
+          "replay_periods": 7606598,
+          "decoded_changes": 11604667,
+          "all_off": 44,
+          "all_on": 0,
+          "requests": 4499248,
+          "identical": 0,
+          "rebuilds": 3533,
+          "deltas": 4492248,
+          "words_compared": 157473680,
+          "flips": 13242548,
+          "activations": 6621664,
+          "deactivations": 6620884,
+          "interval_joins": 962178,
+          "interval_splits": 997647,
+          "dirty_leaves": 37531284,
+          "tree_merges": 117263766,
+          "scenario_leaf_updates": 37531284,
+          "scenario_tree_merges": 117263766,
+          "flip_histogram": [
+            0,
+            4073309,
+            320764,
+            95644,
+            4780,
+            3844,
+            859,
+            48
+          ]
+        },
+        "numerical_seconds": 0.007149916,
+        "predicate_seconds": 1.012757041,
+        "solve_and_output_seconds": 13.727690541,
+        "whole_internal_seconds": 14.829207291,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cells_scalar",
+      "repeat": 2,
+      "wall_seconds": 18.768802584032528,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "scalar",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 16904022,
+          "cofactor_builds": 0,
+          "mux_words": 0,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.009007416,
+        "predicate_seconds": 1.006923625,
+        "solve_and_output_seconds": 17.655595041,
+        "whole_internal_seconds": 18.753253583,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_native",
+      "repeat": 3,
+      "wall_seconds": 14.490612416004296,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.006809833,
+        "predicate_seconds": 1.016283291,
+        "solve_and_output_seconds": 13.373396083,
+        "whole_internal_seconds": 14.477072625,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_cached",
+      "repeat": 3,
+      "wall_seconds": 14.830336457991507,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 8388608,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "50b43cdbc6125084928e9000fa44bc495d207a465e1a3985fea15846f50aaa80",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "neon",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 4499248,
+          "chronological_replays": 0,
+          "exact_cache_hits": 4538450,
+          "exact_cache_comparisons": 4546607,
+          "cache_peak_entries": 13617,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3467,
+          "replay_periods": 7606598,
+          "decoded_changes": 11604667,
+          "all_off": 44,
+          "all_on": 0,
+          "requests": 4499248,
+          "identical": 0,
+          "rebuilds": 3533,
+          "deltas": 4492248,
+          "words_compared": 157473680,
+          "flips": 13242548,
+          "activations": 6621664,
+          "deactivations": 6620884,
+          "interval_joins": 962178,
+          "interval_splits": 997647,
+          "dirty_leaves": 37531284,
+          "tree_merges": 117263766,
+          "scenario_leaf_updates": 37531284,
+          "scenario_tree_merges": 117263766,
+          "flip_histogram": [
+            0,
+            4073309,
+            320764,
+            95644,
+            4780,
+            3844,
+            859,
+            48
+          ]
+        },
+        "numerical_seconds": 0.007046458,
+        "predicate_seconds": 1.0401725,
+        "solve_and_output_seconds": 13.687182332999999,
+        "whole_internal_seconds": 14.816476,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cells_scalar",
+      "repeat": 3,
+      "wall_seconds": 18.791524083004333,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "scalar",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 16904022,
+          "cofactor_builds": 0,
+          "mux_words": 0,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.008702458,
+        "predicate_seconds": 1.008762916,
+        "solve_and_output_seconds": 17.673790832999998,
+        "whole_internal_seconds": 18.776783875,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    },
+    {
+      "mode": "cofactor_scalar",
+      "repeat": 3,
+      "wall_seconds": 14.344616290996782,
+      "summary": {
+        "status": "PASS",
+        "coverage_complete": true,
+        "logical_strategy_addresses": 8748874821870,
+        "numerical_roots": 30,
+        "predicate_options": 180,
+        "unique_predicate_plans": 90,
+        "predicate_plan_reuses": 90,
+        "predicate_cells": 2556,
+        "predicate_payload_bytes": 1758528,
+        "cache_budget_bytes": 0,
+        "execution_payload_bytes": 1303648,
+        "result_bytes_computed": 1229126928,
+        "result_bytes_written": 0,
+        "result_sha256": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+        "mixed_position_addresses": 8540193892643,
+        "all_flat_addresses": 208680929227,
+        "backend": "scalar",
+        "native_workers": 1,
+        "work": {
+          "alternative_tuples": 21870,
+          "cartesian_cells_visited": 16904022,
+          "rule_graph_evaluations": 1242216,
+          "cofactor_builds": 621108,
+          "mux_words": 591640770,
+          "result_boxes": 9037698,
+          "logical_addresses_resolved": 8748874821870,
+          "state_calls": 9037698,
+          "chronological_replays": 0,
+          "exact_cache_hits": 0,
+          "exact_cache_comparisons": 0,
+          "cache_peak_entries": 0,
+          "coalesced_last_axis_cells": 7866324,
+          "constant_cofactor_regions": 0,
+          "all_flat_boxes": 11855,
+          "all_invested_boxes": 0
+        },
+        "execution_work": {
+          "full_replays": 3533,
+          "replay_periods": 7751402,
+          "decoded_changes": 21675992,
+          "all_off": 11855,
+          "all_on": 0,
+          "requests": 9037698,
+          "identical": 21211,
+          "rebuilds": 3598,
+          "deltas": 9009356,
+          "words_compared": 316319430,
+          "flips": 23336100,
+          "activations": 11668440,
+          "deactivations": 11667660,
+          "interval_joins": 1820208,
+          "interval_splits": 1864172,
+          "dirty_leaves": 63683912,
+          "tree_merges": 211828703,
+          "scenario_leaf_updates": 63683912,
+          "scenario_tree_merges": 211828703,
+          "flip_histogram": [
+            21211,
+            8192653,
+            629643,
+            184582,
+            4805,
+            3896,
+            860,
+            48
+          ]
+        },
+        "numerical_seconds": 0.008838666,
+        "predicate_seconds": 1.011547083,
+        "solve_and_output_seconds": 13.227426583,
+        "whole_internal_seconds": 14.330880540999999,
+        "best_descriptive_not_validated": {
+          "template": 1,
+          "choices": [
+            34,
+            145
+          ],
+          "ranges": [
+            [
+              0,
+              112
+            ],
+            [
+              641,
+              3043
+            ]
+          ],
+          "metrics": [
+            {
+              "net_return_pct": 152.2367432723274,
+              "gross_return_pct": 161.4826977508818,
+              "cagr_pct": 151.97096622137764,
+              "max_drawdown_pct": 26.214440038166142,
+              "sharpe_annualized_naive": 2.0487487771198034,
+              "trades": 9,
+              "exposure_pct": 97.58432087511395,
+              "mean_bps_per_bar": 4.8256637631044645,
+              "mean_trade_bps": 1272.0104690827463,
+              "periods": 2194
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

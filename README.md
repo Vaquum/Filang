@@ -170,3 +170,13 @@ python3 scripts/benchmark.py --out runs/benchmark --repeats 3
 **Terasweep is the performance prototype:** a starting point for eliminating repeated work, not a prescribed kernel stack or performance ceiling. Filang combines shared numerical DAGs with parameter-event scoring in this slice; broader algorithms remain open.
 
 Neither prototype is a runtime dependency or compatibility obligation. Correctness is defined here and checked with independent reference calculations. This repository contains no copied prototype implementation or market dataset.
+
+## Joint strategy sweep evidence
+
+The joint rule layer and its first complete **8.748-trillion-address** parameter
+campaign are documented in [the measured report](benchmarks/reports/20261005-joint-strategies/README.md).
+This is exact result-box coverage of a declared two-condition family, not trillions
+of independent indicators or a general arbitrary trillion-program throughput claim.
+All combined positions and full backtest metrics were independently verified.
+[Rule syntax, contracts and commands](docs/JOINT_STRATEGY_SWEEP.md) include a
+summary-output mode that avoids retaining the large result-box file.

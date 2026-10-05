@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "reference": "/Users/mikkokotila/dev/Filang/runs/joint-v07-final",
+  "files": {
+    "boxes.bin": "769a31cc3e7597aeecf677fef96322f5ff5ca0ed827e977fb0b2756ff8f5261b",
+    "predicate-cells.bin": "6a983eaaca7918a061968fc37a71d176193b6826b679b410edc56f0b986dbc11"
+  },
+  "removed_after_complete_comparison": true
+}
