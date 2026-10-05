@@ -1,6 +1,6 @@
 use filang::{backtest::Costs, config::Config, data, report, search, Result};
 use std::{collections::HashMap, env, fs, path::Path};
-const HELP:&str="Filang 0.7.0 (research prototype)\n\n  filang micro-inspect --config FILE\n  filang cohort-parity --data CSV --out DIR\n  filang micro-sweep --config FILE --gate FILE --out DIR [--plan regions|expanded]\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
+const HELP:&str="Filang 0.8.0 (research prototype)\n\n  filang dense-example --out FILE --coefficients 3|11|41\n  filang dense-inspect --config FILE\n  filang dense-prepare --config FILE --gate FILE --out DIR\n  filang dense-sweep --config FILE --gate FILE --out DIR [--resume true --max-tasks N]\n  filang micro-inspect --config FILE\n  filang cohort-parity --data CSV --out DIR\n  filang micro-sweep --config FILE --gate FILE --out DIR [--plan regions|expanded]\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
   filang strategy-example --out DIR [--grid-count N --neighbors true --qualifiers true --slots 2]\n  filang strategy-inspect --config FILE\n  filang strategy-sweep --config FILE [--out DIR --plan expanded|cells|cofactor --gate FILE]\n  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
 fn arguments() -> Result<(String, HashMap<String, String>)> {
     let mut it = env::args().skip(1);
@@ -36,6 +36,67 @@ fn main() {
 fn entry() -> Result<()> {
     let (cmd, mut flags) = arguments()?;
     match cmd.as_str() {
+        "dense-example" => {
+            let out = take(&mut flags, "--out")?;
+            let n = flags
+                .remove("--coefficients")
+                .unwrap_or_else(|| "3".into())
+                .parse()
+                .map_err(|_| "bad coefficients")?;
+            finish(&flags)?;
+            filang::dense_run::example(&out, n)?;
+            println!("Dense domain: {out}");
+        }
+        "dense-inspect" | "dense-prepare" | "dense-sweep" => {
+            let path = take(&mut flags, "--config")?;
+            let raw = fs::read_to_string(path).map_err(|e| e.to_string())?;
+            if cmd == "dense-inspect" {
+                finish(&flags)?;
+                let c = filang::dense_run::Config::parse(&raw)?;
+                println!("{{\"status\":\"PLAN_ONLY\",\"upstream_constructions\":{},\"logical_strategy_addresses\":\"{}\",\"cutoff_points_per_axis\":{}}}",c.atoms()*c.families.len()as u64,c.logical()?,c.cutoffs);
+            } else {
+                let out = take(&mut flags, "--out")?;
+                let gate = take(&mut flags, "--gate")?;
+                let resume = flags
+                    .remove("--resume")
+                    .unwrap_or_else(|| "false".into())
+                    .parse::<bool>()
+                    .map_err(|_| "resume true/false")?;
+                let max_tasks = flags
+                    .remove("--max-tasks")
+                    .unwrap_or_else(|| "0".into())
+                    .parse::<u64>()
+                    .map_err(|_| "bad max tasks")?;
+                let backend = filang::kernels::Backend::resolve(
+                    &flags.remove("--backend").unwrap_or_else(|| "auto".into()),
+                )?;
+                let proof = flags
+                    .remove("--certificates")
+                    .unwrap_or_else(|| "true".into())
+                    .parse::<bool>()
+                    .map_err(|_| "certificates true/false")?;
+                let capture = flags
+                    .remove("--capture")
+                    .unwrap_or_else(|| "false".into())
+                    .parse::<bool>()
+                    .map_err(|_| "capture true/false")?;
+                finish(&flags)?;
+                println!(
+                    "{}",
+                    filang::dense_run::run(
+                        &raw,
+                        &out,
+                        &gate,
+                        resume,
+                        cmd == "dense-prepare",
+                        max_tasks,
+                        backend,
+                        proof,
+                        capture
+                    )?
+                );
+            }
+        }
         "strategy-example" | "strategy-inspect" | "strategy-sweep" => {
             println!("{}", filang::joint_run::cli(&cmd, flags)?);
         }
