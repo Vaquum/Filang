@@ -48,7 +48,7 @@ def boxes_equal(a,b):
         parity(x['metrics'],y['metrics'])
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',required=True);p.add_argument('--gate',required=True);p.add_argument('--out',required=True);p.add_argument('--repeats',type=int,default=3);p.add_argument('--full',action='store_true');a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',required=True);p.add_argument('--gate',required=True);p.add_argument('--out',required=True);p.add_argument('--repeats',type=int,default=3);p.add_argument('--full',action='store_true');p.add_argument('--reference-run');p.add_argument('--compact-proofs',action='store_true');a=p.parse_args()
     out=Path(a.out)
     if out.exists() or a.repeats<1:raise ValueError('fresh output and positive repeats required')
     out.mkdir(parents=True);binary=str(Path('target/release/filang').resolve())
@@ -65,7 +65,11 @@ def main():
         wall=time.perf_counter()-start;summary=json.loads((root/'summary.json').read_text())
         if not summary['coverage_complete']:raise ValueError('incomplete result')
         return wall,summary
-    proofs={};ref=None
+    if a.compact_proofs and (not a.full or not a.reference_run):raise ValueError('compact proofs require full mode and reference-run')
+    proofs={};ref=str(Path(a.reference_run).resolve()) if a.reference_run else None
+    if ref:
+        v=json.loads((Path(ref)/'verification.json').read_text())
+        if v['status']!='PASS' or v['boxes_sha256']!=sha(Path(ref)/'boxes.bin'):raise ValueError('reference proof incomplete/changed')
     for name,plan,backend,cache in modes:
         _,s=run('proof-'+name,plan,backend,cache,True);proofs[name]=s
         if a.full:
@@ -76,6 +80,11 @@ def main():
             if ref is None:ref=values
             else:parity(ref,values)
         print('proof',name,s['logical_strategy_addresses'],s['work']['result_boxes'],'PASS',flush=True)
+        if a.compact_proofs:
+            proof_root=out/('proof-'+name)
+            record={f:sha(proof_root/f) for f in ['boxes.bin','predicate-cells.bin']}
+            (proof_root/'checked_large_files.json').write_text(json.dumps({'status':'PASS','reference':ref,'files':record,'removed_after_complete_comparison':True},indent=2)+'\n')
+            for f in record:(proof_root/f).unlink()
     if not a.full:verify(out/'proof-cofactor_cached',out/'independent-verification.json')
     results=[]
     for rep in range(a.repeats):
@@ -89,7 +98,7 @@ def main():
     result={'status':'PASS','source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
       'working_tree_dirty':bool(subprocess.check_output(['git','status','--porcelain'],text=True).strip()),'engine_sha256':sha(binary),
       'platform':platform.platform(),'native_workers':1,'cpu_pinned':False,'os_caches_flushed':False,'repeats':a.repeats,
-      'mode':'full-domain box-parity' if a.full else 'exhaustive small-domain address parity',
+      'reference_run':a.reference_run,'compact_proofs':a.compact_proofs,'mode':'full-domain box-parity' if a.full else 'exhaustive small-domain address parity',
       'logical_addresses':proofs[modes[0][0]]['logical_strategy_addresses'],'all_timed_metrics_verified':True,
       'output_contract':'summary; all results computed; expanded addresses versus exact boxes differ physically',
       'median_wall_seconds':med,'proof_summaries':proofs,'measurements':results}
