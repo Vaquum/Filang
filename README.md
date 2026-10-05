@@ -2,7 +2,7 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.7, with known-indicator parity as the current research gate.** The latest delivery reconstructs an explicit first cohort using native atoms, verifies complete backtest parity against TA-Lib and independent cash/share accounting, then enables bounded parameter neighborhoods. [Issue #8](https://github.com/mikkokotila/Filang/issues/8) tracks the current shared-state slice; the broader coverage and trillion-scale target remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
+**Status: runnable 0.7, with native joint indicator/rule sweeps.** Known-indicator atoms, shared numerical and predicate calculations, Boolean/temporal rule graphs, and full-risk execution now support jointly parameterized strategies. [Issue #16](https://github.com/mikkokotila/Filang/issues/16) and [PR #17](https://github.com/mikkokotila/Filang/pull/17) deliver a verified 8.748-trillion-address restricted parameter-family campaign—not trillions of independent indicators. The broader factory and scaling obligations remain open in [issue #1](https://github.com/mikkokotila/Filang/issues/1).
 
 ## Current: joint indicator and rule sweeps (0.7)
 
