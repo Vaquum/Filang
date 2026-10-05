@@ -70,6 +70,11 @@ fn entry() -> Result<()> {
                 let backend = filang::kernels::Backend::resolve(
                     &flags.remove("--backend").unwrap_or_else(|| "auto".into()),
                 )?;
+                let workers = flags
+                    .remove("--workers")
+                    .unwrap_or_else(|| "1".into())
+                    .parse::<usize>()
+                    .map_err(|_| "bad workers")?;
                 let proof = flags
                     .remove("--certificates")
                     .unwrap_or_else(|| "true".into())
@@ -90,6 +95,7 @@ fn entry() -> Result<()> {
                         resume,
                         cmd == "dense-prepare",
                         max_tasks,
+                        workers,
                         backend,
                         proof,
                         capture

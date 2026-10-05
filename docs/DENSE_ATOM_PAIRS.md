@@ -58,7 +58,7 @@ execution state, making successful task outputs deterministic across restart.
 Completed task records bind data, code, raw domain config, backend, plan and output
 policy. Reuse verifies checksums; modified contexts or committed data fail closed.
 Uncommitted staging artifacts are recomputed, never counted as completed work.
-This is a sequential resumable controller, not a distributed or adaptive one.
+Tasks can run on 1–8 native scoped workers and reduce in canonical order. Worker count may change on restart. This is not a distributed or adaptive controller.
 
 Every file uses an appended SHA-256 of the preceding bytes. The native writer
 flushes, calls File::sync_all, renames on the same filesystem and syncs the parent
@@ -92,6 +92,7 @@ filang dense-prepare --config runs/dense41.cfg --gate GATE --out runs/dense41
 filang dense-sweep --config runs/dense41.cfg --gate GATE --out runs/dense41 --resume true
 ```
 
+`--workers 4` uses four bounded native task workers (default one).
 `--max-tasks N` pauses after N new committed tasks; repeating with `--resume true`
 continues. Default zero means no task-count limit. `--certificates false` performs
 leaf-pair enumeration over the SAME exact predicate dictionary. `--capture true`

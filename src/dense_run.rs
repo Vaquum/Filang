@@ -644,10 +644,14 @@ pub fn run(
     resume: bool,
     prepare_only: bool,
     max_tasks: u64,
+    workers: usize,
     backend: Backend,
     proof: bool,
     capture: bool,
 ) -> Result<String> {
+    if workers == 0 || workers > 8 {
+        return Err("workers must be in 1..8".into());
+    }
     let parsed = Config::parse(raw)?;
     let c = &parsed;
     let clock = Instant::now();
@@ -695,8 +699,21 @@ pub fn run(
     let tasks = dir.join("tasks");
     fs::create_dir_all(&banks).map_err(|e| e.to_string())?;
     fs::create_dir_all(&tasks).map_err(|e| e.to_string())?;
-    for f in 0..c.families.len() {
-        prepared(c, &d, range.clone(), &context, f, &banks, backend)?;
+    for lo in (0..c.families.len()).step_by(workers) {
+        std::thread::scope(|scope| -> Result<()> {
+            let mut jobs = Vec::new();
+            for f in lo..(lo + workers).min(c.families.len()) {
+                let d = &d;
+                let r = range.clone();
+                let ctxt = &context;
+                let banks = &banks;
+                jobs.push(scope.spawn(move || prepared(c, d, r, ctxt, f, banks, backend)));
+            }
+            for job in jobs {
+                job.join().map_err(|_| "preparation worker panicked")??;
+            }
+            Ok(())
+        })?;
     }
     let preparation_seconds = clock.elapsed().as_secs_f64();
     let (
@@ -732,47 +749,81 @@ pub fn run(
                 )?;
                 let right = Tree::new(&entries_b, c.tree_budget)?;
                 for template in 0..c.rules.len() {
-                    for &node in &frontier {
-                        let committed = tasks.join(format!("task-{done:08}.chk")).exists();
-                        if !committed && max_tasks > 0 && new_tasks >= max_tasks {
+                    let mut cursor = 0;
+                    while cursor < frontier.len() {
+                        let mut jobs = Vec::new();
+                        let mut pending_new = 0;
+                        while jobs.len() < workers && cursor < frontier.len() {
+                            let id = done + jobs.len() as u64;
+                            let committed = tasks.join(format!("task-{id:08}.chk")).exists();
+                            if !committed && max_tasks > 0 && new_tasks + pending_new >= max_tasks {
+                                break;
+                            }
+                            if !committed {
+                                pending_new += 1;
+                            }
+                            jobs.push((id, frontier[cursor], committed));
+                            cursor += 1;
+                        }
+                        if jobs.is_empty() {
                             complete = false;
                             break 'outer;
                         }
-                        let t = task(
-                            c,
-                            &d,
-                            range.clone(),
-                            &context,
-                            &tasks,
-                            done,
-                            [a, b],
-                            template,
-                            &left,
-                            &right,
-                            node,
-                            backend,
-                            proof,
-                            capture,
-                        )?;
-                        if committed {
-                            reused += 1;
-                        } else {
-                            new_tasks += 1;
+                        let batch = std::thread::scope(|scope| -> Result<Vec<(Task, bool)>> {
+                            let mut handles = Vec::new();
+                            for (id, node, committed) in jobs {
+                                let d = &d;
+                                let r = range.clone();
+                                let ctxt = &context;
+                                let dir = &tasks;
+                                let l = &left;
+                                let rr = &right;
+                                handles.push(scope.spawn(move || {
+                                    task(
+                                        c,
+                                        d,
+                                        r,
+                                        ctxt,
+                                        dir,
+                                        id,
+                                        [a, b],
+                                        template,
+                                        l,
+                                        rr,
+                                        node,
+                                        backend,
+                                        proof,
+                                        capture,
+                                    )
+                                    .map(|t| (t, committed))
+                                }));
+                            }
+                            handles
+                                .into_iter()
+                                .map(|h| h.join().map_err(|_| "task worker panicked".to_owned())?)
+                                .collect()
+                        })?;
+                        for (t, committed) in batch {
+                            if committed {
+                                reused += 1;
+                            } else {
+                                new_tasks += 1;
+                            }
+                            covered = covered
+                                .checked_add(t.work.logical)
+                                .ok_or("whole coverage overflow")?;
+                            regions = regions
+                                .checked_add(t.regions)
+                                .ok_or("region count overflow")?;
+                            pairs += t.work.signature_pairs;
+                            visits += t.work.node_pairs as u128;
+                            certified += t.work.proved_regions as u128;
+                            result_hash.update(&t.encode(&context));
+                            if best.as_ref().map_or(true, |v| t.best.better(v)) {
+                                best = Some(t.best);
+                            }
+                            done += 1;
                         }
-                        covered = covered
-                            .checked_add(t.work.logical)
-                            .ok_or("whole coverage overflow")?;
-                        regions = regions
-                            .checked_add(t.regions)
-                            .ok_or("region count overflow")?;
-                        pairs += t.work.signature_pairs;
-                        visits += t.work.node_pairs as u128;
-                        certified += t.work.proved_regions as u128;
-                        result_hash.update(&t.encode(&context));
-                        if best.as_ref().map_or(true, |v| t.best.better(v)) {
-                            best = Some(t.best);
-                        }
-                        done += 1;
                     }
                 }
                 eprintln!(
@@ -788,7 +839,7 @@ pub fn run(
     if let Some(b) = &best {
         export_best(c, b, dir)?;
     }
-    let summary=format!("{{\"version\":1,\"status\":{},\"coverage_complete\":{},\"context_sha256\":{},\"data_sha256\":{},\"engine_sha256\":{},\"coefficient_count\":{},\"cutoff_count\":{},\"upstream_constructions\":{},\"requested_strategy_addresses\":{},\"resolved_strategy_addresses\":{},\"signature_pair_products_resolved\":{},\"tree_node_pairs_visited\":{},\"certified_nonleaf_products\":{},\"metric_regions_evaluated\":{},\"completed_tasks\":{},\"new_tasks\":{},\"reused_tasks\":{},\"result_digest\":{},\"best\":{},\"prepare_seconds_this_invocation\":{},\"whole_seconds_this_invocation\":{},\"backend\":{},\"proof\":{},\"capture\":{},\"role\":\"retrospective_systems_discovery_not_validation\"}}\n",quote(if complete{"PASS"}else if prepare_only{"PREPARED"}else{"PAUSED"}),complete,quote(&context),quote(&d.digest),quote(&crate::anchor_run::engine_id()?),c.coefficients,c.cutoffs,c.atoms()*c.families.len()as u64,quote(&c.logical()?.to_string()),quote(&covered.to_string()),quote(&pairs.to_string()),quote(&visits.to_string()),quote(&certified.to_string()),regions,done,new_tasks,reused,quote(&result_hash.finish()),best.as_ref().map_or_else(||"null".into(),|b|b.json(c)),num(preparation_seconds),num(clock.elapsed().as_secs_f64()),quote(backend.name()),proof,capture);
+    let summary=format!("{{\"version\":1,\"status\":{},\"coverage_complete\":{},\"context_sha256\":{},\"data_sha256\":{},\"engine_sha256\":{},\"coefficient_count\":{},\"cutoff_count\":{},\"upstream_constructions\":{},\"requested_strategy_addresses\":{},\"resolved_strategy_addresses\":{},\"signature_pair_products_resolved\":{},\"tree_node_pairs_visited\":{},\"certified_nonleaf_products\":{},\"metric_regions_evaluated\":{},\"completed_tasks\":{},\"new_tasks\":{},\"reused_tasks\":{},\"result_digest\":{},\"best\":{},\"prepare_seconds_this_invocation\":{},\"whole_seconds_this_invocation\":{},\"native_workers\":{},\"backend\":{},\"proof\":{},\"capture\":{},\"role\":\"retrospective_systems_discovery_not_validation\"}}\n",quote(if complete{"PASS"}else if prepare_only{"PREPARED"}else{"PAUSED"}),complete,quote(&context),quote(&d.digest),quote(&crate::anchor_run::engine_id()?),c.coefficients,c.cutoffs,c.atoms()*c.families.len()as u64,quote(&c.logical()?.to_string()),quote(&covered.to_string()),quote(&pairs.to_string()),quote(&visits.to_string()),quote(&certified.to_string()),regions,done,new_tasks,reused,quote(&result_hash.finish()),best.as_ref().map_or_else(||"null".into(),|b|b.json(c)),num(preparation_seconds),num(clock.elapsed().as_secs_f64()),workers,quote(backend.name()),proof,capture);
     fs::write(dir.join("summary.json"), &summary).map_err(|e| e.to_string())?;
     Ok(summary)
 }
