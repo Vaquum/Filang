@@ -152,6 +152,7 @@ pub struct Executor<'a> {
     end: usize,
     gaps: Vec<usize>,
     state: ReusableExecution,
+    context_costs: Vec<Costs>,
     backend: Backend,
     scorer: Scorer,
     budget: usize,
@@ -187,6 +188,7 @@ impl<'a> Executor<'a> {
             end,
             gaps,
             state,
+            context_costs: costs.to_vec(),
             backend,
             scorer,
             budget,
@@ -197,6 +199,29 @@ impl<'a> Executor<'a> {
             bank_hits: 0,
             bank_peak_bytes: 0,
         })
+    }
+    /// Guard the public joint API against mixing numerical timelines or economic
+    /// contexts. The same immutable Data instance is required, not just a caller-
+    /// supplied digest. Explicit gap schedules are not yet a joint-API contract.
+    pub fn validate_joint_context(
+        &self,
+        d: &Data,
+        range: &std::ops::Range<usize>,
+        costs: &[Costs],
+    ) -> Result<()> {
+        if !std::ptr::eq(self.d, d)
+            || self.start != range.start
+            || self.end != range.end
+            || !self.gaps.is_empty()
+            || costs.len() != self.context_costs.len()
+            || costs.iter().zip(&self.context_costs).any(|(a, b)| {
+                a.fee_bps.to_bits() != b.fee_bps.to_bits()
+                    || a.slip_bps.to_bits() != b.slip_bps.to_bits()
+            })
+        {
+            return Err("joint execution data/range/cost/gap context mismatch".into());
+        }
+        Ok(())
     }
     /// Shared full-risk backend for already compiled compound-rule positions.
     /// The fixed context and all validity/decision timing belong to this Executor.

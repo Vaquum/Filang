@@ -272,6 +272,9 @@ impl Predicate {
         cut: f64,
         qualifiers: &[Qualifier],
     ) -> Result<Mask> {
+        if matches!(self, Self::Slope(_, n) if *n==0 || *n>100000) {
+            return Err("slope lag outside 1..100000".into());
+        }
         if !cut.is_finite() || y.map_or(false, |a| a.len() != x.len()) {
             return Err("predicate numerical context".into());
         }
@@ -335,6 +338,9 @@ pub fn cells(
 ) -> Result<Vec<Cell>> {
     grid.validate()?;
     if !matches!(predicate, Predicate::Threshold(_)) {
+        if grid.count != 1 || grid.value(0) != 0. {
+            return Err("non-threshold predicate requires singleton zero grid".into());
+        }
         let m = predicate.evaluate(x, y, 0., qualifiers)?;
         if m.payload() > budget {
             return Err("predicate bank budget".into());

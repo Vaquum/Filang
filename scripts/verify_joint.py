@@ -11,7 +11,11 @@ import talib
 from anchor_reference import portfolio
 from cohort_reference import CashOracle, check_values, setup
 
-def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def sha(path):
+    h=hashlib.sha256()
+    with Path(path).open('rb') as f:
+        for b in iter(lambda:f.read(1<<20),b''):h.update(b)
+    return h.hexdigest()
 def parse(text):
     tokens=iter(re.findall(r'\(|\)|[^\s()]+',text))
     def read(token=None):
@@ -128,7 +132,7 @@ class Oracle:
         if self.f(masks,n,prices,len(masks),fee/10000,slip/10000,interval,out):raise ValueError('cash/share oracle failure')
         return out
 
-def verify(root,out):
+def verify(root,out,template=None):
     setup();root=Path(root);out=Path(out);clock=time.perf_counter();m=json.loads((root/'manifest.json').read_text());summary=json.loads((root/'summary.json').read_text())
     if not m['capture'] or m['output']!='boxes' or m['plan']=='Expanded':raise ValueError('requires captured cells/cofactor box output')
     if sha(m['data'])!=m['data_sha256']:raise ValueError('input changed')
@@ -163,7 +167,11 @@ def verify(root,out):
             options[oid]=(spec,cells);option_order.append(oid)
         if f.read(1):raise ValueError('trailing predicate evidence')
     dtype=np.dtype([('template','<u8'),('axes','<u8',(m['slots'],3)),('metrics','<f8',(len(m['costs']),10))]);assert dtype.itemsize==m['binary_record_bytes']
-    rows=np.memmap(root/'boxes.bin',mode='r',dtype=dtype);programs=[parse(t) for t in m['templates']];slots=[[o['id'] for o in m['options'] if o['slot']==s] for s in range(m['slots'])];oracle=Oracle(root/'reference-build');cursor=covered=tuples=metric_count=checked_cells=numpy_checks=0;error=0.;pending_masks=[];pending_rows=[];prices=cols['open'][lo+1:hi]
+    rows=np.memmap(root/'boxes.bin',mode='r',dtype=dtype);programs=[parse(t) for t in m['templates']]
+    selected=list(range(len(programs))) if template is None else [template]
+    if any(i<0 or i>=len(programs) for i in selected):raise ValueError('template index')
+    if template is not None:rows=rows[np.searchsorted(rows['template'],template,side='left'):np.searchsorted(rows['template'],template,side='right')]
+    slots=[[o['id'] for o in m['options'] if o['slot']==s] for s in range(m['slots'])];oracle=Oracle(root/('reference-build-all' if template is None else f'reference-build-{template}'));cursor=covered=tuples=metric_count=checked_cells=numpy_checks=0;error=0.;pending_masks=[];pending_rows=[];prices=cols['open'][lo+1:hi]
     def flush():
         nonlocal error,metric_count,numpy_checks
         if not pending_rows:return
@@ -175,7 +183,8 @@ def verify(root,out):
                 pos=np.unpackbits(np.asarray(pending_masks[0],dtype='<u8').view(np.uint8),bitorder='little')[:length].astype(bool);other=portfolio(prices,pos,fee/10000,slip/10000,m['interval']);error=max(error,check_values(other,got[0],'NumPy ledger crosscheck',1e-7));numpy_checks+=1
             metric_count+=len(block)
         pending_masks.clear();pending_rows.clear()
-    for ti,program in enumerate(programs):
+    for ti in selected:
+        program=programs[ti]
         for choices in itertools.product(*slots):
             if m['different_tags'] and len({options[i][0]['tag'] for i in choices})!=len(choices):continue
             tuples+=1;last=options[choices[-1]][1];last_count=int(options[choices[-1]][0]['grid'].split(':')[2]);last_starts=np.array([c[0] for c in last])
@@ -202,9 +211,9 @@ def verify(root,out):
                     covered+=width;pending_masks.append(packed(expected));pending_rows.append(np.array(row['metrics']));cursor+=1;at=end
                     if len(pending_rows)>=512:flush()
     flush()
-    if cursor!=len(rows) or covered!=m['logical_addresses'] or covered!=summary['logical_strategy_addresses']:raise ValueError('final exact coverage mismatch')
-    result={'status':'PASS','logical_addresses_verified':covered,'boxes_verified':cursor,'cartesian_predicate_cells_verified':checked_cells,'alternative_tuples_verified':tuples,'predicate_options_verified':len(options),'unique_predicate_plans_verified':len(refcache),'all_compound_positions_verified':True,'all_box_metrics_verified':True,'cash_share_metric_sets':metric_count,'numpy_crosschecks':numpy_checks,'mask_disagreements':0,'max_metric_absolute_error':error,'data_sha256':m['data_sha256'],'engine_sha256':m['engine_sha256'],'boxes_sha256':sha(root/'boxes.bin'),'predicate_cells_sha256':sha(root/'predicate-cells.bin'),'oracle_source_sha256':sha(oracle.src),'seconds':time.perf_counter()-clock}
+    if cursor!=len(rows) or covered!=m['logical_addresses']//len(programs)*len(selected) or m['logical_addresses']!=summary['logical_strategy_addresses']:raise ValueError('final exact coverage mismatch')
+    result={'status':'PASS','templates_verified':selected,'full_campaign':template is None,'logical_addresses_verified':covered,'boxes_verified':cursor,'cartesian_predicate_cells_verified':checked_cells,'alternative_tuples_verified':tuples,'predicate_options_verified':len(options),'unique_predicate_plans_verified':len(refcache),'all_compound_positions_verified':True,'all_box_metrics_verified':True,'cash_share_metric_sets':metric_count,'numpy_crosschecks':numpy_checks,'mask_disagreements':0,'max_metric_absolute_error':error,'data_sha256':m['data_sha256'],'engine_sha256':m['engine_sha256'],'boxes_sha256':sha(root/'boxes.bin'),'predicate_cells_sha256':sha(root/'predicate-cells.bin'),'oracle_source_sha256':sha(oracle.src),'seconds':time.perf_counter()-clock}
     if out.exists():raise ValueError('verification output already exists')
     out.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2),flush=True);return result
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--run',required=True);p.add_argument('--out',required=True);a=p.parse_args();verify(a.run,a.out)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--run',required=True);p.add_argument('--out',required=True);p.add_argument('--template',type=int);a=p.parse_args();verify(a.run,a.out,a.template)

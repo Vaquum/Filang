@@ -186,3 +186,20 @@ No unchanged arbitrary Limen/SFD compatibility, universal trillion-program throu
 robust financial edge, or untouched confirmation follows from these tests. Source,
 protocol, logical/physical counts, output policy, full-risk parity, timings and
 negative results must be reported separately.
+
+## Public API invariants
+
+A joint Sweep must bind the same immutable Data instance, scored range and cost
+scenario list as its Executor. Gap overrides are rejected until their joint
+semantics are explicitly implemented. Alternatives have unique IDs, nonempty
+complete/disjoint cells, and properly padded truth/validity planes. Cutoff cells
+for a fixed predicate have identical validity. Temporal compound templates must
+retain the full input timeline. Invalid public inputs fail before scoring; cached
+results never cross execution contexts.
+
+`scripts/benchmark_joint.py --config FILE --gate FILE --out DIR --repeats 3`
+compares expanded/cells/cofactor/SIMD/cache paths on a small domain. `--full`
+compares cell/cofactor/SIMD/cache paths with complete box-wise parity on the larger
+domain, without attempting or estimating trillion independent replays.
+`scripts/verify_joint_all.py --run DIR --workers 3` checks disjoint template
+partitions independently, then reconciles the whole campaign's coverage and files.

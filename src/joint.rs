@@ -46,7 +46,11 @@ pub struct BoxResult {
 impl BoxResult {
     pub fn width(&self) -> Result<u64> {
         self.ranges.iter().try_fold(1u64, |a, (lo, hi)| {
-            a.checked_mul(hi - lo)
+            let width = hi
+                .checked_sub(*lo)
+                .filter(|v| *v > 0)
+                .ok_or("invalid empty/reversed box")?;
+            a.checked_mul(width)
                 .ok_or_else(|| "box volume overflow".into())
         })
     }
@@ -221,6 +225,7 @@ pub struct Sweep<'a, 'd> {
     start: usize,
     end: usize,
     full_timeline: bool,
+    rows: usize,
     max_boxes: u64,
     interval: i64,
 }
@@ -238,6 +243,8 @@ impl<'a, 'd> Sweep<'a, 'd> {
         full_timeline: bool,
         max_boxes: u64,
     ) -> Result<Self> {
+        executor.validate_joint_context(d, &range, costs)?;
+        Backend::resolve(backend.name())?;
         let len = range
             .end
             .checked_sub(range.start + 2)
@@ -257,6 +264,7 @@ impl<'a, 'd> Sweep<'a, 'd> {
             start: range.start,
             end: range.end - 2,
             full_timeline,
+            rows: d.len(),
             max_boxes,
             interval: d.interval,
         })
@@ -270,6 +278,49 @@ impl<'a, 'd> Sweep<'a, 'd> {
     where
         F: FnMut(&BoxResult) -> Result<()>,
     {
+        if programs.is_empty() || programs.len() > 128 || self.work.boxes != 0 {
+            return Err("joint run needs 1..128 templates and an unused sweep instance".into());
+        }
+        let mask_len = if self.full_timeline {
+            self.rows
+        } else {
+            self.end - self.start
+        };
+        let words = (mask_len + 63) / 64;
+        let mut ids = std::collections::HashSet::new();
+        for options in slots {
+            for a in options {
+                if a.count == 0 || a.cells.is_empty() || !ids.insert(a.id) {
+                    return Err(
+                        "joint alternatives need positive domains, unique IDs and cells".into(),
+                    );
+                }
+                let mut next = 0;
+                let validity = &a.cells[0].mask.valid;
+                for c in a.cells.iter() {
+                    let m = &c.mask;
+                    if c.lo != next
+                        || c.hi <= c.lo
+                        || c.hi > a.count
+                        || m.len != mask_len
+                        || m.bits.len() != words
+                        || m.valid.len() != words
+                        || &m.valid != validity
+                        || m.bits.iter().zip(&m.valid).any(|(b, v)| b & !v != 0)
+                        || (mask_len % 64 != 0 && m.valid.last().unwrap() >> (mask_len % 64) != 0)
+                    {
+                        return Err("joint cell coverage/timeline/validity invariant".into());
+                    }
+                    next = c.hi;
+                }
+                if next != a.count {
+                    return Err("incomplete predicate cell coverage".into());
+                }
+            }
+        }
+        if !self.full_timeline && programs.iter().any(|p| !p.pointwise()) {
+            return Err("compound temporal rules require the full causal input timeline".into());
+        }
         let expected = domain_count(slots, self.different_tags, true)?
             .checked_mul(programs.len() as u64)
             .ok_or("domain overflow")?;

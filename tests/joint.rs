@@ -542,3 +542,112 @@ fn actual_joint_trillion_domain_is_resolved_as_disjoint_boxes() {
     assert_eq!(run.work.logical, 1_000_002_000_001);
     assert!(run.work.boxes < 1000);
 }
+
+#[test]
+fn public_joint_api_rejects_cross_context_and_incomplete_cells() {
+    let d = fixture(32);
+    let other = fixture(32);
+    let costs = [Costs {
+        fee_bps: 10.,
+        slip_bps: 10.,
+    }];
+    let mut ex = Executor::new(
+        &d,
+        0..32,
+        vec![],
+        &costs,
+        Backend::Scalar,
+        Scorer::Auto,
+        16 << 20,
+    )
+    .unwrap();
+    assert!(ex.validate_joint_context(&other, &(0..32), &costs).is_err());
+    assert!(ex.validate_joint_context(&d, &(1..32), &costs).is_err());
+    assert!(ex
+        .validate_joint_context(
+            &d,
+            &(0..32),
+            &[Costs {
+                fee_bps: 5.,
+                slip_bps: 10.
+            }]
+        )
+        .is_err());
+    let grid = Grid::parse("-1:1:3:1").unwrap();
+    let x = (0..30).map(|i| (i as f64 / 4.).sin()).collect::<Vec<_>>();
+    let cells = rules::cells(&Predicate::Threshold(Cmp::Gt), &x, None, grid, &[], 1 << 20).unwrap();
+    let p = Program::parse("(and s0 s1)", 2).unwrap();
+    let good = vec![
+        vec![Alternative {
+            id: 0,
+            tag: "a".into(),
+            count: 3,
+            cells: Arc::new(cells.clone()),
+        }],
+        vec![Alternative {
+            id: 1,
+            tag: "b".into(),
+            count: 3,
+            cells: Arc::new(cells.clone()),
+        }],
+    ];
+    for case in 0..5 {
+        let mut slots = good.clone();
+        match case {
+            0 => slots[0][0].count = 4,
+            1 => {
+                let mut c = cells.clone();
+                c[0].lo = 1;
+                slots[0][0].cells = Arc::new(c);
+            }
+            2 => slots[1][0].id = 0,
+            3 => {
+                let mut c = cells.clone();
+                c[0].mask.valid[0] = 0;
+                slots[0][0].cells = Arc::new(c);
+            }
+            _ => slots[0][0].cells = Arc::new(vec![]),
+        }
+        let mut sweep = Sweep::new(
+            &mut ex,
+            &d,
+            0..32,
+            &costs,
+            Backend::Scalar,
+            Plan::Cofactor,
+            true,
+            0,
+            false,
+            10000,
+        )
+        .unwrap();
+        assert!(sweep.run(&slots, &[p.clone()], |_| Ok(())).is_err());
+    }
+    let temporal = Program::parse("(recent 2 (and s0 s1))", 2).unwrap();
+    let mut sweep = Sweep::new(
+        &mut ex,
+        &d,
+        0..32,
+        &costs,
+        Backend::Scalar,
+        Plan::Cofactor,
+        true,
+        0,
+        false,
+        10000,
+    )
+    .unwrap();
+    assert!(sweep.run(&good, &[temporal], |_| Ok(())).is_err());
+    assert!(rules::cells(
+        &Predicate::Relative(Cmp::Gt),
+        &x,
+        Some(&x),
+        grid,
+        &[],
+        1 << 20
+    )
+    .is_err());
+    assert!(Predicate::Slope(true, 0)
+        .evaluate(&x, None, 0., &[])
+        .is_err());
+}
