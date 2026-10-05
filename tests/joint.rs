@@ -651,3 +651,92 @@ fn public_joint_api_rejects_cross_context_and_incomplete_cells() {
         .evaluate(&x, None, 0., &[])
         .is_err());
 }
+
+#[test]
+fn partitioned_domain_replay_preserves_coordinates_coverage_and_metrics() {
+    let d = fixture(96);
+    let costs = [Costs {
+        fee_bps: 10.,
+        slip_bps: 10.,
+    }];
+    let grid = Grid::parse("-1:1:3:2").unwrap();
+    let slots = (0..2)
+        .map(|s| {
+            (0..2)
+                .map(|i| {
+                    let values = (0..94)
+                        .map(|t| ((t + s * 7 + i * 11) as f64 / 9.).sin())
+                        .collect::<Vec<_>>();
+                    Alternative {
+                        id: s * 2 + i,
+                        tag: format!("{s}"),
+                        count: grid.count,
+                        cells: Arc::new(
+                            rules::cells(
+                                &Predicate::Threshold(Cmp::Gt),
+                                &values,
+                                None,
+                                grid,
+                                &[],
+                                1 << 20,
+                            )
+                            .unwrap(),
+                        ),
+                    }
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let p = Program::parse("(or s0 (not s1))", 2).unwrap();
+    let evaluate = |domain: &[Vec<Alternative>]| {
+        let mut ex = Executor::new(
+            &d,
+            0..96,
+            vec![],
+            &costs,
+            Backend::Scalar,
+            Scorer::Auto,
+            16 << 20,
+        )
+        .unwrap();
+        let mut sweep = Sweep::new(
+            &mut ex,
+            &d,
+            0..96,
+            &costs,
+            Backend::Scalar,
+            Plan::Cofactor,
+            true,
+            1 << 20,
+            false,
+            10000,
+        )
+        .unwrap();
+        let mut out = BTreeMap::new();
+        sweep
+            .run(domain, &[p.clone()], |b| {
+                out.insert(
+                    (b.choices.clone(), b.ranges.clone()),
+                    metric_values(&b.metrics[0], d.interval),
+                );
+                Ok(())
+            })
+            .unwrap();
+        (out, sweep.work.logical)
+    };
+    let (full, coverage) = evaluate(&slots);
+    let mut merged = BTreeMap::new();
+    let mut partial_coverage = 0;
+    for a in &slots[0] {
+        let (part, n) = evaluate(&[vec![a.clone()], slots[1].clone()]);
+        partial_coverage += n;
+        for (k, v) in part {
+            assert!(merged.insert(k, v).is_none());
+        }
+    }
+    assert_eq!(coverage, partial_coverage);
+    assert_eq!(full.len(), merged.len());
+    for (k, v) in &full {
+        same(v, &merged[k]);
+    }
+}

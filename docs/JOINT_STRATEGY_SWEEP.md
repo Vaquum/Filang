@@ -203,3 +203,11 @@ compares cell/cofactor/SIMD/cache paths with complete box-wise parity on the lar
 domain, without attempting or estimating trillion independent replays.
 `scripts/verify_joint_all.py --run DIR --workers 3` checks disjoint template
 partitions independently, then reconciles the whole campaign's coverage and files.
+
+Domain partition/replay fixtures reconcile original coordinates, complete coverage
+and full metric results across independent sweep instances. They are not a
+checkpoint/resume controller: durable queued-work state, adaptive feedback replay,
+and arbitrary predicate-catalog paging remain explicit follow-up work under #1.
+For low-disk benchmark runs, `--full --reference-run VERIFIED_RUN --compact-proofs`
+compares each newly generated full result file and removes only that temporary
+benchmark copy after retaining its hash. The verified source run is never removed.
