@@ -1,0 +1,16 @@
+{
+  "families": [
+    "ema",
+    "macd"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 48,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "30289047",
+  "metric_regions_in_domain": 24474817,
+  "independently_replayed_metrics": 48,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.5063505998114124e-12,
+  "seconds": 2.925174332980532
+}

@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "family": "ema",
+  "numerical_parameter_constructions": 363,
+  "predicate_regions_verified": 54943,
+  "distinct_states_verified": 2112,
+  "logical_condition_addresses": "21781089",
+  "all_membership_masks_validity_and_counts_checked": true,
+  "mask_disagreements": 0,
+  "unsimplified_temporal_crosschecks": 27,
+  "bank_body_sha256": "0280101160cd80e49b16cacd5421e62e9023fb7b1200412c5803d2ce7aeb10e7",
+  "members_body_sha256": "ab11302610e6983ca11ba9b03a6e5a58edb4795f5c2347586c17de6f81c110cd",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "seconds": 0.8286227909848094
+}

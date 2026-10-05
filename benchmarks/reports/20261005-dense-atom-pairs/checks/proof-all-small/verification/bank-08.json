@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "family": "cci",
+  "numerical_parameter_constructions": 27,
+  "predicate_regions_verified": 243,
+  "distinct_states_verified": 196,
+  "logical_condition_addresses": "243",
+  "all_membership_masks_validity_and_counts_checked": true,
+  "mask_disagreements": 0,
+  "unsimplified_temporal_crosschecks": 9,
+  "bank_body_sha256": "a753489152b24c1d5d918578cf35b9ae66736c86e5a6ed377082a11357815f98",
+  "members_body_sha256": "c7c3e04d1ba2c91702fb3000bbf14c2416e976e8b87919d00c3b423b5abb3683",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "seconds": 0.05476058297790587
+}

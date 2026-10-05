@@ -1,0 +1,16 @@
+{
+  "families": [
+    "roc",
+    "atr"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 48,
+  "product_partition_replayed": true,
+  "logical_coverage": "7873987339683",
+  "signature_pairs": "1640616",
+  "metric_regions_in_domain": 1199393,
+  "independently_replayed_metrics": 48,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 4.320099833421409e-12,
+  "seconds": 0.6453024999937043
+}

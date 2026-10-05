@@ -1,0 +1,16 @@
+{
+  "families": [
+    "macd",
+    "atr"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 48,
+  "product_partition_replayed": true,
+  "logical_coverage": "7873987339683",
+  "signature_pairs": "1647708",
+  "metric_regions_in_domain": 1214003,
+  "independently_replayed_metrics": 48,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.9558577807620168e-12,
+  "seconds": 0.5358119590091519
+}

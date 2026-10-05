@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "all_captured_region_masks_metrics_and_coverage_checked": true,
+  "logical_addresses": "354294",
+  "regions_checked": 33836,
+  "task_count": 6,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 1.7479351299698465e-12,
+  "seconds": 0.8167996249976568,
+  "state_metric_tables": {
+    "0:1:0": "runs/dense-v08-closeout/proof-small/verification/metrics-0-1-0.npy",
+    "0:1:1": "runs/dense-v08-closeout/proof-small/verification/metrics-0-1-1.npy",
+    "0:1:2": "runs/dense-v08-closeout/proof-small/verification/metrics-0-1-2.npy",
+    "1:0:0": "runs/dense-v08-closeout/proof-small/verification/metrics-1-0-0.npy",
+    "1:0:1": "runs/dense-v08-closeout/proof-small/verification/metrics-1-0-1.npy",
+    "1:0:2": "runs/dense-v08-closeout/proof-small/verification/metrics-1-0-2.npy"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "families": [
+    "stochastic",
+    "rsi"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 192,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "20784933",
+  "metric_regions_in_domain": 16608898,
+  "independently_replayed_metrics": 192,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.0534685063466895e-12,
+  "seconds": 1.9362387910368852
+}

@@ -1,0 +1,16 @@
+{
+  "families": [
+    "rsi",
+    "bollinger"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 12,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "886410",
+  "metric_regions_in_domain": 541014,
+  "independently_replayed_metrics": 12,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.2595258997171186e-12,
+  "seconds": 0.6796341249719262
+}

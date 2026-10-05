@@ -1,0 +1,16 @@
+{
+  "families": [
+    "ema",
+    "sma"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 48,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "1103703",
+  "metric_regions_in_domain": 783188,
+  "independently_replayed_metrics": 48,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.2363443602225743e-12,
+  "seconds": 1.0620024170493707
+}

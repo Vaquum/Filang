@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "family": "macd",
+  "numerical_parameter_constructions": 27,
+  "predicate_regions_verified": 4467,
+  "distinct_states_verified": 2788,
+  "logical_condition_addresses": "1620081",
+  "all_membership_masks_validity_and_counts_checked": true,
+  "mask_disagreements": 0,
+  "unsimplified_temporal_crosschecks": 9,
+  "bank_body_sha256": "c2527b6d2e32a0d79440cf3fa7f6cc32c2b571fe695ae5c72fb0e5923b28b5e3",
+  "members_body_sha256": "cbfdb33732303b323b419030e80b0d7570b6380d626f32776a761d8fb803a08c",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "seconds": 0.10915970802307129
+}

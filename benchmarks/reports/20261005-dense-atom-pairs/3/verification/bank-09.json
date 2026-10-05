@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "family": "vwap",
+  "numerical_parameter_constructions": 27,
+  "predicate_regions_verified": 4135,
+  "distinct_states_verified": 2450,
+  "logical_condition_addresses": "1620081",
+  "all_membership_masks_validity_and_counts_checked": true,
+  "mask_disagreements": 0,
+  "unsimplified_temporal_crosschecks": 9,
+  "bank_body_sha256": "30801a630b38de574afa41751dccbd966727b2b6c748287287e2441fc62af194",
+  "members_body_sha256": "7d6d79e7c15581d28b623f881d4cb475a74854d692a097fbf06397f2a29e1df1",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "seconds": 0.06756170798325911
+}

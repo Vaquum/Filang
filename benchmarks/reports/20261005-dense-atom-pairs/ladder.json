@@ -1,0 +1,35 @@
+[
+  {
+    "coefficient_count": 3,
+    "numerical_constructions": 270,
+    "predicate_regions": 23194,
+    "distinct_predicate_states": 13606,
+    "logical_addresses": "708658860571470",
+    "metric_regions": 367444451,
+    "wall_seconds": 187.798788791,
+    "max_rss_bytes": 49184768,
+    "checkpoint_metric_checks": 2052
+  },
+  {
+    "coefficient_count": 11,
+    "numerical_constructions": 3630,
+    "predicate_regions": 310155,
+    "distinct_predicate_states": 27854,
+    "logical_addresses": "128092276266998670",
+    "metric_regions": 1488700638,
+    "wall_seconds": 670.0347655,
+    "max_rss_bytes": 83361792,
+    "checkpoint_metric_checks": 3888
+  },
+  {
+    "coefficient_count": 41,
+    "numerical_constructions": 50430,
+    "predicate_regions": 4305671,
+    "distinct_predicate_states": 33474,
+    "logical_addresses": "24722229265522193070",
+    "metric_regions": 2102291930,
+    "wall_seconds": 982.768791958,
+    "max_rss_bytes": 107347968,
+    "checkpoint_metric_checks": 6048
+  }
+]

@@ -1,0 +1,2 @@
+0	rsi-dense	rsi	threshold:gt	recent:3	20008000:1:1:20000000	(div0 (wilder 13 (add (abs (diff 1 close)) (diff 1 close))) (wilder 13 (abs (diff 1 close))))	-
+1	vwap-dense	vwap	threshold:gt	persist:2	19982000:1:1:20000000	(div (add close (mul (constant 3f847ae147ae147b) (sub open close))) (div (mean_sum 20 (mul (div (add (add high low) (add close (mul (constant 3f847ae147ae147b) (sub open close)))) (constant 4008000000000000)) volume)) (mean_sum 20 volume)))	-

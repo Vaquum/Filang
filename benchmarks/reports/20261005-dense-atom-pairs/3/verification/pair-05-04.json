@@ -1,0 +1,16 @@
+{
+  "families": [
+    "stochastic",
+    "bollinger"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 24,
+  "product_partition_replayed": true,
+  "logical_coverage": "7873987339683",
+  "signature_pairs": "1652400",
+  "metric_regions_in_domain": 1274227,
+  "independently_replayed_metrics": 24,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.161826273550105e-12,
+  "seconds": 1.0945380410412326
+}

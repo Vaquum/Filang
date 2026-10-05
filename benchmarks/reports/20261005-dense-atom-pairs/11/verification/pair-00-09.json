@@ -1,0 +1,16 @@
+{
+  "families": [
+    "sma",
+    "vwap"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 3,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "1909812",
+  "metric_regions_in_domain": 1600066,
+  "independently_replayed_metrics": 3,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 9.99644811372491e-13,
+  "seconds": 1.1022622500313446
+}

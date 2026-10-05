@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "all_ten_metrics_equal_within_declared_tolerance": true,
+  "max_metric_absolute_error": 2.2737367544323206e-13
+}

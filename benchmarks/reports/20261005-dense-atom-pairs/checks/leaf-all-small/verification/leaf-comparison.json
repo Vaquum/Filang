@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "all_leaf_result_metrics_compared": 5699484,
+  "logical_addresses": "15943230",
+  "max_metric_absolute_error": 0.0,
+  "independent_reference": "runs/dense-v08-closeout/proof-all-small",
+  "reference_capture_check_sha256": "a7be2c8630ed197bd91a4c868da42828b77872f082faab78991662a207e275f0"
+}

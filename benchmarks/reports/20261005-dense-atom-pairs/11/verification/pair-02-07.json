@@ -1,0 +1,16 @@
+{
+  "families": [
+    "rsi",
+    "roc"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 12,
+  "product_partition_replayed": true,
+  "logical_coverage": "1423247514077763",
+  "signature_pairs": "17501085",
+  "metric_regions_in_domain": 14327589,
+  "independently_replayed_metrics": 12,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 1.7621459846850485e-12,
+  "seconds": 1.6012605410069227
+}

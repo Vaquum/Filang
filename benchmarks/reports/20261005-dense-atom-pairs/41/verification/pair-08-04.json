@@ -1,0 +1,16 @@
+{
+  "families": [
+    "cci",
+    "bollinger"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 24,
+  "product_partition_replayed": true,
+  "logical_coverage": "274691436283579923",
+  "signature_pairs": "2195370",
+  "metric_regions_in_domain": 1183726,
+  "independently_replayed_metrics": 24,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 2.2239987629291136e-12,
+  "seconds": 0.7741562920273282
+}

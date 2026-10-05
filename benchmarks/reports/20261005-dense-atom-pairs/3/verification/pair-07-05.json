@@ -1,0 +1,16 @@
+{
+  "families": [
+    "roc",
+    "stochastic"
+  ],
+  "status": "PASS",
+  "checkpoints_checked": 48,
+  "product_partition_replayed": true,
+  "logical_coverage": "7873987339683",
+  "signature_pairs": "14990400",
+  "metric_regions_in_domain": 12373777,
+  "independently_replayed_metrics": 48,
+  "all_large_region_metrics_replayed": false,
+  "max_metric_absolute_error": 3.169020601490047e-12,
+  "seconds": 1.5934729999862611
+}
