@@ -9,6 +9,71 @@ An independent review cleared its scientific contract before publication.
 Implementation drafts and synthetic checks preceded publication; market fitting
 and outcome evaluation did not.
 
+## Audited outcome
+
+The full R2 audit passed, and the frozen economic criterion is **not-supported
+at all five timeframes**. The [complete measured report](../../benchmarks/reports/20261008-geometry-payoff-r2/README.md)
+retains all models, policies, costs, controls and numerical audit qualifications.
+
+| Minutes | G pooled net return | G minus B total net log return | Completed G trades | Jointly positive years |
+|---:|---:|---:|---:|---:|
+| 15 | +104.8798% | 0 | 2 | 0 |
+| 30 | +104.5528% | -0.00158690 | 2 | 0 |
+| 60 | +104.2764% | 0 | 2 | 0 |
+| 120 | +99.2327% | -0.03856168 | 17 | 0 |
+| 240 | +106.5362% | +0.01035335 | 2 | 1 |
+
+All five Holm-adjusted composite p-values are 1.0. None reaches twenty completed
+G trades, three jointly positive years or both positive interval lower endpoints.
+G's positive pooled account returns arise mostly from long holdings in 2024 and
+2025; G has no exposure in 2023 or partial 2026. The 2024 G returns are positive
+and the 2025 G returns negative at every timeframe. The 240m 2026 selector chose
+an active threshold policy that never entered; a selected policy is not evidence
+that a trade occurred.
+
+At 15m and 60m, G and the sign-history baseline produce identical net results.
+At 240m, G matches U exactly, while its advantage over B comes from lower
+turnover despite lower gross return. Buy-and-hold has a larger net return than G
+at every timeframe. These controls prevent a positive Bitcoin account return
+from being misreported as incremental geometry information.
+
+The clean producer execution commit was
+`1ed4770824064d47c9b2675a754157939ef1fef5`. The producer completed all 680 fits,
+60 policy choices and 820 ledgers in 67.952530 seconds. The successful full audit
+took 208.802645 seconds internally (209.047460 seconds in its external launcher),
+checking 458,972 native keys and all 36,755 retained array members. The largest
+direct fit gradient was 2.5062222601597052e-17. The largest continuous numeric
+comparison error was 2.128217602148652e-10 under the declared absolute-plus-relative
+tolerance; bootstrap replica errors were at most 7.51623156075576e-17.
+These are operational measurements, not a matched speedup claim.
+
+### Bootstrap arithmetic qualification
+
+The first full audit stopped on the 30m G-minus-B seven-day p-value. That contrast
+has exactly one nonzero daily value among 1,376 days, on 2024-01-01. In 379 of
+2,000 replicas the day is selected exactly twice, putting the real-arithmetic
+tail event on its equality boundary. Equivalent one-column and two-column
+floating reductions put some replicas on opposite sides of the literal `>=`.
+The original producer p is 0.9020489755; the independent cash/share arithmetic
+p is 0.7376311844. The exact one-atom algebraic diagnostic is 0.9270364818.
+None is substituted for another in the original sealed result.
+
+The reviewed verifier correction applies uniformly to all thirty
+comparison/block/timeframe cases. It first checks the independently reconstructed
+daily accounts and every ordinary/centered replica at the unchanged numerical
+tolerance. It then reconstructs the executed reduction on validated retained
+daily bytes and checks the original literal predicate on the sealed replicas.
+The receipt preserves both p-values, margins, counts and errors; it makes no
+claim that alternate floating tail predicates agree. Only the three 30m
+G-minus-B block lengths have a p disagreement. The original failed log, verifier,
+tests and receipt are preserved alongside the successful audit. No producer,
+protocol, draw, tolerance or outcome was rewritten, and no epsilon was added.
+
+The mean 30m incremental effect is negative, and all timeframes independently
+fail the activity and annual-consistency conditions. This numerical qualification
+therefore supplies no route to a positive R2 conclusion. It motivates an exact
+integer tail predicate in the separately frozen R3 specification.
+
 ## Why this experiment follows R1a
 
 R1a supported its direction log-loss criterion at 30 minutes only. That selected

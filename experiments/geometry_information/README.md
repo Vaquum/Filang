@@ -6,7 +6,7 @@
 
 [R1a](ROUND1A.md) is the separately published exact Newton amendment in merged PR #25. Its full audit passed; only 30m supported the frozen information criterion, and the selected fixed-threshold geometry policies lost at primary and reduced costs. The scientific contract below remains the original R1 reference.
 
-[R2](ROUND2.md), separately frozen in PR #26, follows those results with conditional log-return models and a fixed family of cost-aware policies. Its economic criterion and complete protocol are separate from this information test.
+[R2](ROUND2.md), separately frozen in PR #26, completed the conditional log-return and cost-aware policy experiment. Its full audit passed, with an explicit floating-tail arithmetic qualification; the economic criterion is not-supported at all five timeframes. The [complete report](../../benchmarks/reports/20261008-geometry-payoff-r2/README.md) retains all controls and outcomes. Its economic criterion is separate from this original information test.
 
 ## Claim and prior exposure
 

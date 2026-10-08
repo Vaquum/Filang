@@ -1,0 +1,23 @@
+{
+  "attempt": "R2-independent-audit-v1",
+  "audit_exit_code": 2,
+  "failure": "30m block7 G_minus_B p_one_sided differs: producer 0.9020489755122438 versus independent arithmetic 0.7376311844077961",
+  "files": {
+    "geometry-payoff-r2-verification.log": {
+      "bytes": 1106,
+      "sha256": "211e3c00b8bdc4fb4444579ceb5909ce25c44ee84da27cbff8b95e232962a2be"
+    },
+    "test_verify_round2.py": {
+      "bytes": 15520,
+      "sha256": "7735e2046d9d7f35c73b60ae01f89b9371fa08398e58c72588c66155acdde479"
+    },
+    "verify_round2.py": {
+      "bytes": 58963,
+      "sha256": "24ec3d8464dbd2ffc2988e7332ee6bc5637afc9d5cad2b61489e13da3f490630"
+    }
+  },
+  "preserved_before_verifier_edit": true,
+  "producer_manifest_sha256": "42bcf7c81c99e0b711118f2298d45af56abb26ff354f711a94ce500fe6e97525",
+  "producer_was_not_modified": true,
+  "status": "FAILED"
+}

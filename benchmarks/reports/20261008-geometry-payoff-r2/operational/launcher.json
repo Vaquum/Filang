@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/run_round2.py",
+    "--data-dir",
+    "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction",
+    "--keys-dir",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1",
+    "--out",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2",
+    "--protocol",
+    "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/round2_protocol.json",
+    "--freeze-commit",
+    "9489c22556898603268fbad9124e0268f0d99852",
+    "--workers",
+    "5",
+    "--blas-threads",
+    "2"
+  ],
+  "log": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-execution.log",
+  "started_utc": "2026-10-08T17:14:48.616639+00:00",
+  "implementation_commit": "1ed4770824064d47c9b2675a754157939ef1fef5",
+  "settings": {
+    "workers": 5,
+    "blas_threads": 2
+  },
+  "pid": 76773,
+  "exit_code": 0,
+  "elapsed_seconds": 67.95253024995327,
+  "completed_utc": "2026-10-08T17:15:56.570947+00:00"
+}
