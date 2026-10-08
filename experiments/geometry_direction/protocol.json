@@ -23,11 +23,12 @@
   "analysis": {
     "alpha_grid": [1, 10, 100, 1000],
     "selection_metric": "binary_log_loss",
+    "selection_tolerance": 1e-12,
     "primary_target": "cc",
     "support_thresholds": [1, 5, 20, 100],
     "geometry_estimator": "(pattern_up + alpha * unconditional_probability) / (pattern_up + pattern_down + alpha)",
     "unconditional_estimator": "Jeffreys-smoothed binary frequency: (up + 0.5)/(up + down + 1)",
-    "selection": "Choose alpha per n/mode on validation log loss; choose one n/mode/alpha per timeframe and target on validation log loss, with deterministic ties. Refit chosen counts on train plus validation, then freeze for the entire test.",
+    "selection": "Choose alpha per n/mode on validation log loss; choose one n/mode/alpha per timeframe and target on validation log loss. Scores within 1e-12 of the minimum tie; prefer fewer bars, then unoriented, then smaller alpha. Refit chosen counts on train plus validation, then freeze for the entire test.",
     "comparison_timeline": "Use the common valid n=10 decision timestamps within each timeframe for every candidate's validation and test scores. Keep all eligible training observations per geometry. Fit shared baseline and unconditional-prior probabilities from every eligible n=2 fitting observation.",
     "baselines": ["unconditional", "learned_lag1_close_direction", "learned_current_body_direction", "momentum_accuracy", "reversal_accuracy"],
     "primary_comparator": "learned_lag1_close_direction for cc; learned_current_body_direction for secondary body target",
