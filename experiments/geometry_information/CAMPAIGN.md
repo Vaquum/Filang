@@ -18,7 +18,7 @@ attempt, then retain the complete result and the remaining scientific question.
 | [PR #23](https://github.com/mikkokotila/Filang/pull/23) | Campaign governance and experiment records | [Law and gate](../../governance/README.md) |
 | [PR #24](https://github.com/mikkokotila/Filang/pull/24) | Round 1 additive geometry: numerical failure, inconclusive | [Frozen protocol](round1_protocol.json), [failure report](../../benchmarks/reports/20261008-geometry-information-r1-failed/README.md) |
 | [PR #25](https://github.com/mikkokotila/Filang/pull/25) | R1a: full audited completion; directional information supported at 30m only | [Protocol](round1a_protocol.json), [method and replay](ROUND1A.md), [complete report](../../benchmarks/reports/20261008-geometry-information-r1a/README.md) |
-| Next separately published PR | Proposed R2: conditional payoff and cost-aware policy selection | Economic follow-up motivated below; no R2 outcome asserted here |
+| [PR #26](https://github.com/mikkokotila/Filang/pull/26) | R2: conditional payoff and cost-aware policy selection | [Frozen protocol](round2_protocol.json), [method and replay](ROUND2.md); no completed R2 outcome asserted here |
 
 The Round 1 protocol was frozen at commit
 [`b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd`](https://github.com/mikkokotila/Filang/commit/b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd),
@@ -68,12 +68,13 @@ instability and prior exposure remain part of that next test's motivation.
    indicators. Use four nested calendar folds and five primary timeframe tests.
    The fixed probability-threshold long/cash ledger is an economic diagnostic;
    its outcomes do not select the R1 model or establish tradeability.
-2. **R2 — limited economic selection, conditional on the residue.** A new
-   protocol may test a small, explicit selective/hysteresis policy family and
-   its relationship to return magnitudes and costs. Retained inner-validation
-   predictions permit past-only policy selection without refitting validation
-   probabilities on their own labels. R2 is not authorized to retroactively
-   change the R1 hypothesis or promote whichever outer result looks best.
+2. **R2 — limited economic selection.** The separately frozen protocol tests
+   direct conditional log-return ridge models and six fixed hysteresis policies
+   plus cash. Models select by earlier validation MSE; their policies select by
+   earlier primary-cost net log return. Both choices then remain fixed through
+   each outer year. The criterion requires improvement over B and cash, annual
+   consistency, trading activity and complete independent audit. R2 cannot
+   retroactively change R1 or select whichever outer result looks best.
 3. **R3 — limited interpretable interactions, only if justified.** A separately
    frozen hypothesis may test a finite low-order interaction family motivated
    by the recorded R1/R2 residue. No unbounded architecture or threshold search
