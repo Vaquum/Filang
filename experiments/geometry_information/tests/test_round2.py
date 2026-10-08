@@ -112,6 +112,9 @@ class RoundTwoTests(unittest.TestCase):
             model["accepted"] = False
             model["solver"]["success"] = False
             model["solver"]["message"] = "synthetic deliberate rejection"
+            model["objective"] = np.nan
+            model["normal_residual"][0] = np.inf
+            model["max_abs_normal_residual"] = np.inf
             return model
         with tempfile.TemporaryDirectory() as tmp, patch.object(runner.r, "fit_ridge", side_effect=reject):
             out = Path(tmp) / "failed"
@@ -120,8 +123,16 @@ class RoundTwoTests(unittest.TestCase):
             records = [json.loads(line) for line in (out / "15m" / "fits.jsonl").read_text().splitlines()]
             self.assertEqual(len(records), 1)
             self.assertFalse(records[0]["accepted"])
+            self.assertIsNone(records[0]["objective"])
+            self.assertIsNone(records[0]["normal_residual"][0])
             with np.load(out / "15m" / "year2023.npz", allow_pickle=False) as arrays:
-                self.assertIn(records[0]["nonfinite_payload_prefix"] + "__theta", arrays.files)
+                prefix = records[0]["nonfinite_payload_prefix"]
+                for diagnostic in ("theta", "gradient", "objective", "normal_residual",
+                                   "max_abs_gradient", "max_abs_normal_residual"):
+                    self.assertIn(prefix + "__" + diagnostic, arrays.files)
+                self.assertTrue(np.isnan(arrays[prefix + "__objective"]))
+                self.assertTrue(np.isposinf(arrays[prefix + "__normal_residual"][0]))
+                self.assertTrue(np.isposinf(arrays[prefix + "__max_abs_normal_residual"]))
             runner.seal_run(out)
             self.assertEqual((out / "manifest.sha256").read_text(), c.digest(out / "manifest.json") + "\n")
 

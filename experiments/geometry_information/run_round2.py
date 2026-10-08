@@ -239,6 +239,8 @@ def timeframe_job(options, minutes):
                 prefix = "failed_fit__" + model["fit_id"]
                 arrays[prefix + "__theta"] = np.array([model["intercept"], *model["coefficients"]])
                 arrays[prefix + "__gradient"] = np.asarray(model["gradient"])
+                for diagnostic in ("objective", "normal_residual", "max_abs_gradient", "max_abs_normal_residual"):
+                    arrays[prefix + "__" + diagnostic] = np.asarray(model[diagnostic], dtype=np.float64)
                 model["nonfinite_payload_prefix"] = prefix
                 model["failure_reason"] = model["solver"]["message"]
                 raise RuntimeError("required ridge fit rejected")
