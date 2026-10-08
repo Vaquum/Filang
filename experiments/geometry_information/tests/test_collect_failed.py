@@ -24,6 +24,7 @@ def fixture(root):
     (run / "provenance.json").write_bytes(provenance)
     identity.update(status="FAILED", implementation={"git_head": failed.IMPLEMENTATION_COMMIT,
                     "worktree_status_porcelain": ""}, settings={"workers": 5, "blas_threads": 2})
+    identity["input_paths"]["data_dir"] = "/synthetic data/pinned-csv"
     save(run / "run.json", identity)
     rejected = []
     for feature in features:
@@ -78,6 +79,10 @@ class FailureCollectorTests(unittest.TestCase):
             self.assertEqual(len((root / "report/retained-fits.jsonl").read_text().splitlines()), 161)
             self.assertEqual(len(list((root / "report").rglob("*-failed-parameters.npz"))), 5)
             self.assertEqual((run / "15m/fits.jsonl").read_bytes(), (root / "report/15m/fits.jsonl").read_bytes())
+            readme = (root / "report/README.md").read_text()
+            self.assertIn("--data-dir '/synthetic data/pinned-csv'", readme)
+            self.assertIn("completed PR #24 tree", readme)
+            self.assertIn("predates that final", readme)
             failed.collect(run, root / "report")
 
     def test_forensic_gate_rejects_unsupported_scientific_or_incomplete_audit(self):

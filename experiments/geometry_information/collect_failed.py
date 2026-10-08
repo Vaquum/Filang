@@ -108,6 +108,7 @@ def readme(identity, audit, launcher, rejected):
     table = report.table(["Minutes", "G history", "Lambda", "Iterations", "Max absolute gradient",
                           "Gradient ≤5e-6", "Optimizer termination"], rows)
     command = shlex.join(identity["command"])
+    audit_data_dir = shlex.quote(identity["input_paths"]["data_dir"])
     elapsed = launcher["elapsed_seconds"]
     return f"""# Round 1 — numerical failure, scientifically inconclusive
 
@@ -212,14 +213,19 @@ The recorded producer command is:
 {command}
 ```
 
-Use a fresh output directory; the failed run remains immutable. Audit and collect
-that original run without refitting:
+Use a fresh output directory; the failed run remains immutable. For forensic
+replay, use the completed PR #24 tree containing the final failed-stage verifier
+and the unchanged producer files whose hashes are recorded in `run.json`.
+Execution commit `17457a99ce3d5b25cd6ff33deefd6ed3fec60bca` predates that final
+verifier. A later solver-amendment checkout with modified producer files cannot
+audit this R1 attempt without restoring the completed PR #24 checkout. Audit and
+collect the original run without refitting:
 
 ```sh
 python experiments/geometry_information/verify_round1.py \\
   --stage failed --run runs/geometry-information-r1 \\
   --keys-root runs/geometry-information-keys-v1 \\
-  --data-dir data/geometry-direction \\
+  --data-dir {audit_data_dir} \\
   --protocol experiments/geometry_information/round1_protocol.json \\
   --out runs/geometry-information-r1-failed-verification.json
 python experiments/geometry_information/collect_failed.py \\

@@ -906,9 +906,9 @@
       "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1/60m/fits.jsonl"
     },
     "README.md": {
-      "bytes": 8421,
+      "bytes": 8859,
       "generated": true,
-      "sha256": "3f0367f1fa59caab246452587824b7b9604a84597479c8051fe35340d5b15b60"
+      "sha256": "62221290ab7e12870e20b87c4898e7e4d3f8bfc82127e21da794748fc99a1cb9"
     },
     "audit-development/geometry-information-r1-failed-verification-adapter1.log": {
       "bytes": 1150,
@@ -923,7 +923,7 @@
     "collection.json": {
       "bytes": 2096,
       "generated": true,
-      "sha256": "38c9b1b6a742381d794df9d85fc262e29531689830995320c09b17cef7642659"
+      "sha256": "c0fb862a465f03ba10dba87b583bc6ebf412761e247c99a530057d8c5cbd2e27"
     },
     "execution.log": {
       "bytes": 716,

@@ -1,5 +1,5 @@
 {
-  "collector_sha256": "d945c9cb63ae91bd54a7c215d40f3b6aa60b8ea2727ddd38b94a603020aa8ff4",
+  "collector_sha256": "0eaaf6aef1b0fd2ea6e08313225d77e8ae3eb638d8d32e109779e857d3163067",
   "coverage": {
     "accepted_candidate_fits": 151,
     "all_retained_records": true,

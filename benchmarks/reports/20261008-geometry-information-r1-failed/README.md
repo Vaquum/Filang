@@ -107,14 +107,19 @@ The recorded producer command is:
 /Users/mikkokotila/dev/Filang-research/.venv/bin/python /Users/mikkokotila/dev/Filang-research/experiments/geometry_information/run_round1.py --data-dir /Users/mikkokotila/dev/Filang-direction/data/geometry-direction --keys-dir /Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1 --out /Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1 --protocol /Users/mikkokotila/dev/Filang-research/experiments/geometry_information/round1_protocol.json --freeze-commit b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd --workers 5 --blas-threads 2
 ```
 
-Use a fresh output directory; the failed run remains immutable. Audit and collect
-that original run without refitting:
+Use a fresh output directory; the failed run remains immutable. For forensic
+replay, use the completed PR #24 tree containing the final failed-stage verifier
+and the unchanged producer files whose hashes are recorded in `run.json`.
+Execution commit `17457a99ce3d5b25cd6ff33deefd6ed3fec60bca` predates that final
+verifier. A later solver-amendment checkout with modified producer files cannot
+audit this R1 attempt without restoring the completed PR #24 checkout. Audit and
+collect the original run without refitting:
 
 ```sh
 python experiments/geometry_information/verify_round1.py \
   --stage failed --run runs/geometry-information-r1 \
   --keys-root runs/geometry-information-keys-v1 \
-  --data-dir data/geometry-direction \
+  --data-dir /Users/mikkokotila/dev/Filang-direction/data/geometry-direction \
   --protocol experiments/geometry_information/round1_protocol.json \
   --out runs/geometry-information-r1-failed-verification.json
 python experiments/geometry_information/collect_failed.py \
