@@ -18,7 +18,7 @@ attempt, then retain the complete result and the remaining scientific question.
 | [PR #23](https://github.com/mikkokotila/Filang/pull/23) | Campaign governance and experiment records | [Law and gate](../../governance/README.md) |
 | [PR #24](https://github.com/mikkokotila/Filang/pull/24) | Round 1 additive geometry: numerical failure, inconclusive | [Frozen protocol](round1_protocol.json), [failure report](../../benchmarks/reports/20261008-geometry-information-r1-failed/README.md) |
 | [PR #25](https://github.com/mikkokotila/Filang/pull/25) | R1a: full audited completion; directional information supported at 30m only | [Protocol](round1a_protocol.json), [method and replay](ROUND1A.md), [complete report](../../benchmarks/reports/20261008-geometry-information-r1a/README.md) |
-| Next separately published PR | Proposed R2: conditional payoff and cost-aware policy selection | Economic follow-up motivated below; no R2 outcome asserted here |
+| [PR #26](https://github.com/mikkokotila/Filang/pull/26) | R2: full audited completion; economic criterion not-supported at all five timeframes | [Frozen protocol](round2_protocol.json), [method and replay](ROUND2.md), [complete report](../../benchmarks/reports/20261008-geometry-payoff-r2/README.md) |
 
 The Round 1 protocol was frozen at commit
 [`b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd`](https://github.com/mikkokotila/Filang/commit/b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd),
@@ -63,17 +63,44 @@ magnitudes well enough to select persistent, cost-aware exposure, with the same
 opportunity and policy search available to B. The complete losses, annual
 instability and prior exposure remain part of that next test's motivation.
 
+R2 completed all 680 fits and 820 ledgers in 67.952530 seconds. Its complete
+independent audit passed all 36,755 array members and retained an explicit
+bootstrap arithmetic qualification: a sparse 30m daily contrast has p-values
+sensitive to floating summation at exact mathematical ties. The original failed
+audit and all original producer values remain preserved; the final verifier
+separately checks continuous numerical replay and exact retained-array tail counts.
+This qualification does not change R2's unsupported economic conclusion.
+
+All five G pooled account returns are positive, but no timeframe passes the
+joint economic criterion. G and B have identical net results at 15m and 60m;
+G and U are identical at 240m. The 240m G advantage over B reflects lower turnover
+despite lower gross return. G mostly holds long in 2024/2025 and remains unexposed
+in 2023/2026, with only 2, 2, 2, 17 and 2 completed trades across the five
+timeframes. All composite Holm p-values are 1.0, and no timeframe reaches the
+same-three-positive-years or twenty-trade conditions. Buy-and-hold exceeds G's
+pooled return at every timeframe.
+
+The remaining specific question is whether limited nonlinear qualitative
+composition separates contexts that the additive model pools together. R3 may
+compare a fixed current/prior interval-interaction extension against a freshly
+fitted additive geometry baseline, with the same target, chronology, policies
+and costs. Its catalogue must be generated from mathematical OHLC admissibility,
+not market support or outer outcomes. The final specification will also define
+an exact bootstrap tail predicate before any R3 fitting. This is the last
+hypothesis family in the campaign budget.
+
 1. **R1 — additive pooling.** Compare additive body/close-sign history against
    that history plus current-to-prior endpoint comparisons and wick-presence
    indicators. Use four nested calendar folds and five primary timeframe tests.
    The fixed probability-threshold long/cash ledger is an economic diagnostic;
    its outcomes do not select the R1 model or establish tradeability.
-2. **R2 — limited economic selection, conditional on the residue.** A new
-   protocol may test a small, explicit selective/hysteresis policy family and
-   its relationship to return magnitudes and costs. Retained inner-validation
-   predictions permit past-only policy selection without refitting validation
-   probabilities on their own labels. R2 is not authorized to retroactively
-   change the R1 hypothesis or promote whichever outer result looks best.
+2. **R2 — limited economic selection.** The separately frozen protocol tests
+   direct conditional log-return ridge models and six fixed hysteresis policies
+   plus cash. Models select by earlier validation MSE; their policies select by
+   earlier primary-cost net log return. Both choices then remain fixed through
+   each outer year. The criterion requires improvement over B and cash, annual
+   consistency, trading activity and complete independent audit. R2 cannot
+   retroactively change R1 or select whichever outer result looks best.
 3. **R3 — limited interpretable interactions, only if justified.** A separately
    frozen hypothesis may test a finite low-order interaction family motivated
    by the recorded R1/R2 residue. No unbounded architecture or threshold search

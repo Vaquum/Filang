@@ -1,0 +1,422 @@
+{
+  "files": {
+    "120m/arrays.json": {
+      "bytes": 1210581,
+      "sha256": "484202d24f3fccb96476e3e8d628a215b6081ee64232598ae1aa90313f2e62a2",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/120m/arrays.json"
+    },
+    "120m/features.json": {
+      "bytes": 4974,
+      "sha256": "19f0571f2f656c2b268ad62f9eeb3bf4866e2d6c703b167b13f7f4c606bc77a5",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/120m/features.json"
+    },
+    "120m/fits.jsonl": {
+      "bytes": 1035579,
+      "sha256": "78ab83f80393ebf6c22ac0f9eb43103102b79e47d8aacbabc6a01764f37ae2fa",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/120m/fits.jsonl"
+    },
+    "120m/ledgers.jsonl": {
+      "bytes": 868788,
+      "sha256": "3c513e56d226d57651586bdd8a44fc160681c7dc116b66eb237d0864fd85ed59",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/120m/ledgers.jsonl"
+    },
+    "120m/selections.jsonl": {
+      "bytes": 26184,
+      "sha256": "9da2cd134d95b66f218034adcb51d45fce80c7868959adcf4140c1cc7608f6ee",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/120m/selections.jsonl"
+    },
+    "120m/statistics.jsonl": {
+      "bytes": 10544,
+      "sha256": "d348324c169a8809daaf570747c0e5c6c5814dcbf1e5f9bb1fa2368c0f3f6510",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/120m/statistics.jsonl"
+    },
+    "120m/summary.json": {
+      "bytes": 141956,
+      "sha256": "8254b08a23f198a9a9d70eeba3c3611c55329cd26aa7ed31fc5343e96a9e8a75",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/120m/summary.json"
+    },
+    "120m/timings.json": {
+      "bytes": 454,
+      "sha256": "5d9e1d04dc3cd98d5e2c859001ddc0c8ed13032d3e64898f120be691079e9e95",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/120m/timings.json"
+    },
+    "15m/arrays.json": {
+      "bytes": 1212921,
+      "sha256": "06a65fe84e41e7e2e564550dc130270fccc4fa19680088c389c1d5dd4b12fbc9",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/15m/arrays.json"
+    },
+    "15m/features.json": {
+      "bytes": 4983,
+      "sha256": "9264c97edc492162f90632a7bb39f87bf813b2259bfb3bd15be66be331fc161e",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/15m/features.json"
+    },
+    "15m/fits.jsonl": {
+      "bytes": 1106245,
+      "sha256": "fa6becf20b79625a32b991187d3346f3df24216bd74e594360c020d04fd4115a",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/15m/fits.jsonl"
+    },
+    "15m/ledgers.jsonl": {
+      "bytes": 868104,
+      "sha256": "33299276a7d655cbd1d9171b1acda0fb620d0c337c5512fe52107e727c7dcec5",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/15m/ledgers.jsonl"
+    },
+    "15m/selections.jsonl": {
+      "bytes": 26151,
+      "sha256": "e396422d50185a27fb7598215e82673086edbe2c7a38340f46f83fa568e1bae7",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/15m/selections.jsonl"
+    },
+    "15m/statistics.jsonl": {
+      "bytes": 10544,
+      "sha256": "cb9647d56912d7950bd638a4c03e739469d647b6811f29196a78954190549dc5",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/15m/statistics.jsonl"
+    },
+    "15m/summary.json": {
+      "bytes": 141480,
+      "sha256": "83a21266e81dff35b9902daa4bded3f0ae585111bff476d6832daabc5de26b67",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/15m/summary.json"
+    },
+    "15m/timings.json": {
+      "bytes": 441,
+      "sha256": "3860090b4417afa575ccda7e4bad854a029a9bbbb7c726ea2e61ad22bf012745",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/15m/timings.json"
+    },
+    "240m/arrays.json": {
+      "bytes": 1210917,
+      "sha256": "a24382a1fcef52a5e39007423ccf205c74ee937822b1a80c95a79f169649ae9e",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/240m/arrays.json"
+    },
+    "240m/features.json": {
+      "bytes": 4974,
+      "sha256": "2cb90fc645b332e03d28bf4c00ef3525ad972fa9e7d32b351ae81237687f8204",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/240m/features.json"
+    },
+    "240m/fits.jsonl": {
+      "bytes": 965287,
+      "sha256": "907e9977e90789fc6ff6531f2623b539798f8fa03d9546d58a9f93924499ae69",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/240m/fits.jsonl"
+    },
+    "240m/ledgers.jsonl": {
+      "bytes": 870600,
+      "sha256": "3ba9a8ce818a550b5c79acf8ee4f55c2faf1f6b505a71ab5196881be4d36b269",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/240m/ledgers.jsonl"
+    },
+    "240m/selections.jsonl": {
+      "bytes": 26382,
+      "sha256": "798835151d55acbb5ab042f79c9f1eed8379314c27beb1911975a22d34e50358",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/240m/selections.jsonl"
+    },
+    "240m/statistics.jsonl": {
+      "bytes": 10542,
+      "sha256": "517a1ba750af185aa31e1f7efc790ae7cfdd5b4af7dd00e16cbcb39104d4204c",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/240m/statistics.jsonl"
+    },
+    "240m/summary.json": {
+      "bytes": 142023,
+      "sha256": "07fb380209fbb189ac5c96205f3f6ea88be8078f7f522a7fe035de47e39c0a49",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/240m/summary.json"
+    },
+    "240m/timings.json": {
+      "bytes": 456,
+      "sha256": "bebb68fb341e049c087c93df907b9cde5e1b5e662a03cedf3709940b32a40ca7",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/240m/timings.json"
+    },
+    "30m/arrays.json": {
+      "bytes": 1212921,
+      "sha256": "6ebbc136d50a48ae4d09de76edda359551e232af3ed8ad2cf1625f01adb21c6b",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/30m/arrays.json"
+    },
+    "30m/features.json": {
+      "bytes": 4983,
+      "sha256": "3def69a19dd9354da09f85fcc34be556c97b353686418f5b535e1acfc9fef7a6",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/30m/features.json"
+    },
+    "30m/fits.jsonl": {
+      "bytes": 1086345,
+      "sha256": "4820051aeb285af94697db7810444ffd50ec482e085e9e41c1b249824cadf286",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/30m/fits.jsonl"
+    },
+    "30m/ledgers.jsonl": {
+      "bytes": 868192,
+      "sha256": "3e75f7f42fbc6d9391f2d14d4492c04ebe2375c65426f0d9173146b792a72bdd",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/30m/ledgers.jsonl"
+    },
+    "30m/selections.jsonl": {
+      "bytes": 26151,
+      "sha256": "ed8b97b3f115d99e7ccb3bed162d190ee30e8f5c91ec8491df8275d10272904f",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/30m/selections.jsonl"
+    },
+    "30m/statistics.jsonl": {
+      "bytes": 10541,
+      "sha256": "80a5ea7f3b5bc38676bfa2786cf01daf54e7a3c3c68d799c0967bb131197cf9c",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/30m/statistics.jsonl"
+    },
+    "30m/summary.json": {
+      "bytes": 141845,
+      "sha256": "123548c42e89ca5022135afb3657fe02e052dbab195975beb8a4234768e7bd9a",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/30m/summary.json"
+    },
+    "30m/timings.json": {
+      "bytes": 445,
+      "sha256": "109289ae6b3525bf9241fffc639960ff6c0e8fb8c880f43d95f44addab255d00",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/30m/timings.json"
+    },
+    "60m/arrays.json": {
+      "bytes": 1210517,
+      "sha256": "7452dd9c692180b5bd63dfd66d2a10a5d56f57cf9f2f51c77780dd0b7f3ab596",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/60m/arrays.json"
+    },
+    "60m/features.json": {
+      "bytes": 4973,
+      "sha256": "5f7067d335be8c859cdf5d70430906cb9a42bb3459122a2898144d8ef5ab942d",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/60m/features.json"
+    },
+    "60m/fits.jsonl": {
+      "bytes": 1057189,
+      "sha256": "215abfefaeb830d9110b3d07abc62946c6caa58d32f19b85de5d7cfcaed86c9d",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/60m/fits.jsonl"
+    },
+    "60m/ledgers.jsonl": {
+      "bytes": 867937,
+      "sha256": "b36059857e7e41dd02b2a9fe5e4a9e3bca06c29ef92ccd2c9aff2fd48c0c8a64",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/60m/ledgers.jsonl"
+    },
+    "60m/selections.jsonl": {
+      "bytes": 26137,
+      "sha256": "8644aa6b0d230a375dd55bbc6b8fb336c3bd15447ed8e11cc03d069b9b8a90a4",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/60m/selections.jsonl"
+    },
+    "60m/statistics.jsonl": {
+      "bytes": 10540,
+      "sha256": "da8c2f6ca1616a65bba4b52953141637c66fe1abb90d38cd49f24e52e7d6c252",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/60m/statistics.jsonl"
+    },
+    "60m/summary.json": {
+      "bytes": 141422,
+      "sha256": "310f98116b92f9ea02b264e38247f148ddc568e6839862582b8e72e0652d8e46",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/60m/summary.json"
+    },
+    "60m/timings.json": {
+      "bytes": 451,
+      "sha256": "859a34845b2480017ae121e3d33393ea55a13fa790d7bcac2ff0b76b50bd1b3b",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/60m/timings.json"
+    },
+    "README.md": {
+      "bytes": 24439,
+      "generated": true,
+      "sha256": "ddb6a9fc4fdfcb14d660c7835cfefb4e8d7d77bf16fbf1e16cb5f2648ca68beb"
+    },
+    "analysis.json": {
+      "bytes": 710906,
+      "sha256": "67a0df339b0be2b9142a930aaa859e9120f28fcb5966995066f63f085a6d2c78",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/analysis.json"
+    },
+    "annual-effects.csv": {
+      "bytes": 631,
+      "generated": true,
+      "sha256": "faedab02191a871762f368cc2fcecb98d2f2392ee1cca088f38d04e4a6c99413"
+    },
+    "economics.csv": {
+      "bytes": 114160,
+      "generated": true,
+      "sha256": "1d658f54441f8a15c29d35df69f687d82cdf1dea78884e09753e3888c3227e31"
+    },
+    "features.json": {
+      "bytes": 41020,
+      "sha256": "bf7fe1490a99e0ac438c0e7a870f3749e0ac1ac1e117c9abce63f72d7ebb7a7b",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/features.json"
+    },
+    "model-policy-choices.csv": {
+      "bytes": 10897,
+      "generated": true,
+      "sha256": "960fd6a269a26346b7564bae2caa6cb1eb59d13ffdf2ae0970797feac044d360"
+    },
+    "native/120m/context.json": {
+      "bytes": 396,
+      "sha256": "c747eed9ffec4d58ebb6615248efd65c0d5f2f605d908223e632cd4fdf8e56ff",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/120m/context.json"
+    },
+    "native/120m/manifest.json": {
+      "bytes": 859,
+      "sha256": "d0aec1a382523fa751aaeeba1311690131f797649a03ffbfae281d50a583373e",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/120m/manifest.json"
+    },
+    "native/120m/manifest.sha256": {
+      "bytes": 65,
+      "sha256": "6bce467d8a174d9f5bd912ab8f4a65da4c10d0addef5ca8f88e87cd6dde43be3",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/120m/manifest.sha256"
+    },
+    "native/120m/timings.json": {
+      "bytes": 283,
+      "sha256": "add054c2eacf15272ed36a4a59ae3bf0928cb746dc4f05800f0569c3bc882dc9",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/120m/timings.json"
+    },
+    "native/15m/context.json": {
+      "bytes": 395,
+      "sha256": "16c381680b942bbfd8146a1407a730acbca9664863df368fdc6d21c1fc611799",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/15m/context.json"
+    },
+    "native/15m/manifest.json": {
+      "bytes": 867,
+      "sha256": "ad00d896669ed2ab03d63ec98fc2a8c9098e982e17757de4adf0c956715c2b09",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/15m/manifest.json"
+    },
+    "native/15m/manifest.sha256": {
+      "bytes": 65,
+      "sha256": "c9bbb5e6dd6abdba26700531fea04cea35ff3c67ede962346bb678177c839dc6",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/15m/manifest.sha256"
+    },
+    "native/15m/timings.json": {
+      "bytes": 284,
+      "sha256": "a00ebf97c904ae55ee0b0aa9a2330cfd6ec665b9444ba469c1507605a1385f6a",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/15m/timings.json"
+    },
+    "native/240m/context.json": {
+      "bytes": 397,
+      "sha256": "b860a26cb2f920ea3ecd0d71294ddb2d3f575eefa511cb1db5872bca7bc0e128",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/240m/context.json"
+    },
+    "native/240m/manifest.json": {
+      "bytes": 854,
+      "sha256": "c2ebf3dbfc4253f085de4933f77fc1b97f82d234921cc831322257a8f2d3e899",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/240m/manifest.json"
+    },
+    "native/240m/manifest.sha256": {
+      "bytes": 65,
+      "sha256": "e2b442da8e8eedf838130a3074e882fe2924245c502c227cbbe9d842007a6ec6",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/240m/manifest.sha256"
+    },
+    "native/240m/timings.json": {
+      "bytes": 283,
+      "sha256": "b8ef574813256e971af4540398ad17331166a7e050119aa3f1716cbf06264015",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/240m/timings.json"
+    },
+    "native/30m/context.json": {
+      "bytes": 396,
+      "sha256": "08ba44691fffd9f4701039821b1e23c8d6a0158004c29992a42e0a6b1abe9a44",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/30m/context.json"
+    },
+    "native/30m/manifest.json": {
+      "bytes": 865,
+      "sha256": "055420b1f8b7dcd215c4117b6b60234d6d3ba61e401444fcd822462c70b7e375",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/30m/manifest.json"
+    },
+    "native/30m/manifest.sha256": {
+      "bytes": 65,
+      "sha256": "b6ec6e37d271c27a88e7aefb12d0ce4f23b291eb16058e1579d36ab2ba9256ea",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/30m/manifest.sha256"
+    },
+    "native/30m/timings.json": {
+      "bytes": 284,
+      "sha256": "e8bb9fbcafed4de6d728f7e1e3f517b742e54645a42ee0832537c0ff7ea2939b",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/30m/timings.json"
+    },
+    "native/60m/context.json": {
+      "bytes": 396,
+      "sha256": "9d5a549493e665823961e1b12bd0ca5397e6613542cd6a3beea422daf90874ae",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/60m/context.json"
+    },
+    "native/60m/manifest.json": {
+      "bytes": 861,
+      "sha256": "71fe0eed5c86efc658d0be2bcdf303e27f630fb571f9a8587bd94c59449200af",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/60m/manifest.json"
+    },
+    "native/60m/manifest.sha256": {
+      "bytes": 65,
+      "sha256": "6541fd789647a81bbd5383c943d3b06b46d298f0c4a7ae33d91770c2f723d835",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/60m/manifest.sha256"
+    },
+    "native/60m/timings.json": {
+      "bytes": 283,
+      "sha256": "10bb6349b3a0b658cf179cdc09b0fcc3b75e00c938ed652d4396abd32152dc25",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/60m/timings.json"
+    },
+    "operational/audit/geometry-payoff-r2-audit-v2.json": {
+      "bytes": 1416,
+      "sha256": "2bb9ac7b5e1c36ba44ea5f8a2f90ba2fd8b2c5f43942fb50f6bc9a4e756da9e1",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-audit-v2.json"
+    },
+    "operational/audit/geometry-payoff-r2-verification-v2.log": {
+      "bytes": 2218,
+      "sha256": "ab4cb314765dea9759fd0fc81b1a90a0290e9248472082aec052fb4d4c511902",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-verification-v2.log"
+    },
+    "operational/audit/geometry-payoff-r2-verification.log": {
+      "bytes": 1106,
+      "sha256": "211e3c00b8bdc4fb4444579ceb5909ce25c44ee84da27cbff8b95e232962a2be",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-audit-v1/geometry-payoff-r2-verification.log"
+    },
+    "operational/audit/receipt.json": {
+      "bytes": 855,
+      "sha256": "5ff2ea046ca662b4331c946ff578eab079ca85edcd124aec99db7f92e635b189",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-audit-v1/receipt.json"
+    },
+    "operational/audit/test_verify_round2.py": {
+      "bytes": 15520,
+      "sha256": "7735e2046d9d7f35c73b60ae01f89b9371fa08398e58c72588c66155acdde479",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-audit-v1/test_verify_round2.py"
+    },
+    "operational/audit/verify_round2.py": {
+      "bytes": 58963,
+      "sha256": "24ec3d8464dbd2ffc2988e7332ee6bc5637afc9d5cad2b61489e13da3f490630",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-audit-v1/verify_round2.py"
+    },
+    "operational/execution.log": {
+      "bytes": 1158,
+      "sha256": "60cb66d614e9a64304904a9669b42a5f66a7267e7af0ca26a55f0b8b61d40e5c",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-execution.log"
+    },
+    "operational/launcher.json": {
+      "bytes": 1097,
+      "sha256": "3f05099e5448558835b04d011698e0b3b93735dd0fba3056a1d36d7801ed5c1c",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-launch.json"
+    },
+    "prediction-scores.csv": {
+      "bytes": 16001,
+      "generated": true,
+      "sha256": "be4ea514ccaa8c8d7bdab5fd8270ab3729ed0bb7a8db5e08a3424c47ac3e8a8b"
+    },
+    "primary-and-sensitivity.csv": {
+      "bytes": 5582,
+      "generated": true,
+      "sha256": "0748992c63b60d03a023927fc3e05ad6324666ed21a75ae7a7cb72d2c830b678"
+    },
+    "producer-manifest.json": {
+      "bytes": 9753,
+      "sha256": "42bcf7c81c99e0b711118f2298d45af56abb26ff354f711a94ce500fe6e97525",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/manifest.json"
+    },
+    "producer-manifest.sha256": {
+      "bytes": 65,
+      "sha256": "669889980e56fd26d4eadf3ef84d5a8495a3d07b84c801f9f2b848aaa50f11eb",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/manifest.sha256"
+    },
+    "protocol.json": {
+      "bytes": 39672,
+      "sha256": "40162d6e1a6ced930bb8c8cfb578f6d9eb4935b7f2ef4ae37a363dc75e52d11d",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/protocol.json"
+    },
+    "provenance.json": {
+      "bytes": 13994,
+      "sha256": "a5f0ad7230bc0531d1337d81110f60f62420813b273684211d09a32f015f025c",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/provenance.json"
+    },
+    "retained-artifacts.json": {
+      "bytes": 21036,
+      "generated": true,
+      "sha256": "5d693b2ce6a981d0b9f95a4e6b7f7a64255dd75d9676390e5fb9a30bdfd2dba5"
+    },
+    "run.json": {
+      "bytes": 6924,
+      "sha256": "1bb45cf80370cffbc1e6cef3a87ece58cea8ea98f5aab825a61b589d02180a0a",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/run.json"
+    },
+    "verification.json": {
+      "bytes": 182527,
+      "sha256": "4639e852c06b482b4dd98fd521a09ac070aa820db82074676c011280094ec32f",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/verification.json"
+    }
+  },
+  "freeze_commit": "9489c22556898603268fbad9124e0268f0d99852",
+  "protocol_sha256": "40162d6e1a6ced930bb8c8cfb578f6d9eb4935b7f2ef4ae37a363dc75e52d11d",
+  "schema": "filang-geometry-information-report-package-v1"
+}

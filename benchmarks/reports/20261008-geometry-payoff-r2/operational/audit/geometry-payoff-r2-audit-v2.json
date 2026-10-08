@@ -1,0 +1,30 @@
+{
+  "attempt": "R2-independent-audit-v2",
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "experiments/geometry_information/verify_round2.py",
+    "--stage",
+    "full",
+    "--run",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2",
+    "--data-dir",
+    "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction",
+    "--keys-root",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1",
+    "--protocol",
+    "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/round2_protocol.json",
+    "--out",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2/verification.json"
+  ],
+  "completed_at": "2026-10-08T17:36:25.834211+00:00",
+  "elapsed_seconds": 209.04746037500445,
+  "exit_code": 0,
+  "log": "/Users/mikkokotila/dev/Filang-research/runs/geometry-payoff-r2-verification-v2.log",
+  "prior_failed_audit": "runs/geometry-payoff-r2-audit-v1/receipt.json",
+  "producer_manifest_sha256": "42bcf7c81c99e0b711118f2298d45af56abb26ff354f711a94ce500fe6e97525",
+  "source_sha256": {
+    "experiments/geometry_information/tests/test_verify_round2.py": "6d7ee3e7ed0430484b27fa5e3fa3d6a852e677f8974d23b220ecdd7e14a96fa2",
+    "experiments/geometry_information/verify_round2.py": "9bf57f3ee4a9f9f7f6be5f126724191bd488666cffcf10fa9c545c78931ad053"
+  },
+  "started_at": "2026-10-08T17:32:56.786816+00:00"
+}
