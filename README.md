@@ -2,9 +2,56 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.8, with dense independent atom-pair sweeps.** Both conditions can independently traverse complete period/source/component grids across the ten known families. Exact predicate-state interning, set-product certificates, native full-risk scoring and durable local task restart reduce physical work without a standalone-profitability shortlist. The full 50,430-construction campaign is complete; the [report](benchmarks/reports/20261005-dense-atom-pairs/README.md) distinguishes exhaustive coverage checks, large checkpoint metric audits and exhaustive captured-control metric parity. Broader factory requirements remain open in issue #1.
+**Status: runnable 0.9, with complete qualitative bar-geometry sweeps.** Candle bodies and wicks have an exact canonical language, including missing wicks, doji, ties, opening gaps and global relationships across any number of bars. The geometry source plugs into the existing dense full-risk executor. It compiles observed patterns once and accounts for the entire unobserved complement with checked `u128` multiplicities. The default experiment covers **55,851,217,669,989,216 logical strategy addresses** without enumerating that many patterns or performing that many independent backtests. Broader factory requirements remain open in issue #1.
 
-## Current: dense atom pairs (0.8)
+## Current: qualitative bar geometry (0.9)
+
+[The complete technical reference](docs/BAR_GEOMETRY.md) defines the atoms,
+canonical format, completeness boundary, exact counts, sweep domain, memory
+budgets, durable artifacts and independent verification. A pattern preserves the
+global order and equality of every low, body bottom, body top and high. Optional
+body direction is part of the candle; indicators and volume are not geometry
+atoms. Lengths and ratios are outside this ordinal language.
+
+For a fixed lag window, every valid historical decision matches exactly one
+complete pattern. Unobserved patterns share an all-false raw mask on that causal
+input. The engine retains their exact count, then applies temporal qualifiers,
+interns identical truth/validity masks, certifies Boolean products and scores the
+remaining regions. A frozen winner always names explicit patterns; it is encoded
+and evaluated afresh on another dataset.
+
+```sh
+cargo build --release --locked --offline
+./target/release/filang geometry-count --bars 2 --mode oriented
+./target/release/filang geometry-inspect --config examples/geometry-trillion.cfg
+
+# Requires the prepared discovery CSV; scoring is 2024, with causal warm-up.
+./target/release/filang geometry-sweep \
+  --config examples/geometry-trillion.cfg --out runs/geometry --workers 10
+python3 scripts/verify_geometry.py --run runs/geometry
+
+# Resume after interruption; worker count may change.
+./target/release/filang geometry-sweep \
+  --config examples/geometry-trillion.cfg --out runs/geometry \
+  --resume true --workers 4
+```
+
+`geometry-example` creates a custom config, `geometry-prepare` commits only the
+predicate banks, and `geometry-evaluate` replays a checksummed frozen selection
+through the separate chronological scorer. `--capture true` retains every result
+region for exhaustive independent metric replay; summary output verifies all
+bank memberships, domain coverage and retained task winners. The verifier reports
+its scope explicitly. `scripts/benchmark_geometry.py` measures matched scalar,
+certificate, native and parallel runs with verification outside the timer.
+
+The `smoke` example has 333,193,824 logical addresses. The `trillion` example uses
+two three-bar lag windows, three qualifiers and three two-slot rules. These are
+complete searches of their declared domains; physical work depends on the data
+and may still be substantial. Bank and tree budgets fail explicitly instead of
+pruning the domain. Native execution has no third-party dependencies and retains
+the Rust 1.63 minimum.
+
+## Earlier: dense atom pairs (0.8)
 
 `dense-sweep` independently varies both numerical neighborhoods, shares exact
 truth/validity signatures across atom coordinates, and evaluates certified products

@@ -50,3 +50,9 @@ pub mod dense_tree;
 pub mod dense_io;
 
 pub mod dense_run;
+
+pub mod geometry;
+
+pub mod geometry_run;
+
+pub mod geometry_cli;
