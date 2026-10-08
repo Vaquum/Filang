@@ -1,0 +1,3 @@
+slot	lags	qualifier	pattern
+0	0,1,2	recent:3	g1:o:0,1,7,8,d;4,6,7,10,u;2,3,5,9,u
+1	0,2,4	recent:3	g1:o:6,7,10,11,u;4,5,8,9,u;0,1,2,3,d

@@ -1,5 +1,5 @@
-//! Bounded dense-family authoring and resumable exact execution. Generic state
-//! dictionaries and Boolean certificates never dispatch on indicator labels.
+//! Bounded family authoring and resumable exact execution. Prepared predicate
+//! sources share the same state dictionaries, Boolean certificates and scorer.
 use crate::{
     backtest::Costs,
     cohort,
@@ -191,7 +191,161 @@ impl Config {
             (b as usize * stride) as f64 / 400.,
         ))
     }
+    fn execution(&self) -> ExecutionConfig {
+        ExecutionConfig {
+            rules: self.rules.clone(),
+            memory: self.memory,
+            bank_budget: self.bank_budget,
+            tree_budget: self.tree_budget,
+            block: self.block,
+            max_nodes: self.max_nodes,
+            costs: self.costs,
+            allow_same_bank: false,
+        }
+    }
 }
+
+/// Execution settings independent of how a predicate bank was constructed.
+/// A source's versioned `raw` configuration must bind these settings as well as
+/// its own domain. Worker count may change on resume; candidate meaning may not.
+#[derive(Clone, Debug)]
+pub struct ExecutionConfig {
+    pub rules: Vec<String>,
+    pub memory: usize,
+    pub bank_budget: usize,
+    pub tree_budget: usize,
+    pub block: usize,
+    pub max_nodes: u64,
+    pub costs: Costs,
+    pub allow_same_bank: bool,
+}
+impl ExecutionConfig {
+    fn validate(&self, source: &dyn BankSource) -> Result<u128> {
+        self.costs.validate()?;
+        if self.rules.is_empty()
+            || self.rules.len() > 128
+            || self.block == 0
+            || self.block > 4096
+            || self.max_nodes == 0
+            || self.memory < 16 << 20
+            || self.bank_budget < 1 << 20
+            || self.tree_budget < 1 << 20
+        {
+            return Err("prepared-bank execution domain/resource limits".into());
+        }
+        let labels = source.labels();
+        if labels.is_empty() || !self.allow_same_bank && labels.len() < 2 {
+            return Err("prepared-bank domain has no bank pairs".into());
+        }
+        let mut unique = labels.to_vec();
+        unique.sort();
+        unique.dedup();
+        if unique.len() != labels.len() || labels.iter().any(String::is_empty) {
+            return Err("prepared-bank labels must be nonempty and unique".into());
+        }
+        for rule in &self.rules {
+            Table::from_program(&Program::parse(rule, 2)?)?;
+        }
+        let counts = (0..labels.len())
+            .map(|f| source.addresses(f))
+            .collect::<Result<Vec<_>>>()?;
+        if counts.contains(&0) {
+            return Err("empty prepared-bank logical domain".into());
+        }
+        let mut pairs = 0u128;
+        for (a, &left) in counts.iter().enumerate() {
+            for (b, &right) in counts.iter().enumerate() {
+                if a != b || self.allow_same_bank {
+                    pairs = left
+                        .checked_mul(right)
+                        .and_then(|n| pairs.checked_add(n))
+                        .ok_or("prepared-bank address overflow")?;
+                }
+            }
+        }
+        pairs
+            .checked_mul(self.rules.len() as u128)
+            .ok_or_else(|| "prepared-bank address overflow".into())
+    }
+}
+
+/// A finite, versioned predicate domain backed by ordinary `FDBANK01` files.
+/// Sources own semantic validation, preparation, aliases and candidate decoding;
+/// the shared runner owns locking, task scheduling, certificates and full scoring.
+/// `prepare` must commit/verify source metadata and the standard bank at
+/// `record_path(banks, "bank", bank, "bin")`, using `bank_context(context, bank)`.
+pub trait BankSource: Sync {
+    fn labels(&self) -> &[String];
+    fn addresses(&self, bank: usize) -> Result<u128>;
+    fn validate(&self, _data: &Data, _range: std::ops::Range<usize>) -> Result<()> {
+        Ok(())
+    }
+    fn prepare(
+        &self,
+        data: &Data,
+        range: std::ops::Range<usize>,
+        context: &str,
+        bank: usize,
+        banks: &Path,
+        backend: Backend,
+    ) -> Result<()>;
+    fn validate_coordinate(&self, bank: usize, coordinate: Coordinate, banks: &Path) -> Result<()>;
+    fn best_json(&self, best: &Best, rules: &[String], banks: &Path) -> Result<String>;
+    fn export_best(&self, best: &Best, rules: &[String], banks: &Path, out: &Path) -> Result<()>;
+    /// Comma-separated JSON members, without braces or a leading/trailing comma.
+    /// Include at least one source-specific member; use the JSON quoting helpers.
+    fn summary_fields(&self, banks: &Path) -> Result<String>;
+}
+
+struct DenseSource<'a>(&'a Config);
+impl BankSource for DenseSource<'_> {
+    fn labels(&self) -> &[String] {
+        &self.0.families
+    }
+    fn addresses(&self, bank: usize) -> Result<u128> {
+        if bank >= self.0.families.len() {
+            return Err("dense family address".into());
+        }
+        Ok(self.0.per_family())
+    }
+    fn prepare(
+        &self,
+        data: &Data,
+        range: std::ops::Range<usize>,
+        context: &str,
+        bank: usize,
+        banks: &Path,
+        backend: Backend,
+    ) -> Result<()> {
+        prepared(self.0, data, range, context, bank, banks, backend)
+    }
+    fn validate_coordinate(&self, bank: usize, co: Coordinate, _banks: &Path) -> Result<()> {
+        if bank >= self.0.families.len()
+            || co.atom >= self.0.atoms()
+            || co.qualifier >= self.0.qualifiers.len() as u64
+            || co.cutoff >= self.0.cutoffs
+        {
+            return Err("checkpoint parameter coordinate".into());
+        }
+        Ok(())
+    }
+    fn best_json(&self, best: &Best, _rules: &[String], _banks: &Path) -> Result<String> {
+        Ok(best.json(self.0))
+    }
+    fn export_best(&self, best: &Best, _rules: &[String], _banks: &Path, out: &Path) -> Result<()> {
+        export_best(self.0, best, out)
+    }
+    fn summary_fields(&self, _banks: &Path) -> Result<String> {
+        let c = self.0;
+        Ok(format!(
+            "\"coefficient_count\":{},\"cutoff_count\":{},\"upstream_constructions\":{}",
+            c.coefficients,
+            c.cutoffs,
+            c.atoms() * c.families.len() as u64
+        ))
+    }
+}
+
 pub fn example(path: &str, count: usize) -> Result<()> {
     let text=format!("version=1\ndata=data/btc4h/discovery.csv\nstart=2024-01-01\nend=2025-01-01\nfamilies={}\ncoefficients={count}\ncutoffs=20001\nqualifiers=plain,persist:2,recent:3\nrules=(and s0 s1);(or s0 s1);(and s0 (not s1))\nnumeric_mib=128\nbank_mib=64\ntree_mib=128\ntask_states=256\nmax_task_nodes=100000000\nfee_bps=10\nslip_bps=10\n",cohort::KINDS.join(","));
     Config::parse(&text)?;
@@ -202,10 +356,10 @@ pub fn example(path: &str, count: usize) -> Result<()> {
         .map_err(|e| e.to_string())?;
     file.write_all(text.as_bytes()).map_err(|e| e.to_string())
 }
-fn bank_context(context: &str, family: usize) -> String {
+pub fn bank_context(context: &str, family: usize) -> String {
     sha256(format!("{context}|family|{family}").as_bytes())
 }
-fn record_path(dir: &Path, prefix: &str, id: usize, ext: &str) -> PathBuf {
+pub fn record_path(dir: &Path, prefix: &str, id: usize, ext: &str) -> PathBuf {
     dir.join(format!("{prefix}-{id:02}.{ext}"))
 }
 fn prepared(
@@ -350,8 +504,35 @@ fn prepared(
     );
     Ok(())
 }
-fn bank_rows(r: &std::ops::Range<usize>) -> usize {
+pub fn bank_rows(r: &std::ops::Range<usize>) -> usize {
     r.end - r.start - 2
+}
+
+fn load_source_bank(
+    source: &dyn BankSource,
+    banks: &Path,
+    context: &str,
+    bank: usize,
+    rows: usize,
+    budget: usize,
+) -> Result<Vec<dense_bank::Entry>> {
+    let entries = dense_bank::load(
+        &record_path(banks, "bank", bank, "bin"),
+        &bank_context(context, bank),
+        budget,
+    )?;
+    let mut count = 0u128;
+    for entry in &entries {
+        dense_bank::validate_mask(&entry.mask, rows)?;
+        source.validate_coordinate(bank, entry.first, banks)?;
+        count = count
+            .checked_add(entry.count)
+            .ok_or("prepared-bank multiplicity overflow")?;
+    }
+    if count != source.addresses(bank)? {
+        return Err("prepared-bank logical coverage mismatch".into());
+    }
+    Ok(entries)
 }
 
 #[derive(Clone, Debug)]
@@ -418,7 +599,14 @@ impl Task {
         }
         b
     }
-    fn decode(b: &[u8], context: &str, id: u64, c: &Config) -> Result<Self> {
+    fn decode(
+        b: &[u8],
+        context: &str,
+        id: u64,
+        c: &ExecutionConfig,
+        source: &dyn BankSource,
+        banks: &Path,
+    ) -> Result<Self> {
         let mut r = Reader::new(b);
         if r.bytes(8)? != b"FDTASK01" || r.bytes(64)? != context.as_bytes() || r.u64()? != id {
             return Err("checkpoint context/version/order mismatch".into());
@@ -433,23 +621,18 @@ impl Task {
         let digest = String::from_utf8(r.bytes(64)?.to_vec()).map_err(|_| "bad result hash")?;
         let families = [r.u64()? as usize, r.u64()? as usize];
         let template = r.u64()? as usize;
-        if families.iter().any(|i| *i >= c.families.len())
-            || families[0] == families[1]
+        if families.iter().any(|i| *i >= source.labels().len())
+            || !c.allow_same_bank && families[0] == families[1]
             || template >= c.rules.len()
         {
             return Err("checkpoint family/template".into());
         }
         let mut coordinates = [Coordinate::default(); 2];
-        for co in &mut coordinates {
+        for (slot, co) in coordinates.iter_mut().enumerate() {
             co.atom = r.u64()?;
             co.qualifier = r.u64()?;
             co.cutoff = r.u64()?;
-            if co.atom >= c.atoms()
-                || co.qualifier >= c.qualifiers.len() as u64
-                || co.cutoff >= c.cutoffs
-            {
-                return Err("checkpoint parameter coordinate".into());
-            }
+            source.validate_coordinate(families[slot], *co, banks)?;
         }
         let score = r.f64()?;
         if !score.is_finite() {
@@ -486,8 +669,10 @@ impl Task {
     }
 }
 #[allow(clippy::too_many_arguments)]
-fn task(
-    c: &Config,
+fn source_task(
+    c: &ExecutionConfig,
+    source: &dyn BankSource,
+    banks: &Path,
     d: &Data,
     range: std::ops::Range<usize>,
     context: &str,
@@ -509,7 +694,7 @@ fn task(
         .checked_mul(right.nodes[right.root].count)
         .ok_or("task count overflow")?;
     if path.exists() {
-        let out = Task::decode(&dense_io::read(&path, 4096)?, context, id, c)?;
+        let out = Task::decode(&dense_io::read(&path, 4096)?, context, id, c, source, banks)?;
         if out.work.logical != expected
             || out.best.families != families
             || out.best.template != template
@@ -654,7 +839,6 @@ pub fn run(
     }
     let parsed = Config::parse(raw)?;
     let c = &parsed;
-    let clock = Instant::now();
     let d = Data::read(&c.data, 14400)?;
     if d.timestamps[0] > c.start || d.timestamps.last().unwrap() + d.interval != c.end {
         return Err(
@@ -666,10 +850,63 @@ pub fn run(
         return Err("dense scored range too short".into());
     }
     cohort::validate_gate(gate, &d.digest)?;
+    run_banks(
+        raw,
+        out,
+        &d,
+        range,
+        "filang-dense-v1",
+        &c.execution(),
+        &DenseSource(c),
+        resume,
+        prepare_only,
+        max_tasks,
+        workers,
+        backend,
+        proof,
+        capture,
+    )
+}
+
+/// Prepare and execute a finite family through the shared dense engine. The
+/// caller owns CSV interval/boundaries and any source-specific gate. `data` must
+/// retain causal warmup, and `range` ends at its exact end-exclusive boundary.
+/// Context prefixes distinguish source languages without altering legacy dense
+/// run identities or any `FDBANK01`/`FDTASK01` serialization.
+#[allow(clippy::too_many_arguments)]
+pub fn run_banks(
+    raw: &str,
+    out: &str,
+    data: &Data,
+    range: std::ops::Range<usize>,
+    context_prefix: &str,
+    c: &ExecutionConfig,
+    source: &dyn BankSource,
+    resume: bool,
+    prepare_only: bool,
+    max_tasks: u64,
+    workers: usize,
+    backend: Backend,
+    proof: bool,
+    capture: bool,
+) -> Result<String> {
+    let clock = Instant::now();
+    let d = data;
+    if workers == 0 || workers > 1024 {
+        return Err("workers must be in 1..1024".into());
+    }
+    if range.start > range.end || range.end != d.len() || range.end - range.start < 4 {
+        return Err("prepared-bank scored range/boundary".into());
+    }
+    if context_prefix.is_empty() || context_prefix.contains('|') {
+        return Err("prepared-bank context prefix".into());
+    }
+    let requested = c.validate(source)?;
+    source.validate(d, range.clone())?;
     Backend::resolve(backend.name())?;
     let context = sha256(
         format!(
-            "filang-dense-v1|{raw}|{}|{}|{}|{proof}|{capture}",
+            "{context_prefix}|{raw}|{}|{}|{}|{proof}|{capture}",
             d.digest,
             crate::anchor_run::engine_id()?,
             backend.name()
@@ -699,15 +936,18 @@ pub fn run(
     let tasks = dir.join("tasks");
     fs::create_dir_all(&banks).map_err(|e| e.to_string())?;
     fs::create_dir_all(&tasks).map_err(|e| e.to_string())?;
-    for lo in (0..c.families.len()).step_by(workers) {
+    for lo in (0..source.labels().len()).step_by(workers) {
         std::thread::scope(|scope| -> Result<()> {
             let mut jobs = Vec::new();
-            for f in lo..(lo + workers).min(c.families.len()) {
-                let d = &d;
+            for f in lo..(lo + workers).min(source.labels().len()) {
                 let r = range.clone();
                 let ctxt = &context;
                 let banks = &banks;
-                jobs.push(scope.spawn(move || prepared(c, d, r, ctxt, f, banks, backend)));
+                jobs.push(scope.spawn(move || {
+                    let rows = bank_rows(&r);
+                    source.prepare(d, r, ctxt, f, banks, backend)?;
+                    load_source_bank(source, banks, ctxt, f, rows, c.bank_budget).map(|_| ())
+                }));
             }
             for job in jobs {
                 job.join().map_err(|_| "preparation worker panicked")??;
@@ -730,120 +970,195 @@ pub fn run(
     let mut best: Option<Best> = None;
     let mut complete = !prepare_only;
     if !prepare_only {
-        'outer: for a in 0..c.families.len() {
-            let entries_a = dense_bank::load(
-                &record_path(&banks, "bank", a, "bin"),
-                &bank_context(&context, a),
+        'outer: for a in 0..source.labels().len() {
+            let entries_a = load_source_bank(
+                source,
+                &banks,
+                &context,
+                a,
+                bank_rows(&range),
                 c.bank_budget,
             )?;
             let left = Tree::new(&entries_a, c.tree_budget)?;
             let frontier = left.frontier(c.block)?;
-            for b in 0..c.families.len() {
-                if a == b {
+            for b in 0..source.labels().len() {
+                if a == b && !c.allow_same_bank {
                     continue;
                 }
-                let entries_b = dense_bank::load(
-                    &record_path(&banks, "bank", b, "bin"),
-                    &bank_context(&context, b),
+                let entries_b = load_source_bank(
+                    source,
+                    &banks,
+                    &context,
+                    b,
+                    bank_rows(&range),
                     c.bank_budget,
                 )?;
                 let right = Tree::new(&entries_b, c.tree_budget)?;
-                for template in 0..c.rules.len() {
-                    let mut cursor = 0;
-                    while cursor < frontier.len() {
-                        let mut jobs = Vec::new();
-                        let mut pending_new = 0;
-                        while jobs.len() < workers && cursor < frontier.len() {
-                            let id = done + jobs.len() as u64;
-                            let committed = tasks.join(format!("task-{id:08}.chk")).exists();
-                            if !committed && max_tasks > 0 && new_tasks + pending_new >= max_tasks {
-                                break;
-                            }
-                            if !committed {
-                                pending_new += 1;
-                            }
-                            jobs.push((id, frontier[cursor], committed));
-                            cursor += 1;
+                // Keep template-major task addresses, but permit a worker batch
+                // to cross template boundaries while sharing this one tree pair.
+                let pair_tasks = frontier
+                    .len()
+                    .checked_mul(c.rules.len())
+                    .ok_or("pair task count overflow")?;
+                let mut cursor = 0;
+                while cursor < pair_tasks {
+                    let mut jobs = Vec::new();
+                    let mut pending_new = 0;
+                    while jobs.len() < workers && cursor < pair_tasks {
+                        let id = done
+                            .checked_add(jobs.len() as u64)
+                            .ok_or("task count overflow")?;
+                        let committed = tasks.join(format!("task-{id:08}.chk")).exists();
+                        if !committed && max_tasks > 0 && new_tasks + pending_new >= max_tasks {
+                            break;
                         }
-                        if jobs.is_empty() {
-                            complete = false;
-                            break 'outer;
+                        if !committed {
+                            pending_new += 1;
                         }
-                        let batch = std::thread::scope(|scope| -> Result<Vec<(Task, bool)>> {
-                            let mut handles = Vec::new();
-                            for (id, node, committed) in jobs {
-                                let d = &d;
-                                let r = range.clone();
-                                let ctxt = &context;
-                                let dir = &tasks;
-                                let l = &left;
-                                let rr = &right;
-                                handles.push(scope.spawn(move || {
-                                    task(
-                                        c,
-                                        d,
-                                        r,
-                                        ctxt,
-                                        dir,
-                                        id,
-                                        [a, b],
-                                        template,
-                                        l,
-                                        rr,
-                                        node,
-                                        backend,
-                                        proof,
-                                        capture,
-                                    )
-                                    .map(|t| (t, committed))
-                                }));
-                            }
-                            handles
-                                .into_iter()
-                                .map(|h| h.join().map_err(|_| "task worker panicked".to_owned())?)
-                                .collect()
-                        })?;
-                        for (t, committed) in batch {
-                            if committed {
-                                reused += 1;
-                            } else {
-                                new_tasks += 1;
-                            }
-                            covered = covered
-                                .checked_add(t.work.logical)
-                                .ok_or("whole coverage overflow")?;
-                            regions = regions
-                                .checked_add(t.regions)
-                                .ok_or("region count overflow")?;
-                            pairs += t.work.signature_pairs;
-                            visits += t.work.node_pairs as u128;
-                            certified += t.work.proved_regions as u128;
-                            result_hash.update(&t.encode(&context));
-                            if best.as_ref().map_or(true, |v| t.best.better(v)) {
-                                best = Some(t.best);
-                            }
-                            done += 1;
+                        let template = cursor / frontier.len();
+                        let node = frontier[cursor % frontier.len()];
+                        jobs.push((id, node, template, committed));
+                        cursor += 1;
+                    }
+                    if jobs.is_empty() {
+                        complete = false;
+                        break 'outer;
+                    }
+                    let batch = std::thread::scope(|scope| -> Result<Vec<(Task, bool)>> {
+                        let mut handles = Vec::new();
+                        for (id, node, template, committed) in jobs {
+                            let r = range.clone();
+                            let ctxt = &context;
+                            let dir = &tasks;
+                            let l = &left;
+                            let rr = &right;
+                            let banks = &banks;
+                            handles.push(scope.spawn(move || {
+                                source_task(
+                                    c,
+                                    source,
+                                    banks,
+                                    d,
+                                    r,
+                                    ctxt,
+                                    dir,
+                                    id,
+                                    [a, b],
+                                    template,
+                                    l,
+                                    rr,
+                                    node,
+                                    backend,
+                                    proof,
+                                    capture,
+                                )
+                                .map(|t| (t, committed))
+                            }));
                         }
+                        handles
+                            .into_iter()
+                            .map(|h| h.join().map_err(|_| "task worker panicked".to_owned())?)
+                            .collect()
+                    })?;
+                    for (t, committed) in batch {
+                        if committed {
+                            reused = reused.checked_add(1).ok_or("task count overflow")?;
+                        } else {
+                            new_tasks = new_tasks.checked_add(1).ok_or("task count overflow")?;
+                        }
+                        covered = covered
+                            .checked_add(t.work.logical)
+                            .ok_or("whole coverage overflow")?;
+                        regions = regions
+                            .checked_add(t.regions)
+                            .ok_or("region count overflow")?;
+                        pairs = pairs
+                            .checked_add(t.work.signature_pairs)
+                            .ok_or("signature-pair count overflow")?;
+                        visits = visits
+                            .checked_add(t.work.node_pairs as u128)
+                            .ok_or("tree-visit count overflow")?;
+                        certified = certified
+                            .checked_add(t.work.proved_regions as u128)
+                            .ok_or("certificate count overflow")?;
+                        result_hash.update(&t.encode(&context));
+                        if best.as_ref().map_or(true, |v| t.best.better(v)) {
+                            best = Some(t.best);
+                        }
+                        done = done.checked_add(1).ok_or("task count overflow")?;
                     }
                 }
                 eprintln!(
                     "Dense pair {} / {} committed; {} total tasks",
-                    c.families[a], c.families[b], done
+                    source.labels()[a],
+                    source.labels()[b],
+                    done
                 );
             }
         }
     }
-    if complete && covered != c.logical()? {
+    if complete && covered != requested {
         return Err("completed dense domain coverage does not reconcile".into());
     }
     if let Some(b) = &best {
-        export_best(c, b, dir)?;
+        source.export_best(b, &c.rules, &banks, dir)?;
     }
-    let summary=format!("{{\"version\":1,\"status\":{},\"coverage_complete\":{},\"context_sha256\":{},\"data_sha256\":{},\"engine_sha256\":{},\"coefficient_count\":{},\"cutoff_count\":{},\"upstream_constructions\":{},\"requested_strategy_addresses\":{},\"resolved_strategy_addresses\":{},\"signature_pair_products_resolved\":{},\"tree_node_pairs_visited\":{},\"certified_nonleaf_products\":{},\"metric_regions_evaluated\":{},\"completed_tasks\":{},\"new_tasks\":{},\"reused_tasks\":{},\"result_digest\":{},\"best\":{},\"prepare_seconds_this_invocation\":{},\"whole_seconds_this_invocation\":{},\"native_workers\":{},\"backend\":{},\"proof\":{},\"capture\":{},\"role\":\"retrospective_systems_discovery_not_validation\"}}\n",quote(if complete{"PASS"}else if prepare_only{"PREPARED"}else{"PAUSED"}),complete,quote(&context),quote(&d.digest),quote(&crate::anchor_run::engine_id()?),c.coefficients,c.cutoffs,c.atoms()*c.families.len()as u64,quote(&c.logical()?.to_string()),quote(&covered.to_string()),quote(&pairs.to_string()),quote(&visits.to_string()),quote(&certified.to_string()),regions,done,new_tasks,reused,quote(&result_hash.finish()),best.as_ref().map_or_else(||"null".into(),|b|b.json(c)),num(preparation_seconds),num(clock.elapsed().as_secs_f64()),workers,quote(backend.name()),proof,capture);
+    let source_fields = source.summary_fields(&banks)?;
+    if source_fields.trim().is_empty() {
+        return Err("missing prepared-bank source summary".into());
+    }
+    let best_json = match &best {
+        Some(b) => source.best_json(b, &c.rules, &banks)?,
+        None => "null".into(),
+    };
+    let summary=format!("{{\"version\":1,\"status\":{},\"coverage_complete\":{},\"context_sha256\":{},\"data_sha256\":{},\"engine_sha256\":{},{},\"requested_strategy_addresses\":{},\"resolved_strategy_addresses\":{},\"signature_pair_products_resolved\":{},\"tree_node_pairs_visited\":{},\"certified_nonleaf_products\":{},\"metric_regions_evaluated\":{},\"completed_tasks\":{},\"new_tasks\":{},\"reused_tasks\":{},\"result_digest\":{},\"best\":{},\"prepare_seconds_this_invocation\":{},\"whole_seconds_this_invocation\":{},\"native_workers\":{},\"backend\":{},\"proof\":{},\"capture\":{},\"role\":\"retrospective_systems_discovery_not_validation\"}}\n",quote(if complete{"PASS"}else if prepare_only{"PREPARED"}else{"PAUSED"}),complete,quote(&context),quote(&d.digest),quote(&crate::anchor_run::engine_id()?),source_fields,quote(&requested.to_string()),quote(&covered.to_string()),quote(&pairs.to_string()),quote(&visits.to_string()),quote(&certified.to_string()),regions,done,new_tasks,reused,quote(&result_hash.finish()),best_json,num(preparation_seconds),num(clock.elapsed().as_secs_f64()),workers,quote(backend.name()),proof,capture);
     fs::write(dir.join("summary.json"), &summary).map_err(|e| e.to_string())?;
     Ok(summary)
+}
+
+// Retain the legacy dense test entrypoint; production sources use source_task.
+#[cfg(test)]
+#[allow(clippy::too_many_arguments)]
+fn task(
+    c: &Config,
+    d: &Data,
+    range: std::ops::Range<usize>,
+    context: &str,
+    dir: &Path,
+    id: u64,
+    families: [usize; 2],
+    template: usize,
+    left: &Tree<'_>,
+    right: &Tree<'_>,
+    left_node: usize,
+    backend: Backend,
+    proof: bool,
+    capture: bool,
+) -> Result<Task> {
+    source_task(
+        &c.execution(),
+        &DenseSource(c),
+        dir,
+        d,
+        range,
+        context,
+        dir,
+        id,
+        families,
+        template,
+        left,
+        right,
+        left_node,
+        backend,
+        proof,
+        capture,
+    )
 }
 
 #[cfg(test)]
 #[path = "dense_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "dense_source_tests.rs"]
+mod source_tests;

@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "role": "independent_frozen_geometry_verification",
+  "all_frozen_decision_masks_validity_and_ten_metrics_checked": true,
+  "decision_rows_checked": 2194,
+  "mask_disagreements": 0,
+  "max_metric_absolute_error": 1.2505552149377763e-12,
+  "ledger_backend": "c",
+  "data_sha256": "6dece8e4d91e98c83d80a0217907e024db656781cf3f0ffd61941e87c942aa98",
+  "selection_sha256": "eb8c54a2f10e09374f5f5e008b10f452cb8a854cb6144bc1c8181a0a19c55486",
+  "rule_sha256": "07887798cce520dd9a97e95d626fa608d002b1eb68cd18101794a8496725e053",
+  "seconds": 0.6472108329180628
+}
