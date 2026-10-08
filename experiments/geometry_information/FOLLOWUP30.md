@@ -282,6 +282,69 @@ Verification and report collection add their own evidence without rewriting that
 record. No failed fit, unfavorable cell, outer period, or missing support may
 disappear from the final report.
 
+## Reproduction
+
+Use the completed PR #28 implementation tree. The published freeze
+`ed7e0b9bccedebc6bda75d7ab701829a6a708c5f` contains the specification and reference;
+it does not contain the later executable implementation. The protocol SHA-256 is
+`4099e7a6620387d0fbe2267819ca0d37dff0f52da3e6bf8689705e979adf497b`.
+
+The original run uses the existing pinned source preparation. The complete D1
+report also retains the scoped original forecasts and native artifacts, so a
+new checkout can replay this diagnosis without regenerating the earlier model
+search. Set up the pinned environment and prepare the immutable raw/CSV inputs
+only when they are not already available:
+
+```sh
+python3.13 -m venv .venv
+.venv/bin/python -m pip install -r requirements-direction.txt -r requirements-information.txt
+FILANG_DATA_DIR="$PWD/data/geometry-direction-replay"
+.venv/bin/python scripts/prepare_direction.py --out "$FILANG_DATA_DIR"
+FILANG_D1_SOURCE="$PWD/benchmarks/reports/20261008-30m-signal-followup-d1/run"
+```
+
+Fresh preparation may have different absolute paths in its provenance metadata.
+The exact archived predecessor provenance is preserved in the source bundle;
+the loader independently verifies the relocated raw and CSV bytes against its
+immutable pins. It neither overwrites new metadata with old paths nor requires
+different locations' metadata files to be byte-identical.
+
+Run from a clean published checkout, using unused output directories outside
+every immutable input tree:
+
+```sh
+.venv/bin/python experiments/geometry_information/run_followup30.py \
+  --r1a-run "$FILANG_D1_SOURCE/predecessor" \
+  --data-dir "$FILANG_DATA_DIR" \
+  --keys-dir "$FILANG_D1_SOURCE/native" \
+  --protocol experiments/geometry_information/followup30_protocol.json \
+  --freeze-commit ed7e0b9bccedebc6bda75d7ab701829a6a708c5f \
+  --blas-threads 2 --out runs/geometry-followup30-d1-replay
+OPENBLAS_NUM_THREADS=2 OMP_NUM_THREADS=2 VECLIB_MAXIMUM_THREADS=2 \
+.venv/bin/python experiments/geometry_information/verify_followup30.py \
+  --stage full --run runs/geometry-followup30-d1-replay \
+  --data-dir "$FILANG_DATA_DIR" \
+  --protocol experiments/geometry_information/followup30_protocol.json \
+  --out runs/geometry-followup30-d1-replay/verification.json
+.venv/bin/python experiments/geometry_information/collect_followup30.py \
+  --run runs/geometry-followup30-d1-replay \
+  --out runs/geometry-followup30-d1-replay-report
+```
+
+On the original machine, the producer may instead read
+`/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1a` as
+`--r1a-run` and
+`/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1` as
+`--keys-dir`, with prepared data at
+`/Users/mikkokotila/dev/Filang-direction/data/geometry-direction`.
+Both routes admit the same original selected forecast and native bytes.
+
+The collector's repeated `--receipt` option can include external launch, audit,
+test and log files. Operational receipts remain outside the immutable producer
+directory; within that directory the later full audit occupies only the fresh
+canonical `verification.json`. A failed audit is preserved before any separate
+retry is considered.
+
 ## Conceptual references
 
 - Gneiting and Raftery (2007), [Strictly Proper Scoring Rules, Prediction, and
