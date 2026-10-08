@@ -1,0 +1,12 @@
+{
+  "clippy_log": "native-clippy.log",
+  "code_used_for_measurement": "0874196f2ec6565c29590e08f9f4e52b712b6ca8",
+  "final_serializer_affected_tests_log": "focused-tests.log",
+  "full_rust_log": "native-tests.log",
+  "full_rust_tests_passed": 92,
+  "full_suite_before_final_serializer_improvement": true,
+  "python_analysis_tests_passed": 7,
+  "python_log": "analysis-tests.log",
+  "release_log": "release-build.log",
+  "validation_scope": "Local pinned Rust 1.63 full suite plus affected tests after allocation-free serialization; final GitHub CI is separate."
+}

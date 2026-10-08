@@ -1,0 +1,9 @@
+# Retained measurement artifacts are sealed by byte hashes, including line endings.
+* -text
+# Table writers use CRLF, and empty final fields are meaningful data.
+*.csv whitespace=-blank-at-eol,cr-at-eol
+*.tsv whitespace=-blank-at-eol,cr-at-eol
+# Matplotlib SVG path records retain the renderer's original spacing.
+*.svg whitespace=-blank-at-eol
+# Captured process logs retain their original trailing blank lines.
+*.log whitespace=-blank-at-eof

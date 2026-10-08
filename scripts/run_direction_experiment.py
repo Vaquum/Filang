@@ -152,7 +152,7 @@ def main() -> None:
             "--out", str(run / "analysis"), "--protocol", str(protocol)], logs / "analysis.log"))
     if "verify" in stages:
         cmd = [sys.executable, str(ROOT / "scripts/verify_direction.py"), "--runs", str(run),
-               "--out", str(run / "verification.json")]
+               "--out", str(run / "verification.json"), "--protocol", str(protocol)]
         if (run / "analysis/analysis.json").exists():
             cmd.extend(["--analysis", str(run / "analysis")])
         if args.verify_sample_per_task:

@@ -1,0 +1,67 @@
+{
+  "max_native_peak_rss_bytes": 482295808,
+  "scope": "Single complete-corpus native invocation per timeframe; elapsed sum is not a repeated timing estimate. Scientific bytes count patterns.tsv and events.tsv only. Task-events overlap across lengths and modes.",
+  "sum_native_elapsed_seconds": 13.237869124859571,
+  "timeframes": [
+    {
+      "elapsed_seconds": 6.836536707938649,
+      "events": 4266918,
+      "native_manifest_sha256": "0a0ce0f1ee62e23f4004edf88ea56d35cd89d168e6fb391be2ab4330628e3fe7",
+      "observed_pattern_records": 3386558,
+      "peak_rss_bytes": 482295808,
+      "scientific_output_bytes": 615434970,
+      "tasks": 18,
+      "timeframe_minutes": 15,
+      "timing_sha256": "aadaa055ed56b8f171af80f31d61bcfdec9f16852f7d09b9ea4a423333afeb9f"
+    },
+    {
+      "elapsed_seconds": 2.3940665419213474,
+      "events": 2132604,
+      "native_manifest_sha256": "43d008979b62aba73eae817fb65fe21d6cf329e67c529af74ec52c503ee0101c",
+      "observed_pattern_records": 1713741,
+      "peak_rss_bytes": 224952320,
+      "scientific_output_bytes": 307960749,
+      "tasks": 18,
+      "timeframe_minutes": 30,
+      "timing_sha256": "65554bb700ec22f58c29fd5c37a5fce3e5e283bad0aca94f8e4302c323473027"
+    },
+    {
+      "elapsed_seconds": 1.950709666009061,
+      "events": 1065528,
+      "native_manifest_sha256": "63b6d3114fbc488d159d0b75ad30e9ee4c823742ce592535e0921c616eb2027e",
+      "observed_pattern_records": 866600,
+      "peak_rss_bytes": 115605504,
+      "scientific_output_bytes": 154345350,
+      "tasks": 18,
+      "timeframe_minutes": 60,
+      "timing_sha256": "796a9e66c8d1ddce22ec041be87df70785930b6ad88cc81b547a32096504f367"
+    },
+    {
+      "elapsed_seconds": 1.3057637920137495,
+      "events": 532746,
+      "native_manifest_sha256": "ec877aa774971cbfd479777f7751e2cb4cf05dafaf0528cfc25753789100bd96",
+      "observed_pattern_records": 440416,
+      "peak_rss_bytes": 63143936,
+      "scientific_output_bytes": 77567314,
+      "tasks": 18,
+      "timeframe_minutes": 120,
+      "timing_sha256": "2c7ae3e0229a483097e25623580feff67309fccaf6f7e679bfe4911d10379657"
+    },
+    {
+      "elapsed_seconds": 0.7507924169767648,
+      "events": 266706,
+      "native_manifest_sha256": "070eb7083612315d7406846b243efb0dd7bef842e9af56f4c758783cae1acd40",
+      "observed_pattern_records": 224131,
+      "peak_rss_bytes": 39469056,
+      "scientific_output_bytes": 38961577,
+      "tasks": 18,
+      "timeframe_minutes": 240,
+      "timing_sha256": "fefb7545d9d5050766352bebfba72da77ce0a52079d7779dc06bc067ec8fd370"
+    }
+  ],
+  "total_events": 8264502,
+  "total_observed_pattern_records": 6631446,
+  "total_scientific_output_bytes": 1194269960,
+  "total_tasks": 90,
+  "version": 1
+}

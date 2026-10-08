@@ -1,0 +1,86 @@
+   Compiling filang v0.9.0 (/Users/mikkokotila/dev/Filang-direction)
+    Finished test [unoptimized + debuginfo] target(s) in 13.09s
+     Running unittests src/lib.rs (target/debug/deps/filang-60b5848ee1125133)
+
+running 17 tests
+test geometry::tests::cross_part_geometry_survives_same_body_and_range_relations ... ok
+test geometry::tests::canonical_order_retains_ties_and_all_degeneracies ... ok
+test geometry::tests::adjacent_pair_codes_do_not_replace_global_order ... ok
+test geometry::tests::compact_key_rejects_noncanonical_bits_ranks_and_directions ... ok
+test geometry::tests::monotone_price_maps_match_but_direction_can_distinguish ... ok
+test geometry::tests::empty_domain_and_single_bar_shapes_are_explicit ... ok
+test geometry::tests::reject_invalid_numeric_geometry_and_orientation ... ok
+test geometry::tests::reusable_encoder_preserves_storage_and_recovers_after_invalid_input ... ok
+test geometry::tests::strict_parser_rejects_noncanonical_or_impossible_patterns ... ok
+test geometry::tests::compact_ten_bar_keys_cover_word_edges_and_keep_width_and_mode ... ok
+test geometry_run::tests::geometry_resource_and_boundary_rejections_are_explicit ... ok
+test geometry::tests::complement_representative_search_is_bounded_and_deterministic ... ok
+test geometry::tests::decimal_ten_bar_domain_exceeds_u128_and_complement_is_exact ... ok
+test geometry::tests::exact_domain_counts_and_checked_overflow ... ok
+test geometry_run::tests::bitwise_qualifiers_match_scalar_at_word_edges_and_invalid_gaps ... ok
+Prepared geometry 0,1,2,3,4,5: 25 causal windows, 25 observed patterns, 41 states; 172865287404114211872 logical conditions
+test geometry_run::tests::causal_prefix_complement_and_u128_memberships_reconstruct_scalar_masks ... ok
+test geometry::tests::complete_pair_catalogues_are_unique_realizable_and_round_trip ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 0.34s
+
+     Running unittests src/main.rs (target/debug/deps/filang-a88c336c99260c5a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/anchors.rs (target/debug/deps/anchors-ff74e7bd4d1201b8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-fb586508d41012c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/cohort.rs (target/debug/deps/cohort-3b8a7eb06443bb41)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/geometry_cli.rs (target/debug/deps/geometry_cli-b7923e3e754403de)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/geometry_count_ten.rs (target/debug/deps/geometry_count_ten-1f7b3920e4992df6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/joint.rs (target/debug/deps/joint-8fe000f9c021e8e7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/micro.rs (target/debug/deps/micro-d566f5403c0f6982)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/paged.rs (target/debug/deps/paged-602eb7754595fb9e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/walk.rs (target/debug/deps/walk-6c0f7e50e5d4d97f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+

@@ -1,0 +1,32 @@
+{
+  "code": {
+    "scripts/analyze_direction.py": {
+      "equals_measurement_commit": true,
+      "measurement_commit_sha256": "9185702d6a836a2a1df79668dbdda20d87fd4b327e60ca1b7c7b900cd810213d",
+      "working_sha256": "9185702d6a836a2a1df79668dbdda20d87fd4b327e60ca1b7c7b900cd810213d"
+    },
+    "scripts/benchmark_direction.py": {
+      "equals_measurement_commit": true,
+      "measurement_commit_sha256": "414a1831f731846e78204baad38a942664312434bff7132769f256399a9d4071",
+      "working_sha256": "414a1831f731846e78204baad38a942664312434bff7132769f256399a9d4071"
+    },
+    "scripts/run_direction_experiment.py": {
+      "equals_measurement_commit": false,
+      "measurement_commit_sha256": "36affb119e704275ce8d1dde105699895b3abbd074e0556c1989ef18c4b6240e",
+      "working_sha256": "f7f4079c4e2cb2da33fc0d0953898c51612e84b8b7c757d1e7ea1c3881806079"
+    },
+    "scripts/verify_direction.py": {
+      "equals_measurement_commit": true,
+      "measurement_commit_sha256": "f08a6ebbf66b9404069ee610f3628983ffc349cb43eb34212102dffbad1e60ae",
+      "working_sha256": "f08a6ebbf66b9404069ee610f3628983ffc349cb43eb34212102dffbad1e60ae"
+    }
+  },
+  "cpu_brand": "Apple M1 Max",
+  "logical_cpus": 10,
+  "measurement_commit": "0874196f2ec6565c29590e08f9f4e52b712b6ca8",
+  "memory_bytes": 68719476736,
+  "platform": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+  "python": "Python 3.13.2",
+  "recorded_at_utc": "2026-10-08T14:45:30.206545+00:00",
+  "rustc": "rustc 1.63.0 (4b91a6ea7 2022-08-08)"
+}

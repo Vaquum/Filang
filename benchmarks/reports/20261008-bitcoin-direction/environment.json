@@ -1,0 +1,16 @@
+{
+  "engine_sha256": "2c5bfc8ac611dbc82a67e06c72070daef7fdd47304c670287909a3f33a116128",
+  "git_head": "0874196f2ec6565c29590e08f9f4e52b712b6ca8",
+  "git_status": "?? analysis-tests.log\n?? core-tests.log\n?? direction-map.log\n?? focused-tests.log\n?? native-check.log\n?? native-clippy.log\n?? native-tests.log\n?? prepare-direction.log\n?? release-build.log",
+  "logical_cpus": 10,
+  "machine": "arm64",
+  "measurement_policy": "Native child includes CSV, encoding, mapping and durable artifacts. Build/preparation/analysis/verification measured separately.",
+  "protocol_sha256": "065b1f3c31908537cc8b274cff4699b90852381bc54f2c39ab039776ca7fb7bf",
+  "python": "3.13.2 (main, Feb  4 2025, 14:51:09) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "python_executable": "/Users/mikkokotila/dev/Filang/.venv/bin/python",
+  "recorded_at_utc": "2026-10-08T14:27:28.854412+00:00",
+  "requested_workers": 10,
+  "runner_sha256": "36affb119e704275ce8d1dde105699895b3abbd074e0556c1989ef18c4b6240e",
+  "system": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "version": 1
+}

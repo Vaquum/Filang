@@ -1,0 +1,157 @@
+{
+  "benchmark_sha256": "ad36e396f57f123463b0211fd2579ea17c341c4b635508de9898c01420d361bd",
+  "bytes_streamed": 615434970,
+  "engine_sha256": "2c5bfc8ac611dbc82a67e06c72070daef7fdd47304c670287909a3f33a116128",
+  "files": {
+    "15m/tasks/n02-oriented/events.tsv": {
+      "bytes": 9904977,
+      "sha256": "02113d1b995ab77f568ca0acbd8d6fd5b5d6a6bcfeafb661944b39144a66326f"
+    },
+    "15m/tasks/n02-oriented/patterns.tsv": {
+      "bytes": 100869,
+      "sha256": "e8781986313a53ef01fee5874d72ee72b7a87e3c262b4d8f2546b24b29e9ec4d"
+    },
+    "15m/tasks/n02-unoriented/events.tsv": {
+      "bytes": 9874019,
+      "sha256": "0b4841bb7585d09bc25ff50a55fcaf0809b15c49cf89c206770f1d95cf9bc490"
+    },
+    "15m/tasks/n02-unoriented/patterns.tsv": {
+      "bytes": 67517,
+      "sha256": "fbd96a25364ec3e3bdccc64cee0eb985b60dafd4f55fd25d4615ccb12ac3ecf6"
+    },
+    "15m/tasks/n03-oriented/events.tsv": {
+      "bytes": 10406359,
+      "sha256": "dc0216c4d46d20b335ae9ee3ee363d6745d6db04014df9cdd46c8d7b241cbad5"
+    },
+    "15m/tasks/n03-oriented/patterns.tsv": {
+      "bytes": 4652391,
+      "sha256": "6528fefe466937ec5346e3d23e17f92dff2a29a47a6a5f0826d8aa929ca65663"
+    },
+    "15m/tasks/n03-unoriented/events.tsv": {
+      "bytes": 10393710,
+      "sha256": "b34091abb15831e175b5878841062d6c8301695503bec3790fb901dabbaad26c"
+    },
+    "15m/tasks/n03-unoriented/patterns.tsv": {
+      "bytes": 3991546,
+      "sha256": "b6f4df9db4733151a0c56d8519a965b88b06a63a77972a0994d8a79767343943"
+    },
+    "15m/tasks/n04-oriented/events.tsv": {
+      "bytes": 10647429,
+      "sha256": "8c421c43267afdf55c678cd12e2fdfe27a94af638e4b8607d175760e3d24ae16"
+    },
+    "15m/tasks/n04-oriented/patterns.tsv": {
+      "bytes": 19612444,
+      "sha256": "ac58e1915c1c0575f932b175eeaa6743a47100033c9ad718671e928877b0c945"
+    },
+    "15m/tasks/n04-unoriented/events.tsv": {
+      "bytes": 10645507,
+      "sha256": "deaff270ad8e9de5ba2421edc420118b70ae877f9391cdb910e24b7117f7e247"
+    },
+    "15m/tasks/n04-unoriented/patterns.tsv": {
+      "bytes": 17774913,
+      "sha256": "5fa3cf7513487472dbd7989a6d06af7b4ae77da970352d0b86840db8c382ccd8"
+    },
+    "15m/tasks/n05-oriented/events.tsv": {
+      "bytes": 10667923,
+      "sha256": "2901c4684e783ee0d3642027d33fe0e600ae610606fa9b231df405bf3a3bfa84"
+    },
+    "15m/tasks/n05-oriented/patterns.tsv": {
+      "bytes": 25030917,
+      "sha256": "649c065b577f4eff7e225452d3ffba8b0ca4bbea55e0f1fce5dbfe91da3f734a"
+    },
+    "15m/tasks/n05-unoriented/events.tsv": {
+      "bytes": 10667863,
+      "sha256": "2d2f16b5968c833894a8073abe4624bdd4978d7475f0afecbb14fb1735d887c4"
+    },
+    "15m/tasks/n05-unoriented/patterns.tsv": {
+      "bytes": 22660016,
+      "sha256": "eaf3b1b2ba77dce02ebce37a1ea6a9a361b45dbd5744f308e3da408be12766ce"
+    },
+    "15m/tasks/n06-oriented/events.tsv": {
+      "bytes": 10667665,
+      "sha256": "9f22e2044a905abea77d3f96ba60fd6cc004e266075296080a6fdad72f099c53"
+    },
+    "15m/tasks/n06-oriented/patterns.tsv": {
+      "bytes": 28425369,
+      "sha256": "3863c8ba76f919bb1ff6677352a834c211b9a0340f3039e92ab87b50aa3b0b2e"
+    },
+    "15m/tasks/n06-unoriented/events.tsv": {
+      "bytes": 10667665,
+      "sha256": "9f22e2044a905abea77d3f96ba60fd6cc004e266075296080a6fdad72f099c53"
+    },
+    "15m/tasks/n06-unoriented/patterns.tsv": {
+      "bytes": 25580901,
+      "sha256": "322268dc01b64df6ae76a27b9aee1c22fd5c8dcf49da9938ee645191dad51951"
+    },
+    "15m/tasks/n07-oriented/events.tsv": {
+      "bytes": 10666951,
+      "sha256": "2429e1149c34dd5f76e82b16e998f12a11b6e04f0462b50443a704a69b213bbc"
+    },
+    "15m/tasks/n07-oriented/patterns.tsv": {
+      "bytes": 31746082,
+      "sha256": "b6c8a067f2f9122981596f98cacfd0fe08be5056f6910222d423b120340a23ac"
+    },
+    "15m/tasks/n07-unoriented/events.tsv": {
+      "bytes": 10666951,
+      "sha256": "2429e1149c34dd5f76e82b16e998f12a11b6e04f0462b50443a704a69b213bbc"
+    },
+    "15m/tasks/n07-unoriented/patterns.tsv": {
+      "bytes": 28427606,
+      "sha256": "b1db6a3b2e4fc07af5803261b5f3f23cd65675d4f513fc7f5d0ed1639527b32d"
+    },
+    "15m/tasks/n08-oriented/events.tsv": {
+      "bytes": 10666224,
+      "sha256": "591aa641ba115e659ce5ce9b595d0e3fc01713e3429ee3fdb332ef5fb8d0a2cc"
+    },
+    "15m/tasks/n08-oriented/patterns.tsv": {
+      "bytes": 35064595,
+      "sha256": "a8c5812f00a50cbed8ff96786275c0dd7d0af16b8fe5db35b88e60925a0c6080"
+    },
+    "15m/tasks/n08-unoriented/events.tsv": {
+      "bytes": 10666224,
+      "sha256": "591aa641ba115e659ce5ce9b595d0e3fc01713e3429ee3fdb332ef5fb8d0a2cc"
+    },
+    "15m/tasks/n08-unoriented/patterns.tsv": {
+      "bytes": 31272291,
+      "sha256": "df9b2d1fa67a04496103f014115313f8e491fe7b57b644c9da33112d5fedb03f"
+    },
+    "15m/tasks/n09-oriented/events.tsv": {
+      "bytes": 10665500,
+      "sha256": "c241076a9e18691fa86506de2174839f3bfd8ffabe7a263d3878e9a368e31ed9"
+    },
+    "15m/tasks/n09-oriented/patterns.tsv": {
+      "bytes": 38382166,
+      "sha256": "4e6807b64c223219aae62940646d4e662c552f26f008db3d05bcb109f79b15d9"
+    },
+    "15m/tasks/n09-unoriented/events.tsv": {
+      "bytes": 10665500,
+      "sha256": "c241076a9e18691fa86506de2174839f3bfd8ffabe7a263d3878e9a368e31ed9"
+    },
+    "15m/tasks/n09-unoriented/patterns.tsv": {
+      "bytes": 34116112,
+      "sha256": "08060a2f542bd617a9b84d66034dfccfb53dc73f721348269ac349284c545c50"
+    },
+    "15m/tasks/n10-oriented/events.tsv": {
+      "bytes": 10664778,
+      "sha256": "2939e796a709ad598500c346b3c0a61319623c64713543f9ac709e23ff78eba9"
+    },
+    "15m/tasks/n10-oriented/patterns.tsv": {
+      "bytes": 41699476,
+      "sha256": "4aed0acd04df0f6a41670af777c07819f87fb37608867c5dffd352e4050acdb5"
+    },
+    "15m/tasks/n10-unoriented/events.tsv": {
+      "bytes": 10664778,
+      "sha256": "2939e796a709ad598500c346b3c0a61319623c64713543f9ac709e23ff78eba9"
+    },
+    "15m/tasks/n10-unoriented/patterns.tsv": {
+      "bytes": 36959736,
+      "sha256": "f3eea5e5cab0d412cc086dcbd27f0ba667f42f5681b307a80ef4becf84a5da51"
+    }
+  },
+  "files_checked": 36,
+  "method": "Stream SHA-256 of actual main-run scientific files; equality to independently audited task artifact seals and every benchmark reference",
+  "protocol_sha256": "065b1f3c31908537cc8b274cff4699b90852381bc54f2c39ab039776ca7fb7bf",
+  "status": "PASS",
+  "verification_sha256": "47f705d51c7ae4ed9fbac2d21d692fc9ff7a679ebc7a9911e5e76ee48bbc0a80",
+  "version": 1
+}

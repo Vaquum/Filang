@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Users/mikkokotila/dev/Filang/.venv/bin/python",
+    "/Users/mikkokotila/dev/Filang-direction/scripts/analyze_direction.py",
+    "--runs",
+    "/Users/mikkokotila/dev/Filang-direction/runs/geometry-direction-v1",
+    "--out",
+    "/Users/mikkokotila/dev/Filang-direction/runs/geometry-direction-v1/analysis",
+    "--protocol",
+    "/Users/mikkokotila/dev/Filang-direction/experiments/geometry_direction/protocol.json"
+  ],
+  "elapsed_seconds": 21.502288875053637,
+  "exit_code": 0,
+  "log": "/Users/mikkokotila/dev/Filang-direction/runs/geometry-direction-v1/logs/analysis.log",
+  "log_sha256": "380ca6f3bc255fa9ad424adf97479827e631f02c98ecf027c84fd31016d4b48d",
+  "peak_rss_bytes": 940883968,
+  "system_cpu_seconds": 1.499646,
+  "user_cpu_seconds": 14.238257
+}

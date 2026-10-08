@@ -1,0 +1,2093 @@
+{
+  "files": {
+    ".gitattributes": {
+      "bytes": 444,
+      "sha256": "b76e42901f9ebad56c1551be129ca4f54904ddd2eab679da60acf6bfaa42e37d"
+    },
+    "README.md": {
+      "bytes": 17849,
+      "sha256": "0dbec9b5d1102769e37b91b39251f455eadd10c12f4f61d502594f7ee78c8562"
+    },
+    "analysis-artifacts.json": {
+      "bytes": 3513,
+      "sha256": "dc92766f5cd792bdeae8c3f964bdfaa4569a1724359a98343046b0e08729dfd1"
+    },
+    "analysis.json": {
+      "bytes": 5996691,
+      "sha256": "cda8e7f61846cf2ede5e0ff802d969de2ff22db45faf5f90176e52b1281be7fb"
+    },
+    "benchmark-main-equivalence.json": {
+      "bytes": 6371,
+      "sha256": "560c9b15fce5beb87b04cc97fc7e015a793a1e333c1c5d7d841dddbf1cfc6541"
+    },
+    "benchmark.json": {
+      "bytes": 29628,
+      "sha256": "ad36e396f57f123463b0211fd2579ea17c341c4b635508de9898c01420d361bd"
+    },
+    "candidates.csv": {
+      "bytes": 122108,
+      "sha256": "750bfe8b1a932b38ce59aba903d2e4979c540a92c423a665dc9ed12d8a1a5986"
+    },
+    "environment.json": {
+      "bytes": 1051,
+      "sha256": "c38295a8f5c48f3c268387125381ea8571f32b9dba87587ff54f26e380fe5d2a"
+    },
+    "evidence-manifest.json": {
+      "bytes": 144783,
+      "sha256": "4b6bc04142e0a0ca892b2973f47425964541575673dfd554473e1d35638c9dc1"
+    },
+    "experiment.identity.json": {
+      "bytes": 291,
+      "sha256": "290b509ba1f12667acde5f258c7b9b76c4c40b3238f80ac692b31d0104e40935"
+    },
+    "figures/figures.json": {
+      "bytes": 924,
+      "sha256": "c5503e25bd7b599ec827b1b769f336be6d2bc5f6536af09681f3301c97d3410d"
+    },
+    "figures/pattern-support.png": {
+      "bytes": 137655,
+      "sha256": "32f74ce9a345f0077ad89aa1570609bda5857e4187b2234ef97c0741b2816515"
+    },
+    "figures/pattern-support.svg": {
+      "bytes": 117259,
+      "sha256": "798635ce8b3f223d0ea25e24667d87843cadebece6d89e34d35ecfdd7ed9e311"
+    },
+    "figures/primary-log-loss.png": {
+      "bytes": 71724,
+      "sha256": "dad9aab40fed23083b8ffa85e970daa00e6ebc6e00ef26845efb99caea2831c2"
+    },
+    "figures/primary-log-loss.svg": {
+      "bytes": 56368,
+      "sha256": "e892b5eb38f2abe04bf77808428b9a686aff5d6ff48abd8990ad9175024dc98f"
+    },
+    "hardware-and-code.json": {
+      "bytes": 1526,
+      "sha256": "06213e55debd4a30a3a580d5fcc0e3520898f862208d9b13c4c93538973b9a9c"
+    },
+    "native/120m/manifest.json": {
+      "bytes": 3084,
+      "sha256": "ec877aa774971cbfd479777f7751e2cb4cf05dafaf0528cfc25753789100bd96"
+    },
+    "native/120m/manifest.json.sha256": {
+      "bytes": 65,
+      "sha256": "a1613a76a74fcd7e7bb26671a08e439505975953c08b365a851ce88c342ce331"
+    },
+    "native/120m/run.config.json": {
+      "bytes": 393,
+      "sha256": "8f534879538e8de13d5e00e1f9bd3c5723f67379c2ad784af8269ce36e713554"
+    },
+    "native/120m/tasks/n02-oriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "19c4216cca579dfe3d34d8aa6da6c82f5e0ec1cdb0673c1037feda12e963c57f"
+    },
+    "native/120m/tasks/n02-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "10cc8ca4f349d514495f71cee1bc3fa2b092b2cf4f7e0b0b914cf9f7bc54a8c9"
+    },
+    "native/120m/tasks/n02-oriented/summary.json": {
+      "bytes": 1475,
+      "sha256": "e47fa5e558f908e1558cd0e3ece195e13bb29506709637c72e2ebf6972c37a45"
+    },
+    "native/120m/tasks/n02-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "970ca4bbdf6e55a17c4fc36ae8b1c940836026e96252f779bc8b49da031573ac"
+    },
+    "native/120m/tasks/n02-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "07c0826f2a59df9cdb3fb81916572fcb2cf15d08ad5ef7ff8afe11cf784ff17f"
+    },
+    "native/120m/tasks/n02-unoriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "a21d61fb93aaf8421e811afc9239cbdc7f0d1709c890a06fcf9e22792ae7ecea"
+    },
+    "native/120m/tasks/n02-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "da4144c854472389c10978ee2a8da8c70a387ce2c8f864778675142a42547a09"
+    },
+    "native/120m/tasks/n02-unoriented/summary.json": {
+      "bytes": 1479,
+      "sha256": "501752de5bafada366300ad875060f4093d0d4fba7421bc8028539a1fd4476ad"
+    },
+    "native/120m/tasks/n02-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "a2bc3a0b0bb9294509b0ac4ff8f30c6c855126278e85ca9a2812e449571745c6"
+    },
+    "native/120m/tasks/n02-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "25eb3c4ba8d21e9ca8d3281361f21ad63b6f527ca580e1ef304fda5755b75f77"
+    },
+    "native/120m/tasks/n03-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "e36b63f59a5f78f38e1cbeebd97b5c93c1783ae83293af89ca2a1e1232e66a91"
+    },
+    "native/120m/tasks/n03-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c58deabd686b7522776f0d8e286b7abdb319007bbbd80107f5b86e895e41b677"
+    },
+    "native/120m/tasks/n03-oriented/summary.json": {
+      "bytes": 1490,
+      "sha256": "c95307ff4a95e125b114ce89b356baf57fa3cbd2cfec79607ff3cf8c66a3e725"
+    },
+    "native/120m/tasks/n03-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "d3c469c2df24b6d918a140c694680e6d88b6c38d6ae31e62cd7ccb0a7ebaea43"
+    },
+    "native/120m/tasks/n03-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "7b5d91b54a272b60330224e8983d18a530841e713c7addfc749324dcc0f3070b"
+    },
+    "native/120m/tasks/n03-unoriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "4fce2ba0440298d6085df8f68cb545de7b0b060fb96aa4d09d91df5b1cf9b88d"
+    },
+    "native/120m/tasks/n03-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "19b4c95fac75aac41bb04dca524519129058aeefdde2dcd59a4b70813c71b62c"
+    },
+    "native/120m/tasks/n03-unoriented/summary.json": {
+      "bytes": 1491,
+      "sha256": "dfd64589a014fab0a238d5da2cb187bc9e8b101e54d976eb68d1b7ee855951a9"
+    },
+    "native/120m/tasks/n03-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "9224817778a01a2ba8e0ab9e99d30d24e91764f375c9694a3a449572345a8584"
+    },
+    "native/120m/tasks/n03-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "e6c699cafd4648217f8e0fa5287a98579089897f8876fb55ffa67ebda72eb6b3"
+    },
+    "native/120m/tasks/n04-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "8e708c55056f088de9139fca4b13349189b0e46b1470f7d3a9011f48ca0ababc"
+    },
+    "native/120m/tasks/n04-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "cf04425c25e0f3f6cff584779f5fcb79821d2ce0dfb34585b00b0e26ae7c5a30"
+    },
+    "native/120m/tasks/n04-oriented/summary.json": {
+      "bytes": 1503,
+      "sha256": "e7a4420de467dc60ee0f2898b9fd3a3a23d1a77c0f244202d9f63decce229c42"
+    },
+    "native/120m/tasks/n04-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "ce2a991c3403e8621d6beb181b298db84409a06442593905d757676e313248b6"
+    },
+    "native/120m/tasks/n04-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "3e042e8e1a68a84ac050e6eb997cd6ee1d997f4b3564ee77b0389a3cb94b27b2"
+    },
+    "native/120m/tasks/n04-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "bc6bdbb50028b7a7342c933abc4587bdf11de7a48803afa80297d1d3887fa36b"
+    },
+    "native/120m/tasks/n04-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c3e4fa7fbbd20321c5d8d15ae9c5ea1b77e86af5f42a806b40fb7eef2968b9dd"
+    },
+    "native/120m/tasks/n04-unoriented/summary.json": {
+      "bytes": 1504,
+      "sha256": "c14136a99ea6f781fbcc8c50b56ccddcd2bef639570daff0f00a5d4be2f17fb3"
+    },
+    "native/120m/tasks/n04-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "6965f29f2a5bd0ce9ea4ddd9e9a9d1845b25e2cda5945bac7e2052d5c08d925e"
+    },
+    "native/120m/tasks/n04-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "c303f0d913c911650f7812b233dc5cbd7413888d42972704f15b0b57b35ae3e4"
+    },
+    "native/120m/tasks/n05-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "6f8e1f2621eec2714929b1c5570b2a98170457b41550f9999ee60516a094aa7a"
+    },
+    "native/120m/tasks/n05-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "b0e1bc69081ac1be9e7d4107580e5b75d844b2cc65ca384164e6fc02c8140967"
+    },
+    "native/120m/tasks/n05-oriented/summary.json": {
+      "bytes": 1518,
+      "sha256": "ed79ae007f0d0c52c1fc76acb94b1d8458c965011b48b9a29fb931f1b2d7a07d"
+    },
+    "native/120m/tasks/n05-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "12bc6a2f3594401ab61cdde6a0d1cb7ffe2720119e37f065071d92604334cc14"
+    },
+    "native/120m/tasks/n05-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "36124c42c618883465c5b1b68562ef0ef83b8042d458506fdf6e31a037812ba3"
+    },
+    "native/120m/tasks/n05-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "3d893e180c9bd2c3ebc3f1e38d59a95b599142162f6ae09cc01fee6f8b20a5a9"
+    },
+    "native/120m/tasks/n05-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "1a657264156753c0be0242177b68a1a4a31d06660ad61b2174159658ce47a288"
+    },
+    "native/120m/tasks/n05-unoriented/summary.json": {
+      "bytes": 1516,
+      "sha256": "7832d37a94010b82240bede8983fec2547950c4432a520bdf096400424dc162d"
+    },
+    "native/120m/tasks/n05-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "2b2557f58febde7e1145fe81bb290e4d0d9a826aa6f465376740d88bf7d489d4"
+    },
+    "native/120m/tasks/n05-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "f29c1a59d5893da093aaa615528066790eff1d27afc9b853b46cb7320c382a2e"
+    },
+    "native/120m/tasks/n06-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "211ad122b5057a9f12e2c4dffad22d05d7f39745e8939eab16b18e1c436a2aa0"
+    },
+    "native/120m/tasks/n06-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "06099ac3530551258fc6463d9935ab22785d3ed140c3dd9bbd6a289861f35d52"
+    },
+    "native/120m/tasks/n06-oriented/summary.json": {
+      "bytes": 1533,
+      "sha256": "01d80c024597e14dcb59017ae05cf722b2f93501e2212280db7189134d4de79f"
+    },
+    "native/120m/tasks/n06-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "26b1b9643e01fea9155a23f5c3197889b42fd0a19392aabdee919bcd8f90fa10"
+    },
+    "native/120m/tasks/n06-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "420c6e61ee106af993121bd482285b919acb4cd55330f41fadfa013b6823b134"
+    },
+    "native/120m/tasks/n06-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "c1b86e60a0a8c1b2370735b6a9de64b98bad2bacf973409f3418a385f825b7ea"
+    },
+    "native/120m/tasks/n06-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c85c3f8c168b4ad5824b286e3399bc6099114162b4b76bb4c7b45d1cdfac9ff0"
+    },
+    "native/120m/tasks/n06-unoriented/summary.json": {
+      "bytes": 1531,
+      "sha256": "7614ca195a90da3db219c16db564f9ebda6eeaddd5dbe0e317b7e2cbc9bb3c35"
+    },
+    "native/120m/tasks/n06-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "563ac8b3a7eb31ff5c263b72f9301efba32234c29983bb4742feec04b505700f"
+    },
+    "native/120m/tasks/n06-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "d392da5395a443129c2d5256289b86006e8074a9742bfcacd383e054bc170675"
+    },
+    "native/120m/tasks/n07-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "2747952f2dc3e444acb411d6e239e0a6a69510d50cad70ea132d7f7eda06b854"
+    },
+    "native/120m/tasks/n07-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "9fbdf0c3a70455ebaa21d15f6198617f9401b9d0984b1b1d9053b2f8e3ec6fff"
+    },
+    "native/120m/tasks/n07-oriented/summary.json": {
+      "bytes": 1548,
+      "sha256": "06a41c84c1a0751bde7feab24f129be6d65debf9f3802c722e9f3e83c60987a1"
+    },
+    "native/120m/tasks/n07-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "50450e28e2daff544f7f390642f16336aa42afbb6096eb30f7c66379d5ef2db1"
+    },
+    "native/120m/tasks/n07-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "f96c28f33390f68c62b4a6bd59c43d4900cee1ada8af56143e66a217be8a7ba8"
+    },
+    "native/120m/tasks/n07-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "21b4048b0e8619040ee08a7e21022158039e5066c421d32f24b61cc7f87ac367"
+    },
+    "native/120m/tasks/n07-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "738c69af57c6c2bc8af06717f0757d92f0a69374b6c3e176b9c875a4fce395bc"
+    },
+    "native/120m/tasks/n07-unoriented/summary.json": {
+      "bytes": 1546,
+      "sha256": "b7d7a53da06359ff6d175392ac060fe9b92b0fbce3a425fa8361ebf0d98d6301"
+    },
+    "native/120m/tasks/n07-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "a5ac621442c34fde6ae56394c78e02831c288ee47649d99c4f0386777e5fc102"
+    },
+    "native/120m/tasks/n07-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "4f83946d41f1ad999eed7796dbd4df99e9aa239da5962f2de424e4a14766cb4a"
+    },
+    "native/120m/tasks/n08-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "693cf3efd70b9986823cfdcbc2f85a3f3a4d216f5c9fbc284f5200fbb5e27a55"
+    },
+    "native/120m/tasks/n08-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "078f165faf26545956827034a71b364e47ae26e6dbec7f743995b5abc77479e7"
+    },
+    "native/120m/tasks/n08-oriented/summary.json": {
+      "bytes": 1566,
+      "sha256": "64a2082a5946324e9e228d514936a355b4ccdc67ce9301ea48bf4be43032d9ba"
+    },
+    "native/120m/tasks/n08-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "b35b20fc1d2cb331621a2a38480d2cfeae69e1b4bf9fa13e275cc1899450f7d9"
+    },
+    "native/120m/tasks/n08-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "248af991a4805e1149d673868e08919d40eb1403ba1731a649d4669af7d832e4"
+    },
+    "native/120m/tasks/n08-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "f54c0f0ad7107d7a728546980602e7ea0d1f66b695bb086a70e2a879b4beebd1"
+    },
+    "native/120m/tasks/n08-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "ed65f60ba4e226140b422ad3a51819170efb846e4c10bf1c0af2dae85c3e64df"
+    },
+    "native/120m/tasks/n08-unoriented/summary.json": {
+      "bytes": 1561,
+      "sha256": "ada45b29a290b5436aeaa326dd39c622768c0b31c58afaabc2891fe47af25468"
+    },
+    "native/120m/tasks/n08-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "d244105e4f0ac1383a953da23d08b2d09077c9cb7a2e90b192ab980cef95feb5"
+    },
+    "native/120m/tasks/n08-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "9d2b08d695d2f623807e7bf06e8db072f6195f39a0459e156f94a840b35fe8c5"
+    },
+    "native/120m/tasks/n09-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "358a8fbb19099a503591c544fa7e49980fdb1b50aafb1d0b4ff145c68602d211"
+    },
+    "native/120m/tasks/n09-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "0fe7ee0185ca154b030217b5a72ba9a893c03d43219feb559aa5ef3b902789a1"
+    },
+    "native/120m/tasks/n09-oriented/summary.json": {
+      "bytes": 1581,
+      "sha256": "d22e1c5ede7b112f36411b4c0d0d596cba877ba62d0a11477d1da7bd4e75b219"
+    },
+    "native/120m/tasks/n09-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "7f10cb5703c92eb9e5f45ddbaf5030bf65ab1fc013bba273ae6460c2e7fe3a1b"
+    },
+    "native/120m/tasks/n09-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "c805f67148b60a032a206e8e884fe8ebfc5e26a536c98301d5b90188537050df"
+    },
+    "native/120m/tasks/n09-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "130ec619e39181eebfe1e1e546f46630e327408a7fef17c151bd0c5b8414bb77"
+    },
+    "native/120m/tasks/n09-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "d70fac3e33e8b00eb6c09cbd0a06e3d7c269defe5590bce90ec1efb9f05f0850"
+    },
+    "native/120m/tasks/n09-unoriented/summary.json": {
+      "bytes": 1579,
+      "sha256": "ad8a9ccf391af7c795d4fa0292ea79f46150eb61b2c83512c7c63a29adb722d1"
+    },
+    "native/120m/tasks/n09-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "d2b88facda0b3c1669de1bb09ff597f74dda218668b7de97c36fbf818e2061a7"
+    },
+    "native/120m/tasks/n09-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "77b6346638cac8d4c5189a40e2c97a91d8900fb76389d5b022ccc6544bd5ea16"
+    },
+    "native/120m/tasks/n10-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "ae7514c314e5937f004e22e2ad9561671a3a9093a9d9a03f1ce2ed28cda03e85"
+    },
+    "native/120m/tasks/n10-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "d713f7966eea5793c5b2c80a3552accf4ce5ac00285317ae1142290eef06a6b7"
+    },
+    "native/120m/tasks/n10-oriented/summary.json": {
+      "bytes": 1600,
+      "sha256": "203ff37d9a715011f18e803a733b400c120d65926939a801e73aba4dcfebe14b"
+    },
+    "native/120m/tasks/n10-oriented/task.identity": {
+      "bytes": 77,
+      "sha256": "df35f9833eecf7755ba3321dcc2c38a1d642a0f36696091d04a39d2587d6cb12"
+    },
+    "native/120m/tasks/n10-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "e8c9eb1c09cf0bf4d2ee0c72d38a20179549da9084556b5b648c2d078f8fd140"
+    },
+    "native/120m/tasks/n10-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "1c8992cd10873315227905a2f808227d9f52790f0d0b56f2189eb914073de0d6"
+    },
+    "native/120m/tasks/n10-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "3a23aa064de441e4f37b0c7401eced75ac9ec32cdb1208037c51c795f2f6b15a"
+    },
+    "native/120m/tasks/n10-unoriented/summary.json": {
+      "bytes": 1595,
+      "sha256": "3790fa699fa2e62c61729190562b41274e4ecfaed33b5d03a68ce040c48bd649"
+    },
+    "native/120m/tasks/n10-unoriented/task.identity": {
+      "bytes": 79,
+      "sha256": "2f535606e906ce6c258491aa76460aeeb7386251627949099594b4fead8eb855"
+    },
+    "native/120m/tasks/n10-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "15f4166f6cfbcd844d9dc846969ec03de48c577f4480d0c522bce9ccddeaa451"
+    },
+    "native/15m/manifest.json": {
+      "bytes": 3088,
+      "sha256": "0a0ce0f1ee62e23f4004edf88ea56d35cd89d168e6fb391be2ab4330628e3fe7"
+    },
+    "native/15m/manifest.json.sha256": {
+      "bytes": 65,
+      "sha256": "2fcf25e1a4d95c2901d58008324731a81bf97b54939a03f49637d6c455c7f11a"
+    },
+    "native/15m/run.config.json": {
+      "bytes": 392,
+      "sha256": "78a7d32100b0d6b78dce9fe473bc01e159f78c9f289e2f64694631cd2d2f51d3"
+    },
+    "native/15m/tasks/n02-oriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "011c29613ecff56e877253d5b8ab619f07371c85c96e7f0a5a59a8df86daa9e6"
+    },
+    "native/15m/tasks/n02-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "54fcf0049deaedf9d1e1cd4959e98f76f68dd8d7d4619a66b3a3e8b006761bd6"
+    },
+    "native/15m/tasks/n02-oriented/summary.json": {
+      "bytes": 1500,
+      "sha256": "191f8ffafa3a84cf401dbc89333f52dfff476c67647271890c28a0371bca8896"
+    },
+    "native/15m/tasks/n02-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "e6be8a0c2aa96e04211c7e09bf415dc03fe6e60dfd1c0ef92d60ebdf3d8df6e3"
+    },
+    "native/15m/tasks/n02-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "491568ff6e0e9dcd9d1e87390809df150a4737938a5eea7b15b5e7f264d3fbcf"
+    },
+    "native/15m/tasks/n02-unoriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "a05fc206acf05e6a450de5a1ee7ed8324b9dccf6ea5b484401f55640484e68a0"
+    },
+    "native/15m/tasks/n02-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "bff6a82ea5620df9c7e1733568f12028ffadcba86af4b06a11b8593dcf9d2c40"
+    },
+    "native/15m/tasks/n02-unoriented/summary.json": {
+      "bytes": 1503,
+      "sha256": "24bc618cc3767c04a5fe9bc48fd2525570e376b4fbb3eca4d0b929050ef49826"
+    },
+    "native/15m/tasks/n02-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "18655e081e46ee2f40c244b41e1f2619fb6e2bf474de34bf5a34f499e123e229"
+    },
+    "native/15m/tasks/n02-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "3b811048e2d0b30576360d471044248ca4e1371014f2ff7f152d6b249d9e86c9"
+    },
+    "native/15m/tasks/n03-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "ef2f2b3cb14cb2d2f8768334bc234dedea6b20e4b84fec65e1dc839d1130c865"
+    },
+    "native/15m/tasks/n03-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "88e5bd4e6e8e28492ae9c1c4366d37feb6e40fa68cc17dce23cc1113a84c72b6"
+    },
+    "native/15m/tasks/n03-oriented/summary.json": {
+      "bytes": 1514,
+      "sha256": "b43e0d17e1831617e50ed7f3ffbcfa6c1383cbd7d79eef535e0bde00e24fdd66"
+    },
+    "native/15m/tasks/n03-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "512fe3d654155550a4ea18064aad251cdaa7d9628a07ef2eb49455f083823548"
+    },
+    "native/15m/tasks/n03-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "14817ca6e8644c94431d68ab4e663de8d0f9fefbb3426f53d0d4e9dc60ddad52"
+    },
+    "native/15m/tasks/n03-unoriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "2cc33cf18330733afabdb543f2cdf8e0e77f450544d701b8a9d41850bae53367"
+    },
+    "native/15m/tasks/n03-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "bcbb24271cc8820a9f27246301263ed2aa40824d7a69934841368c3759763ef7"
+    },
+    "native/15m/tasks/n03-unoriented/summary.json": {
+      "bytes": 1515,
+      "sha256": "3a96a4f0bee42f3f2377ef6565547f6567d0bb6d378620d05644f073b9869a9b"
+    },
+    "native/15m/tasks/n03-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "e7b8de8a4c32e1f7eff3cd3759fd529dc00fa0506da96be2428d74f4ae978a32"
+    },
+    "native/15m/tasks/n03-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "db5d10d7fd52c7ca198f8ca7d4eea1d1907f7f7e3b099b5faa538dec4f9b856d"
+    },
+    "native/15m/tasks/n04-oriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "0b0e83c5516067916fc126b92ac1e68ea9d4e0c1d69e9c16a3433e2c69c4c0b2"
+    },
+    "native/15m/tasks/n04-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "376cd042916cd2546d4a9d09e54f881938a3b68fccee4017658f87f6bd3cda97"
+    },
+    "native/15m/tasks/n04-oriented/summary.json": {
+      "bytes": 1528,
+      "sha256": "e97662599f4fa9a2687a23770f0e29a2e90652ca8935f147d6346089eb6b4a7c"
+    },
+    "native/15m/tasks/n04-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "bb4f37d2dc9a6a0662b2c10211cee9c143223927e9433f794d1515512a746480"
+    },
+    "native/15m/tasks/n04-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "4b42211629bdbd13df0c5e233d25a9540fab15849822a51e2d019c440c030916"
+    },
+    "native/15m/tasks/n04-unoriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "6a489b37b6745e5df1b1696df88192f848c0d5fc1ca4b9321bbe56c716926623"
+    },
+    "native/15m/tasks/n04-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "407889154b1828f08916a868eb72ea5e8fe49153ce0ab5f7a0373a7d9fbf81ef"
+    },
+    "native/15m/tasks/n04-unoriented/summary.json": {
+      "bytes": 1529,
+      "sha256": "bce7791df31da19dcdaf41b6f1f399fdfd3a194e5e678e988474ee7f34e96229"
+    },
+    "native/15m/tasks/n04-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "511f4c2508094c78fe6fd9afe7ba38ffe6e81c30c7ec414cfd5ee83c2c88c2c8"
+    },
+    "native/15m/tasks/n04-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "9a22a7ad014663ab679b857e2d3efcdaa160eb44a050a5ed5dc206313126d488"
+    },
+    "native/15m/tasks/n05-oriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "2c75ba32acf082572645bb407c638a01cfd9c850df5cfe1bb4a87640acbcc957"
+    },
+    "native/15m/tasks/n05-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "8db0873b90a314b07cd22066610eb45b839f8789bee1e26df1ecd4b38ca71228"
+    },
+    "native/15m/tasks/n05-oriented/summary.json": {
+      "bytes": 1543,
+      "sha256": "9405217073baf541543150e427ce0992b0c9ca0d17304dc1856e8bda64cd88b3"
+    },
+    "native/15m/tasks/n05-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "40b55129276ec31f74e99179a5cb3ed32c1164a9730639f36a4648da325d2a62"
+    },
+    "native/15m/tasks/n05-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "f4f616abb2f6cc77a6e24f006361bc1af955e7fbf5d28b65f13793f2dfbd648b"
+    },
+    "native/15m/tasks/n05-unoriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "c93995cbc930d31645c333dd2c115e1db8ef39a2271d24d8da90a389ad3a9069"
+    },
+    "native/15m/tasks/n05-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "14f29b61ac2dbe78c81cfb0e9a180ae6638f4601da537692e096ec0c62e3c0f9"
+    },
+    "native/15m/tasks/n05-unoriented/summary.json": {
+      "bytes": 1541,
+      "sha256": "9699e6d2eb8a6eb166d780a3da0670e3a7f440aea4f2a7ca0da3f19692d10e8e"
+    },
+    "native/15m/tasks/n05-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "3bad209d5aef1e3d50ead3ed7413847c1af70efedfd7d58dd2feda2e8f35649e"
+    },
+    "native/15m/tasks/n05-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "2781ab4b0456f1d8b081259baf4491d5032c723c76a40a4b996fc5d6e80d1d63"
+    },
+    "native/15m/tasks/n06-oriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "0375ffdd487c5e005032b97d5b179fd8a297006d59f8134b8d4b36e4f740d285"
+    },
+    "native/15m/tasks/n06-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "f325564c8c4b3bd6082ca3af8790c627f184515388a2931daa13478ff159377e"
+    },
+    "native/15m/tasks/n06-oriented/summary.json": {
+      "bytes": 1558,
+      "sha256": "0fdaf5672bc44f2b49fee8425983f1745a152c68ed9dfcef5b550e260a312577"
+    },
+    "native/15m/tasks/n06-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "5cee6dccc17ca3813530cd14f1e88fb2b39eabe90c3daa8b5e42feb5084983d5"
+    },
+    "native/15m/tasks/n06-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "f126b5d0160bb67c9b7c6e99d8cd599b6d8b822c9b223f934805545debd33efb"
+    },
+    "native/15m/tasks/n06-unoriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "169f71c20221f5b5b77309cddde01bdd553ccfb92233b872ffe257cec724a1f9"
+    },
+    "native/15m/tasks/n06-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c693d0175b4fb2c414eb4b84166da930cf25494f22db885fa000af8cd439345a"
+    },
+    "native/15m/tasks/n06-unoriented/summary.json": {
+      "bytes": 1556,
+      "sha256": "cf1111ddfd3bbf61056a799adf576da9be2270afdc3442dc9955877318283fb9"
+    },
+    "native/15m/tasks/n06-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "04f717e9236ebdcab9dd9536d3ce870a6d876646168831d64bc980da2352d3ec"
+    },
+    "native/15m/tasks/n06-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "04a59b65f2ba6aa762163ccb1bcf31524fb486de93e54b971d54a3294d121d13"
+    },
+    "native/15m/tasks/n07-oriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "61f23c824e6a37f772a0a6b41c3a0cc02c4db780c773e81c2cdc35d8f6ff6870"
+    },
+    "native/15m/tasks/n07-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "0cbad141020c710b94ecc127dc11a8cb1eec6af7aaf94d8e5fb01e8e53fefd50"
+    },
+    "native/15m/tasks/n07-oriented/summary.json": {
+      "bytes": 1574,
+      "sha256": "0a638fda9066961fdc2509554b15f62861e43781cca768e5d11e1b472047a442"
+    },
+    "native/15m/tasks/n07-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "62b34b98ab34101ab843f9b16db583443bdfac281935803ad3936b3217d5db54"
+    },
+    "native/15m/tasks/n07-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "cf8d78c71aaead1c259638a2085d5de6c89bb1111a3ed6043a3d5ab3af983347"
+    },
+    "native/15m/tasks/n07-unoriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "4cb35577403580104416a99d3e52b395fe5be4849adb1c13a1e0c834d3b73879"
+    },
+    "native/15m/tasks/n07-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c825c7311487e05165a33875278b2bf949799bd1f6af94c8667880385f263f68"
+    },
+    "native/15m/tasks/n07-unoriented/summary.json": {
+      "bytes": 1572,
+      "sha256": "f9c6f51bc421042e661e7b6b05c36946b634d420f2a72f9b9b51423c14cc6a7c"
+    },
+    "native/15m/tasks/n07-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "392edee29d992d49d281d14f29bb31558913319140e2ae0b4faa9fceb3f04f4b"
+    },
+    "native/15m/tasks/n07-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "5a97a28bb3de10a3de5fc914ff967566415624af1c71092bf78bcfd3978a5751"
+    },
+    "native/15m/tasks/n08-oriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "cd2841355249015f98a0efe52010e64c065dc7e6c9fc7fadd10705c94610f0ac"
+    },
+    "native/15m/tasks/n08-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "1f7976703830b72753d6f91b6c1e7ab0c0e03cd0d91c8da888c76247feaa4e46"
+    },
+    "native/15m/tasks/n08-oriented/summary.json": {
+      "bytes": 1592,
+      "sha256": "e9973ce0074e5ac0bfa231ddd15773d8f8cd1fd6fb32dc3e93604b34adb93d57"
+    },
+    "native/15m/tasks/n08-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "daf36af7b45953bfeebd9afffcb41aa91d87846eec896665162a268cf03a2183"
+    },
+    "native/15m/tasks/n08-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "dfa7bcb84bdec1ef3e28a7c4e13cf08a71e103ecb9e476f496c55f3d078e8958"
+    },
+    "native/15m/tasks/n08-unoriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "d980e15192678fdfc3ac795eac810fba7bc98fe66cbe6176d7ad07104ef4339f"
+    },
+    "native/15m/tasks/n08-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "555c3a17ea458138cd34112f29b4b23df0c90de2d1fbb3ec0c1ab716a9fbe583"
+    },
+    "native/15m/tasks/n08-unoriented/summary.json": {
+      "bytes": 1587,
+      "sha256": "4be0d262c893882559b84e7317b47f315d260bba9bd99c5374a9c9f4a020a162"
+    },
+    "native/15m/tasks/n08-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "52a109a8831c51a273da94ad9e513de534c7bb74aba0fb877437124367e015b8"
+    },
+    "native/15m/tasks/n08-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "624f2397555f073bf3446e24823e5ad204ec380e6c2c2919a89028e40fa0d831"
+    },
+    "native/15m/tasks/n09-oriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "fe8cf838baadcb5c555e444f18631804ae5573b93ac0d77291af82922a85eb0b"
+    },
+    "native/15m/tasks/n09-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "ed62a873d0531e7795360f68ea6770d376adc1af8d50a8ab155478e84a39fd39"
+    },
+    "native/15m/tasks/n09-oriented/summary.json": {
+      "bytes": 1607,
+      "sha256": "e6d791e3e1fbbb85f4d86a24563a53e4d1a053adf1d617e20fa5abba28180e15"
+    },
+    "native/15m/tasks/n09-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "d808b3d668e6f98480ce86368efdd17ea648a9d99fb07a2342c0d1cf9a3b9c2f"
+    },
+    "native/15m/tasks/n09-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "56ac6cf120b549411e6485391385d16fb3279535b264dc271f5770e0fb82173a"
+    },
+    "native/15m/tasks/n09-unoriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "e4292465c08e95e0936bae81757059af62559ebd0294f4ed7214e8da48398d84"
+    },
+    "native/15m/tasks/n09-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "3cb5533be08dbdc03e66be755fc8db568cb1a6c535603bb296b153105b00b8c6"
+    },
+    "native/15m/tasks/n09-unoriented/summary.json": {
+      "bytes": 1605,
+      "sha256": "6f90618b243a9aa548c114883849e58fea569a3a2db3410b1377cf553becb7e9"
+    },
+    "native/15m/tasks/n09-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "45bd0671b7905cc262ab905cfaa68ae6e94f95a48defd0ea67558b37f92577e1"
+    },
+    "native/15m/tasks/n09-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "f3af4f5dfc8a8c8826892f4dd542ff8ac83019aeb2d8c9cf913a4f955e724d70"
+    },
+    "native/15m/tasks/n10-oriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "ee91e493544aa7afee3ecede9f05aae99a960a6feaf6c53ac849a387e1f6b508"
+    },
+    "native/15m/tasks/n10-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "d7087b3ee63f98f463e967ba1aa5321dfb76ce7643c8d98894931ff8b3f201b4"
+    },
+    "native/15m/tasks/n10-oriented/summary.json": {
+      "bytes": 1626,
+      "sha256": "6070ef4994fbecf9c2d24c468ce8561aeccf5d5696ee3b68cfdd2ad3ba864b84"
+    },
+    "native/15m/tasks/n10-oriented/task.identity": {
+      "bytes": 77,
+      "sha256": "89de65839ca6f91768ad99f7f105abc983442818327107d89972c990f7670121"
+    },
+    "native/15m/tasks/n10-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "ccc47057c2014a6cfe9a81dfd841d6a202b39bc348968cb2fd2577cfa12c3f22"
+    },
+    "native/15m/tasks/n10-unoriented/artifacts.tsv": {
+      "bytes": 435,
+      "sha256": "2ed8b9ff9c2a3dda30c4305d538ae619ceaf50043e6be7845856f8dda9ac282e"
+    },
+    "native/15m/tasks/n10-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "1ad6d1ae08b8a3d10d8c77ba90b63d249a0a020688018138884aa7bd4b66652d"
+    },
+    "native/15m/tasks/n10-unoriented/summary.json": {
+      "bytes": 1621,
+      "sha256": "c5b560deda6203b4faa592f3ccbea79de55c67e63d09e67bab1f747d091e1bde"
+    },
+    "native/15m/tasks/n10-unoriented/task.identity": {
+      "bytes": 79,
+      "sha256": "5d42be78f368b4fc3d314aab6d6e94196a57f402c67779c0f8a97651bd18ffd1"
+    },
+    "native/15m/tasks/n10-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "e432dc8fadab8ac61d7866a7ba42d7a4d5ef4dbfb96e76c1b1822b4209629f29"
+    },
+    "native/240m/manifest.json": {
+      "bytes": 3083,
+      "sha256": "070eb7083612315d7406846b243efb0dd7bef842e9af56f4c758783cae1acd40"
+    },
+    "native/240m/manifest.json.sha256": {
+      "bytes": 65,
+      "sha256": "99c492b7cbd209b074ff4cd8caa6f962eefe5852deaf2cc23fc76aea4e84c2f5"
+    },
+    "native/240m/run.config.json": {
+      "bytes": 394,
+      "sha256": "69128fcb0b46d031f26b5ebc4e411ae93e04864cf7fe140f121c3a536f794f5d"
+    },
+    "native/240m/tasks/n02-oriented/artifacts.tsv": {
+      "bytes": 430,
+      "sha256": "980ae90a48b190b37bb04bcfd9036a0ba78ae6850cbefeee6c71759daba2320e"
+    },
+    "native/240m/tasks/n02-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "976f35320e2a8621e9978c79bf8942b4d8683d6bb5f2e385974b191e9ef08a59"
+    },
+    "native/240m/tasks/n02-oriented/summary.json": {
+      "bytes": 1473,
+      "sha256": "b2e06d38225101dccb614b7fde93a250479e0f0641e3ff70fe03f653f01a444c"
+    },
+    "native/240m/tasks/n02-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "4d678314ddb6032424e836ad505ac48bf2647ca89a61305fbf98c67bc357828a"
+    },
+    "native/240m/tasks/n02-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "2d0d001bf91b863ba9ee25c6bcf0405f2b444adcfb2725868c4f75e8b0e4ba36"
+    },
+    "native/240m/tasks/n02-unoriented/artifacts.tsv": {
+      "bytes": 430,
+      "sha256": "5a3022f6eab432ae988a5ce142c74c0901f76ae57eedef1a521039f1845a800e"
+    },
+    "native/240m/tasks/n02-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "5270295634de2ae38459372b30e744218a898014a920a9cdae5e452ffd8202b3"
+    },
+    "native/240m/tasks/n02-unoriented/summary.json": {
+      "bytes": 1477,
+      "sha256": "b55f51cbecf5bf7db45cf7986815e3618486a26963ec05ab88308cb0d7a211ce"
+    },
+    "native/240m/tasks/n02-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "1a97bab48a5663a3bd923d9a42f7bf874836634a9e3629355ca53b17294c9433"
+    },
+    "native/240m/tasks/n02-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "332b6742b341ff30bdb02fb53462a7291ee875240bf25ab73234ff9913cb2d60"
+    },
+    "native/240m/tasks/n03-oriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "b54ff6c4d186174fd981997888dd785d1454aa802820e720e0b3186979f7a3e4"
+    },
+    "native/240m/tasks/n03-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "bf8b13647e6fe5495a3c9239d986a623d6ce3efd30420842417c68adc391387a"
+    },
+    "native/240m/tasks/n03-oriented/summary.json": {
+      "bytes": 1487,
+      "sha256": "4e4af14b8345061863ee73c8c575bc179405b895e5f47b1d5fe63dc573d72d63"
+    },
+    "native/240m/tasks/n03-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "47f009500f8461e234d80b1a5bd5cd157250dc9db25aa3f640bd367da8c00967"
+    },
+    "native/240m/tasks/n03-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "28d0ada962c0285099e622ce2e0aba88376cd4ea9380c76cd3434d4b4ccac435"
+    },
+    "native/240m/tasks/n03-unoriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "423aeb64180427aaf1440b544f93e73c472386b1b2b93f78fd9a2376fb0055d9"
+    },
+    "native/240m/tasks/n03-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "782a5204bd80782bb340feb9aaa228f6fb47bd02ebc4dc5e6f52ef33984b4902"
+    },
+    "native/240m/tasks/n03-unoriented/summary.json": {
+      "bytes": 1488,
+      "sha256": "a1d97e4c5187f552240f6a6ba50d794e7f93d0c5521cc6350cabd42ecfc5ec24"
+    },
+    "native/240m/tasks/n03-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "25061dfbebc85da111f536a841d03fb1e1df6a3338bb6e8593f42ed1df113365"
+    },
+    "native/240m/tasks/n03-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "74cedf9ab257d14dead43a175b0c10963d34988cfaa5ab4c5a1e8448be6e2200"
+    },
+    "native/240m/tasks/n04-oriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "8382e9a9bf4d883062de99fea8d2efb10fa4b3d8a5ebf80e3b2f24e0787de8f4"
+    },
+    "native/240m/tasks/n04-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "29557115f473c633a84ed5816efd62c426cd257668b926fcb346774d6a8b99d7"
+    },
+    "native/240m/tasks/n04-oriented/summary.json": {
+      "bytes": 1500,
+      "sha256": "7b877b2f3da90a636bf3a5dac6d05dc897137c344bb15eacd964d69dfce81d7b"
+    },
+    "native/240m/tasks/n04-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "fc66696addd8ea27c78c6d8af09aec8923dc2050240d48d2908afefb83c1509f"
+    },
+    "native/240m/tasks/n04-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "c787f9fb7a9fb5088811cd644ae71b0d70e7eb37505b5fe24f2143552d3137a2"
+    },
+    "native/240m/tasks/n04-unoriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "6cc2b94bcc0408389418bfd5317fb8d916f9cf4dfc0ae60808c75fbefecc7509"
+    },
+    "native/240m/tasks/n04-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "de108be71a1839553eb3069f044aad24414e477c44c81fbe2a44e9c6259555e1"
+    },
+    "native/240m/tasks/n04-unoriented/summary.json": {
+      "bytes": 1501,
+      "sha256": "d39e1f0bc58edc84ce631b2305412b18b4df8e36cdf62bfe6384a75aa3e5514a"
+    },
+    "native/240m/tasks/n04-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "aac69771bc9d1317a12234f1c30f7cfb1a97130e9224b2bb27a6bedc91bbc3fe"
+    },
+    "native/240m/tasks/n04-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "76b7f5458028c9819e3b8dd03d0210e3497fdd9817877881266f0f17254bc648"
+    },
+    "native/240m/tasks/n05-oriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "e52a5c408f52ac2a6c2cbb7267c452e8cda96eb8d7025fab52fcfb2aeeccc051"
+    },
+    "native/240m/tasks/n05-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c2ac0664ca5f84c61853cfa3c8f8b7cdf78cb89262cfb6f577d8f5bd43f8c957"
+    },
+    "native/240m/tasks/n05-oriented/summary.json": {
+      "bytes": 1515,
+      "sha256": "dd9492bb241852797da326de7e9335d0ae879e9c4cec1818f4e2434e356bc4d7"
+    },
+    "native/240m/tasks/n05-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "3cd5583d7e94914fc94fcd400d6ab466fccbecabdccc22e3e6310428051254c2"
+    },
+    "native/240m/tasks/n05-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "dd60b5be6fbb946e3ea7094fffb2e1a9af625c9450bc9ea4e35763544802c4a1"
+    },
+    "native/240m/tasks/n05-unoriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "73e06985192e9d9d89e0aa033b0deca7dd9d5dc9f38fd7b498121e38a66cf368"
+    },
+    "native/240m/tasks/n05-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "26388687dc1e59f036385b9ca8ec168603de79a78abb5105192215d85cabd291"
+    },
+    "native/240m/tasks/n05-unoriented/summary.json": {
+      "bytes": 1513,
+      "sha256": "187fa559ebf7986286c194c7327502e908f339cebff3ce2453450ecf05cc85c9"
+    },
+    "native/240m/tasks/n05-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "88e1d63340d7bd30003c1e2371148230705fa108334c0c6a384fa3b9c24cafdb"
+    },
+    "native/240m/tasks/n05-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "9723a425434f33308bbf15bd39c33705e47c8c311539a5c191f76ce05b05baa2"
+    },
+    "native/240m/tasks/n06-oriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "2da5a66819502f73dd37a38ae224fe65fd7eda082568a50b99db3299cc53fa1e"
+    },
+    "native/240m/tasks/n06-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c60366e588641784b9846e1f8754f0ea8b88c6fbcaf533cbb1661985da27076d"
+    },
+    "native/240m/tasks/n06-oriented/summary.json": {
+      "bytes": 1530,
+      "sha256": "dc15bd86b1760e890ae5b045a534d8c9fb88a5bac479b3c1343d343fb5779ad1"
+    },
+    "native/240m/tasks/n06-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "11dcecb23c939133bb99f4f4c405760cc1e832e9efe24e05ecc1d00d9fe5aa21"
+    },
+    "native/240m/tasks/n06-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "794d5a3f162e400a896a3ec2e736a3a38ee3b67ab381bbd980f4d54f04955762"
+    },
+    "native/240m/tasks/n06-unoriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "49d1055825584a0d36877fb3d1994dfbbbf2a9736eab026104923e5e6626181c"
+    },
+    "native/240m/tasks/n06-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "29a44ff062d84784f01bf421811a42d392f1b9e5acf0272d90b5b2aeaaddc05c"
+    },
+    "native/240m/tasks/n06-unoriented/summary.json": {
+      "bytes": 1528,
+      "sha256": "3fec999732e2f029efc9d6e2f6a2f24644d832c77696878b76f9504d181697c4"
+    },
+    "native/240m/tasks/n06-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "fc2b6614b06c3f80947cbb972c9aa627184c32deb53bb5d5be927f79cb6dbb88"
+    },
+    "native/240m/tasks/n06-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "2b31981af88dbde359b595c4b27e8e46cf0e80d06a3ecc869247b3becad1335a"
+    },
+    "native/240m/tasks/n07-oriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "ddb48a2300471cb8f20a07cb6c9d06466134c7a3231b661e4cc37fc3aeda35fe"
+    },
+    "native/240m/tasks/n07-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "836badb6d288a1ff7cb2869cfe0989ac4372df011f78c48233cf85913f3ce8e8"
+    },
+    "native/240m/tasks/n07-oriented/summary.json": {
+      "bytes": 1545,
+      "sha256": "c3ad6ff048f9913b12b91e0a06ded89f0f060e9e1738da893993c40fd01bb1f5"
+    },
+    "native/240m/tasks/n07-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "894d7fbdbe0d0982dfa1bb1ec47197724ed3bc964c43e9bacb2880b808e31ecf"
+    },
+    "native/240m/tasks/n07-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "5b4daecbb5edcb31a3f2342e60d808d30e54e3893cc01a91c7b46c0f0e13958c"
+    },
+    "native/240m/tasks/n07-unoriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "78ace0694fed04eb43170545c38d3fae047349ba2e0779c569e78f670d66de29"
+    },
+    "native/240m/tasks/n07-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "ce1141abea0507c2c758713c53951dfa11dbd5c93637a3902b7c19a59f8a366b"
+    },
+    "native/240m/tasks/n07-unoriented/summary.json": {
+      "bytes": 1543,
+      "sha256": "028513c21806812f5256b398353ea036baf54e6dbdfb679bfd40a15dacfea6fe"
+    },
+    "native/240m/tasks/n07-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "a6e704b002dd3e914aa806730afc0590e11744c777d4c1fb0b3a1e751531c871"
+    },
+    "native/240m/tasks/n07-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "062a88a01091c012c8a50ed9d53dd216564ff74c1784d4d19762625adcc80c69"
+    },
+    "native/240m/tasks/n08-oriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "ced2a4038ac1abc1e52a12509dc8254c4d3753b94965e900c4346fd31d62816b"
+    },
+    "native/240m/tasks/n08-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "4b62f068a40521418ed58798605092475d4ea79f022c2a29a9928a7ed1ea9415"
+    },
+    "native/240m/tasks/n08-oriented/summary.json": {
+      "bytes": 1563,
+      "sha256": "cd7841d93df9a3b84949ef3edb336973da86f677347f37d993f2cdc6e6769917"
+    },
+    "native/240m/tasks/n08-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "6ee4fec2e868094de025d6531ff9a7ca144517473b9c5e061f893a2488f0fde9"
+    },
+    "native/240m/tasks/n08-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "4f25feaedcf316834a5c5a5fbb76d5595fbec8d82b62bc528dc97116604f113c"
+    },
+    "native/240m/tasks/n08-unoriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "796c6f212a5c8b36821162296e81c309fd0b67c281aa321e3fe709c6f81aa0e0"
+    },
+    "native/240m/tasks/n08-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "4124318a930adc4668e7558306a075f0b50bb4c02e3e1c758b42fb3c8ea4f904"
+    },
+    "native/240m/tasks/n08-unoriented/summary.json": {
+      "bytes": 1558,
+      "sha256": "4b31b47bedeb0e4fda2d91a849945af888e8a6a858bb6de265f15c46870c161e"
+    },
+    "native/240m/tasks/n08-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "0ec4ac93015e6b531d374dcba0e307cc62ad22ae2fdd7eb00de2ad8472ef6b2f"
+    },
+    "native/240m/tasks/n08-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "6ad92692bd137bfc24f90c0e38d79af609ebbde45de2824d2992b40036b7f865"
+    },
+    "native/240m/tasks/n09-oriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "f02542b6e5b57f41e970e092eccbfd369184f1be5a99e808293b4407597bcee0"
+    },
+    "native/240m/tasks/n09-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "51f36ac55114a9288c9e73aadbb9092517ac5372f8d98d801fef4eec4a665ceb"
+    },
+    "native/240m/tasks/n09-oriented/summary.json": {
+      "bytes": 1578,
+      "sha256": "dd3b291ef6aa0c2f887ca5e6015410fd41b18012efcb2a99f0da619632ba43ec"
+    },
+    "native/240m/tasks/n09-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "c7f88003d9ecd4087bd78f92458443e69ef0633270e45bfb1bfaa72c930a699f"
+    },
+    "native/240m/tasks/n09-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "0d403ac4a8f86d2d897115d0b48d0a5ab95bd3c588dc997ec76ed667922dd4a0"
+    },
+    "native/240m/tasks/n09-unoriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "b771f3847d56418b375f3bdcbef7ff6a2cdb885aab5acbb1df65952eb7f79d1c"
+    },
+    "native/240m/tasks/n09-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "ca37b501a41d1e513c7a79529740256120892211caaee44ed263020191470f9d"
+    },
+    "native/240m/tasks/n09-unoriented/summary.json": {
+      "bytes": 1576,
+      "sha256": "d1fe1951cbe17461f6dcf17f94a3ff365fe4ac4678f84a46990f71706c36647f"
+    },
+    "native/240m/tasks/n09-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "e7053bb8053c5eb85f5fe86ae3d12b82f8f24c0b5488a45e188495712f212164"
+    },
+    "native/240m/tasks/n09-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "a12bf82f143738ca522608c342816d18d6263bc937b17214506ad14b123197fe"
+    },
+    "native/240m/tasks/n10-oriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "8ac08fba4de2768debfec1a68a58e6d3c311c21873e1b3b21a1480ba88fa3e3d"
+    },
+    "native/240m/tasks/n10-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "b59378945b10d6f28b83ec79520470b898b9453e3395cc8dd3408ff40b9518ed"
+    },
+    "native/240m/tasks/n10-oriented/summary.json": {
+      "bytes": 1598,
+      "sha256": "dfb260188f2763bd7a0acfbb98e30ff9e0d76d6f3f68a03a20e836e792a39a89"
+    },
+    "native/240m/tasks/n10-oriented/task.identity": {
+      "bytes": 77,
+      "sha256": "0aa5740ab00f029801738c5cd607c47c19a56bf6705264d5a41b0a580dad2942"
+    },
+    "native/240m/tasks/n10-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "352d04b9e283096f142a25a3488d9cd116f4965f48d2929bbfd2e864b3d43cdd"
+    },
+    "native/240m/tasks/n10-unoriented/artifacts.tsv": {
+      "bytes": 432,
+      "sha256": "2989f617128dffc8c0ed18d248fb1e54400e4bafab86b718d83394600b59b062"
+    },
+    "native/240m/tasks/n10-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "85ce96d4378a02c2bac6a9e8b6b815d8833ee6d3f7ef0c1ea87df53250c7bbaa"
+    },
+    "native/240m/tasks/n10-unoriented/summary.json": {
+      "bytes": 1593,
+      "sha256": "c65124599897673b4663b20a653578d647fe525d450a0547b54c0066d570af48"
+    },
+    "native/240m/tasks/n10-unoriented/task.identity": {
+      "bytes": 79,
+      "sha256": "1cae157d0c6616b3cf3fbaeb21e3a2c13150097e1be480217e951d4d57dc3dd0"
+    },
+    "native/240m/tasks/n10-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "e63172f07f238dde0b7835b4f1f71dfb5b3224d1ff427283a408da19ee988d9e"
+    },
+    "native/30m/manifest.json": {
+      "bytes": 3087,
+      "sha256": "43d008979b62aba73eae817fb65fe21d6cf329e67c529af74ec52c503ee0101c"
+    },
+    "native/30m/manifest.json.sha256": {
+      "bytes": 65,
+      "sha256": "129ad528175d9166a85f1fa88178aaf1d5be760305f6180f787c0ed8125f25eb"
+    },
+    "native/30m/run.config.json": {
+      "bytes": 393,
+      "sha256": "e364caecb21522993e84a219e5204308148690fcf8ee24e5ab1470e71a68e5bd"
+    },
+    "native/30m/tasks/n02-oriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "66ca6fe124c8800b82dacb64d849a48c43d28938ca4db33707703cd59c3c33c0"
+    },
+    "native/30m/tasks/n02-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "4bce13c8182583904e0e2e088b1a4735af13eb2ffdc914331b313ef62e48c451"
+    },
+    "native/30m/tasks/n02-oriented/summary.json": {
+      "bytes": 1492,
+      "sha256": "0bc6d2d8d2602e7f19590c664a1da13be6f7636097fbc5d0516ba82039380672"
+    },
+    "native/30m/tasks/n02-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "f50d86851e0e9f8c88e881e5d44316a27578f8681f02e4b2aa32f4e4fdd3d440"
+    },
+    "native/30m/tasks/n02-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "47f1198416116295c8eec4c72b362c1b7e855d09d7fadd81b876b87a12818c28"
+    },
+    "native/30m/tasks/n02-unoriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "32a56164a47365f2c8d6cd97c5a5d0489a2781084703459523997742995d1dce"
+    },
+    "native/30m/tasks/n02-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "e65aa4f4d230823c8772c59078ea8de3c0d9d56488bb5220564dbb3c3f3ce91c"
+    },
+    "native/30m/tasks/n02-unoriented/summary.json": {
+      "bytes": 1495,
+      "sha256": "0b21d7cd08a1e25a30ec31ba3641ccc1d30dcb17a3e8d563ebca30d5dcefa0bc"
+    },
+    "native/30m/tasks/n02-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "88bfbd4a21f21d83414017f1fe078239bd9017677f28778f0a0eae8155503a96"
+    },
+    "native/30m/tasks/n02-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "cd0a32f369af6fb939645838ad6858d5554850b5ec565dac6e62fd08f5e5eb69"
+    },
+    "native/30m/tasks/n03-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "971acbc8df9c5c252db1e82acdcc1ff09c578f3af989a6a85d83ccf9d08cc992"
+    },
+    "native/30m/tasks/n03-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "f328e40403b465644ff6f94e7f6cf0c6af1c43b09d971d8074a81e8cf6c426d3"
+    },
+    "native/30m/tasks/n03-oriented/summary.json": {
+      "bytes": 1507,
+      "sha256": "1d3a59418c76d3db9627031240bb1de114550db0ce02f07af30187eb733ab8b9"
+    },
+    "native/30m/tasks/n03-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "5c876a0c72f6e58b80fd0ec2eb07936738f3b75d5a7a6501deeed1fb311c4aad"
+    },
+    "native/30m/tasks/n03-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "13bc89072c81d38064b6640d0ab59f3f2e8f6ae4ce0daf2aa0aba8ba4a1a0481"
+    },
+    "native/30m/tasks/n03-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "fb5d5d1168aaf0a1f861cc845407e278e0a4d25d01d512594aa9c819822cc68e"
+    },
+    "native/30m/tasks/n03-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "b093ca47cd883b46c9b1e4e4018b94b30936da0495c3401d1bcbc40dd416f7b8"
+    },
+    "native/30m/tasks/n03-unoriented/summary.json": {
+      "bytes": 1508,
+      "sha256": "6e66d2a8ff00931a6f11be4749efbeaf98b324cdad57196bb94037b52734f32b"
+    },
+    "native/30m/tasks/n03-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "9afda4851ace6da6845048e11baea69472b566a81e38ddb3b31be632cb02de4f"
+    },
+    "native/30m/tasks/n03-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "75ea39609bd874dcc7c967eae26b62e75476c3a9e5aea15b65d51f226e2c9bc9"
+    },
+    "native/30m/tasks/n04-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "64868ceff1208a4300dacf09f23d991e34cbc905ad951bd42a86835053e5f086"
+    },
+    "native/30m/tasks/n04-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "1cf84783afe59c61ad9cc5a2aeeb0fea45368155d5795a0f2803ea149c6c2e48"
+    },
+    "native/30m/tasks/n04-oriented/summary.json": {
+      "bytes": 1520,
+      "sha256": "b64f66387bfc38b12a6f5fbd291e6a8e4871865b950c569ec5c24682027e084c"
+    },
+    "native/30m/tasks/n04-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "05f08cb8310586e359af7c82074619f1f65a06eb2b7be0f471182551bdebaad8"
+    },
+    "native/30m/tasks/n04-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "08f5708b32799faf7d27cf014b1bd8fb5a0fe8d8f69a0799722d7226b91e958b"
+    },
+    "native/30m/tasks/n04-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "c9fcee602630920bdb6a797ec6cfdef43c4eebb9b43bc57373dbda36cb1e8c64"
+    },
+    "native/30m/tasks/n04-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "bbc24765913cadd76110c0d4ff1e2d70033c5ed4cc0e2914cd1b5773cc23c00e"
+    },
+    "native/30m/tasks/n04-unoriented/summary.json": {
+      "bytes": 1521,
+      "sha256": "4898c8dc8fb40d50f780880ec883ec499c3587190c60f4296317a64c68c118ca"
+    },
+    "native/30m/tasks/n04-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "f21b8699d904d3c70a798621d4cbd51e7dd797d8bd4ea85000fc9ee7e2154b5e"
+    },
+    "native/30m/tasks/n04-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "3b59decad545b3f680f71f7b6be2f3ec991fa5817106bad0bb9f3f25ab7ae07b"
+    },
+    "native/30m/tasks/n05-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "c5ed7d2ec08f941505e31f78e89da39ab57f8024ff380cc7e738f7a68547af31"
+    },
+    "native/30m/tasks/n05-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "8fab86a8a8593f978cb41ecd00b9b4bae0c29636fee2ecee53b5913f55b7083d"
+    },
+    "native/30m/tasks/n05-oriented/summary.json": {
+      "bytes": 1535,
+      "sha256": "6b0bd0f37064564d4c8cfd4805a6dbdf06be7ac7025e460341de0a3883697b41"
+    },
+    "native/30m/tasks/n05-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "f319bb0bf1a1edcf14c49e475ca92cdb5e7f91152b41467478e9e383a7f924d7"
+    },
+    "native/30m/tasks/n05-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "6cd5f6fc37564e02d531e429ec7f63c243f461075e5218595e3faf4f76c29c74"
+    },
+    "native/30m/tasks/n05-unoriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "bb4e8f0c85d3dc007127135cec6d313ef2cdab35dbcce3494c9b5499df3b4730"
+    },
+    "native/30m/tasks/n05-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c5d894d900c78f3f8f50c5787f4d4c2a274a1038e786c6488d6d7f3530e77dd6"
+    },
+    "native/30m/tasks/n05-unoriented/summary.json": {
+      "bytes": 1533,
+      "sha256": "210d751948347b74ced266dbac770ad49c9377d55fa80fa75533259b60080e66"
+    },
+    "native/30m/tasks/n05-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "1a282a177c864fde1e42273df29ccb2f367cb866a8e8e599fe8ba545fdb8ea86"
+    },
+    "native/30m/tasks/n05-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "8cad63248470bf1b417e45ca4a72c5c6554f03978e1781eeafa62b0133a4db1e"
+    },
+    "native/30m/tasks/n06-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "360ba3d3561603b2ccc73c85a070eb08b3e9714fafcf7af24433adc1ad519e33"
+    },
+    "native/30m/tasks/n06-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "2cc7933237ef98db32cec4f98a1d8657e6a96efa121ea635044d120e4496755d"
+    },
+    "native/30m/tasks/n06-oriented/summary.json": {
+      "bytes": 1550,
+      "sha256": "6121a9a5def34d9b4ca9fb602ced6e16f0cb6f239289d1ed6acf8cb2dd10a86b"
+    },
+    "native/30m/tasks/n06-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "d73ab179598369488069e09ff0f6defb4df8681b9df95e4beb7aaeb91584df56"
+    },
+    "native/30m/tasks/n06-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "15c70c0de4b6e0a13ed5535d8f6f8df89c3543e20f20697adf75f8835686a36f"
+    },
+    "native/30m/tasks/n06-unoriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "d5ca4f748642e4573f18d804dae9fe1bdf8dc62b8f677d8c89c516b90076d5af"
+    },
+    "native/30m/tasks/n06-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "9691e2f884d582fdaa10a2f00d97f5325a427857c04c2dd3305d7204d0b4b49e"
+    },
+    "native/30m/tasks/n06-unoriented/summary.json": {
+      "bytes": 1548,
+      "sha256": "cfce9c47412c9e5c2274685f143fb96f9db27df89fcb14a1ba1188d2fdf21a4f"
+    },
+    "native/30m/tasks/n06-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "d3c1b6f18e4a6d3cf80254e524c2777b1917ddbe41aa0a87ea35795a31c6c54b"
+    },
+    "native/30m/tasks/n06-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "6c3f4f6658c2e36af3d4c8927dadfdbbdfb49f253f3b303c1f346607b7dd9612"
+    },
+    "native/30m/tasks/n07-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "50e30528447ec588a634c47ee5666358e02d3d4b5ab071fb20f3c659e3b99357"
+    },
+    "native/30m/tasks/n07-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "4d4db2a197e408be1b47fcc4559bdc9f3dd28c59b3df8130b0e18574e4190cc3"
+    },
+    "native/30m/tasks/n07-oriented/summary.json": {
+      "bytes": 1566,
+      "sha256": "ac39ef8c6660008fc348be2eb51e578dc6aff9ffcb1915c097838e67aa591029"
+    },
+    "native/30m/tasks/n07-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "31bc0624af7ab23fb3d9fd7d4783bd2327e30377e4bd6eacdd09a80849a92287"
+    },
+    "native/30m/tasks/n07-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "e5bd0ba619c14209af9a65c9532fc48f38a88b938f6be0a7773e2a4dcd66dd03"
+    },
+    "native/30m/tasks/n07-unoriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "32d3e84aff1846324d2715c0e7b661368b8065e56069961c0b74cb5b65267ea3"
+    },
+    "native/30m/tasks/n07-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "9a8f075f1ca2e4edb7c83e3efd7a14b2c278f79d6ef8f2ff0a22e2c2ee4f4993"
+    },
+    "native/30m/tasks/n07-unoriented/summary.json": {
+      "bytes": 1564,
+      "sha256": "13167d737e089a84316f2f43da81e71f4ffb794496b9a028680dbade2c979776"
+    },
+    "native/30m/tasks/n07-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "1b137d7eef2a149dc1774da717ceb97af1630b57c64b2b3ba6768b70d66a986f"
+    },
+    "native/30m/tasks/n07-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "63b64af2238ad98d2be202a6bae9ab7d96f6a1097b2cb4ba8bf5337b0f9a4a9f"
+    },
+    "native/30m/tasks/n08-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "1ad4eae7d1e66f4573f692583d901cf615590bf673065ca00040f4b11fc15319"
+    },
+    "native/30m/tasks/n08-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "4ee3b326e4b85ed6d2dac39d002dbb1bb2e88123def41937c688a485caa855ce"
+    },
+    "native/30m/tasks/n08-oriented/summary.json": {
+      "bytes": 1584,
+      "sha256": "5c1e1a51f237f88605a4ba128f92bc5972de725ef10ec44adef132041f6bb1be"
+    },
+    "native/30m/tasks/n08-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "0e81121d521b5d71ff0113ea8ae17163b841cab57622d143f7eb001a67a126e6"
+    },
+    "native/30m/tasks/n08-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "22d8c72e502ba56aab46de9da6b086d509a1f0e541e844001cb70ad6491f7227"
+    },
+    "native/30m/tasks/n08-unoriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "6343183c1aee28a27c32939c67e9048801a268e6dbbf54f847a7527eed58e5de"
+    },
+    "native/30m/tasks/n08-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "4887f301ba00d882fdacc35b77100e0e947cb90cc126c2907aeb492ef697328b"
+    },
+    "native/30m/tasks/n08-unoriented/summary.json": {
+      "bytes": 1579,
+      "sha256": "c075aa4977b093470cf4b47344ed57af16eb8fd4732e168f2a72c0ef07202785"
+    },
+    "native/30m/tasks/n08-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "a26718afc01f667a2f19b0e5a8c4c2bce91b1c729acc23580eea30585add1ac1"
+    },
+    "native/30m/tasks/n08-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "92fb41835b1d20fe2f3357ab4ad1b90b6bee31c23407c959044305cf8562680c"
+    },
+    "native/30m/tasks/n09-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "ef306d74130051ed232d706d368c3b1a7469dc9b3943bfe4207b33da68a3e90a"
+    },
+    "native/30m/tasks/n09-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "eb67230790fd67ff36cd6f55163c75a1d2b0a2546841f27361b9cd09a25258c5"
+    },
+    "native/30m/tasks/n09-oriented/summary.json": {
+      "bytes": 1599,
+      "sha256": "dfdd9839a9fce29c77f58a8af2824d89868de637e7101b818d5bcd10e60d2763"
+    },
+    "native/30m/tasks/n09-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "c2522716dcce5a3114098cfddb5a2045bfbfc9c1ad80f020061f7340bcc5160f"
+    },
+    "native/30m/tasks/n09-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "328972e1e4623921733524094b4cd251ecf82dbae1703d481f33d8ce138c406c"
+    },
+    "native/30m/tasks/n09-unoriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "c7d81d487dabb0b705cf526e61287a519131a31379218cf6da1d3d76ad1a6c63"
+    },
+    "native/30m/tasks/n09-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "86116c43ff0ebcaa79a0339e80d9f54fa286fa61fae6c2eed7781e10cd6da7b7"
+    },
+    "native/30m/tasks/n09-unoriented/summary.json": {
+      "bytes": 1597,
+      "sha256": "95f286860c97141f62b8078dbfc9c8c71b9b2920438cb090ca4511fa040af298"
+    },
+    "native/30m/tasks/n09-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "85715ec73142ad17640eb95bb564e88177e6322a2d71a3ed90cfa005a6a1a879"
+    },
+    "native/30m/tasks/n09-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "1579094801752bda88ad5652eb36d2f95beefd7640d52a603c87bef9f4528a5a"
+    },
+    "native/30m/tasks/n10-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "251a614bc5dd1afe046db03f0123bb6c0f18770317caf3d827ffdd145ab14dad"
+    },
+    "native/30m/tasks/n10-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "0fd7ce0d659eb37475779fe1029625f45c7f86a490abee107ccfee3f40298850"
+    },
+    "native/30m/tasks/n10-oriented/summary.json": {
+      "bytes": 1618,
+      "sha256": "ad6781842ada715caa63aca8eea88b094cfa68360751f42c156e63a826bfb679"
+    },
+    "native/30m/tasks/n10-oriented/task.identity": {
+      "bytes": 77,
+      "sha256": "0348f23ca6e5ee47761485fd1241753e78131ba688f01408bc3adb85a193cac0"
+    },
+    "native/30m/tasks/n10-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "9b02720245715b5082719966804bffa165ebd64029610691c03fbe9988049929"
+    },
+    "native/30m/tasks/n10-unoriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "fa203489fff5e246eb1ae2d9e34da8d41cdc9852c3ea6a1d9336b94480ed6e41"
+    },
+    "native/30m/tasks/n10-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "3e661476a8927a6957f58a96b798b03fd42280fdc3d07ed42f258e99536ea19d"
+    },
+    "native/30m/tasks/n10-unoriented/summary.json": {
+      "bytes": 1613,
+      "sha256": "4fff9743340accf78067fed51105412d44a5af7ed1b6f35e318342c80b3a7326"
+    },
+    "native/30m/tasks/n10-unoriented/task.identity": {
+      "bytes": 79,
+      "sha256": "dfd98062b4333607821123cecb4f8150c01514b68447822d0a8dc41760028ac8"
+    },
+    "native/30m/tasks/n10-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "3b6184d7fb0e21a2672f41b50f2ac58a5753f5135a854470a6740b5723d1bf21"
+    },
+    "native/60m/manifest.json": {
+      "bytes": 3084,
+      "sha256": "63b6d3114fbc488d159d0b75ad30e9ee4c823742ce592535e0921c616eb2027e"
+    },
+    "native/60m/manifest.json.sha256": {
+      "bytes": 65,
+      "sha256": "a1432a2845126e955ba9004e249bd6c5fed2d75df7c95177802e1a0ec42781e7"
+    },
+    "native/60m/run.config.json": {
+      "bytes": 393,
+      "sha256": "8ce71669acc681e1fa1cf7ef377283732ee55becaa843d3d6e38f682bd35560d"
+    },
+    "native/60m/tasks/n02-oriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "ef295c53f5aab72b7da361e4b8e0d673ab1d496d7d46d11a2dbbe7c1d5148de1"
+    },
+    "native/60m/tasks/n02-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "d31c431f7419cd764249231866b69f23e8f06c956f95490658f5a99928424722"
+    },
+    "native/60m/tasks/n02-oriented/summary.json": {
+      "bytes": 1479,
+      "sha256": "a0b20acf13710c7cac6dc14ec85261b08c5936932d6b35dc6f2e6dfabbd837a6"
+    },
+    "native/60m/tasks/n02-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "0363841872526e9410a4c3468ae17d5cdaf3e5dc175b1b8618a5f0ac75d8c572"
+    },
+    "native/60m/tasks/n02-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "86b4e2ffff2e3b2148878624f4f652da0d039d9199d247ee208e7f1ae6fa926d"
+    },
+    "native/60m/tasks/n02-unoriented/artifacts.tsv": {
+      "bytes": 431,
+      "sha256": "945151c63bc53486122c904e8659c8a4e21b77e46a160230080d649abf6d72d8"
+    },
+    "native/60m/tasks/n02-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "0b90a7db62e9e311ef13fb81861329ebb26de1dac49b7d750a238e1f2ddb8ed7"
+    },
+    "native/60m/tasks/n02-unoriented/summary.json": {
+      "bytes": 1483,
+      "sha256": "0c9f19454dbb3a67623e6bb438c029f29fa5b73d50f92b1d0b3060e36c295c27"
+    },
+    "native/60m/tasks/n02-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "30bc8645683fde671b30ce7778842673b0303dc9140f0272e06f3fd6ebd34035"
+    },
+    "native/60m/tasks/n02-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "f747d63676025366cc835bce6deefe8b6e0f8abb0e198ba4fc37d32147c86508"
+    },
+    "native/60m/tasks/n03-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "e93d50855c094c2749c52322938297a2dc98188d191aa14b779537a84e64e340"
+    },
+    "native/60m/tasks/n03-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "568ea4baee2cb3b520d10b1513c662d6c376a719ba667e3c06a5153032d40423"
+    },
+    "native/60m/tasks/n03-oriented/summary.json": {
+      "bytes": 1495,
+      "sha256": "d9e1a636c81c3af01ad92a47f851216e0a9202d9c5e0b50c0adf6a5b0fcada6d"
+    },
+    "native/60m/tasks/n03-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "8ed04ba23d9c1e639d7a12aa437d8003f1f7562cf0400c1654e2a9d691f89098"
+    },
+    "native/60m/tasks/n03-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "144971e1cc19673cb285ac2cf008f668b0c7ded39434d1012ba70adc9bdf6565"
+    },
+    "native/60m/tasks/n03-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "9edfa7b8652a75183da7b071f365ef953a5a3a2c50957978d528356e07d8c4dd"
+    },
+    "native/60m/tasks/n03-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "71dbe58bb0426af74320f8949165bac6ba55afed13cbd440f675b7c6a4052681"
+    },
+    "native/60m/tasks/n03-unoriented/summary.json": {
+      "bytes": 1496,
+      "sha256": "4bb4103a732b70d2f53d89b95914b8b2607fb235d6d310b3a2559977724691f6"
+    },
+    "native/60m/tasks/n03-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "9084c0ff2fafd8fde692931d8b042284f49011f68e4b4712c067d110ae2b9a0d"
+    },
+    "native/60m/tasks/n03-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "701763a061dd6f2c4417801d0cda412e830905a922fac5dd12f14f1d4bc22765"
+    },
+    "native/60m/tasks/n04-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "36c601069f79eed0374fba07b541feac4aec350f4a3c896efdcdabecd4025810"
+    },
+    "native/60m/tasks/n04-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "0f5d7672bc64ae9cb2b7b74c7c6d4a8463d92206e293a0c65567e00ef99b8d03"
+    },
+    "native/60m/tasks/n04-oriented/summary.json": {
+      "bytes": 1507,
+      "sha256": "05cae7f4981d7e78e31531abff2756978761fd032d16b917c3a0af91fc5e380a"
+    },
+    "native/60m/tasks/n04-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "80d92b9dafee143252bc38a09fa22c039864aa6d4806fa344e14477df0c13ac4"
+    },
+    "native/60m/tasks/n04-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "37ace69093e76b984122262a95b0d6fa88c1b83fc119037140494de70f2cf099"
+    },
+    "native/60m/tasks/n04-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "6c4303edfe8f440f82264ac69800aaa0237275195c538d836635fcdc79f21dd6"
+    },
+    "native/60m/tasks/n04-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "8d32db108988c6e1f4945939c3f48af8eb8cee883da3edb699b3c65d9fca2015"
+    },
+    "native/60m/tasks/n04-unoriented/summary.json": {
+      "bytes": 1508,
+      "sha256": "6a50ab795edbcfc9fdc1b99332d20e17d3bb78d22c0b6ab4f8b967792d29d5e5"
+    },
+    "native/60m/tasks/n04-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "fb47411ca8b2a91c46407b47a8f4e1eb3cb45e37aa13f81228c75ee84b4e1421"
+    },
+    "native/60m/tasks/n04-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "04decf2a8a8d5fcd517ea71dfef05e239f6cf5db12e7c7633d919c1962fe76b1"
+    },
+    "native/60m/tasks/n05-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "209ecfccde855fd8b4f728f68ef39d3e810ac9dbcc76b7741aff9b34271515f3"
+    },
+    "native/60m/tasks/n05-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "e5288678c58bb3d0696f938f9901d01a234a3c39cf9a7a211c91b16869cda54a"
+    },
+    "native/60m/tasks/n05-oriented/summary.json": {
+      "bytes": 1522,
+      "sha256": "7e7b6bdcffd4e0e86b5c027fb9c0f55aea0c9a140ff22103f4e22e4ece9dd7a0"
+    },
+    "native/60m/tasks/n05-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "2ef39b8491ac946fd39cb883459e59ef419a43cf8394572f47bb5f2c006b9e67"
+    },
+    "native/60m/tasks/n05-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "14bb360e70f6f503aab03376426a14e5bc6e99681577bba4339c9c159fb4408a"
+    },
+    "native/60m/tasks/n05-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "15f68e5c7f6b7795d4d3578ceeb7432db72e0ec650319bc89253fd6062ddad17"
+    },
+    "native/60m/tasks/n05-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "f4c9b25ba308e654a87335dd07c49b0419c07e0d0c79d37978d7b93aacd83daf"
+    },
+    "native/60m/tasks/n05-unoriented/summary.json": {
+      "bytes": 1520,
+      "sha256": "ad282a2d09705a21f340af9e3cc0c924f07c53695e1f88bacdd3aded9f365a33"
+    },
+    "native/60m/tasks/n05-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "81e326428a02c0c8af9181f7463c2433eb9471aeaa1b48ec19e9512568bb5d94"
+    },
+    "native/60m/tasks/n05-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "74230d83a63f2d5920982ea2ad64095a0817bad73b162264b5bd07016d14b635"
+    },
+    "native/60m/tasks/n06-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "40256aa6948ff80e8c1cbc8bdfb2e0eb82d1165cd6c0674f304878ed2faec097"
+    },
+    "native/60m/tasks/n06-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "a4f24482defd34f0dc984a23091e5743c405cfb057e868df1e7d220cb30589a1"
+    },
+    "native/60m/tasks/n06-oriented/summary.json": {
+      "bytes": 1537,
+      "sha256": "178bbc5f5eaba5da8bc476df2c82267fe00f13cb14e12deeca398459a11e04c7"
+    },
+    "native/60m/tasks/n06-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "982b4bc3f9d72dcd50b9b90becbb6ecd4662ba86f3b1b869f918abc14556becf"
+    },
+    "native/60m/tasks/n06-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "76f34180f6ffa5dedf26d2fcc641543415f706bf0f3efc7777371673449b29cd"
+    },
+    "native/60m/tasks/n06-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "47baeb7d12611e763041c330cdbb6b4e7d9609e1be232f2d43b2ad8143a2817b"
+    },
+    "native/60m/tasks/n06-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "051dd79b0e9c72f5631fe8c11807af61f9a28ea5fc07cd24eaafc2404183e6c7"
+    },
+    "native/60m/tasks/n06-unoriented/summary.json": {
+      "bytes": 1535,
+      "sha256": "29aeb26f814281a47b632057da17232c99d3f4e3feb16f5e6f2e91afe23037d5"
+    },
+    "native/60m/tasks/n06-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "67c880a71ac7c81aea07b89712408b00ba28ec7c385a3220136653baa5949817"
+    },
+    "native/60m/tasks/n06-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "abfd259be0d43814bc862d3b430dcbe353b595381e276b9922735c45510bafed"
+    },
+    "native/60m/tasks/n07-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "c280408255c1c42739f486f6cf442224d7b1531de5de46c2993ffa085ef72cd6"
+    },
+    "native/60m/tasks/n07-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "d257fc56d18d5dfde25fad142982323c009a05e7006895dc720c69797789365a"
+    },
+    "native/60m/tasks/n07-oriented/summary.json": {
+      "bytes": 1553,
+      "sha256": "76948d9e0f306319f498885a0bd7076687b1b527201deca371a65d0cee1b477f"
+    },
+    "native/60m/tasks/n07-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "c6042f94985834368485b26ae0fdc42e65e3a0bd9a190c609b2d50c804a4f596"
+    },
+    "native/60m/tasks/n07-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "d59550028b3c4aea5d58ecce99fa4361023167bcf524257448a3be0b46f19816"
+    },
+    "native/60m/tasks/n07-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "3923d43855d124eaf700266577635b8f8d085ebbd5769f7b236dc0f0091b0c93"
+    },
+    "native/60m/tasks/n07-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "9e1d98e68640f770aa8b8a214a10b1701e7518215b2a2158af50cc28eef20262"
+    },
+    "native/60m/tasks/n07-unoriented/summary.json": {
+      "bytes": 1551,
+      "sha256": "a9282c7bd2c87d4448f1f10713dfc63a02b0ea0dd3b397125fee01da09dd878f"
+    },
+    "native/60m/tasks/n07-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "4aeb82e2dba1b646b34ed18fbc3aeabf140e0d7d87f73df3b453bf4a765c662e"
+    },
+    "native/60m/tasks/n07-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "e20a0f301fe1670b94545d30133daf9df0f5bd9814ca52747df6ba9e1f0156f0"
+    },
+    "native/60m/tasks/n08-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "bfbfab3e7f6ac97d82612bbec69dd6c0fe41231f6e75a8cfa1694b53156d97ca"
+    },
+    "native/60m/tasks/n08-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "e2d9b0c15c0728fb6adb0efa2caf3d7483f84b885d791dd5b3b39c00b6ee0872"
+    },
+    "native/60m/tasks/n08-oriented/summary.json": {
+      "bytes": 1571,
+      "sha256": "5d51eba6d5a664ee3c4f0aaa4f5c70fb994859aabaf95b88e8fda679682d3504"
+    },
+    "native/60m/tasks/n08-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "25a820107668b9c08c26eae83af448a6f200ce73b768db847fe8f5878708d077"
+    },
+    "native/60m/tasks/n08-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "e200db503b341b823bdd1f3e93698a4787b9b06644bc3116f1b52b3127d8569b"
+    },
+    "native/60m/tasks/n08-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "ed300bd1a5b6a95e0e19e6e29fca84a92a798c4bed18cc47e147796f9ca9015e"
+    },
+    "native/60m/tasks/n08-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c970e1deaa4181f5bd936b40cf993eea7fb2d6005d136998819360150e9efbfe"
+    },
+    "native/60m/tasks/n08-unoriented/summary.json": {
+      "bytes": 1566,
+      "sha256": "f6ad3e69efe021e6907f095e3e9f73d0775cf846b7ea1296f31d4e5ce982255c"
+    },
+    "native/60m/tasks/n08-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "e43f7d2be3b4dfd52bca9a84dd2668e9527b22948ab5165905305a964299d629"
+    },
+    "native/60m/tasks/n08-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "628af7c452fcccad7263b7032b9d5398af26e1757cb34d6234ad9a016d8df9d2"
+    },
+    "native/60m/tasks/n09-oriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "afb51cfc5083e33d815695ba0c277a91ec759f07d4927b8e60d1a2178bc8b52f"
+    },
+    "native/60m/tasks/n09-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "3f0a5fe63328183a05b0974e3cb8fbe1aa00851ee706d21714e0e8493bc12266"
+    },
+    "native/60m/tasks/n09-oriented/summary.json": {
+      "bytes": 1586,
+      "sha256": "6926ab3f3640442a0cd71e3bab80d02408fe0c284c3a71b567bd90dfd0e2a78d"
+    },
+    "native/60m/tasks/n09-oriented/task.identity": {
+      "bytes": 76,
+      "sha256": "303ceb1bb67924183d9e5f41b6461f5b0dc10e64ddf0b9c42b781963c82c2550"
+    },
+    "native/60m/tasks/n09-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "184b149aa40e889d59482d9d0370571332e04ce481775e574d4f270ca9427287"
+    },
+    "native/60m/tasks/n09-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "3cdba96c4a369bc68ce42f4b7a4ff35ac3cffd17d007b3492fc4f05a0fde2488"
+    },
+    "native/60m/tasks/n09-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "c8f3e8322a723ba9d866ad5c94817bd7a5f3b584851c51215e78f267da3529bb"
+    },
+    "native/60m/tasks/n09-unoriented/summary.json": {
+      "bytes": 1584,
+      "sha256": "278355e4e48e4b5474cdb5b34f035878ab5c818f6dfc7a7e28b3eea0ef99c98a"
+    },
+    "native/60m/tasks/n09-unoriented/task.identity": {
+      "bytes": 78,
+      "sha256": "fa5236caf9684fd6fad57f75d8b42e0bd590c661394395934c11d1c9201edbe1"
+    },
+    "native/60m/tasks/n09-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "7f3ff9aaf9812c194c4c6ce47120ffd0519b6a377546ad399f9f9860bd9fce32"
+    },
+    "native/60m/tasks/n10-oriented/artifacts.tsv": {
+      "bytes": 434,
+      "sha256": "043f2e2c8735afbca71a269d30edc48dc2195ab3e0ada3bc3bf392bce5c998e2"
+    },
+    "native/60m/tasks/n10-oriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "f580b6d262cde024922192e972e679f2a12237500488671a8412ea5169c28558"
+    },
+    "native/60m/tasks/n10-oriented/summary.json": {
+      "bytes": 1605,
+      "sha256": "da19f8589cf4119b969cc70ee016f8092005b458aac6ff586ed6cdf1a7e5d136"
+    },
+    "native/60m/tasks/n10-oriented/task.identity": {
+      "bytes": 77,
+      "sha256": "c27efc54709e0d7f7477eef76728ae4230c33e3c1113294c1d4c2fec03937718"
+    },
+    "native/60m/tasks/n10-oriented/timing.json": {
+      "bytes": 65,
+      "sha256": "4d7fb7356e7c49c8b08eaebab9e06645981cf9c2d01e8899b6058789065e2a20"
+    },
+    "native/60m/tasks/n10-unoriented/artifacts.tsv": {
+      "bytes": 433,
+      "sha256": "4c87106ce85a2a76701dda54861dfb01113c19be42bc02e00f16b4a91ed2de52"
+    },
+    "native/60m/tasks/n10-unoriented/artifacts.tsv.sha256": {
+      "bytes": 65,
+      "sha256": "1db595d7f6088320ea953c5471e2d10ea4dcb34262d9e24cf08c6472213471bc"
+    },
+    "native/60m/tasks/n10-unoriented/summary.json": {
+      "bytes": 1600,
+      "sha256": "00dbeeb1c8ecb71a8620d34434b2ce738fefc03c38842e1a1646e9ebdd5974d1"
+    },
+    "native/60m/tasks/n10-unoriented/task.identity": {
+      "bytes": 79,
+      "sha256": "9491d741040f152fa925793aeec4321cef59bd4fbc9b24cf563bb4eca62d8e13"
+    },
+    "native/60m/tasks/n10-unoriented/timing.json": {
+      "bytes": 65,
+      "sha256": "c3464eb5a1e140d4fd9b38c238bd03adb8c2112c18449d14578064e647a9b39b"
+    },
+    "performance-summary.json": {
+      "bytes": 2711,
+      "sha256": "5407fd0fa9b55b4571ee3b0d9addd656117fd3777f5dd9bdd8e3652ec4a0bbdd"
+    },
+    "protocol.json": {
+      "bytes": 5393,
+      "sha256": "065b1f3c31908537cc8b274cff4699b90852381bc54f2c39ab039776ca7fb7bf"
+    },
+    "provenance.json": {
+      "bytes": 13994,
+      "sha256": "a5f0ad7230bc0531d1337d81110f60f62420813b273684211d09a32f015f025c"
+    },
+    "selected.csv": {
+      "bytes": 2880,
+      "sha256": "5a5160cfe81caad901a29f9e20cb6e31634dd0dd63372d894393554f19be9487"
+    },
+    "selected/015m-body.daily.csv": {
+      "bytes": 110842,
+      "sha256": "9b5c5abd25f95cd301ab1b4d430bf01654144bb08a5ca34db5606a9c91b32611"
+    },
+    "selected/015m-body.probabilities.tsv": {
+      "bytes": 44949,
+      "sha256": "dba175d3e54bb3d4f2b085889f097ef62f0f516e4a57b2de4d982059993fbe4b"
+    },
+    "selected/015m-cc.daily.csv": {
+      "bytes": 110826,
+      "sha256": "071e0f4ad9d6f3a45cf9eb143825bce213c8873f2d1c8ac8194745ab61f0a9d4"
+    },
+    "selected/015m-cc.probabilities.tsv": {
+      "bytes": 45018,
+      "sha256": "c845f43270f34e8c52143817aa159f6f833ebcf3a456cff11103c0e7375e5991"
+    },
+    "selected/030m-body.daily.csv": {
+      "bytes": 110963,
+      "sha256": "dc317ae3203c2a33627f56be95cb20c636fe8cd6dcfa4dc2f87a7ab0d08c22e8"
+    },
+    "selected/030m-body.probabilities.tsv": {
+      "bytes": 32755,
+      "sha256": "32987184a57fe086bee0a39c43ba378428d7c72757e244ae06243c6a5f59632d"
+    },
+    "selected/030m-cc.daily.csv": {
+      "bytes": 110992,
+      "sha256": "8e0cf55b4d12a83ba89136c022387bd97f8b807dda1d2337b297be09dfa99411"
+    },
+    "selected/030m-cc.probabilities.tsv": {
+      "bytes": 32852,
+      "sha256": "fe7a7cb021fe61f4d901274a59627b33d248a22f533ea75b5c8c5c7eba606863"
+    },
+    "selected/060m-body.daily.csv": {
+      "bytes": 110649,
+      "sha256": "6761b86c5fd77a84006a5709f518553a2e01bd7a3530ed65f5feca55e07c9c63"
+    },
+    "selected/060m-body.probabilities.tsv": {
+      "bytes": 23464,
+      "sha256": "95adcf46a6e94d78b278f13c3d06c5e7ec96133a5a09d2d9b2fa422b2fc09736"
+    },
+    "selected/060m-cc.daily.csv": {
+      "bytes": 110687,
+      "sha256": "88f5830e11c5c20ab65bb169520ec13f3dbe7aa16bd1fc1eedced2b8e16688c0"
+    },
+    "selected/060m-cc.probabilities.tsv": {
+      "bytes": 23390,
+      "sha256": "9ad6f8e89614e9e0b6c907b13ac3a973fd01737fd014b419ab6b6997a9b205bd"
+    },
+    "selected/120m-body.daily.csv": {
+      "bytes": 108663,
+      "sha256": "a39ae0ff67589095f23503e208687195881f5d8133f696090312d4dd8b5f923d"
+    },
+    "selected/120m-body.probabilities.tsv": {
+      "bytes": 21313,
+      "sha256": "241280fe26f82c6041c24914700705e99c296e92d4b4c3aad047a35acd5418ae"
+    },
+    "selected/120m-cc.daily.csv": {
+      "bytes": 108650,
+      "sha256": "3b8216d325eec00ec74af2428d7e503afb2883dc8dc8bfee4934c463a2aabf7e"
+    },
+    "selected/120m-cc.probabilities.tsv": {
+      "bytes": 21351,
+      "sha256": "ab09324490a707a6f1dfb47cfee88e10512e486d04b8498a7eb931129ec2768f"
+    },
+    "selected/240m-body.daily.csv": {
+      "bytes": 108034,
+      "sha256": "a417f79e8a8511ffe5c124209ab5e4631aa8e9866b5c62fdb8e751ee93e56e4c"
+    },
+    "selected/240m-body.probabilities.tsv": {
+      "bytes": 13754,
+      "sha256": "d71824c0212f7e82d62349e00a4cb860002de31d6385ec756e885732067ca7d1"
+    },
+    "selected/240m-cc.daily.csv": {
+      "bytes": 108013,
+      "sha256": "b6792707b61cd060dfb5ac23032a45a620f644231c8a18dcb4bcb4689c0f6335"
+    },
+    "selected/240m-cc.probabilities.tsv": {
+      "bytes": 13758,
+      "sha256": "d983e04e7e45bf11068c396170b5a022c199e54926e89a26b18712461166a72c"
+    },
+    "timings/analysis.json": {
+      "bytes": 784,
+      "sha256": "cb30dc49b18cc857f754150200bc4ec2b0aed1eeb57e03c71e27db80f2637cc8"
+    },
+    "timings/native-120m.json": {
+      "bytes": 1206,
+      "sha256": "2c7ae3e0229a483097e25623580feff67309fccaf6f7e679bfe4911d10379657"
+    },
+    "timings/native-15m.json": {
+      "bytes": 1200,
+      "sha256": "aadaa055ed56b8f171af80f31d61bcfdec9f16852f7d09b9ea4a423333afeb9f"
+    },
+    "timings/native-240m.json": {
+      "bytes": 1207,
+      "sha256": "fefb7545d9d5050766352bebfba72da77ce0a52079d7779dc06bc067ec8fd370"
+    },
+    "timings/native-30m.json": {
+      "bytes": 1214,
+      "sha256": "65554bb700ec22f58c29fd5c37a5fce3e5e283bad0aca94f8e4302c323473027"
+    },
+    "timings/native-60m.json": {
+      "bytes": 1202,
+      "sha256": "796a9e66c8d1ddce22ec041be87df70785930b6ad88cc81b547a32096504f367"
+    },
+    "timings/verification.json": {
+      "bytes": 896,
+      "sha256": "cec02ff57ad2203d71995a00afc98a150210e34063a733de595d529ef5c37e6e"
+    },
+    "validation/analysis-tests.log": {
+      "bytes": 867,
+      "sha256": "1876a484b893ab6a79bfa901b3aded9475c996502a6c19fe6eb2560d25f04caf"
+    },
+    "validation/core-tests.log": {
+      "bytes": 3814,
+      "sha256": "f6614882e579f6d35d15fa4c0136415242d825529583a2471ab95463fbf80dba"
+    },
+    "validation/focused-tests.log": {
+      "bytes": 5137,
+      "sha256": "6c591d72b8d299a40a2608a7c13603d71d5df9e55526478138cdbb5503491e5c"
+    },
+    "validation/native-check.log": {
+      "bytes": 131,
+      "sha256": "b775a40c783c39dde8b835f8fc2160b847ba77a3d4615935a52a16997576acf1"
+    },
+    "validation/native-clippy.log": {
+      "bytes": 133,
+      "sha256": "70461bc514ee09bcaae8a9f022d61e047f6c6e2e1cacea4c5595071d75d5b63e"
+    },
+    "validation/native-tests.log": {
+      "bytes": 9084,
+      "sha256": "1f44174076806c7758dc047d5f79b9fee87ab97f238a578dcc8c0a2013550592"
+    },
+    "validation/receipt.json": {
+      "bytes": 564,
+      "sha256": "fd04d7246c360d78e79b458d73d32264ef5398ff859f9a7975f2b32da2a086e0"
+    },
+    "validation/release-build.log": {
+      "bytes": 123,
+      "sha256": "4f68f2449b060245bc6b6ea20e64886bdfcb83f57b281aa96d48a77adce038c7"
+    },
+    "verification.json": {
+      "bytes": 89092,
+      "sha256": "47f705d51c7ae4ed9fbac2d21d692fc9ff7a679ebc7a9911e5e76ee48bbc0a80"
+    }
+  },
+  "measurement_commit": "0874196f2ec6565c29590e08f9f4e52b712b6ca8",
+  "recorded_at_utc": "2026-10-08T14:50:01.949633+00:00",
+  "scope": "All retained report files except this manifest. Raw pattern/event tables stay in source run directories and are bound by retained task seals.",
+  "status": "PASS",
+  "version": 1
+}
