@@ -4,6 +4,8 @@
 
 **Execution status:** the original R1 attempt stopped at its frozen optimizer limit and is scientifically inconclusive. Its [complete failure record](../../benchmarks/reports/20261008-geometry-information-r1-failed/README.md) preserves all retained fits and the independent forensic audit. The specification below remains the original contract; a numerical retry requires a separately frozen amendment.
 
+[R1a](ROUND1A.md) is the separately published exact Newton amendment in PR #25. It preserves the scientific contract below and gives the numerical specification and replay commands for the fresh attempt.
+
 ## Claim and prior exposure
 
 **Round 1 asks whether additive pooled endpoint geometry improves next executable-bar direction log loss beyond additive body and close-return sign history.** It tests information gain. Its fixed-policy trading outputs are diagnostics, with no model, timeframe, threshold or cost selection based on those outputs.

@@ -15,6 +15,7 @@ import time
 
 import numpy as np
 from scipy.optimize import minimize
+from scipy.linalg import cho_factor, cho_solve
 from scipy.special import expit
 
 
@@ -223,7 +224,7 @@ def objective(theta, X, y, penalty):
     return value, gradient
 
 
-def fit_model(X, y, penalty, optimizer, initial=None):
+def _fit_lbfgs_model(X, y, penalty, optimizer, initial=None):
     X, y = np.asarray(X, dtype=np.float64), np.asarray(y, dtype=np.float64)
     require(len(y) > 0 and np.any(y == 0) and np.any(y == 1) and np.all((y == 0) | (y == 1)), "fit needs both binary classes")
     if initial is None:
@@ -244,6 +245,139 @@ def fit_model(X, y, penalty, optimizer, initial=None):
             "message": str(result.message), "iterations": int(result.nit), "function_evaluations": int(result.nfev),
             "gradient_evaluations": int(result.njev), "reported_objective": float(result.fun)},
             "wall_seconds": time.perf_counter()-began, "cpu_seconds": time.process_time()-cpu}
+
+
+def objective_hessian(theta, X, penalty):
+    """Full curvature for [intercept, beta], without penalizing the intercept.
+
+    This block construction equals [1,X].T @ diag(w) @ [1,X]. Computing the
+    weight from exp(-abs(z)) retains positive curvature when expit(z) rounds
+    to one. There is no diagonal jitter, scaling, or dropped constant column.
+    """
+    z = X @ theta[1:] + theta[0]
+    tail = np.exp(-np.abs(z))
+    weights = tail / (1.0+tail)**2 / len(X)
+    hessian = np.empty((X.shape[1]+1, X.shape[1]+1), dtype=np.float64)
+    hessian[0, 0] = weights.sum()
+    cross = X.T @ weights
+    hessian[0, 1:], hessian[1:, 0] = cross, cross
+    hessian[1:, 1:] = X.T @ (weights[:, None]*X)
+    hessian[np.arange(1, len(hessian)), np.arange(1, len(hessian))] += penalty
+    return hessian
+
+
+def _fit_newton_model(X, y, penalty, optimizer, initial=None):
+    X, y = np.asarray(X, dtype=np.float64), np.asarray(y, dtype=np.float64)
+    require(X.ndim == 2 and y.shape == (len(X),), "aligned Newton matrix and labels")
+    require(len(y) > 0 and np.any(y == 0) and np.any(y == 1) and np.all((y == 0) | (y == 1)), "fit needs both binary classes")
+    require(np.isfinite(penalty) and penalty > 0, "Newton requires positive finite ridge penalty")
+    if initial is None:
+        p = (y.sum()+1)/(len(y)+2)
+        initial = np.zeros(X.shape[1]+1)
+        initial[0] = math.log(p/(1-p))
+    initial = np.asarray(initial, dtype=np.float64).copy()
+    require(initial.shape == (X.shape[1]+1,), "Newton initializer dimension")
+    maximum = optimizer["maxiter"]
+    trials = optimizer["max_line_search_trials"]
+    tolerance = optimizer["gtol"]
+    first_step = optimizer["initial_step"]
+    shrink = optimizer["backtracking_factor"]
+    armijo = optimizer["armijo_c1"]
+    require(isinstance(maximum, int) and maximum >= 0 and isinstance(trials, int) and trials >= 1,
+            "Newton iteration/trial bounds")
+    require(np.isfinite(tolerance) and tolerance > 0 and first_step == 1.0 and shrink == 0.5
+            and armijo == 1e-4, "Newton frozen gradient/Armijo settings")
+    began, cpu = time.perf_counter(), time.process_time()
+    current = initial.copy()
+    updates, nfev, njev, nhev = 0, 0, 0, 0
+    steps, backtracks, trial_counts = [], [], []
+    nonfinite_trials = 0
+    value, gradient = objective(current, X, y, penalty)
+    nfev += 1
+    njev += 1
+    status, reason, detail = 1, "maximum_iterations", "maximum accepted Newton updates reached"
+    success = False
+    while True:
+        if not (np.isfinite(current).all() and np.isfinite(value) and np.isfinite(gradient).all()):
+            status, reason, detail = 2, "nonfinite_evaluation", "nonfinite parameters, objective, or analytic gradient"
+            break
+        # This is the sole success condition, checked before any update and
+        # again immediately after every accepted update, including the last.
+        if np.max(np.abs(gradient)) <= tolerance:
+            success, status, reason, detail = True, 0, "gradient_tolerance", "maximum absolute analytic gradient reached tolerance"
+            break
+        if updates >= maximum:
+            break
+        hessian = objective_hessian(current, X, penalty)
+        nhev += 1
+        if not np.isfinite(hessian).all():
+            status, reason, detail = 3, "nonfinite_hessian", "full Newton Hessian is nonfinite"
+            break
+        try:
+            factor = cho_factor(hessian, lower=True, check_finite=True)
+            direction = cho_solve(factor, -gradient, check_finite=True)
+        except (np.linalg.LinAlgError, ValueError) as error:
+            status, reason, detail = 4, "factorization_failure", str(error)
+            break
+        if not np.isfinite(direction).all():
+            status, reason, detail = 5, "nonfinite_direction", "Cholesky direction is nonfinite"
+            break
+        slope = float(gradient @ direction)
+        if not np.isfinite(slope) or slope >= 0:
+            status, reason, detail = 6, "non_descent_direction", "gradient dot Newton direction must be finite and negative"
+            break
+        accepted_step = False
+        for j in range(trials):
+            alpha = first_step*shrink**j
+            candidate = current+alpha*direction
+            trial_value, trial_gradient = objective(candidate, X, y, penalty)
+            nfev += 1
+            njev += 1
+            finite = (np.isfinite(candidate).all() and np.isfinite(trial_value)
+                      and np.isfinite(trial_gradient).all())
+            if not finite:
+                nonfinite_trials += 1
+                continue
+            if trial_value <= value+armijo*alpha*slope:
+                current, value, gradient = candidate, trial_value, trial_gradient
+                updates += 1
+                steps.append(float(alpha))
+                backtracks.append(j)
+                trial_counts.append(j+1)
+                accepted_step = True
+                break
+        if not accepted_step:
+            trial_counts.append(trials)
+            status, reason, detail = 7, "line_search_failure", "no finite Armijo trial accepted within the fixed trial budget"
+            break
+    reported_objective = float(value)
+    # Match the existing fit contract: independently recompute terminal value
+    # and analytic gradient outside the optimizer's evaluation counters.
+    value, gradient = objective(current, X, y, penalty)
+    finite_final = (np.isfinite(current).all() and np.isfinite(value) and np.isfinite(gradient).all())
+    max_gradient = float(np.max(np.abs(gradient)))
+    if success and (not finite_final or max_gradient > tolerance):
+        success, status, reason, detail = False, 8, "terminal_recomputation_failure", "terminal recomputation does not meet finite gradient tolerance"
+    accepted = bool(success and finite_final and max_gradient <= 5e-6)
+    return {"intercept": float(current[0]), "coefficients": current[1:].tolist(),
+            "objective": float(value), "gradient": gradient.tolist(), "max_abs_gradient": max_gradient,
+            "coefficient_sha256": array_sha(current, "<f8"), "initializer_sha256": array_sha(initial, "<f8"),
+            "accepted": accepted, "optimizer": {"method": "Newton-Cholesky-Armijo", "success": success,
+            "status": status, "stop_reason": reason, "message": detail, "iterations": updates,
+            "function_evaluations": nfev, "gradient_evaluations": njev, "hessian_evaluations": nhev,
+            "reported_objective": reported_objective, "step_sizes": steps, "backtrack_counts": backtracks,
+            "line_search_trial_counts": trial_counts, "nonfinite_line_search_trials": nonfinite_trials},
+            "wall_seconds": time.perf_counter()-began, "cpu_seconds": time.process_time()-cpu}
+
+
+def fit_model(X, y, penalty, optimizer, initial=None):
+    """Dispatch only the method frozen for this attempt; never fall back."""
+    method = optimizer.get("method", "L-BFGS-B")
+    if method == "L-BFGS-B":
+        return _fit_lbfgs_model(X, y, penalty, optimizer, initial)
+    if method == "Newton-Cholesky-Armijo":
+        return _fit_newton_model(X, y, penalty, optimizer, initial)
+    raise ValueError(f"unsupported frozen optimizer method: {method}")
 
 
 def theta(model):

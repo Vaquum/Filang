@@ -17,6 +17,7 @@ attempt, then retain the complete result and the remaining scientific question.
 | [PR #22](https://github.com/mikkokotila/Filang/pull/22) | Predecessor complete-pattern direction experiment | [Protocol](../geometry_direction/protocol.json), [measured report](../../benchmarks/reports/20261008-bitcoin-direction/README.md) |
 | [PR #23](https://github.com/mikkokotila/Filang/pull/23) | Campaign governance and experiment records | [Law and gate](../../governance/README.md) |
 | [PR #24](https://github.com/mikkokotila/Filang/pull/24) | Round 1 additive geometry: numerical failure, inconclusive | [Frozen protocol](round1_protocol.json), [failure report](../../benchmarks/reports/20261008-geometry-information-r1-failed/README.md) |
+| [PR #25](https://github.com/mikkokotila/Filang/pull/25) | R1a: separately frozen exact Newton numerical amendment | [Protocol](round1a_protocol.json), [method and replay](ROUND1A.md); execution and scientific outcome tracked in the PR |
 | Next separately published PR | Proposed frozen R1 solver amendment | Numerical-method follow-up; no result asserted here |
 
 The Round 1 protocol was frozen at commit

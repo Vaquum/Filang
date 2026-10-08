@@ -9,6 +9,7 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 
@@ -17,6 +18,9 @@ import common as c
 import run_round1 as runner
 
 OPTIMIZER = {"maxiter": 1000, "ftol": 1e-12, "gtol": 1e-7, "maxls": 50}
+NEWTON = {"method": "Newton-Cholesky-Armijo", "maxiter": 100, "gtol": 1e-7,
+          "initial_step": 1.0, "backtracking_factor": 0.5, "armijo_c1": 1e-4,
+          "max_line_search_trials": 50}
 DAY = 86400
 
 
@@ -205,6 +209,132 @@ class InformationTests(unittest.TestCase):
         self.assertEqual(summary["p_one_sided"], (1+np.count_nonzero(centered >= observed))/51)
         self.assertEqual(c.holm({"15": .01, "30": .01, "60": .03, "120": .8, "240": .9}),
                          {"15": .05, "30": .05, "60": .09, "120": 1., "240": 1.})
+
+
+class NewtonTests(unittest.TestCase):
+    def test_protocol_path_allows_only_original_and_amendment(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name in ("round1_protocol.json", "round1a_protocol.json"):
+                path = root / "experiments" / "geometry_information" / name
+                self.assertEqual(runner.protocol_repository_path(path, root),
+                                 "experiments/geometry_information/"+name)
+            with self.assertRaises(ValueError):
+                runner.protocol_repository_path(root / "elsewhere.json", root)
+            with self.assertRaises(ValueError):
+                runner.protocol_repository_path(root.parent / "outside.json", root)
+
+    def test_hessian_finite_difference_and_unpenalized_intercept(self):
+        rng = np.random.default_rng(831)
+        X = rng.integers(0, 2, size=(71, 7)).astype(float)
+        X[:, 1] = X[:, 0]  # collinear columns remain in the full Hessian
+        X[:, 2], X[:, 3] = 1.0, 0.0
+        y = rng.integers(0, 2, size=len(X)).astype(float)
+        theta = rng.normal(0, .3, X.shape[1]+1)
+        penalty = .01
+        hessian = c.objective_hessian(theta, X, penalty)
+        estimate = np.empty_like(hessian)
+        for j in range(len(theta)):
+            delta = np.zeros_like(theta); delta[j] = 1e-5
+            estimate[:, j] = (c.objective(theta+delta, X, y, penalty)[1]
+                              - c.objective(theta-delta, X, y, penalty)[1])/2e-5
+        np.testing.assert_allclose(hessian, estimate, atol=2e-10, rtol=2e-9)
+        unpenalized = c.objective_hessian(theta, X, 0.)
+        np.testing.assert_allclose(hessian-unpenalized, np.diag([0., *([penalty]*X.shape[1])]), atol=3e-17)
+        self.assertGreater(np.linalg.eigvalsh(hessian).min(), 0.)
+        # A sigmoid rounded to one must not erase representable curvature.
+        extreme = np.zeros_like(theta); extreme[0] = 40.
+        self.assertGreater(c.objective_hessian(extreme, X, penalty)[0, 0], 0.)
+
+    def test_collinear_constant_columns_converge_to_same_objective(self):
+        rng = np.random.default_rng(981)
+        X = rng.integers(0, 2, size=(233, 9)).astype(float)
+        X[:, 1], X[:, 2], X[:, 3] = X[:, 0], 1., 0.
+        y = rng.integers(0, 2, size=len(X)).astype(float)
+        original = c.fit_model(X, y, .001, OPTIMIZER)
+        fitted = c.fit_model(X, y, .001, NEWTON)
+        self.assertTrue(original["accepted"] and fitted["accepted"])
+        self.assertLessEqual(fitted["max_abs_gradient"], NEWTON["gtol"])
+        self.assertAlmostEqual(original["objective"], fitted["objective"], places=10)
+        np.testing.assert_allclose(c.theta(original), c.theta(fitted), atol=3e-5, rtol=1e-5)
+        receipt = fitted["optimizer"]
+        self.assertEqual(receipt["stop_reason"], "gradient_tolerance")
+        self.assertEqual(receipt["iterations"], len(receipt["step_sizes"]))
+        self.assertEqual(receipt["gradient_evaluations"], receipt["function_evaluations"])
+        self.assertEqual(receipt["function_evaluations"], 1+sum(receipt["line_search_trial_counts"]))
+        self.assertEqual(receipt["hessian_evaluations"], receipt["iterations"])
+        for step, backtracks in zip(receipt["step_sizes"], receipt["backtrack_counts"]):
+            self.assertEqual(step, 2.**(-backtracks))
+
+    def test_zero_update_and_hundredth_update_gradient_checks(self):
+        X, y = np.zeros((4, 1)), np.array([0., 1., 0., 1.])
+        initial = c.fit_model(X, y, .1, NEWTON)
+        self.assertTrue(initial["accepted"])
+        self.assertEqual(initial["optimizer"]["iterations"], 0)
+        self.assertEqual(initial["optimizer"]["hessian_evaluations"], 0)
+        self.assertEqual(initial["optimizer"]["function_evaluations"], 1)
+        def hundred_updates(theta, X, y, penalty):
+            return 1000.+theta[0], np.array([float(theta[0] > -100.), 0.])
+        with mock.patch.object(c, "objective", side_effect=hundred_updates), \
+             mock.patch.object(c, "objective_hessian", return_value=np.eye(2)):
+            last = c.fit_model(X, y, .1, NEWTON)
+            early = c.fit_model(X, y, .1, {**NEWTON, "maxiter": 99})
+        self.assertTrue(last["accepted"])
+        self.assertEqual(last["optimizer"]["iterations"], 100)
+        self.assertEqual(last["optimizer"]["function_evaluations"], 101)
+        self.assertFalse(early["accepted"])
+        self.assertEqual(early["optimizer"]["stop_reason"], "maximum_iterations")
+
+    def test_small_steps_never_declare_success(self):
+        X, y = np.zeros((4, 1)), np.array([0., 1., 0., 1.])
+        # Rounded equal objective values eventually pass Armijo at tiny alpha;
+        # the persistently large gradient must still exhaust the update budget.
+        with mock.patch.object(c, "objective", return_value=(1., np.array([1., 0.]))), \
+             mock.patch.object(c, "objective_hessian", return_value=np.eye(2)):
+            fitted = c.fit_model(X, y, .1, {**NEWTON, "maxiter": 3})
+        self.assertFalse(fitted["accepted"])
+        self.assertFalse(fitted["optimizer"]["success"])
+        self.assertEqual(fitted["optimizer"]["stop_reason"], "maximum_iterations")
+        self.assertEqual(fitted["optimizer"]["iterations"], 3)
+        self.assertTrue(all(a < 1e-11 for a in fitted["optimizer"]["step_sizes"]))
+        self.assertEqual(fitted["max_abs_gradient"], 1.)
+
+    def test_failure_statuses_and_exact_line_search_bound(self):
+        X, y = np.zeros((4, 1)), np.array([0., 1., 0., 1.])
+        def reject_every_trial(theta, X, y, penalty):
+            return float(theta[0] != 0.), np.array([1., 0.])
+        with mock.patch.object(c, "objective", side_effect=reject_every_trial), \
+             mock.patch.object(c, "objective_hessian", return_value=np.eye(2)):
+            failed = c.fit_model(X, y, .1, NEWTON)
+            with mock.patch.object(c, "cho_factor", side_effect=np.linalg.LinAlgError("synthetic factor failure")):
+                factor = c.fit_model(X, y, .1, NEWTON)
+            with mock.patch.object(c, "cho_solve", return_value=np.array([1., 0.])):
+                ascent = c.fit_model(X, y, .1, NEWTON)
+            with mock.patch.object(c, "cho_solve", return_value=np.array([np.nan, 0.])):
+                nonfinite = c.fit_model(X, y, .1, NEWTON)
+        self.assertEqual(failed["optimizer"]["stop_reason"], "line_search_failure")
+        self.assertEqual(failed["optimizer"]["line_search_trial_counts"], [50])
+        self.assertEqual(failed["optimizer"]["function_evaluations"], 51)
+        self.assertEqual(failed["optimizer"]["iterations"], 0)
+        self.assertEqual(factor["optimizer"]["stop_reason"], "factorization_failure")
+        self.assertEqual(ascent["optimizer"]["stop_reason"], "non_descent_direction")
+        self.assertEqual(nonfinite["optimizer"]["stop_reason"], "nonfinite_direction")
+        for model in (failed, factor, ascent, nonfinite): self.assertFalse(model["accepted"])
+
+    def test_original_lbfgs_dispatch_is_unchanged_and_unknown_methods_fail(self):
+        X = np.array([[0., 1.], [1., 0.], [1., 1.], [0., 0.]])
+        y = np.array([0., 1., 0., 1.])
+        with mock.patch.object(c, "minimize", wraps=c.minimize) as optimizer:
+            implicit = c.fit_model(X, y, .1, OPTIMIZER)
+            explicit = c.fit_model(X, y, .1, {**OPTIMIZER, "method": "L-BFGS-B"})
+        self.assertEqual(implicit["coefficient_sha256"], explicit["coefficient_sha256"])
+        self.assertEqual(implicit["optimizer"], explicit["optimizer"])
+        for call in optimizer.call_args_list:
+            self.assertEqual(call.kwargs["method"], "L-BFGS-B")
+            self.assertEqual(call.kwargs["options"], OPTIMIZER)
+            self.assertTrue(call.kwargs["jac"])
+        with self.assertRaisesRegex(ValueError, "unsupported frozen"):
+            c.fit_model(X, y, .1, {**NEWTON, "method": "unregistered"})
 
 
 if __name__ == "__main__":
