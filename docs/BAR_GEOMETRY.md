@@ -266,10 +266,13 @@ F_(n+1)(s) += F_n(r) * w_k * C(s,j) * C(s-j,k-j)
 ```
 
 Sum over `k=1..4` and `j=0..min(r,k)`. The required domain size is
-`sum_r F_n(r)`. The native implementation checks every integer addition and
-multiplication in `u128`; it rejects unsupported overflow instead of truncating,
-wrapping or saturating a reported count. A product of valid individual bank
-counts can still overflow the strategy-address count and is checked separately.
+`sum_r F_n(r)`. The original `count_domain` and `count_domain_by_levels` APIs
+check every integer addition and multiplication in `u128`; they reject
+unsupported overflow instead of truncating, wrapping or saturating a reported
+count. A product of valid individual bank counts can still overflow the
+strategy-address count and is checked separately. The decimal counting APIs
+use arbitrary-precision natural integers with the same recurrence and an
+explicit ten-candle resource bound. `geometry-count` uses this decimal path.
 
 | Window length | Unoriented full patterns | Oriented full patterns |
 |---:|---:|---:|
@@ -282,10 +285,17 @@ counts can still overflow the strategy-address count and is checked separately.
 | 7 | 3,840,691,551,111,678,501,624,968 | 349,946,534,568,771,563,626,027,452 |
 | 8 | 599,170,270,107,067,142,441,692,696,968 | 109,093,488,682,843,434,702,978,214,200,252 |
 | 9 | 153,066,871,555,466,967,822,330,084,645,768,968 | 55,702,085,623,739,099,432,122,993,642,929,144,252 |
+| 10 | 60,654,091,922,379,541,904,994,268,730,790,100,840,968 | 44,121,589,533,882,676,853,417,959,154,810,808,313,579,452 |
 
-Both modes exceed `u128` at ten candles. The sweep accepts at most nine candles
-per window and also checks the complete strategy product; an individually
-countable window can still make that product too large.
+Both modes exceed `u128` at ten candles. The `geometry-sweep` bank-pair engine
+continues to accept at most nine candles per window and checks the complete
+strategy product; an individually countable window can still make that product
+too large. `geometry-direction-sweep` supports two through ten candles, using
+fixed-width complete-pattern keys for observed states and exact decimal
+cardinalities for the unobserved complement. It does not multiply the full
+pattern domain into a bank-pair strategy product. Counting or observing a
+ten-candle domain does not relax the existing bank-pair engine's arithmetic
+limits.
 
 The independent Python verifier obtains these counts differently. With `q`
 available levels, one candle has `A(q)=sum_k w_k*C(q,k)` assignments. For fixed
@@ -497,6 +507,26 @@ full count, while `count_domain_by_levels` exposes its distribution.
 most the number of observed identities plus one. Full large-domain enumeration
 is not a preparation step.
 
+`GeometryEncoder::encode_key_ohlc` and `encode_key_endpoints` return a copyable
+`GeometryKey` without per-window allocation. A key is exactly four `u64` words:
+six bits per endpoint rank, one upward-direction bit per candle, four bits for
+the candle count and one mode bit. Flat bodies are inferred from tied body
+ranks. At ten candles this uses 255 bits; the final bit and all unused fields
+must be zero. Keys retain the complete global order, including every
+nonadjacent comparison, and distinguish different counts and modes.
+`GeometryKey::from_pattern` packs a validated pattern, `to_pattern` reconstructs
+it for catalogue export, and `from_words` validates raw words, including all
+unused bits and direction consistency. Key ordering is deterministic word
+ordering; canonical persisted pattern text remains `g1`.
+
+`count_domain_decimal(n, mode)` returns the exact complete-domain count as a
+decimal string for `n=0..10`. `count_domain_unobserved_decimal(n, mode,
+observed)` subtracts a distinct observed-set cardinality exactly and rejects a
+set count larger than its domain. Both use private base-10^9 natural-number
+arithmetic and reject widths above ten before work begins. The core geometry
+encoder itself remains general-purpose; this bound applies to compact keys
+and decimal counting, not the mathematical language.
+
 ## 14. Configuration and logical address grammar
 
 A configuration is UTF-8 `key=value` text with blank lines and `#` comment lines.
@@ -530,8 +560,9 @@ in that order; `0,2,4` selects current, two bars ago and four bars ago. Intermed
 candles still exist in the input timeline. Sparse selection does not compress
 time or assert anything about their geometry.
 
-Duplicate windows are rejected. A window has at most nine candles and maximum
-lag 100,000. A configuration has at most 128 banks, sixteen distinct qualifiers
+Duplicate windows are rejected. In this bank-pair configuration, a window has
+at most nine candles and maximum lag 100,000. A configuration has at most 128
+banks, sixteen distinct qualifiers
 and 128 rule templates. At least two banks are required when same-bank pairing
 is disabled. The qualifier window is in `1..100000`. Rule templates use `s0`,
 `s1`, `(and X Y)`, `(or X Y)` and `(not X)`, must reference both slots, and must
@@ -572,6 +603,7 @@ Exact domain counting needs no market data:
 cargo build --release --locked --offline
 ./target/release/filang geometry-count --bars 2 --mode unoriented
 ./target/release/filang geometry-count --bars 5 --mode oriented
+./target/release/filang geometry-count --bars 10 --mode oriented
 python3 scripts/verify_geometry.py --self-test
 python3 scripts/verify_geometry.py --counts 9
 ```

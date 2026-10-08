@@ -116,6 +116,161 @@ pub struct GeometryPattern {
     directions: Option<Vec<BodyDirection>>,
 }
 
+/// Maximum window for the allocation-free, fixed-width lookup key and the
+/// arbitrary-precision decimal counting API. The general geometry encoder is
+/// not subject to this limit, and the dense sweep retains its checked u128
+/// cardinality and product limits.
+pub const GEOMETRY_KEY_MAX_BARS: usize = 10;
+
+/// A lossless 32-byte key for complete geometry through ten candles.
+///
+/// Bits 0..239 contain the four six-bit endpoint ranks for each candle, in
+/// caller order. Bits 240..249 identify upward bodies; a tied body is flat and
+/// any other body without its upward bit is down. Bits 250..253 hold the candle
+/// count, bit 254 selects oriented geometry, and bit 255 is reserved and zero.
+/// Unused ranks and direction bits are zero. The count and mode are part of
+/// equality, so keys from different window widths or modes cannot alias.
+///
+/// Converting a valid pattern to a key allocates nothing. Ordering is the
+/// deterministic numeric ordering of the four words, not g1 text ordering.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct GeometryKey([u64; 4]);
+
+impl GeometryKey {
+    pub fn from_pattern(pattern: &GeometryPattern) -> Result<Self> {
+        if pattern.len() > GEOMETRY_KEY_MAX_BARS {
+            return Err("compact geometry key supports at most ten candles".into());
+        }
+        // GeometryPattern's private fields and checked constructors establish
+        // rank density and direction consistency. Do not revalidate with a
+        // temporary allocation in this hot path.
+        let mut words = [0u64; 4];
+        for (i, ranks) in pattern.ranks.iter().enumerate() {
+            let row = ranks[0] as u64
+                | (ranks[1] as u64) << 6
+                | (ranks[2] as u64) << 12
+                | (ranks[3] as u64) << 18;
+            let bit = i * 24;
+            let word = bit / 64;
+            let offset = bit % 64;
+            words[word] |= row << offset;
+            if offset > 40 {
+                words[word + 1] |= row >> (64 - offset);
+            }
+        }
+        if let Some(directions) = &pattern.directions {
+            for (i, &direction) in directions.iter().enumerate() {
+                if direction == BodyDirection::Up {
+                    words[3] |= 1 << (48 + i);
+                }
+            }
+            words[3] |= 1 << 62;
+        }
+        words[3] |= (pattern.len() as u64) << 58;
+        Ok(Self(words))
+    }
+
+    /// Read the four packed words. Persisted canonical patterns should use
+    /// the g1 representation; this layout is intended for exact native lookup.
+    pub fn words(self) -> [u64; 4] {
+        self.0
+    }
+
+    /// Check every rank, direction and unused bit before accepting raw words.
+    /// Decoding allocates and belongs outside the window lookup hot path.
+    pub fn from_words(words: [u64; 4]) -> Result<Self> {
+        let key = Self(words);
+        if key.len() > GEOMETRY_KEY_MAX_BARS {
+            return Err("compact geometry key supports at most ten candles".into());
+        }
+        let pattern = key.to_pattern();
+        pattern.validate()?;
+        if Self::from_pattern(&pattern)? != key {
+            return Err("compact geometry key has noncanonical unused or direction bits".into());
+        }
+        Ok(key)
+    }
+
+    pub fn len(self) -> usize {
+        ((self.0[3] >> 58) & 15) as usize
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn mode(self) -> GeometryMode {
+        if self.0[3] & (1 << 62) == 0 {
+            GeometryMode::Unoriented
+        } else {
+            GeometryMode::Oriented
+        }
+    }
+
+    fn rank_row(self, index: usize) -> [usize; 4] {
+        let bit = index * 24;
+        let word = bit / 64;
+        let offset = bit % 64;
+        let mut value = self.0[word] >> offset;
+        if offset > 40 {
+            value |= self.0[word + 1] << (64 - offset);
+        }
+        [
+            (value & 63) as usize,
+            ((value >> 6) & 63) as usize,
+            ((value >> 12) & 63) as usize,
+            ((value >> 18) & 63) as usize,
+        ]
+    }
+
+    fn body_direction(self, index: usize, row: &[usize; 4]) -> BodyDirection {
+        if row[1] == row[2] {
+            BodyDirection::Flat
+        } else if self.0[3] & (1 << (48 + index)) != 0 {
+            BodyDirection::Up
+        } else {
+            BodyDirection::Down
+        }
+    }
+
+    /// Reconstruct the canonical global order. Display writes the same g1
+    /// representation directly without allocating intermediate vectors.
+    pub fn to_pattern(self) -> GeometryPattern {
+        let mut ranks = Vec::with_capacity(self.len());
+        let mut directions = if self.mode() == GeometryMode::Oriented {
+            Some(Vec::with_capacity(self.len()))
+        } else {
+            None
+        };
+        for i in 0..self.len() {
+            let row = self.rank_row(i);
+            if let Some(directions) = &mut directions {
+                directions.push(self.body_direction(i, &row));
+            }
+            ranks.push(row);
+        }
+        GeometryPattern { ranks, directions }
+    }
+}
+
+impl fmt::Display for GeometryKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let oriented = self.mode() == GeometryMode::Oriented;
+        f.write_str(if oriented { "g1:o:" } else { "g1:u:" })?;
+        for i in 0..self.len() {
+            if i > 0 {
+                f.write_str(";")?;
+            }
+            let row = self.rank_row(i);
+            write!(f, "{},{},{},{}", row[0], row[1], row[2], row[3])?;
+            if oriented {
+                write!(f, ",{}", self.body_direction(i, &row).token())?;
+            }
+        }
+        Ok(())
+    }
+}
+
 impl GeometryPattern {
     pub fn new(ranks: Vec<[usize; 4]>, directions: Option<Vec<BodyDirection>>) -> Result<Self> {
         let pattern = Self { ranks, directions };
@@ -371,6 +526,16 @@ impl GeometryEncoder {
         Ok(&self.pattern)
     }
 
+    /// Encode and return a fixed-size lookup key without allocating. Storage
+    /// for ranking was allocated by `new`; only catalogue export needs to
+    /// reconstruct or clone a GeometryPattern. Widths above ten are rejected.
+    pub fn encode_key_ohlc(&mut self, rows: &[[f64; 4]]) -> Result<GeometryKey> {
+        if self.pattern.len() > GEOMETRY_KEY_MAX_BARS {
+            return Err("compact geometry key supports at most ten candles".into());
+        }
+        GeometryKey::from_pattern(self.encode_ohlc(rows)?)
+    }
+
     pub fn encode_endpoints(
         &mut self,
         rows: &[[f64; 4]],
@@ -401,6 +566,17 @@ impl GeometryEncoder {
         }
         self.rank_values();
         Ok(&self.pattern)
+    }
+
+    pub fn encode_key_endpoints(
+        &mut self,
+        rows: &[[f64; 4]],
+        directions: Option<&[BodyDirection]>,
+    ) -> Result<GeometryKey> {
+        if self.pattern.len() > GEOMETRY_KEY_MAX_BARS {
+            return Err("compact geometry key supports at most ten candles".into());
+        }
+        GeometryKey::from_pattern(self.encode_endpoints(rows, directions)?)
     }
 
     fn rank_values(&mut self) {
@@ -441,6 +617,147 @@ fn validate_direction(flat: bool, direction: BodyDirection, candle: usize) -> Re
 /// has one pattern. Overflow is an error, never saturation or truncation.
 pub fn count_domain(n: usize, mode: GeometryMode) -> Result<u128> {
     checked_total(&count_domain_by_levels(n, mode)?)
+}
+
+/// Exact decimal cardinality through ten candles, including domains larger
+/// than u128. This reporting API does not expand the dense sweep's u128
+/// arithmetic contract. The explicit bound prevents hostile unbounded work.
+pub fn count_domain_decimal(n: usize, mode: GeometryMode) -> Result<String> {
+    Ok(decimal_domain(n, mode)?.to_string())
+}
+
+/// Exact size of the legal complement of a set of distinct observed complete
+/// patterns. The caller establishes that its set has the requested n/mode;
+/// this function checks that its cardinality does not exceed the domain.
+pub fn count_domain_unobserved_decimal(
+    n: usize,
+    mode: GeometryMode,
+    observed: usize,
+) -> Result<String> {
+    let mut total = decimal_domain(n, mode)?;
+    total.subtract(&DecimalNatural::from_usize(observed))?;
+    Ok(total.to_string())
+}
+
+// Narrow arbitrary-precision natural arithmetic for exact domain reporting.
+// Base 10^9 makes output direct; only scaled addition and subtraction are
+// required. No approximate/logarithmic cardinality enters experiment receipts.
+#[derive(Clone, Default)]
+struct DecimalNatural {
+    limbs: Vec<u32>,
+}
+
+impl DecimalNatural {
+    const BASE: u64 = 1_000_000_000;
+
+    fn from_usize(mut value: usize) -> Self {
+        let mut limbs = Vec::new();
+        while value != 0 {
+            limbs.push((value % Self::BASE as usize) as u32);
+            value /= Self::BASE as usize;
+        }
+        Self { limbs }
+    }
+
+    fn add_multiple(&mut self, source: &Self, factor: u32) {
+        if factor == 0 || source.limbs.is_empty() {
+            return;
+        }
+        self.limbs
+            .resize(self.limbs.len().max(source.limbs.len()), 0);
+        let mut carry = 0u64;
+        for (i, &limb) in source.limbs.iter().enumerate() {
+            let value = self.limbs[i] as u64 + limb as u64 * factor as u64 + carry;
+            self.limbs[i] = (value % Self::BASE) as u32;
+            carry = value / Self::BASE;
+        }
+        let mut i = source.limbs.len();
+        while carry != 0 {
+            if i == self.limbs.len() {
+                self.limbs.push(0);
+            }
+            let value = self.limbs[i] as u64 + carry;
+            self.limbs[i] = (value % Self::BASE) as u32;
+            carry = value / Self::BASE;
+            i += 1;
+        }
+    }
+
+    fn subtract(&mut self, other: &Self) -> Result<()> {
+        let order = self
+            .limbs
+            .len()
+            .cmp(&other.limbs.len())
+            .then_with(|| self.limbs.iter().rev().cmp(other.limbs.iter().rev()));
+        if order == Ordering::Less {
+            return Err("observed geometry count exceeds legal domain".into());
+        }
+        let mut borrow = 0i64;
+        for (i, limb) in self.limbs.iter_mut().enumerate() {
+            let value = *limb as i64 - other.limbs.get(i).copied().unwrap_or(0) as i64 - borrow;
+            if value < 0 {
+                *limb = (value + Self::BASE as i64) as u32;
+                borrow = 1;
+            } else {
+                *limb = value as u32;
+                borrow = 0;
+            }
+        }
+        debug_assert_eq!(borrow, 0);
+        while self.limbs.last() == Some(&0) {
+            self.limbs.pop();
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for DecimalNatural {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.limbs.split_last() {
+            None => f.write_str("0"),
+            Some((last, remaining)) => {
+                write!(f, "{last}")?;
+                for limb in remaining.iter().rev() {
+                    write!(f, "{limb:09}")?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+fn decimal_domain(n: usize, mode: GeometryMode) -> Result<DecimalNatural> {
+    if n > GEOMETRY_KEY_MAX_BARS {
+        return Err("decimal geometry count supports at most ten candles".into());
+    }
+    let weights = mode.weights();
+    let mut counts = vec![DecimalNatural::from_usize(1)];
+    for _ in 0..n {
+        let mut next = vec![DecimalNatural::default(); counts.len() + 4];
+        for (r, count) in counts.iter().enumerate() {
+            if count.limbs.is_empty() {
+                continue;
+            }
+            for (k, &weight) in weights.iter().enumerate().skip(1) {
+                for j in 0..=r.min(k) {
+                    let levels = r + k - j;
+                    // Through ten candles, levels <= 40 and k <= 4. The
+                    // coefficient is small although accumulated counts are
+                    // arbitrary precision. Check the conversion explicitly.
+                    let coefficient = choose(levels, k)? * choose(k, j)? * weight;
+                    let factor = u32::try_from(coefficient)
+                        .map_err(|_| "decimal geometry merge coefficient exceeds u32")?;
+                    next[levels].add_multiple(count, factor);
+                }
+            }
+        }
+        counts = next;
+    }
+    let mut total = DecimalNatural::default();
+    for count in &counts {
+        total.add_multiple(count, 1);
+    }
+    Ok(total)
 }
 
 /// Exact counts indexed by the number of distinct global price levels.
@@ -930,6 +1247,14 @@ mod tests {
                 count_domain(n, GeometryMode::Oriented).unwrap(),
                 oriented.parse::<u128>().unwrap()
             );
+            assert_eq!(
+                count_domain_decimal(n, GeometryMode::Unoriented).unwrap(),
+                *unoriented
+            );
+            assert_eq!(
+                count_domain_decimal(n, GeometryMode::Oriented).unwrap(),
+                *oriented
+            );
         }
         for mode in [GeometryMode::Unoriented, GeometryMode::Oriented] {
             assert!(count_domain(10, mode).is_err());
@@ -942,6 +1267,53 @@ mod tests {
     }
 
     #[test]
+    fn decimal_ten_bar_domain_exceeds_u128_and_complement_is_exact() {
+        // Independently calculated by inclusion-exclusion: for m available
+        // levels, one candle has f(m)=C(m+3,4) unoriented shapes, or
+        // f(m)=2*C(m+3,4)-C(m+2,3) oriented shapes. Sum the surjection counts
+        // sum_{m=0..k} (-1)^(k-m)*C(k,m)*f(m)^n over k=0..4n.
+        for (mode, count, minus_453) in [
+            (
+                GeometryMode::Unoriented,
+                "60654091922379541904994268730790100840968",
+                "60654091922379541904994268730790100840515",
+            ),
+            (
+                GeometryMode::Oriented,
+                "44121589533882676853417959154810808313579452",
+                "44121589533882676853417959154810808313578999",
+            ),
+        ] {
+            assert_eq!(count_domain_decimal(10, mode).unwrap(), count);
+            assert!(count.parse::<u128>().is_err());
+            assert!(count_domain(10, mode).is_err());
+            assert_eq!(
+                count_domain_unobserved_decimal(10, mode, 453).unwrap(),
+                minus_453
+            );
+            assert_eq!(count_domain_unobserved_decimal(0, mode, 0).unwrap(), "1");
+            assert_eq!(count_domain_unobserved_decimal(0, mode, 1).unwrap(), "0");
+            assert!(count_domain_unobserved_decimal(0, mode, 2).is_err());
+            assert!(count_domain_decimal(11, mode).is_err());
+            assert!(count_domain_decimal(usize::MAX, mode).is_err());
+        }
+        assert_eq!(
+            count_domain_unobserved_decimal(2, GeometryMode::Unoriented, 2568).unwrap(),
+            "0"
+        );
+        assert!(count_domain_unobserved_decimal(2, GeometryMode::Unoriented, 2569).is_err());
+        let mut boundary = DecimalNatural::from_usize(1_000_000_000);
+        boundary.subtract(&DecimalNatural::from_usize(1)).unwrap();
+        assert_eq!(boundary.to_string(), "999999999");
+        let mut maximum = DecimalNatural::from_usize(usize::MAX);
+        assert_eq!(maximum.to_string(), usize::MAX.to_string());
+        maximum
+            .subtract(&DecimalNatural::from_usize(usize::MAX))
+            .unwrap();
+        assert_eq!(maximum.to_string(), "0");
+    }
+
+    #[test]
     fn complete_pair_catalogues_are_unique_realizable_and_round_trip() {
         for (mode, expected) in [
             (GeometryMode::Unoriented, 2568),
@@ -951,6 +1323,7 @@ mod tests {
             assert_eq!(patterns.len(), expected);
             let unique: HashSet<_> = patterns.iter().cloned().collect();
             assert_eq!(unique.len(), expected);
+            let mut keys = HashSet::new();
             for pattern in &patterns {
                 pattern.validate().unwrap();
                 assert_eq!(
@@ -961,7 +1334,20 @@ mod tests {
                     GeometryPattern::from_ohlc(&realize(pattern), mode).unwrap(),
                     *pattern
                 );
+                let key = GeometryKey::from_pattern(pattern).unwrap();
+                assert_eq!(key.to_pattern(), *pattern);
+                assert_eq!(key.to_string(), pattern.to_string());
+                assert_eq!(
+                    key.to_string().parse::<GeometryPattern>().unwrap(),
+                    *pattern
+                );
+                assert_eq!(GeometryKey::from_words(key.words()).unwrap(), key);
+                assert_eq!(key.mode(), mode);
+                assert_eq!(key.len(), 2);
+                assert!(!key.is_empty());
+                keys.insert(key);
             }
+            assert_eq!(keys.len(), expected);
             if mode == GeometryMode::Unoriented {
                 assert_eq!(
                     patterns
@@ -994,6 +1380,87 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn compact_ten_bar_keys_cover_word_edges_and_keep_width_and_mode() {
+        assert_eq!(std::mem::size_of::<GeometryKey>(), 32);
+        let mut distinct = HashSet::new();
+        for n in 0..=10 {
+            for mode in [GeometryMode::Unoriented, GeometryMode::Oriented] {
+                // Forty distinct ranks exercise 6-bit fields spanning both
+                // 64-bit word edges, the maximum rank 39, and direction bit 9.
+                let ranks: Vec<_> = (0..n)
+                    .map(|i| [4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3])
+                    .collect();
+                let directions = if mode == GeometryMode::Oriented {
+                    Some(
+                        (0..n)
+                            .map(|i| {
+                                if i % 2 == 0 {
+                                    BodyDirection::Down
+                                } else {
+                                    BodyDirection::Up
+                                }
+                            })
+                            .collect(),
+                    )
+                } else {
+                    None
+                };
+                let pattern = GeometryPattern::new(ranks, directions).unwrap();
+                let key = GeometryKey::from_pattern(&pattern).unwrap();
+                let mut encoder = GeometryEncoder::new(n, mode).unwrap();
+                assert_eq!(encoder.encode_key_ohlc(&realize(&pattern)).unwrap(), key);
+                assert_eq!(key.to_pattern(), pattern);
+                assert_eq!(key.to_string(), pattern.to_string());
+                assert_eq!(key.to_string().parse::<GeometryPattern>().unwrap(), pattern);
+                assert_eq!(key.len(), n);
+                assert_eq!(key.mode(), mode);
+                assert_eq!(GeometryKey::from_words(key.words()).unwrap(), key);
+                assert!(distinct.insert(key));
+
+                let flat = GeometryPattern::from_ohlc(&vec![[0.0; 4]; n], mode).unwrap();
+                let flat_key = GeometryKey::from_pattern(&flat).unwrap();
+                assert_eq!(flat_key.to_pattern(), flat);
+                assert_eq!(flat_key.to_string(), flat.to_string());
+                assert_eq!(GeometryKey::from_words(flat_key.words()).unwrap(), flat_key);
+            }
+        }
+        let long = GeometryPattern::from_ohlc(&[[0.0; 4]; 11], GeometryMode::Oriented).unwrap();
+        assert!(GeometryKey::from_pattern(&long).is_err());
+        assert!(GeometryEncoder::new(11, GeometryMode::Oriented)
+            .unwrap()
+            .encode_key_ohlc(&[[0.0; 4]; 11])
+            .is_err());
+    }
+
+    #[test]
+    fn compact_key_rejects_noncanonical_bits_ranks_and_directions() {
+        let flat = GeometryPattern::from_ohlc(&[[0.0; 4]], GeometryMode::Oriented).unwrap();
+        let flat_key = GeometryKey::from_pattern(&flat).unwrap();
+        for (word, bit) in [(0, 24), (2, 0), (3, 48), (3, 49), (3, 63)] {
+            let mut words = flat_key.words();
+            words[word] |= 1 << bit;
+            assert!(GeometryKey::from_words(words).is_err());
+        }
+        let mut too_wide = [0; 4];
+        too_wide[3] = 11 << 58;
+        assert!(GeometryKey::from_words(too_wide).is_err());
+        let mut nondense = flat_key.words();
+        nondense[0] = 2 << 18;
+        assert!(GeometryKey::from_words(nondense).is_err());
+        let mut unordered = flat_key.words();
+        unordered[0] = 1;
+        assert!(GeometryKey::from_words(unordered).is_err());
+        let mut out_of_bounds = flat_key.words();
+        out_of_bounds[0] = 4 << 18;
+        assert!(GeometryKey::from_words(out_of_bounds).is_err());
+        let unorient =
+            GeometryPattern::from_ohlc(&[[1.0, 3.0, 0.0, 2.0]], GeometryMode::Unoriented).unwrap();
+        let mut direction_in_unoriented = GeometryKey::from_pattern(&unorient).unwrap().words();
+        direction_in_unoriented[3] |= 1 << 48;
+        assert!(GeometryKey::from_words(direction_in_unoriented).is_err());
     }
 
     #[test]
@@ -1056,6 +1523,10 @@ mod tests {
             assert_eq!(
                 encoder.encode_ohlc(&rows).unwrap(),
                 &GeometryPattern::from_ohlc(&rows, mode).unwrap()
+            );
+            assert_eq!(
+                encoder.encode_key_ohlc(&rows).unwrap().to_pattern(),
+                GeometryPattern::from_ohlc(&rows, mode).unwrap()
             );
             assert_eq!(
                 pointers,
