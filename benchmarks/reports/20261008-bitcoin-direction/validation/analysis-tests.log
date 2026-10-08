@@ -1,0 +1,12 @@
+test_binary_flat_and_jeffreys (__main__.DirectionAnalysisTests.test_binary_flat_and_jeffreys) ... ok
+test_end_to_end_and_no_test_label_leakage (__main__.DirectionAnalysisTests.test_end_to_end_and_no_test_label_leakage) ... ok
+test_exact_counter_beyond_u128 (__main__.DirectionAnalysisTests.test_exact_counter_beyond_u128) ... ok
+test_geometry_equalities_and_direction (__main__.DirectionAnalysisTests.test_geometry_equalities_and_direction) ... ok
+test_holm_family (__main__.DirectionAnalysisTests.test_holm_family) ... ok
+test_paired_block_bootstrap_independent_and_deterministic (__main__.DirectionAnalysisTests.test_paired_block_bootstrap_independent_and_deterministic) ... ok
+test_roundoff_tie_break (__main__.DirectionAnalysisTests.test_roundoff_tie_break) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 4.711s
+
+OK

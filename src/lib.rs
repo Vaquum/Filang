@@ -56,3 +56,7 @@ pub mod geometry;
 pub mod geometry_run;
 
 pub mod geometry_cli;
+
+pub mod direction;
+
+pub mod direction_cli;

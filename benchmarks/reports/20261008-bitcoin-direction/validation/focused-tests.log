@@ -1,0 +1,79 @@
+   Compiling filang v0.10.0 (/Users/mikkokotila/dev/Filang-direction)
+    Finished test [unoptimized + debuginfo] target(s) in 11.65s
+     Running unittests src/lib.rs (target/debug/deps/filang-19427cdb08cb2e26)
+
+running 54 tests
+test data::tests::reject_gaps_and_bad_prices ... ok
+test backtest::tests::no_same_bar_return ... ok
+test data::tests::dates ... ok
+test dense_bank::tests::collision_checked_identity_preserves_counts_and_coordinates ... ok
+test dense_cells::tests::cells_do_not_allocate_by_grid_cardinality ... ok
+test backtest::execution_state::tests::node_join_and_split_identity ... ok
+test backtest::tests::cash_and_cash_funded_buy_hold ... ok
+test dense_run::tests::dense_domains_and_u128_are_exact ... ok
+test dense_io::tests::lock_checksum_and_uncommitted_staging ... ok
+test backtest::tests::full_path_family_matches_every_chronological_metric ... ok
+test engine::tests::future_append_and_batch_identity ... ok
+test engine::tests::prepared_bank_identity_and_backend_parity ... ok
+test engine::tests::warmup_and_invalid ... ok
+test family::tests::arbitrary_atom_programs_fuse_and_group_without_labels ... ok
+test engine::tests::rolling_oracle ... ok
+test backtest::tests::shared_cost_scenarios_match_independent_ledgers ... ok
+test family::tests::budget_and_context_are_not_optional ... ok
+test geometry::tests::canonical_order_retains_ties_and_all_degeneracies ... ok
+test geometry::tests::adjacent_pair_codes_do_not_replace_global_order ... ok
+test geometry::tests::compact_key_rejects_noncanonical_bits_ranks_and_directions ... ok
+test family_kernels::tests::multi_output_matches_reference_bits ... ok
+test geometry::tests::compact_ten_bar_keys_cover_word_edges_and_keep_width_and_mode ... ok
+test geometry::tests::cross_part_geometry_survives_same_body_and_range_relations ... ok
+test geometry::tests::complement_representative_search_is_bounded_and_deterministic ... ok
+test geometry::tests::decimal_ten_bar_domain_exceeds_u128_and_complement_is_exact ... ok
+test geometry::tests::empty_domain_and_single_bar_shapes_are_explicit ... ok
+test geometry::tests::monotone_price_maps_match_but_direction_can_distinguish ... ok
+test geometry::tests::reject_invalid_numeric_geometry_and_orientation ... ok
+test geometry::tests::reusable_encoder_preserves_storage_and_recovers_after_invalid_input ... ok
+test backtest::execution_state::tests::arbitrary_flips_splits_joins_scenarios_and_tails ... ok
+test geometry::tests::strict_parser_rejects_noncanonical_or_impossible_patterns ... ok
+test dense_tree::tests::all_two_slot_rules_masks_and_weighted_coverage ... ok
+test geometry::tests::exact_domain_counts_and_checked_overflow ... ok
+test geometry_run::tests::geometry_resource_and_boundary_rejections_are_explicit ... ok
+test backtest::tests::sweep_matches_direct_ties_costs_and_invalid ... ok
+test joint::tests::behavior_hash_is_only_an_index_and_fifo_is_bounded ... ok
+test kernels::tests::simd_matches_scalar_boundaries ... ok
+test lang::tests::types_and_roundtrip ... ok
+test packed::tests::packed_append_correlation_and_votes ... ok
+test geometry_run::tests::bitwise_qualifiers_match_scalar_at_word_edges_and_invalid_gaps ... ok
+test hash::chunk_tests::chunk_boundaries_match_one_shot ... ok
+test quantiles::tests::fenwick_matches_sorts_and_future_perturbation ... ok
+test regions::tests::trillion_constant_grid_is_resolved_without_enumeration ... ok
+test regions::tests::grids_ties_invalids_and_all_region_endpoints ... ok
+test report::tests::escaping ... ok
+test hash::tests::standard_vectors ... ok
+test geometry_run::tests::causal_prefix_complement_and_u128_memberships_reconstruct_scalar_masks ... ok
+test paged_anchors::tests::paged_anchors_equal_finite_catalog_without_global_seen_set ... ok
+test dense_run::tests::prepared_aliases_and_committed_task_replay ... ok
+test walk::tests::random_access_last_trillion_page_is_bounded_and_deterministic ... ok
+test geometry::tests::complete_pair_catalogues_are_unique_realizable_and_round_trip ... ok
+test dense_cells::tests::monotone_pushdown_matches_unsimplified_on_full_validity_ties_and_boundaries ... ok
+test dense_run::source_tests::generic_source_same_bank_and_preparation_coverage_are_explicit ... ok
+test dense_run::source_tests::generic_source_u128_nonfourhour_and_multworker_resume_match ... ok
+
+test result: ok. 54 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.96s
+
+     Running tests/direction_cli.rs (target/debug/deps/direction_cli-d766e136e1855096)
+
+running 3 tests
+test chronological_labels_counts_gaps_and_ten_bar_universes ... ok
+test strict_input_resource_and_argument_errors_are_explicit ... ok
+test worker_changes_resume_and_tamper_detection_preserve_exact_artifacts ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.93s
+
+     Running tests/geometry_count_ten.rs (target/debug/deps/geometry_count_ten-6badfecfeb49bcb8)
+
+running 2 tests
+test count_cli_rejects_unsupported_width_instead_of_truncating ... ok
+test count_cli_preserves_decimal_strings_and_supports_ten_bars ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+

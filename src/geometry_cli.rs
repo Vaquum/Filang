@@ -2,7 +2,9 @@
 use crate::{
     backtest::{Costs, Market, Rule},
     data::{self, Data},
-    geometry::{count_domain, GeometryEncoder, GeometryMode, GeometryPattern},
+    geometry::{
+        count_domain, count_domain_decimal, GeometryEncoder, GeometryMode, GeometryPattern,
+    },
     geometry_run::{self, Config},
     hash::sha256,
     kernels::Backend,
@@ -87,7 +89,7 @@ pub fn cli(command: &str, mut flags: HashMap<String, String>) -> Result<String> 
             Ok(format!(
                 "{{\"version\":1,\"bars\":{bars},\"mode\":{},\"complete_patterns\":{}}}",
                 quote(&mode.to_string()),
-                quote(&count_domain(bars, mode)?.to_string())
+                quote(&count_domain_decimal(bars, mode)?)
             ))
         }
         _ => Err("unknown geometry command".into()),

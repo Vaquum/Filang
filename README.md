@@ -2,9 +2,36 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.9, with complete qualitative bar-geometry sweeps.** Candle bodies and wicks have an exact canonical language, including missing wicks, doji, ties, opening gaps and global relationships across any number of bars. The geometry source plugs into the existing dense full-risk executor. It compiles observed patterns once and accounts for the entire unobserved complement with checked `u128` multiplicities. The default experiment covers **55,851,217,669,989,216 logical strategy addresses** without enumerating that many patterns or performing that many independent backtests. Broader factory requirements remain open in issue #1.
+**Status: runnable 0.10, with complete qualitative geometry and repeatable next-bar direction experiments.** Candle bodies and wicks have an exact canonical language, including missing wicks, doji, ties, opening gaps and global relationships. The native direction sweep maps two through ten candles, retains every observed pattern and label, and accounts exactly for the unobserved universe with arbitrary-precision counts. The existing dense full-risk geometry executor retains its checked `u128` strategy multiplicities. Broader factory requirements remain open in issue #1.
 
-## Current: qualitative bar geometry (0.9)
+## Current: Bitcoin next-bar direction (0.10)
+
+[The experiment protocol and guide](experiments/geometry_direction/README.md)
+define a pinned Vaquum BTCUSDT study at 15, 30, 60, 120 and 240 minutes,
+crossed with every consecutive window length from two through ten and both
+orientation modes. A grouped native sweep writes exact per-pattern direction
+counts and chronological events. It uses the shared geometry kernel and avoids
+materializing a pattern-by-timeline matrix.
+
+Training, validation selection and frozen test periods are explicit. The study
+compares geometry with unconditional and lag-one direction baselines, preserves
+missing bars, reports unseen-pattern support, and independently reconstructs
+every output. [The measured report](benchmarks/reports/20261008-bitcoin-direction/README.md)
+contains outcomes, uncertainty, throughput and verification receipts.
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-direction.txt
+.venv/bin/python scripts/run_direction_experiment.py \
+  --out runs/geometry-direction-v1 --workers 10
+```
+
+The runner builds pinned Rust 1.63, downloads immutable checked source snapshots,
+maps all 90 configurations, selects on validation, and runs the independent audit.
+Use `--stage prepare|map|analyze|verify` to run a stage explicitly. The native
+`geometry-direction-sweep` also exposes a strict standalone CLI and sealed resume.
+
+## Earlier: qualitative bar geometry (0.9)
 
 [The complete technical reference](docs/BAR_GEOMETRY.md) defines the atoms,
 canonical format, completeness boundary, exact counts, sweep domain, memory
