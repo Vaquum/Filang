@@ -2,9 +2,40 @@
 
 A parametric financial-program language and factorized feature-discovery engine.
 
-**Status: runnable 0.10, with complete qualitative geometry and repeatable next-bar direction experiments.** Candle bodies and wicks have an exact canonical language, including missing wicks, doji, ties, opening gaps and global relationships. The native direction sweep maps two through ten candles, retains every observed pattern and label, and accounts exactly for the unobserved universe with arbitrary-precision counts. The existing dense full-risk geometry executor retains its checked `u128` strategy multiplicities. Broader factory requirements remain open in issue #1.
+**Status: runnable 0.10, with complete qualitative geometry and a completed, independently audited three-family research campaign.** Candle bodies and wicks have an exact canonical language, including missing wicks, doji, ties, opening gaps and global relationships. The native direction sweep maps two through ten candles, retains every observed pattern and label, and accounts exactly for the unobserved universe with arbitrary-precision counts. The existing dense full-risk geometry executor retains its checked `u128` strategy multiplicities. Broader factory requirements remain open in issue #1.
 
-## Current: Bitcoin next-bar direction (0.10)
+## Current: completed Bitcoin geometry research campaign
+
+The [finite campaign](experiments/geometry_information/CAMPAIGN.md) has completed
+its three hypothesis families on the five pinned Vaquum BTCUSDT timeframes.
+The result separates information from tested tradeability: additive geometry
+improved the frozen directional log-loss criterion at 30m only, while neither
+economic round established the specified incremental long/cash edge after costs.
+All evaluations remain retrospective because these snapshots and preceding
+results had already been inspected.
+
+| Attempt | Audited result | Complete evidence |
+|---|---|---|
+| R1 | Inconclusive: the original optimizer reached its frozen limit before outer prediction or account replay | [Preserved failure](benchmarks/reports/20261008-geometry-information-r1-failed/README.md) |
+| R1a | Information criterion supported at 30m only; all five pooled fixed-policy geometry accounts lost at primary and reduced costs | [Report](benchmarks/reports/20261008-geometry-information-r1a/README.md) |
+| R2 | Economic criterion not-supported at all five timeframes; positive returns did not establish incremental geometry or sufficient activity | [Report](benchmarks/reports/20261008-geometry-payoff-r2/README.md) |
+| R3 | Fixed 225-column interaction extension not-supported at all five timeframes; no consistent net advantage over freshly fitted additive geometry and cash | [Report](benchmarks/reports/20261008-geometry-interactions-r3/README.md) |
+
+[R3's protocol and replay guide](experiments/geometry_information/ROUND3.md),
+[frozen specification](experiments/geometry_information/round3_protocol.json)
+and [PR #27](https://github.com/mikkokotila/Filang/pull/27) define the final test.
+It retains all 680 fits, 60 policy selections, 820 ledgers, the exact interaction
+catalogue, and independently checked integer bootstrap tail decisions. At 15m
+and 30m the interaction and additive policies have the same primary net results;
+the 120m advantage is almost entirely lower turnover, and the 240m extension
+loses relative to its additive baseline. No timeframe passes every frozen gate.
+
+The campaign budget is exhausted. Its complete outcomes and original failure
+remain reproducible; no robust live trading edge is claimed. The existing
+qualitative language and native sweeps below remain available for explicitly
+specified research.
+
+## Earlier: Bitcoin next-bar direction (0.10)
 
 [The experiment protocol and guide](experiments/geometry_direction/README.md)
 define a pinned Vaquum BTCUSDT study at 15, 30, 60, 120 and 240 minutes,

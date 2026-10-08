@@ -1,0 +1,26 @@
+{"features_verified": 15, "records": 237005, "interaction_columns": 225}
+{"features_verified": 30, "records": 118432, "interaction_columns": 225}
+{"features_verified": 60, "records": 59150, "interaction_columns": 225}
+{"features_verified": 120, "records": 29572, "interaction_columns": 225}
+{"features_verified": 240, "records": 14813, "interaction_columns": 225}
+{"verified_minutes": 15, "verified_year": 2023, "candidate_fits": 32, "ledger_replays": 41}
+{"verified_minutes": 15, "verified_year": 2024, "candidate_fits": 64, "ledger_replays": 82}
+{"verified_minutes": 15, "verified_year": 2025, "candidate_fits": 96, "ledger_replays": 123}
+{"verified_minutes": 15, "verified_year": 2026, "candidate_fits": 128, "ledger_replays": 164}
+{"verified_minutes": 30, "verified_year": 2023, "candidate_fits": 32, "ledger_replays": 41}
+{"verified_minutes": 30, "verified_year": 2024, "candidate_fits": 64, "ledger_replays": 82}
+{"verified_minutes": 30, "verified_year": 2025, "candidate_fits": 96, "ledger_replays": 123}
+{"verified_minutes": 30, "verified_year": 2026, "candidate_fits": 128, "ledger_replays": 164}
+{"verified_minutes": 60, "verified_year": 2023, "candidate_fits": 32, "ledger_replays": 41}
+{"verified_minutes": 60, "verified_year": 2024, "candidate_fits": 64, "ledger_replays": 82}
+{"verified_minutes": 60, "verified_year": 2025, "candidate_fits": 96, "ledger_replays": 123}
+{"verified_minutes": 60, "verified_year": 2026, "candidate_fits": 128, "ledger_replays": 164}
+{"verified_minutes": 120, "verified_year": 2023, "candidate_fits": 32, "ledger_replays": 41}
+{"verified_minutes": 120, "verified_year": 2024, "candidate_fits": 64, "ledger_replays": 82}
+{"verified_minutes": 120, "verified_year": 2025, "candidate_fits": 96, "ledger_replays": 123}
+{"verified_minutes": 120, "verified_year": 2026, "candidate_fits": 128, "ledger_replays": 164}
+{"verified_minutes": 240, "verified_year": 2023, "candidate_fits": 32, "ledger_replays": 41}
+{"verified_minutes": 240, "verified_year": 2024, "candidate_fits": 64, "ledger_replays": 82}
+{"verified_minutes": 240, "verified_year": 2025, "candidate_fits": 96, "ledger_replays": 123}
+{"verified_minutes": 240, "verified_year": 2026, "candidate_fits": 128, "ledger_replays": 164}
+{"status": "PASS", "stage": "full", "receipt": "/Users/mikkokotila/dev/Filang-research/runs/geometry-interactions-r3/verification.json"}

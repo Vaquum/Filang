@@ -1,0 +1,442 @@
+{
+  "adapter_sha256": "cfadffe8f1c286900899b034a8abf8a2f3c5a8d079affad55fa536031cbb6b83",
+  "protocol_sha256": "065b1f3c31908537cc8b274cff4699b90852381bc54f2c39ab039776ca7fb7bf",
+  "sources": [
+    {
+      "csv": "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction/15m/ohlcv.csv",
+      "csv_bytes": 13358698,
+      "csv_sha256": "0e361a9d8773578b54453affc313fe9504b6e367a666001bb168383b700e2e3c",
+      "expected_grid_rows": 237312,
+      "feature_columns": [
+        "open",
+        "high",
+        "low",
+        "close"
+      ],
+      "first_open": 1577836800,
+      "gaps": [
+        {
+          "missing_grid_bars": 4,
+          "next_open": 1581217200,
+          "previous_open": 1581212700
+        },
+        {
+          "missing_grid_bars": 23,
+          "next_open": 1582133400,
+          "previous_open": 1582111800
+        },
+        {
+          "missing_grid_bars": 8,
+          "next_open": 1583321400,
+          "previous_open": 1583313300
+        },
+        {
+          "missing_grid_bars": 10,
+          "next_open": 1587789000,
+          "previous_open": 1587779100
+        },
+        {
+          "missing_grid_bars": 14,
+          "next_open": 1593322200,
+          "previous_open": 1593308700
+        },
+        {
+          "missing_grid_bars": 4,
+          "next_open": 1606719600,
+          "previous_open": 1606715100
+        },
+        {
+          "missing_grid_bars": 16,
+          "next_open": 1608573600,
+          "previous_open": 1608558300
+        },
+        {
+          "missing_grid_bars": 4,
+          "next_open": 1608865200,
+          "previous_open": 1608860700
+        },
+        {
+          "missing_grid_bars": 10,
+          "next_open": 1613019600,
+          "previous_open": 1613009700
+        },
+        {
+          "missing_grid_bars": 6,
+          "next_open": 1615001400,
+          "previous_open": 1614995100
+        },
+        {
+          "missing_grid_bars": 10,
+          "next_open": 1618893000,
+          "previous_open": 1618883100
+        },
+        {
+          "missing_grid_bars": 18,
+          "next_open": 1619340300,
+          "previous_open": 1619323200
+        },
+        {
+          "missing_grid_bars": 18,
+          "next_open": 1628836200,
+          "previous_open": 1628819100
+        },
+        {
+          "missing_grid_bars": 8,
+          "next_open": 1632906000,
+          "previous_open": 1632897900
+        },
+        {
+          "missing_grid_bars": 10,
+          "next_open": 1679666400,
+          "previous_open": 1679656500
+        }
+      ],
+      "interval_seconds": 900,
+      "last_open": 1791416700,
+      "minutes": 15,
+      "missing_grid_bars": 163,
+      "polars_version": "1.42.1",
+      "policy": "Real rows retained; gaps remain explicit and invalidate crossing feature/target windows.",
+      "resolved_url": "https://huggingface.co/datasets/vaquum/binance_btcusdt_15m_klines/resolve/46344429039d7b268dfadcb20bee2435cfb6cdd5/btcusdt_15m_kline_20200101_to_20261007.parquet",
+      "rows": 237149,
+      "source": {
+        "expected_source_bytes": 21239943,
+        "expected_source_rows": 237149,
+        "filename": "btcusdt_15m_kline_20200101_to_20261007.parquet",
+        "minutes": 15,
+        "repo": "vaquum/binance_btcusdt_15m_klines",
+        "revision": "46344429039d7b268dfadcb20bee2435cfb6cdd5",
+        "sha256": "e3b2a6521596ffe661cd21c71a311934913170c4b597dc5e7e582c881c49c6be"
+      },
+      "source_sha256": "e3b2a6521596ffe661cd21c71a311934913170c4b597dc5e7e582c881c49c6be"
+    },
+    {
+      "csv": "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction/30m/ohlcv.csv",
+      "csv_bytes": 6711321,
+      "csv_sha256": "65da774e7ecbe88156e1a0daf029d69b85bd6ec17013f46025f8d313b53e83b5",
+      "expected_grid_rows": 118656,
+      "feature_columns": [
+        "open",
+        "high",
+        "low",
+        "close"
+      ],
+      "first_open": 1577836800,
+      "gaps": [
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1581217200,
+          "previous_open": 1581211800
+        },
+        {
+          "missing_grid_bars": 11,
+          "next_open": 1582133400,
+          "previous_open": 1582111800
+        },
+        {
+          "missing_grid_bars": 4,
+          "next_open": 1583321400,
+          "previous_open": 1583312400
+        },
+        {
+          "missing_grid_bars": 5,
+          "next_open": 1587789000,
+          "previous_open": 1587778200
+        },
+        {
+          "missing_grid_bars": 7,
+          "next_open": 1593322200,
+          "previous_open": 1593307800
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1606719600,
+          "previous_open": 1606714200
+        },
+        {
+          "missing_grid_bars": 8,
+          "next_open": 1608573600,
+          "previous_open": 1608557400
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1608865200,
+          "previous_open": 1608859800
+        },
+        {
+          "missing_grid_bars": 5,
+          "next_open": 1613019600,
+          "previous_open": 1613008800
+        },
+        {
+          "missing_grid_bars": 3,
+          "next_open": 1615001400,
+          "previous_open": 1614994200
+        },
+        {
+          "missing_grid_bars": 5,
+          "next_open": 1618893000,
+          "previous_open": 1618882200
+        },
+        {
+          "missing_grid_bars": 8,
+          "next_open": 1619339400,
+          "previous_open": 1619323200
+        },
+        {
+          "missing_grid_bars": 9,
+          "next_open": 1628836200,
+          "previous_open": 1628818200
+        },
+        {
+          "missing_grid_bars": 4,
+          "next_open": 1632906000,
+          "previous_open": 1632897000
+        },
+        {
+          "missing_grid_bars": 5,
+          "next_open": 1679666400,
+          "previous_open": 1679655600
+        }
+      ],
+      "interval_seconds": 1800,
+      "last_open": 1791415800,
+      "minutes": 30,
+      "missing_grid_bars": 80,
+      "polars_version": "1.42.1",
+      "policy": "Real rows retained; gaps remain explicit and invalidate crossing feature/target windows.",
+      "resolved_url": "https://huggingface.co/datasets/vaquum/binance_btcusdt_30m_klines/resolve/9ebf9f0f26c13e2e34a5a2808082d73127f142e5/btcusdt_30m_kline_20200101_to_20261007.parquet",
+      "rows": 118576,
+      "source": {
+        "expected_source_bytes": 10750427,
+        "expected_source_rows": 118576,
+        "filename": "btcusdt_30m_kline_20200101_to_20261007.parquet",
+        "minutes": 30,
+        "repo": "vaquum/binance_btcusdt_30m_klines",
+        "revision": "9ebf9f0f26c13e2e34a5a2808082d73127f142e5",
+        "sha256": "41302c042e9048359d2595c6b2424482097097a3d49c91ea5af2ca7975482df8"
+      },
+      "source_sha256": "41302c042e9048359d2595c6b2424482097097a3d49c91ea5af2ca7975482df8"
+    },
+    {
+      "csv": "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction/60m/ohlcv.csv",
+      "csv_bytes": 3373735,
+      "csv_sha256": "3fb0d11cc8d60b3d47d63a69398c4bbdeb79d7d79ae510fd669335746a4c21a9",
+      "expected_grid_rows": 59328,
+      "feature_columns": [
+        "open",
+        "high",
+        "low",
+        "close"
+      ],
+      "first_open": 1577836800,
+      "gaps": [
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1581217200,
+          "previous_open": 1581210000
+        },
+        {
+          "missing_grid_bars": 5,
+          "next_open": 1582131600,
+          "previous_open": 1582110000
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1583319600,
+          "previous_open": 1583312400
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1587787200,
+          "previous_open": 1587776400
+        },
+        {
+          "missing_grid_bars": 3,
+          "next_open": 1593320400,
+          "previous_open": 1593306000
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1606719600,
+          "previous_open": 1606712400
+        },
+        {
+          "missing_grid_bars": 4,
+          "next_open": 1608573600,
+          "previous_open": 1608555600
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1608865200,
+          "previous_open": 1608858000
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1613019600,
+          "previous_open": 1613008800
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1614999600,
+          "previous_open": 1614992400
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1618891200,
+          "previous_open": 1618880400
+        },
+        {
+          "missing_grid_bars": 3,
+          "next_open": 1619337600,
+          "previous_open": 1619323200
+        },
+        {
+          "missing_grid_bars": 4,
+          "next_open": 1628834400,
+          "previous_open": 1628816400
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1632906000,
+          "previous_open": 1632895200
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1679666400,
+          "previous_open": 1679655600
+        }
+      ],
+      "interval_seconds": 3600,
+      "last_open": 1791414000,
+      "minutes": 60,
+      "missing_grid_bars": 34,
+      "polars_version": "1.42.1",
+      "policy": "Real rows retained; gaps remain explicit and invalidate crossing feature/target windows.",
+      "resolved_url": "https://huggingface.co/datasets/vaquum/binance_btcusdt_1h_klines/resolve/0e32b55575e24c0748aad7cb9140caf0fb04913c/btcusdt_1h_kline_20200101_to_20261007.parquet",
+      "rows": 59294,
+      "source": {
+        "expected_source_bytes": 5397332,
+        "expected_source_rows": 59294,
+        "filename": "btcusdt_1h_kline_20200101_to_20261007.parquet",
+        "minutes": 60,
+        "repo": "vaquum/binance_btcusdt_1h_klines",
+        "revision": "0e32b55575e24c0748aad7cb9140caf0fb04913c",
+        "sha256": "2885f7b4c1d0b1bd0e08fa4f20145eae93160f2eee5ba04fb4dad34e3c85b883"
+      },
+      "source_sha256": "2885f7b4c1d0b1bd0e08fa4f20145eae93160f2eee5ba04fb4dad34e3c85b883"
+    },
+    {
+      "csv": "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction/120m/ohlcv.csv",
+      "csv_bytes": 1695124,
+      "csv_sha256": "f8230b440abc10c1fa9e4b41e440796f457df328ebd5947d8b64811918c79d4b",
+      "expected_grid_rows": 29664,
+      "feature_columns": [
+        "open",
+        "high",
+        "low",
+        "close"
+      ],
+      "first_open": 1577836800,
+      "gaps": [
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1582128000,
+          "previous_open": 1582106400
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1587787200,
+          "previous_open": 1587772800
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1593316800,
+          "previous_open": 1593302400
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1608573600,
+          "previous_open": 1608552000
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1618891200,
+          "previous_open": 1618876800
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1619337600,
+          "previous_open": 1619323200
+        },
+        {
+          "missing_grid_bars": 2,
+          "next_open": 1628834400,
+          "previous_open": 1628812800
+        },
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1679666400,
+          "previous_open": 1679652000
+        }
+      ],
+      "interval_seconds": 7200,
+      "last_open": 1791410400,
+      "minutes": 120,
+      "missing_grid_bars": 11,
+      "polars_version": "1.42.1",
+      "policy": "Real rows retained; gaps remain explicit and invalidate crossing feature/target windows.",
+      "resolved_url": "https://huggingface.co/datasets/vaquum/binance_btcusdt_2h_klines/resolve/cffd0d94bf33bcd4455d1846f13dbf3a9854b11f/btcusdt_2h_kline_20200101_to_20261007.parquet",
+      "rows": 29653,
+      "source": {
+        "expected_source_bytes": 2719852,
+        "expected_source_rows": 29653,
+        "filename": "btcusdt_2h_kline_20200101_to_20261007.parquet",
+        "minutes": 120,
+        "repo": "vaquum/binance_btcusdt_2h_klines",
+        "revision": "cffd0d94bf33bcd4455d1846f13dbf3a9854b11f",
+        "sha256": "564ec4bfc5effc13da47b57fe5dac71fa7d625386946aa115b0783c6ee18a917"
+      },
+      "source_sha256": "564ec4bfc5effc13da47b57fe5dac71fa7d625386946aa115b0783c6ee18a917"
+    },
+    {
+      "csv": "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction/240m/ohlcv.csv",
+      "csv_bytes": 851436,
+      "csv_sha256": "569880fbd855a4eeba310dcf096f6b14695fca5f99e7793fb534754d336d8857",
+      "expected_grid_rows": 14832,
+      "feature_columns": [
+        "open",
+        "high",
+        "low",
+        "close"
+      ],
+      "first_open": 1577836800,
+      "gaps": [
+        {
+          "missing_grid_bars": 1,
+          "next_open": 1582128000,
+          "previous_open": 1582099200
+        }
+      ],
+      "interval_seconds": 14400,
+      "last_open": 1791403200,
+      "minutes": 240,
+      "missing_grid_bars": 1,
+      "polars_version": "1.42.1",
+      "policy": "Real rows retained; gaps remain explicit and invalidate crossing feature/target windows.",
+      "resolved_url": "https://huggingface.co/datasets/vaquum/binance_btcusdt_4h_klines/resolve/45183e45055b759ad803547e9fdb124033fdabfb/btcusdt_4h_kline_20200101_to_20261007.parquet",
+      "rows": 14831,
+      "source": {
+        "expected_source_bytes": 1423274,
+        "expected_source_rows": 14831,
+        "filename": "btcusdt_4h_kline_20200101_to_20261007.parquet",
+        "minutes": 240,
+        "repo": "vaquum/binance_btcusdt_4h_klines",
+        "revision": "45183e45055b759ad803547e9fdb124033fdabfb",
+        "sha256": "e0b5256141b88d1d3a73d2f243c2ccb3b9fcb2d633c93cee9a2a687c60f6c08e"
+      },
+      "source_sha256": "e0b5256141b88d1d3a73d2f243c2ccb3b9fcb2d633c93cee9a2a687c60f6c08e"
+    }
+  ],
+  "version": 1
+}
