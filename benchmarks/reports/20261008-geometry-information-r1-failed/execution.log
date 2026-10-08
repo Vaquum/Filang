@@ -1,0 +1,9 @@
+/Users/mikkokotila/dev/Filang-research/.venv/lib/python3.13/site-packages/numpy/__config__.py:155: UserWarning: Install `pyyaml` for better output
+  warnings.warn("Install `pyyaml` for better output", stacklevel=1)
+Traceback (most recent call last):
+  File "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/run_round1.py", line 468, in <module>
+    main()
+    ~~~~^^
+  File "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/run_round1.py", line 414, in main
+    raise RuntimeError("required timeframe fit/analysis failed; failures and incomplete fit coverage retained")
+RuntimeError: required timeframe fit/analysis failed; failures and incomplete fit coverage retained

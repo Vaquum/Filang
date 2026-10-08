@@ -34,3 +34,11 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/filang-direction-verify"
           "$RUNNER_TEMP/filang-direction-verify/bin/python" -m pip install -r requirements-verify.txt
           "$RUNNER_TEMP/filang-direction-verify/bin/python" scripts/test_direction_analysis.py
+      - name: Geometry information experiment and causal ledger
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          VECLIB_MAXIMUM_THREADS: "1"
+        run: |
+          "$RUNNER_TEMP/filang-direction-verify/bin/python" -m pip install -r requirements-information.txt
+          "$RUNNER_TEMP/filang-direction-verify/bin/python" -m unittest discover -s experiments/geometry_information/tests -v

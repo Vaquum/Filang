@@ -104,24 +104,24 @@ impl Config {
     }
 }
 
-/// Private input type: unlike the backtest Data contract, this reader retains
+/// Shared input type: unlike the backtest Data contract, this reader retains
 /// explicit missing bars. A consecutive-run counter makes gap validation O(1).
-struct DirectionData {
-    timestamps: Vec<i64>,
-    columns: [Vec<f64>; 4],
-    consecutive: Vec<u32>,
-    digest: String,
-    source_bytes: u64,
-    gap_count: u64,
-    missing_grid_bars: u64,
+pub(crate) struct DirectionData {
+    pub(crate) timestamps: Vec<i64>,
+    pub(crate) columns: [Vec<f64>; 4],
+    pub(crate) consecutive: Vec<u32>,
+    pub(crate) digest: String,
+    pub(crate) source_bytes: u64,
+    pub(crate) gap_count: u64,
+    pub(crate) missing_grid_bars: u64,
 }
 
 impl DirectionData {
-    fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.timestamps.len()
     }
 
-    fn index(&self, timestamp: i64) -> usize {
+    pub(crate) fn index(&self, timestamp: i64) -> usize {
         self.timestamps.partition_point(|v| *v < timestamp)
     }
 
@@ -156,7 +156,15 @@ impl DirectionData {
         Ok(())
     }
 
-    fn read(path: &Path, config: &Config) -> Result<Self> {
+    pub(crate) fn read(
+        path: &Path,
+        interval_seconds: i64,
+        max_rows: usize,
+        memory_bytes: usize,
+    ) -> Result<Self> {
+        if interval_seconds <= 0 || max_rows == 0 || max_rows > u32::MAX as usize {
+            return Err("invalid direction input interval or row bound".into());
+        }
         let file = File::open(path).map_err(|e| format!("read {}: {e}", path.display()))?;
         let mut reader = BufReader::with_capacity(BUFFER_BYTES, file);
         let mut line = String::with_capacity(256);
@@ -203,7 +211,7 @@ impl DirectionData {
                 .ok_or("direction missing timestamp")?
                 .parse::<i64>()
                 .map_err(|_| format!("invalid timestamp line {line_number}"))?;
-            if timestamp.rem_euclid(config.interval_seconds) != 0 {
+            if timestamp.rem_euclid(interval_seconds) != 0 {
                 return Err(format!("off-grid timestamp line {line_number}"));
             }
             let mut values = [0.0f64; 5];
@@ -235,7 +243,7 @@ impl DirectionData {
                         "duplicate/out-of-order timestamp line {line_number}"
                     ));
                 }
-                if delta == config.interval_seconds {
+                if delta == interval_seconds {
                     out.consecutive
                         .last()
                         .copied()
@@ -246,22 +254,22 @@ impl DirectionData {
                     out.gap_count += 1;
                     out.missing_grid_bars = out
                         .missing_grid_bars
-                        .checked_add((delta / config.interval_seconds - 1) as u64)
+                        .checked_add((delta / interval_seconds - 1) as u64)
                         .ok_or("direction missing grid count overflow")?;
                     1
                 }
             } else {
                 1
             };
-            out.reserve_row(config.max_rows, config.memory_mib * MIB)?;
+            out.reserve_row(max_rows, memory_bytes)?;
             out.timestamps.push(timestamp);
             out.consecutive.push(run);
             for (column, value) in out.columns.iter_mut().zip(values) {
                 column.push(value);
             }
         }
-        if out.len() < 4 {
-            return Err("direction experiment requires at least four bars".into());
+        if out.len() == 0 {
+            return Err("direction input contains no bars".into());
         }
         out.digest = digest.finish();
         out.source_bytes = bytes;
@@ -664,7 +672,15 @@ pub fn run(mut config: Config) -> Result<String> {
         .to_str()
         .ok_or("direction input path must be UTF-8")?
         .to_owned();
-    let data = DirectionData::read(Path::new(&data_path), &config)?;
+    let data = DirectionData::read(
+        Path::new(&data_path),
+        config.interval_seconds,
+        config.max_rows,
+        config.memory_mib * MIB,
+    )?;
+    if data.len() < 4 {
+        return Err("direction experiment requires at least four bars".into());
+    }
     let first = data.index(bounds[0]);
     let end = data.index(bounds[3]);
     if first == end || end - first <= *config.bars.last().unwrap() {

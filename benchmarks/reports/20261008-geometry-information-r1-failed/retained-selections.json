@@ -1,0 +1,67 @@
+[
+  {
+    "family": "B",
+    "inner_fit_id": "f60b28bf6a10f8454e94818e8307179a3e04d0b34752a88709e11f3d596db88b",
+    "inner_model_path": "15m/2023/B/candidates/n10-l0.1.json",
+    "lambda": 0.1,
+    "minutes": 15,
+    "n": 10,
+    "outer_year": 2023,
+    "refit_fit_id": "dc88d3500bb2aaa64393539b7fa107aca9296b2eed6f0c347556d1ec8e837be4",
+    "refit_model_path": "15m/2023/B/refit.json",
+    "validation_minimum_loss": 0.691123613717332,
+    "validation_selected_loss": 0.691123613717332
+  },
+  {
+    "family": "B",
+    "inner_fit_id": "76a34d8186a9d0ea6cc5790b220b3202129d3fa2781cfbdcf5c7922c0b89f9e5",
+    "inner_model_path": "30m/2023/B/candidates/n10-l0.001.json",
+    "lambda": 0.001,
+    "minutes": 30,
+    "n": 10,
+    "outer_year": 2023,
+    "refit_fit_id": "ddf08afafda41ffaff33b83494bf8a33e763249063adfac38fbe8a63cdeef03d",
+    "refit_model_path": "30m/2023/B/refit.json",
+    "validation_minimum_loss": 0.6895448964485364,
+    "validation_selected_loss": 0.6895448964485364
+  },
+  {
+    "family": "B",
+    "inner_fit_id": "972264afb69f3ff5e97445cd1c22c4df8d4882b02621d23c977e92381913a543",
+    "inner_model_path": "60m/2023/B/candidates/n05-l0.0001.json",
+    "lambda": 0.0001,
+    "minutes": 60,
+    "n": 5,
+    "outer_year": 2023,
+    "refit_fit_id": "e4e2c014e523295fe67f7f0ed387e04af6698b44c7a7b436b94e51fcfa7d9885",
+    "refit_model_path": "60m/2023/B/refit.json",
+    "validation_minimum_loss": 0.6881034801619523,
+    "validation_selected_loss": 0.6881034801619523
+  },
+  {
+    "family": "B",
+    "inner_fit_id": "11450af8f954e48cb835f388431b7f7a4549842eb79be1de048fc6296ec6c157",
+    "inner_model_path": "120m/2023/B/candidates/n10-l0.01.json",
+    "lambda": 0.01,
+    "minutes": 120,
+    "n": 10,
+    "outer_year": 2023,
+    "refit_fit_id": "571dc081bcdb823998ff5dd693f9d399bf41040e62ed34aba558e5584c5be4af",
+    "refit_model_path": "120m/2023/B/refit.json",
+    "validation_minimum_loss": 0.689646391027489,
+    "validation_selected_loss": 0.689646391027489
+  },
+  {
+    "family": "B",
+    "inner_fit_id": "d3f9b18e4b3ccfc617b849e68ec4bcd5505ec5ac16494ec02eb7da84b9b4015a",
+    "inner_model_path": "240m/2023/B/candidates/n10-l0.1.json",
+    "lambda": 0.1,
+    "minutes": 240,
+    "n": 10,
+    "outer_year": 2023,
+    "refit_fit_id": "7c1e9f339ab44060f1a2542304d28430714789785de47c564c1151e3e1477615",
+    "refit_model_path": "240m/2023/B/refit.json",
+    "validation_minimum_loss": 0.6924662883676075,
+    "validation_selected_loss": 0.6924662883676075
+  }
+]
