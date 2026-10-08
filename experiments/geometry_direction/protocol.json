@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "experiment_id": "btc-next-bar-geometry-v1",
+  "question": "Do complete qualitative candle body/wick configurations predict the immediately subsequent Bitcoin bar direction beyond unconditional frequency and lag-one direction autocorrelation?",
+  "history_start": "2020-01-01",
+  "validation_start": "2024-01-01",
+  "test_start": "2025-01-01",
+  "end": "2026-10-08",
+  "timeframes_minutes": [15, 30, 60, 120, 240],
+  "bars": [2, 3, 4, 5, 6, 7, 8, 9, 10],
+  "modes": ["oriented", "unoriented"],
+  "targets": {
+    "cc": "sign(close[t+1] - close[t]); primary",
+    "body": "sign(close[t+1] - open[t+1]); secondary"
+  },
+  "horizon_bars": 1,
+  "window": "Contiguous candles t,t-1,...,t-n+1, ordered current-first; all endpoint relations retained.",
+  "feature_scope": "Only candle body and wick endpoints, plus optional body direction. Volume and all other source columns are excluded from features.",
+  "time_policy": "UTC candle opening timestamps; features available at t+interval; target available at t+2*interval. Current and target candles must be in the same split. No boundary-crossing training labels.",
+  "missing_policy": "Retain real source rows; reject duplicate, unordered or off-grid timestamps; skip every feature window and target crossing a missing grid bar. Never forward-fill or compress gaps.",
+  "flat_policy": "Keep down/flat/up counts for every pattern and split. Exclude exactly flat targets from binary probability scores and report their counts.",
+  "unobserved_policy": "Represent the complement of all observed canonical patterns with its exact arbitrary-precision size and zero empirical observations. Predict the fitted unconditional probability for an unseen pattern; no pattern-specific evidence is claimed.",
+  "analysis": {
+    "alpha_grid": [1, 10, 100, 1000],
+    "selection_metric": "binary_log_loss",
+    "primary_target": "cc",
+    "support_thresholds": [1, 5, 20, 100],
+    "geometry_estimator": "(pattern_up + alpha * unconditional_probability) / (pattern_up + pattern_down + alpha)",
+    "unconditional_estimator": "Jeffreys-smoothed binary frequency: (up + 0.5)/(up + down + 1)",
+    "selection": "Choose alpha per n/mode on validation log loss; choose one n/mode/alpha per timeframe and target on validation log loss, with deterministic ties. Refit chosen counts on train plus validation, then freeze for the entire test.",
+    "comparison_timeline": "Use the common valid n=10 decision timestamps within each timeframe for every candidate's validation and test scores. Keep all eligible training observations per geometry. Fit shared baseline and unconditional-prior probabilities from every eligible n=2 fitting observation.",
+    "baselines": ["unconditional", "learned_lag1_close_direction", "learned_current_body_direction", "momentum_accuracy", "reversal_accuracy"],
+    "primary_comparator": "learned_lag1_close_direction for cc; learned_current_body_direction for secondary body target",
+    "metrics": ["binary_log_loss", "brier", "accuracy", "balanced_accuracy", "training_support_coverage"],
+    "bootstrap": {
+      "unit": "UTC_day",
+      "block_days": [7, 1, 28],
+      "replicates": 2000,
+      "seed": 20261008
+    },
+    "multiplicity": "Holm correction across the five validation-selected primary cc tests. All-candidate test tables are descriptive. Secondary body tests are a separate exploratory family.",
+    "interpretation": "Retrospective classification experiment. Test is held out from this experiment's fitting and selection; some historical data were examined in earlier Filang work. No profitability inference from direction accuracy."
+  },
+  "sources": [
+    {"minutes": 15, "repo": "vaquum/binance_btcusdt_15m_klines", "revision": "46344429039d7b268dfadcb20bee2435cfb6cdd5", "filename": "btcusdt_15m_kline_20200101_to_20261007.parquet", "sha256": "e3b2a6521596ffe661cd21c71a311934913170c4b597dc5e7e582c881c49c6be", "expected_source_rows": 237149, "expected_source_bytes": 21239943},
+    {"minutes": 30, "repo": "vaquum/binance_btcusdt_30m_klines", "revision": "9ebf9f0f26c13e2e34a5a2808082d73127f142e5", "filename": "btcusdt_30m_kline_20200101_to_20261007.parquet", "sha256": "41302c042e9048359d2595c6b2424482097097a3d49c91ea5af2ca7975482df8", "expected_source_rows": 118576, "expected_source_bytes": 10750427},
+    {"minutes": 60, "repo": "vaquum/binance_btcusdt_1h_klines", "revision": "0e32b55575e24c0748aad7cb9140caf0fb04913c", "filename": "btcusdt_1h_kline_20200101_to_20261007.parquet", "sha256": "2885f7b4c1d0b1bd0e08fa4f20145eae93160f2eee5ba04fb4dad34e3c85b883", "expected_source_rows": 59294, "expected_source_bytes": 5397332},
+    {"minutes": 120, "repo": "vaquum/binance_btcusdt_2h_klines", "revision": "cffd0d94bf33bcd4455d1846f13dbf3a9854b11f", "filename": "btcusdt_2h_kline_20200101_to_20261007.parquet", "sha256": "564ec4bfc5effc13da47b57fe5dac71fa7d625386946aa115b0783c6ee18a917", "expected_source_rows": 29653, "expected_source_bytes": 2719852},
+    {"minutes": 240, "repo": "vaquum/binance_btcusdt_4h_klines", "revision": "45183e45055b759ad803547e9fdb124033fdabfb", "filename": "btcusdt_4h_kline_20200101_to_20261007.parquet", "sha256": "e0b5256141b88d1d3a73d2f243c2ccb3b9fcb2d633c93cee9a2a687c60f6c08e", "expected_source_rows": 14831, "expected_source_bytes": 1423274}
+  ]
+}
