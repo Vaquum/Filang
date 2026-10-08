@@ -17,7 +17,8 @@ attempt, then retain the complete result and the remaining scientific question.
 | [PR #22](https://github.com/mikkokotila/Filang/pull/22) | Predecessor complete-pattern direction experiment | [Protocol](../geometry_direction/protocol.json), [measured report](../../benchmarks/reports/20261008-bitcoin-direction/README.md) |
 | [PR #23](https://github.com/mikkokotila/Filang/pull/23) | Campaign governance and experiment records | [Law and gate](../../governance/README.md) |
 | [PR #24](https://github.com/mikkokotila/Filang/pull/24) | Round 1 additive geometry: numerical failure, inconclusive | [Frozen protocol](round1_protocol.json), [failure report](../../benchmarks/reports/20261008-geometry-information-r1-failed/README.md) |
-| Next separately published PR | Proposed frozen R1 solver amendment | Numerical-method follow-up; no result asserted here |
+| [PR #25](https://github.com/mikkokotila/Filang/pull/25) | R1a: full audited completion; directional information supported at 30m only | [Protocol](round1a_protocol.json), [method and replay](ROUND1A.md), [complete report](../../benchmarks/reports/20261008-geometry-information-r1a/README.md) |
+| Next separately published PR | Proposed R2: conditional payoff and cost-aware policy selection | Economic follow-up motivated below; no R2 outcome asserted here |
 
 The Round 1 protocol was frozen at commit
 [`b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd`](https://github.com/mikkokotila/Filang/commit/b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd),
@@ -44,6 +45,23 @@ The frozen `outer_use` restriction is fold-relative, as its explicit schedule
 specifies: a year's outer labels cannot fit/select that year's pipeline, but
 may become already-past training/validation data for later chronological folds.
 This explains the existing schedule without changing the frozen JSON.
+
+R1a completed all 680 fits using the separately frozen exact Newton amendment.
+Its full independent audit passed all 458,972 native keys, all fits and selected
+predictions, paired inference, and 960 ledger replays. At 30m, pooled B-minus-G
+log-loss gain was 0.0005687511 nats per binary observation, with 95% interval
+[0.0002508591, 0.0008935404], Holm-adjusted p=0.00249875 and three of four
+positive outer years. The 2026 effect was negative. None of the other four
+timeframes passed every frozen information condition.
+
+Every selected G fixed-threshold annual policy lost money at primary costs, and
+all five G aggregates also lost at the reduced-cost scenario. At 30m, G's gross
+log return was 0.47553 below B; its smaller net loss came from 7,984 fewer
+one-way exposure changes. Buy-and-hold and unconditional controls were positive.
+The resulting question is whether geometry can estimate conditional payoff
+magnitudes well enough to select persistent, cost-aware exposure, with the same
+opportunity and policy search available to B. The complete losses, annual
+instability and prior exposure remain part of that next test's motivation.
 
 1. **R1 — additive pooling.** Compare additive body/close-sign history against
    that history plus current-to-prior endpoint comparisons and wick-presence

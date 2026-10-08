@@ -28,6 +28,14 @@ THREAD_VARIABLES = ("VECLIB_MAXIMUM_THREADS", "OPENBLAS_NUM_THREADS", "OMP_NUM_T
                     "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS", "BLIS_NUM_THREADS")
 
 
+def protocol_repository_path(path, repo):
+    relative = Path(path).resolve().relative_to(Path(repo).resolve()).as_posix()
+    if relative not in ("experiments/geometry_information/round1_protocol.json",
+                        "experiments/geometry_information/round1a_protocol.json"):
+        raise ValueError("unsupported protocol repository path")
+    return relative
+
+
 def numerical():
     global np, c, economics
     import numpy as np
@@ -359,7 +367,8 @@ def main():
     numerical()
     began = time.perf_counter()
     repo = Path(__file__).resolve().parents[2]
-    frozen = subprocess.run(["git", "show", f"{args.freeze_commit}:experiments/geometry_information/round1_protocol.json"],
+    protocol_path = protocol_repository_path(args.protocol, repo)
+    frozen = subprocess.run(["git", "show", f"{args.freeze_commit}:{protocol_path}"],
                             cwd=repo, check=True, capture_output=True).stdout
     c.require(frozen == args.protocol.read_bytes(), "supplied protocol differs from freeze commit")
     protocol = json.loads(frozen)
@@ -387,12 +396,15 @@ def main():
     options = {"out": str(out), "data_dir": str(args.data_dir.resolve()), "keys_dir": str(args.keys_dir.resolve()),
                "protocol_sha256": c.digest(out / "protocol.json"), "implementation_sha256": implementation_sha}
     run = {"schema": "filang-information-run-v1", "status": "RUNNING", "command": [sys.executable, *sys.argv],
-           "freeze_commit": args.freeze_commit, "protocol_sha256": options["protocol_sha256"],
+           "attempt_id": protocol["attempt_id"], "experiment_id": protocol["experiment_id"],
+           "freeze_commit": args.freeze_commit, "protocol_repository_path": protocol_path,
+           "protocol_sha256": options["protocol_sha256"],
            "source_provenance_sha256": c.digest(provenance_path), "input_paths": options,
            "implementation": {"files": implementation_files, "sha256": implementation_sha,
                               "git_head": implementation_head, "worktree_status_porcelain": implementation_status},
            "runtime": runtime_receipt(), "settings": {"workers": args.workers, "blas_threads": args.blas_threads},
-           "started_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "amendments": [], "deviations": []}
+           "started_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+           "amendments": [protocol["amendment"]] if "amendment" in protocol else [], "deviations": []}
     c.write_json(out / "run.json", run)
     results, receipts, errors = [], [], []
     with ProcessPoolExecutor(max_workers=args.workers, mp_context=multiprocessing.get_context("spawn")) as pool:

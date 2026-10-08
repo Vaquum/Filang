@@ -1,0 +1,26 @@
+{"features_verified": 15, "records": 237005, "producer_features_verified": true}
+{"features_verified": 30, "records": 118432, "producer_features_verified": true}
+{"features_verified": 60, "records": 59150, "producer_features_verified": true}
+{"features_verified": 120, "records": 29572, "producer_features_verified": true}
+{"features_verified": 240, "records": 14813, "producer_features_verified": true}
+{"verified_minutes": 15, "verified_year": 2023, "candidate_fits": 32, "ledger_replays": 48}
+{"verified_minutes": 15, "verified_year": 2024, "candidate_fits": 64, "ledger_replays": 96}
+{"verified_minutes": 15, "verified_year": 2025, "candidate_fits": 96, "ledger_replays": 144}
+{"verified_minutes": 15, "verified_year": 2026, "candidate_fits": 128, "ledger_replays": 192}
+{"verified_minutes": 30, "verified_year": 2023, "candidate_fits": 160, "ledger_replays": 240}
+{"verified_minutes": 30, "verified_year": 2024, "candidate_fits": 192, "ledger_replays": 288}
+{"verified_minutes": 30, "verified_year": 2025, "candidate_fits": 224, "ledger_replays": 336}
+{"verified_minutes": 30, "verified_year": 2026, "candidate_fits": 256, "ledger_replays": 384}
+{"verified_minutes": 60, "verified_year": 2023, "candidate_fits": 288, "ledger_replays": 432}
+{"verified_minutes": 60, "verified_year": 2024, "candidate_fits": 320, "ledger_replays": 480}
+{"verified_minutes": 60, "verified_year": 2025, "candidate_fits": 352, "ledger_replays": 528}
+{"verified_minutes": 60, "verified_year": 2026, "candidate_fits": 384, "ledger_replays": 576}
+{"verified_minutes": 120, "verified_year": 2023, "candidate_fits": 416, "ledger_replays": 624}
+{"verified_minutes": 120, "verified_year": 2024, "candidate_fits": 448, "ledger_replays": 672}
+{"verified_minutes": 120, "verified_year": 2025, "candidate_fits": 480, "ledger_replays": 720}
+{"verified_minutes": 120, "verified_year": 2026, "candidate_fits": 512, "ledger_replays": 768}
+{"verified_minutes": 240, "verified_year": 2023, "candidate_fits": 544, "ledger_replays": 816}
+{"verified_minutes": 240, "verified_year": 2024, "candidate_fits": 576, "ledger_replays": 864}
+{"verified_minutes": 240, "verified_year": 2025, "candidate_fits": 608, "ledger_replays": 912}
+{"verified_minutes": 240, "verified_year": 2026, "candidate_fits": 640, "ledger_replays": 960}
+{"status": "PASS", "stage": "full", "receipt": "runs/geometry-information-r1a/verification.json"}

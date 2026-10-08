@@ -280,7 +280,7 @@ class VerifierTests(unittest.TestCase):
                  "fit_count": 4, "fit_up_count": 2, "fit_down_count": 2,
                  "fit_rows_sha256": v.array_digest(rows, "<i8"), "fit_labels_sha256": v.array_digest(y),
                  "feature_sha256": "c"*64, "feature_columns_sha256": v.json_digest(v.feature_names(2, "B")),
-                 "source_sha256": "a"*64, "native_keys_sha256": "b"*64, "protocol_sha256": "d"*64,
+                 "source_sha256": "a"*64, "native_keys_sha256": "b"*64, "protocol_sha256": v.R1_PROTOCOL_SHA256,
                  "implementation_sha256": "e"*64, "initializer": {"kind": "beta11_zero", "parent_fit_id": None,
                  "parent_coefficient_sha256": None}, "cache_hit": False}
         model["fit_id"] = v.json_digest(model)
@@ -289,7 +289,7 @@ class VerifierTests(unittest.TestCase):
                      initializer_sha256=v.array_digest(np.zeros(7), "<f8"), accepted=False,
                      optimizer={"success": False, "status": 1, "iterations": 1000, "function_evaluations": 1001,
                                 "gradient_evaluations": 1001, "reported_objective": math.log(2)})
-        arguments = (model, source, receipt, feature, labels, fold, "B", 2, .1, "inner", "d"*64, "e"*64, None)
+        arguments = (model, source, receipt, feature, labels, fold, "B", 2, .1, "inner", v.R1_PROTOCOL_SHA256, "e"*64, None)
         v.audit_fit(*arguments, require_accepted=False)
         with self.assertRaisesRegex(ValueError, "unaccepted"):
             v.audit_fit(*arguments)
