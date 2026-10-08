@@ -71,6 +71,88 @@ class AdapterOracleTests(unittest.TestCase):
             audit.compare(np.array([1], dtype=np.int32), np.array([1], dtype=np.int64))
 
 
+class OriginalOracleContractTests(unittest.TestCase):
+    def test_actual_native_receipt_replays_both_complete_prediction_phases(self):
+        """Exercise the real cross-oracle boundary that first failed on D1.
+
+        This is an unmocked native export fixture, raw-key audit and full
+        prediction/sidecar audit. It covers the complete inherited API, not
+        merely a stand-alone assertion that a dictionary contains ``minutes``.
+        """
+        from experiments.geometry_information.tests.test_verify_round1 import VerifierTests
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            native = root / "native"
+            native.mkdir()
+            source, protocol = VerifierTests().native_fixture(native)
+            original_receipt, original_rows = audit.original.audit_native_keys(native, source, protocol)
+            self.assertNotIn("minutes", original_receipt)
+            receipt, rows = audit.audited_native_context(native, source, protocol, minutes=1)
+            self.assertEqual(receipt["minutes"], 1)
+            self.assertEqual(receipt["keys_file_sha256"], audit.digest(native / "keys.bin"))
+            self.assertEqual({k: value for k, value in receipt.items() if k != "minutes"}, original_receipt)
+            np.testing.assert_array_equal(rows, original_rows)
+            with self.assertRaisesRegex(ValueError, "source interval"):
+                audit.audited_native_context(native, source, protocol, minutes=30)
+
+            fold = {"year": 1970, "validation_start": "1970-01-01", "validation_end_exclusive": "1970-01-02",
+                    "outer_start": "1970-01-01", "outer_end_exclusive": "1970-01-02"}
+            fitting = audit.original.phase_oracle(source, rows, 0, 86400)
+            for phase in ("validation", "outer"):
+                arrays = audit.original.phase_oracle(source, rows, 0, 86400)
+                available = arrays["phase_mask"] & arrays["causal_feature_valid"]
+                selected_rows = np.flatnonzero(available)
+                models = {}
+                for family in audit.FAMILIES:
+                    coefficients = np.linspace(-.02, .03, len(audit.original.feature_names(2, family)))
+                    if phase == "outer":
+                        coefficients *= 2
+                    parameters = np.r_[.1, coefficients]
+                    model = {"n": 2, "intercept": float(parameters[0]), "coefficients": coefficients.tolist(),
+                             "fit_id": phase + "-" + family, "coefficient_sha256": audit.array_digest(parameters),
+                             "path": f"{phase}-{family}.json"}
+                    audit.original.save_json(root / model["path"], model)
+                    models[family] = model
+                    z = audit.original.raw_features(source["prices"], selected_rows, 2, family).astype(float) @ coefficients + .1
+                    arrays[f"logit_{family}"] = np.full(len(available), np.nan)
+                    arrays[f"p_{family}"] = np.full(len(available), np.nan)
+                    arrays[f"logit_{family}"][available] = z
+                    arrays[f"p_{family}"][available] = audit.original.stable_sigmoid(z)
+                baseline, arrays["p_unconditional"], arrays["p_lag1"] = audit.original.baseline_oracle(source, fitting, available)
+                path = root / f"{phase}.npz"
+                np.savez_compressed(path, **arrays)
+                sidecar = {"schema": "filang-information-predictions-v1", "minutes": 1, "outer_year": 1970,
+                    "phase": phase, "phase_start": 0, "phase_end_exclusive": 86400,
+                    "source_sha256": source["sha256"], "protocol_sha256": "a" * 64,
+                    "native_keys_sha256": receipt["keys_file_sha256"],
+                    "models": {family: {"fit_id": model["fit_id"], "coefficient_sha256": model["coefficient_sha256"],
+                                         "path": model["path"], "file_sha256": audit.digest(root / model["path"])}
+                               for family, model in models.items()},
+                    "baseline_fit": baseline,
+                    "baseline_fit_rows_sha256": audit.array_digest(np.flatnonzero(fitting["binary_mask"]), "<i8"),
+                    "baseline_fit_labels_sha256": audit.array_digest(fitting["direction"][fitting["binary_mask"]] == 1, np.uint8),
+                    "scores": audit.original.phase_scores(arrays), "npz_sha256": audit.digest(path), "npz_bytes": path.stat().st_size,
+                    "arrays": {name: {"dtype": value.dtype.str, "shape": list(value.shape), "sha256": audit.array_digest(value)}
+                               for name, value in arrays.items()}}
+                audit.original.save_json(path.with_suffix(".json"), sidecar)
+                arguments = (root, root, phase, source, rows, fold, models, fitting, "a" * 64)
+                # Confirm the regression fixture reaches the original failure
+                # when the required feature-stage context is omitted.
+                with self.assertRaisesRegex(KeyError, "minutes"):
+                    audit.original.audit_predictions(*arguments, original_receipt)
+                verified, scores, error = audit.original.audit_predictions(*arguments, receipt)
+                self.assertEqual(len(verified), 16)
+                self.assertEqual(scores, sidecar["scores"])
+                self.assertLessEqual(error, 1e-10)
+                self.assertTrue(np.isfinite(verified["p_B"][-1]))
+                self.assertFalse(verified["classification_valid"][-1])
+                # The second receipt dependency must remain the native key
+                # identity; adding timeframe context cannot weaken that check.
+                wrong_key_receipt = {**receipt, "keys_file_sha256": "0" * 64}
+                with self.assertRaisesRegex(ValueError, "native_keys_sha256"):
+                    audit.original.audit_predictions(*arguments, wrong_key_receipt)
+
+
 class DiagnosticOracleTests(unittest.TestCase):
     def test_auc_half_ties_and_slope_behavior(self):
         y = np.array([-1, 1, -1, 1])

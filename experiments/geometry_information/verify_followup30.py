@@ -351,6 +351,29 @@ def predecessor_paths(root, protocol):
     return required
 
 
+def audited_native_context(directory, source, protocol, minutes, producer_features=None):
+    """Bridge the native-key receipt to the existing prediction-oracle API.
+
+    ``audit_native_keys`` returns source/key evidence without a ``minutes``
+    field. R1's own ``feature_stage`` adds that context before calling
+    ``audit_predictions``. The latter consumes exactly ``minutes`` and
+    ``keys_file_sha256`` from its receipt; its source and model arguments carry
+    the other prediction/sample identities. Bind the same complete boundary
+    here instead of passing the context-free native result directly.
+    """
+    require(type(minutes) is int and minutes > 0 and source["interval_seconds"] == minutes * 60,
+            "native/prediction timeframe and source interval disagree")
+    receipt, rows = original.audit_native_keys(directory, source, protocol, producer_features)
+    require(receipt["status"] == "PASS" and receipt["all_native_records_checked"] is True and
+            receipt["all_raw_vs_key_projections_checked"] is True, "complete native evidence required for prediction replay")
+    require(receipt["source_sha256"] == source["sha256"] and receipt["source_rows"] == len(source["timestamp"]),
+            "native/prediction receipt source ownership differs")
+    require(original.HEX.fullmatch(receipt["keys_file_sha256"]) and
+            receipt["keys_file_sha256"] == digest(Path(directory) / "keys.bin"), "native/prediction key identity differs")
+    require("minutes" not in receipt or receipt["minutes"] == minutes, "native receipt has conflicting timeframe context")
+    return {**receipt, "minutes": minutes}, rows
+
+
 def check_predecessor_bundle(root, native, data_dir, protocol):
     """Replay the consumed 30m inputs; explicitly reuse the pinned full audit."""
     root, native, data_dir = Path(root), Path(native), Path(data_dir)
@@ -401,7 +424,8 @@ def check_predecessor_bundle(root, native, data_dir, protocol):
     require(digest(native / "keys.bin") == pins["keys_sha256"] and (native / "keys.bin").stat().st_size == pins["keys_bytes"] and
             digest(native / "context.json") == pins["context_sha256"] and digest(native / "manifest.json") == pins["manifest_sha256"],
             "exact pinned native inputs")
-    receipt, causal_rows = original.audit_native_keys(native, source, old_protocol, json_file(root / "30m/features.json"))
+    receipt, causal_rows = audited_native_context(native, source, old_protocol, protocol["data"]["minutes"],
+                                                  json_file(root / "30m/features.json"))
     require(receipt["records_checked"] == pins["records"], "all native causal records checked")
     root_features = next(f for f in json_file(root / "features.json")["timeframes"] if f["minutes"] == 30)
     compare(root_features, json_file(root / "30m/features.json"), "original root/local feature receipts")
