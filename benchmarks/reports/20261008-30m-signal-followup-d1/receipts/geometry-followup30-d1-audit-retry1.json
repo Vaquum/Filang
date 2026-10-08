@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "experiments/geometry_information/verify_followup30.py",
+    "--stage",
+    "full",
+    "--run",
+    "runs/geometry-followup30-d1",
+    "--data-dir",
+    "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction",
+    "--protocol",
+    "experiments/geometry_information/followup30_protocol.json",
+    "--out",
+    "runs/geometry-followup30-d1/verification.json"
+  ],
+  "completed_utc": "2026-10-08T19:07:24.676948+00:00",
+  "elapsed_seconds": 11.30728025001008,
+  "exit_code": 0,
+  "first_failed_audit_sha256": "8a6ef0d5e6e606101dc4dd2d6f9c39c4b8d834b15d302d4949a06c355009d000",
+  "log_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-followup30-d1-verification-retry1.log",
+  "log_sha256": "774498125c70fcf9e66155902cf656f9b30c62ab1549edc75105992de2026cf1",
+  "operation": "F30-D1 same-output full audit after reviewed native-context binding repair",
+  "producer_implementation_commit": "d26ca231d9af7963bd016aec1a90385c1d1661be",
+  "producer_rerun": false,
+  "schema": "filang-operation-receipt-v1",
+  "started_utc": "2026-10-08T19:07:13.369341+00:00",
+  "status": "COMPLETE",
+  "thread_environment": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "VECLIB_MAXIMUM_THREADS": "2"
+  },
+  "verifier_execution_commit": "8b6a1c04d2580afe321a8bcd4f5eb93314126967",
+  "verifier_sha256": "2ed999961d7c72b6cd7692fb88b3317ef1527b2bac9453046a76b22d2f947dbf"
+}

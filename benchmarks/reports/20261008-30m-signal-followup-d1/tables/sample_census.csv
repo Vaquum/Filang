@@ -1,0 +1,9 @@
+binary,causal_forecasts,exit_boundary_exclusions,flat,forecast_valid_future_label_invalid,future_gap_exclusions,future_source_rows_missing,gaps_receiving_inside_phase,in_phase,in_phase_causal_invalid,label_valid,phase,phase_end_exclusive,phase_start,source_rows,year
+17517,17520,2,1,2,0,0,[],17520,0,17518,validation,1672531200,1640995200,118576,2023
+17496,17506,2,6,4,2,0,"[{""missing_bars"":5,""previous_timestamp"":1679655600,""receiving_row"":56492,""receiving_timestamp"":1679666400}]",17515,9,17502,outer,1704067200,1672531200,118576,2023
+17496,17506,2,6,4,2,0,"[{""missing_bars"":5,""previous_timestamp"":1679655600,""receiving_row"":56492,""receiving_timestamp"":1679666400}]",17515,9,17502,validation,1704067200,1672531200,118576,2024
+17561,17568,2,5,2,0,0,[],17568,0,17566,outer,1735689600,1704067200,118576,2024
+17561,17568,2,5,2,0,0,[],17568,0,17566,validation,1735689600,1704067200,118576,2025
+17514,17520,2,4,2,0,0,[],17520,0,17518,outer,1767225600,1735689600,118576,2025
+17514,17520,2,4,2,0,0,[],17520,0,17518,validation,1767225600,1735689600,118576,2026
+13431,13440,0,7,2,0,2,[],13440,0,13438,outer,1791417600,1767225600,118576,2026

@@ -264,7 +264,33 @@ def number(value, digits=10):
     return "unavailable" if value is None else f"{value:.{digits}g}"
 
 
-def render_report(identity, analysis, diagnostics, audit, outcome, scopes):
+def audit_history(receipt_paths, identity, manifest_sha256):
+    """Describe supplied audit attempts without changing numerical admission."""
+    records = [(path, load_json(path)) for path in receipt_paths if path.suffix == ".json"]
+    records = [(path, value) for path, value in records if isinstance(value, dict)]
+    history = []
+    for path, value in records:
+        if value.get("schema") != "filang-30m-signal-followup-verification-v1" or value.get("status") != "FAIL":
+            continue
+        require(value.get("stage") == "full" and value.get("protocol_sha256") == PROTOCOL_SHA256 and
+                value.get("freeze_commit") == FREEZE_COMMIT, "supplied failed audit belongs to another protocol")
+        failure_sha = digest(path)
+        retention = any(v.get("schema") == "filang-audit-retention-receipt-v1" and
+                        v.get("sha256") == failure_sha and
+                        v.get("producer_manifest_sha256_unchanged") == manifest_sha256 and
+                        v.get("original_producer_not_rerun") is True for _, v in records)
+        retry = any(v.get("schema") == "filang-operation-receipt-v1" and v.get("status") == "COMPLETE" and
+                    v.get("exit_code") == 0 and v.get("first_failed_audit_sha256") == failure_sha and
+                    v.get("producer_implementation_commit") == identity["implementation"]["git_commit"] and
+                    v.get("producer_rerun") is False for _, v in records)
+        history.append({"receipt": path.name, "sha256": failure_sha,
+                        "error": str(value.get("error", "unspecified")),
+                        "verifier_sha256": value.get("verifier_sha256"),
+                        "same_producer_reaudit_receipts": retention and retry})
+    return history
+
+
+def render_report(identity, analysis, diagnostics, audit, outcome, scopes, history=()):
     primary = analysis["bootstrap"]["7"]
     gate = analysis["continuation"]["gate_if_verified"]
     lines = ["# F30-D1 — 30-minute signal follow-up", "",
@@ -282,7 +308,8 @@ def render_report(identity, analysis, diagnostics, audit, outcome, scopes):
              f"| Scored binary observations | {primary['original_count']} |",
              f"| Positive annual adapted gains | {analysis['primary']['positive_years']} / 4 |", "",
              "| Required condition | Passed |", "|---|---|",]
-    lines.extend(f"| {key.replace('_', ' ')} | {str(value).lower()} |"
+    labels = {"p_below_005": "One-sided p < 0.05"}
+    lines.extend(f"| {labels.get(key, key.replace('_', ' '))} | {str(value).lower()} |"
                  for key, value in analysis["primary"]["conditions"].items())
     lines.extend(["| Eight accepted fits and full independent audit | true |", "",
                   "A failure of the latest-year gate does not erase pooled evidence. "
@@ -365,6 +392,24 @@ def render_report(identity, analysis, diagnostics, audit, outcome, scopes):
                   "not every original five-timeframe run file. Refer to "
                   "[FOLLOWUP30.md](../../../experiments/geometry_information/FOLLOWUP30.md) for the scientific contract "
                   "and reproduction commands.", ""])
+    if history:
+        lines.extend(["## Retained audit attempts", "",
+                      "Earlier failed full audits are inconclusive validation attempts. "
+                      "Their original receipts remain visible alongside the successful full audit.", ""])
+        for attempt in history:
+            error = json.dumps(attempt["error"], ensure_ascii=True)
+            lines.extend([f"- Retained FAIL: [{attempt['receipt']}](receipts/{attempt['receipt']}); "
+                          f"error `{error}`; verifier `{attempt['verifier_sha256']}`."])
+            if attempt["same_producer_reaudit_receipts"]:
+                lines.extend(["  The retention and successful retry receipts bind this failure to a re-audit "
+                              "of the same sealed producer. The producer, fitted adapters, forecasts and "
+                              "scientific results were not rerun or replaced."])
+            if (attempt["error"] == "'minutes'" and attempt["verifier_sha256"] ==
+                    "876fcfde2896e0c3c77157e09adc9895b611cc8b9f7cd63ec06d31e9a98e0e89"):
+                lines.extend(["  The verifier had passed a native-key receipt without the timeframe context "
+                              "expected by the inherited prediction oracle. The reviewed verifier-only repair "
+                              "restored that context with source/interval/key checks and an unmocked integration regression."])
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -396,6 +441,7 @@ def collect(run, out, receipts=()):
         require(source.is_file() and not source.is_relative_to(run), "operational receipt must be an external file")
         require(source.name not in {p.name for p in receipt_paths}, "duplicate operational receipt name")
         receipt_paths.append(source)
+    history = audit_history(receipt_paths, identity, digest(run / "manifest.json"))
     out.mkdir(parents=True)
     copied = {}
     for relative in sorted(set(sources) | {"manifest.json", "manifest.sha256", "verification.json"}):
@@ -414,7 +460,7 @@ def collect(run, out, receipts=()):
     table_dir.mkdir()
     for key in [*TABLES, "score_cells"]:
         write_csv(table_dir / (key + ".csv"), diagnostics[key])
-    readme = render_report(identity, analysis, diagnostics, audit, outcome, scopes)
+    readme = render_report(identity, analysis, diagnostics, audit, outcome, scopes, history)
     (out / "README.md").write_text(readme)
     summary = {"schema": "filang-30m-signal-followup-report-v1", "attempt_id": "F30-D1",
                "protocol_sha256": PROTOCOL_SHA256, "freeze_commit": FREEZE_COMMIT,
@@ -423,7 +469,7 @@ def collect(run, out, receipts=()):
                "collector_sha256": digest(__file__), "outcome": outcome,
                "primary_conditions": analysis["primary"]["conditions"], "full_independent_audit": "PASS",
                "continuation_gate": analysis["continuation"]["gate_if_verified"],
-               "coverage": audit["coverage"], "source_copies": copied,
+               "coverage": audit["coverage"], "source_copies": copied, "audit_history": history,
                "csv_rows": {key: len(diagnostics[key]) for key in [*TABLES, "score_cells"]},
                "raw_source_storage": "external immutable pins; all consumed prediction/model/native artifacts copied"}
     write_json(out / "report.json", summary)

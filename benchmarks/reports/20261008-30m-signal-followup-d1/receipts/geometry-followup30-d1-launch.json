@@ -1,0 +1,45 @@
+{
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "experiments/geometry_information/run_followup30.py",
+    "--r1a-run",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1a",
+    "--data-dir",
+    "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction",
+    "--keys-dir",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1",
+    "--protocol",
+    "experiments/geometry_information/followup30_protocol.json",
+    "--freeze-commit",
+    "ed7e0b9bccedebc6bda75d7ab701829a6a708c5f",
+    "--blas-threads",
+    "2",
+    "--out",
+    "runs/geometry-followup30-d1"
+  ],
+  "completed_utc": "2026-10-08T19:00:50.894665+00:00",
+  "elapsed_seconds": 11.562516042031348,
+  "exit_code": 0,
+  "implementation_commit": "d26ca231d9af7963bd016aec1a90385c1d1661be",
+  "implementation_files": {
+    "experiments/geometry_information/FOLLOWUP30.md": "f8fa9bafb61f4baaa665d1e44110e39a84c6b287e7b96fd67efa94caba8d0804",
+    "experiments/geometry_information/collect_followup30.py": "f8039e2dfb04bbfd11ddd986e8e7ad8aa97f4e22a934fdc0d9830868144ede8a",
+    "experiments/geometry_information/followup30.py": "9557c08a0c340f620e20f0fe6da29bad16ef66c41a119e9df5d42409ac780f7f",
+    "experiments/geometry_information/run_followup30.py": "d779c9b0ae93150a5f919791a79837cecbb4e887bc9562806cdba5428fd499e0",
+    "experiments/geometry_information/tests/test_collect_followup30.py": "000d5d9ad0fcd089000e39f51fe5a6efab559c4e591ef4cb15142c292a5f4b49",
+    "experiments/geometry_information/tests/test_followup30.py": "9aa08297fb02da1aca3d40d605d265fcf7d2f1ba4035b00725bb52d60d07ae55",
+    "experiments/geometry_information/tests/test_verify_followup30.py": "543b72664ab4a3375b22acf5ff43147d8c443daec5a5b796fa5ade27118806ab",
+    "experiments/geometry_information/verify_followup30.py": "876fcfde2896e0c3c77157e09adc9895b611cc8b9f7cd63ec06d31e9a98e0e89"
+  },
+  "log_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-followup30-d1-execution.log",
+  "log_sha256": "dd2af4761a70ab7756a9a017806ceea02afd13cbd43af8edc9369234e813412d",
+  "operation": "F30-D1 frozen producer first execution",
+  "schema": "filang-operation-receipt-v1",
+  "started_utc": "2026-10-08T19:00:39.331346+00:00",
+  "status": "COMPLETE",
+  "thread_environment": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "VECLIB_MAXIMUM_THREADS": "2"
+  }
+}

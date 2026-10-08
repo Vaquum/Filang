@@ -356,3 +356,203 @@ retry is considered.
   motivates examining probability adaptation alongside ranking and accuracy.
   The exact penalty, solver, and scientific criterion here are this protocol's
   choices, not a result supplied by that paper.
+
+## Executed outcome — 2026-10-08
+
+**F30-D1 is complete and not-supported. The declared F30-M1 continuation gate
+fails.** The full independent audit passed. The matched adaptation preserves a
+positive pooled directional score improvement, but the complete claim also
+required temporal stability. Only two annual effects are positive, and the
+latest pinned 2026 effect remains negative. This finding preserves the positive
+pooled evidence while declining the predeclared economic continuation.
+
+The [complete report](../../benchmarks/reports/20261008-30m-signal-followup-d1/README.md)
+contains every frozen table and the full selected-source and numerical bundles.
+Its [diagnostics](../../benchmarks/reports/20261008-30m-signal-followup-d1/run/diagnostics.json)
+and [analysis](../../benchmarks/reports/20261008-30m-signal-followup-d1/run/analysis.json)
+are the numerical sources for the interpretation below. These observations do
+not amend the preceding specification or create an additional success route.
+
+### What survives adaptation
+
+The pooled adapted B-minus-G gain is **0.0004321658981 nats per binary
+observation**, with the primary seven-day individual 95% interval
+**[0.0000761485182, 0.0008019818147]** and exact one-sided **p=0.01299350325**
+(25 tail hits in 2,000 replicas). There are 66,002 binary observations and
+22 true flats across 1,376 calendar days. About 75.99% of the original pooled
+gain remains. It would therefore be incorrect to conclude that adaptation
+eliminated the original signal or proved it was merely a calibration artifact.
+
+| Period | Binary count | Raw B-minus-G gain | Adapted gain | Adapted magnitude-weighted gain |
+|---|---:|---:|---:|---:|
+| 2023 | 17,496 | +0.001586663019 | +0.001657179466 | -0.003299246613 |
+| 2024 | 17,561 | +0.000768797864 | +0.000383977559 | -0.003131813852 |
+| 2025 | 17,514 | +0.000203097758 | -0.000184917101 | -0.000452438968 |
+| 2026 through Oct 7 | 13,431 | -0.000541989502 | -0.000295926598 | -0.000360292111 |
+| Pooled | 66,002 | +0.000568751077 | +0.000432165898 | -0.001933623572 |
+
+The first three pooled conditions pass; the three-positive-years and positive-
+2026 conditions fail. All eight fits and the full audit pass. The one- and
+28-day sensitivity intervals also exclude zero, with p=0.0139935035 and
+p=0.0084957521 respectively. They cannot replace the failed annual conditions.
+These are retrospective nominal uncertainty measures for an outcome-selected
+timeframe, without a new campaign-wide error guarantee.
+
+The adjusted pooled B/G log losses are 0.690933151430 and 0.690500985532.
+Adjusted accuracy is 52.92567% versus 53.13021%, a difference of 135 correct
+labels among 66,002. Accuracy and log loss are descriptive or primary scores
+under their respective definitions; neither is an account return.
+
+All eight fitted slopes are positive: B/G slopes are 0.979152/1.210462 in 2023,
+1.038296/1.205121 in 2024, 0.873361/1.002285 in 2025, and 0.742665/0.674996 in
+2026. None deliberately reverses or collapses the original ranking. Positive
+affine maps preserve ranking mathematically within a year; retained binary64
+probabilities can have slightly different exact ties, and different annual
+maps can reorder cross-year pairs. Pooled AUC movement is consequently not
+evidence of newly learned within-year discrimination. The complete coefficients,
+score distributions, AUC and Brier values remain in the report.
+
+### The pooled effect depends on 2023
+
+The four predeclared leave-one-year-out adapted gains are:
+
+| Excluded period | Remaining binary count | Adapted gain |
+|---|---:|---:|
+| 2023 | 48,506 | -0.000009693612 |
+| 2024 | 48,441 | +0.000449635303 |
+| 2025 | 48,488 | +0.000655057988 |
+| 2026 | 52,571 | +0.000618181198 |
+
+2023 contributes 28.99401194 to the total paired loss improvement of
+28.52381361; the other three periods together contribute -0.47019833. This is
+a descriptive concentration finding. It does not license omitting later years.
+
+All 46 months remain present, including partial October 2026. Adapted positive
+monthly effects number 10/12, 6/12, 5/12 and 2/10 in 2023 through 2026: 23/46
+overall, compared with 27/46 before adaptation. The partial October period has
+336 binary labels and gain -0.001375776069. Dependent monthly signs are not
+treated as an additional binomial test.
+
+### Directional frequency and signed magnitude disagree
+
+Return-magnitude-weighted adapted gain is negative in every annual period and
+pooled. The raw pooled weighted gain was already negative, at -0.000719322741.
+This diagnostic weights the binary loss differences by absolute realized log
+return. It changes the scoring population's weighting; it is neither the
+original proper-score estimand nor a simulated strategy return.
+
+Every pooled outcome-magnitude cell is retained:
+
+| Absolute realized log return | Target-valid count | Adapted gain |
+|---|---:|---:|
+| Exactly flat | 22 | Undefined |
+| Nonflat below 1 bp | 2,651 | -0.001420043449 |
+| 1 to below 5 bp | 10,547 | +0.000945862054 |
+| 5 to below 12 bp | 15,815 | +0.001178099536 |
+| 12 to below 24 bp | 17,176 | +0.001389176646 |
+| At least 24 bp | 19,813 | -0.001018513124 |
+
+The positive improvement lies in the intermediate 1–24 bp strata. The smallest
+nonflat and largest strata work against the geometry pipeline. These cells use
+the future realized magnitude and cannot become executable entry filters.
+
+The two adapted disagreement cells illustrate the difference between directional
+frequency and signed payoff. When B predicts down and G predicts up, G is right
+on 50.88% of 5,625 nonflat labels. Mean positive log return is +20.27364 bp,
+whereas mean negative log return is -22.84129 bp. Across all 5,627 target-valid
+observations, including two flats, mean next log return is **-0.90409 bp**.
+The slightly higher frequency of up moves does not compensate for the larger
+negative moves, even before costs.
+
+In the opposite disagreement cell, G correctly predicts down on 50.31881% of
+5,646 nonflat labels, yet mean return across 5,649 target-valid observations is
+**+0.09186 bp**. Mean positive magnitude is 19.72586 bp versus negative magnitude
+19.29325 bp. The complete four-state partitions for both raw and adapted scores
+are retained in the report; these two explanatory cells do not define a new
+policy, holding path or selected trading result.
+
+Drift-centered score-to-payoff alignment is also unfavorable:
+
+| Period | Adapted mean((pG-pB) * (log return-past mean)) |
+|---|---:|
+| 2023 | -3.898630054e-7 |
+| 2024 | -5.999593277e-7 |
+| 2025 | +1.768531794e-7 |
+| 2026 | -3.174717272e-7 |
+| Pooled | -2.806606529e-7 |
+
+Only one annual alignment is positive. Pooled alignment and latest-period
+alignment are negative. Thus every descriptive alignment condition fails,
+independently of the already failed primary stability conditions. These are
+association diagnostics, not a causal decomposition or P&L calculation.
+
+### Execution, failed audit and completed verification
+
+The specification was published at freeze
+`ed7e0b9bccedebc6bda75d7ab701829a6a708c5f` before new market calculations.
+The single producer execution used clean published implementation
+`d26ca231d9af7963bd016aec1a90385c1d1661be`, starting at
+2026-10-08T19:00:40.969926Z. It accepted all eight adapters and sealed its
+original pending-audit record. It was not rerun.
+
+The first full audit was an **inconclusive validation attempt**. It stopped on
+`KeyError: 'minutes'` because the new verifier called the existing native-key
+oracle directly without the timeframe context normally supplied by the
+original feature-stage wrapper. The failure receipt and its launcher/log are
+retained, including the exact failed-receipt SHA-256
+`8a6ef0d5e6e606101dc4dd2d6f9c39c4b8d834b15d302d4949a06c355009d000`.
+
+The reviewed verifier-only correction at
+`8b6a1c04d2580afe321a8bcd4f5eb93314126967` binds that context after checking the
+interval, native audit coverage, source ownership and actual key hash. An
+unmocked regression reproduces the original failure and successfully exercises
+both original prediction phases, preserving causal forecasts with unavailable
+labels and rejecting inconsistent intervals/keys. All 48 follow-up tests pass;
+the earlier complete information suite's 179-test pass is also retained.
+A separate formatting receipt explains the single removed EOF newline between
+that original test run and the first execution tree.
+
+The corrected verifier re-audited the same sealed producer and passed all
+twelve required checks: every one of 118,432 native keys, eight original and
+eight adapted prediction phases, eight adapter optima, 393 retained array
+members, 55 aggregate periods, all detailed partitions and 6,000 exact bootstrap
+tail decisions. Maximum continuous comparison error was
+1.1738165994756855e-11; maximum independently reconstructed adapter gradient was
+9.065468682131024e-11. The earlier full R1a audit remains the pinned evidence for
+unconsumed original candidates and other timeframes.
+
+The producer launcher took 11.562516 seconds; its fitting stage took 0.070147
+seconds, and prediction serialization took 5.083270 seconds. Its peak RSS was
+398,704,640 bytes. The successful full audit took 11.160271 seconds internally
+(11.307280 seconds including its launcher). These are single-run operational
+receipts on the existing M1 Max host, with one producer worker and two BLAS
+threads. They are not a matched speedup benchmark. Reusing the existing native
+keys and forecasts leaves only eight two-parameter fits for this question.
+
+The collected record has 130 files and 26,007,501 bytes. Exact identities are:
+
+| Artifact | SHA-256 |
+|---|---|
+| Frozen protocol | `4099e7a6620387d0fbe2267819ca0d37dff0f52da3e6bf8689705e979adf497b` |
+| Unchanged producer manifest | `67c6bea9a86b131c6c7c38b652784cffe1f0a113f342b2d5ef15ca249ae2b613` |
+| Successful full audit | `59289fdaff072322b736145f44df3a54bb9c2bd29adb1d1198e17249c5a8c84e` |
+| Complete report manifest | `4dd0b057c6983ddf5a34246fea2de815488c8412d340156c5e8a34de0736ed2b` |
+
+All thirteen operational receipts, including the failed audit, exact retention
+record and successful re-audit, are part of that report. The original producer
+files and their pending-audit status remain byte-preserved; the later audit and
+collector establish the final not-supported outcome.
+
+### Bounded follow-up decision
+
+F30-M1 is not opened. Most of a small historical direction-score improvement
+survives adjustment, but the declared pipeline lacks the required temporal
+stability and signed-magnitude alignment. Searching favorable historical months,
+outcome-magnitude cells or new thresholds would change the experiment after
+seeing its result.
+
+This closes the separately authorized follow-up while preserving the original
+three-family campaign and the positive pooled observation. It does not disprove
+all qualitative geometry functions. A later claim of tradeable information
+would require a separately frozen question, fresh prospective outcomes and
+appropriate execution evidence; none is established or initiated here.

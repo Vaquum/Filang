@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/geometry_information/tests",
+    "-p",
+    "test_*followup30.py",
+    "-v"
+  ],
+  "completed_utc": "2026-10-08T19:05:43.700596+00:00",
+  "elapsed_seconds": 2.5920022919308394,
+  "exit_code": 0,
+  "fixed_files": {
+    "experiments/geometry_information/tests/test_verify_followup30.py": "35f5c876b32dcd0957aac45c95f834a0f87e956f0df1dfb58a096f674e4444ab",
+    "experiments/geometry_information/verify_followup30.py": "2ed999961d7c72b6cd7692fb88b3317ef1527b2bac9453046a76b22d2f947dbf"
+  },
+  "log_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-followup30-d1-verifier-fix-tests.log",
+  "log_sha256": "820c13506d071757e2ea87708c17c56a4c3413ae2f0b61cc9cd7b83b3dbbbc8b",
+  "operation": "F30-D1 receipt integration regression and complete followup test panel before re-audit",
+  "schema": "filang-operation-receipt-v1",
+  "started_utc": "2026-10-08T19:05:41.107668+00:00",
+  "thread_environment": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "VECLIB_MAXIMUM_THREADS": "2"
+  }
+}

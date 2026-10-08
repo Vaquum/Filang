@@ -1,0 +1,308 @@
+{
+  "artifacts": {
+    "immutability": "Producer ends COMPLETE_PENDING_INDEPENDENT_AUDIT and seals its original bytes. Later audit/report join that record without rewriting it. Collector requires full PASS audit bound to exact run manifest/analysis/protocol/implementation and complete declared coverage. Copy source and run artifacts byte-for-byte; no omitted year/bin/failure.",
+    "inputs": "Record and copy exact bytes of every consumed predecessor file, including all 8 source prediction NPZ/sidecars, selected model/selection records, original manifest/seal/audit/protocol/run/analysis, any referenced provenance/features/daily files. Copy the exact native keys/context/manifest/seal. Raw Parquet/prepared CSV can remain externally pinned and downloadable at original revision. Scoped bundle preserves original relative paths and advertises its coverage, not the entire R1a run.",
+    "required": "protocol.json; run.json; inputs.json; all 8 adapter fit records with parameters/objective/gradient/iterations/backtracking/sample and model bindings; full row adapted prediction bundles for each year/phase with sidecars; daily.csv plus arrays; complete period scores, magnitude cells, decision cells, score cells, score boundaries, distribution, sample census, alignment and weighted gains; all primary/sensitivity bootstrap ordinary/centered/count/hit arrays and integer encoding; analysis.json; final producer manifest/seal; independent verification; complete report README and execution receipts."
+  },
+  "attempt_id": "F30-D1",
+  "audit": {
+    "independence": "The new verifier must not import new producer fitting, scoring, partitioning, bootstrap or diagnostic computational helpers. Reuse existing independent verify_round1 raw-OHLC/key/feature/prediction oracle primitives if bound by code hash; implement new adapter objective/gradient, tables, partitions, exact ratio tails and decisions separately.",
+    "scope": "Reconstruct every 30m native key; every consumed original phase/label/mask and selected B/G prediction from raw features and retained coefficients. Bind original candidate/refit ownership and selection records; rely explicitly on pinned original full audit for original unconsumed candidate fitting/selection coverage. Verify all 8 new adapter objective/gradients and acceptance, full row transformations, all tables/cells/daily arrays, all 6000 exact tail bits, criteria and continuation gate. Check every copied source artifact hash, source bundle census, run manifest and report coverage.",
+    "synthetic": [
+      "finite-difference 2 parameter gradient and Hessian",
+      "constant logits, single class, negative fitted slope, gradient-only success and failed solver retention",
+      "outer label changes cannot alter adapter parameters or validation bin boundaries",
+      "raw-versus refit validation model vintage swap rejected",
+      "future-label unavailability does not remove available forecasts",
+      "flats included in payoff and excluded from binary metrics",
+      "probability/magnitude bin equalities, duplicate cuts, empty cells and missing classes",
+      "AUC ties half credit and negative/zero affine slope behavior",
+      "partition and payoff identity reconciliation",
+      "exact ratio bootstrap with variable counts, negative and zero sums, mathematical ties and empty denominator failure",
+      "corrupt source/model/NPZ/sidecar/manifest/audit bindings rejected",
+      "independent tiny data end-to-end diagnostics and stale/incomplete collector rejection"
+    ],
+    "tolerance": "Numerical arrays/scalars: absolute 1e-10 plus relative 1e-10; report maximum error. Integers, booleans, strings, schemas, shapes, dtypes, masks, bin membership, selected inputs, coverage, exact encoding/tail hits/counts/p values/criteria agree exactly. Validate executed float daily inputs numerically first; exact tail uses independently validated retained float inputs. Do not claim discontinuous integer decisions commute with approximate float reconstruction."
+  },
+  "authorization_and_history": {
+    "base_merge_commit": "9880d900fd9e8fd3ffdcb49ce3f01313e4248f15",
+    "predecessor_prs": [
+      25,
+      26,
+      27
+    ],
+    "prior_exposure": "All original 2020-01-01 through 2026-10-07 snapshots, R1a outcomes, R2 and R3 results were already inspected. Thirty minutes was selected from those results. The new protocol limits further adaptation but cannot restore independent test status or a campaign-wide error guarantee.",
+    "request": "The user explicitly requested following the 30-minute research lead after the three-family campaign was completed. This is a separately declared follow-up; the original completed campaign and stopping record remain intact.",
+    "request_date": "2026-10-08"
+  },
+  "claim": "The previously selected 30-minute qualitative geometry pipeline retains positive incremental directional log-loss performance after matched past-only affine score adaptation, with positive performance in the latest pinned 2026 period as well as the declared pooled and annual criteria.",
+  "continuation": {
+    "budget": "One F30-D1 diagnostic, followed by at most one separately frozen F30-M1 probability-to-payoff experiment if the gate below passes. No additional feature/architecture/regime search is authorized by this specification.",
+    "gate": "D1 primary outcome supported AND adapted probability-to-payoff drift-centered alignment point estimate >0 in pooled and partial 2026 AND positive in at least 3 of 4 annual periods. Alignment is a descriptive feasibility veto, not a second inferential claim. Other diagnostics cannot rescue gate failure.",
+    "permitted_next_object": "Preserve exact R1a heads and declared adapters; map each p by common past-only flat fraction and positive/negative log return magnitudes: mu=(1-z)*(p*m_plus-(1-p)*m_minus). Same permitted past magnitudes for B/G. Include unconditional mapped frequency (same past mean return), cash and buy_hold. Fully freeze chronology, fixed finite policy grammar, execution and costs before any M1 fit/evaluation. Require primary increment against B, unconditional and cash, annual consistency, activity and full audit. Attractive D1 bins may not choose magnitude conditioning.",
+    "stop": "If D1 or its continuation gate fails, retain mechanism findings and close this bounded follow-up without trading promotion. Report which requirements failed. A future fresh-data study remains a separately specified possibility; these reused historical observations cannot establish live tradeability."
+  },
+  "data": {
+    "end_exclusive": "2026-10-08",
+    "history_start": "2020-01-01",
+    "interval_seconds": 1800,
+    "minutes": 30,
+    "native": {
+      "context_sha256": "08ba44691fffd9f4701039821b1e23c8d6a0158004c29992a42e0a6b1abe9a44",
+      "keys_bytes": 4737512,
+      "keys_sha256": "b72e5aef5b33ddb79419f0198a0d7e7c41453814c5ffa93860c569bf72b8a10f",
+      "manifest_sha256": "055420b1f8b7dcd215c4117b6b60234d6d3ba61e401444fcd822462c70b7e375",
+      "records": 118432
+    },
+    "source": {
+      "expected_source_bytes": 10750427,
+      "expected_source_rows": 118576,
+      "filename": "btcusdt_30m_kline_20200101_to_20261007.parquet",
+      "minutes": 30,
+      "missing_grid_bars": 80,
+      "prepared_csv_sha256": "65da774e7ecbe88156e1a0daf029d69b85bd6ec17013f46025f8d313b53e83b5",
+      "repo": "vaquum/binance_btcusdt_30m_klines",
+      "revision": "9ebf9f0f26c13e2e34a5a2808082d73127f142e5",
+      "sha256": "41302c042e9048359d2595c6b2424482097097a3d49c91ea5af2ca7975482df8"
+    },
+    "source_contract": "Finite positive IEEE-754 binary64 OHLC values, exact comparisons, no epsilon or inferred tick size. Low <= min(open,close) <= max(open,close) <= high. Volume is validated as source data but is never a feature. Original UTC candle opening timestamps, strictly increasing and on the timeframe grid. Preserve actual source rows, reject duplicates and off-grid times, never fill prices or compress gaps.",
+    "timezone": "UTC"
+  },
+  "diagnostics": {
+    "alignment": "For raw/adapted, pooled and per year, mean(delta_p*logreturn) and mean(delta_p*(logreturn-mu_past)) over all classification_valid rows. delta_p=pG-pB. mu_past is direct log-return mean of that year original selected validation classification_valid rows, including flats, shared by B/G. No outer mean estimated for centering. Retain per year past mean, sample count, rows/returns digests and unscaled product sum. Association is not P&L.",
+    "cell_fields": "Each magnitude/decision/score cell retains target valid, binary, up, down, flat counts; B/G mean probabilities on binary and all target valid; paired raw/adapted loss and Brier sums/means; mean log return; positive and negative conditional mean magnitudes; flats fraction z; empirical q=P(up|nonflat); paired score correction means and alignment. Null conditional statistics when undefined, never silently drop empty cells.",
+    "decision_states": {
+      "rule": "Separate raw/adapted four states B_down_G_down,B_down_G_up,B_up_G_down,B_up_G_up using p>=0.5 as up. Retain all 4 states every year and pooled. These are one-observation strata, not simulated trade paths.",
+      "threshold": 0.5
+    },
+    "families": [
+      "B",
+      "G"
+    ],
+    "magnitude_bins": {
+      "labels": [
+        "flat",
+        "nonflat_lt1",
+        "1_to5",
+        "5_to12",
+        "12_to24",
+        "ge24"
+      ],
+      "rule": "flat iff original direction==0. Other bins apply only nonflat: |logreturn|*10000<1; [1,5); [5,12); [12,24); >=24. Keep all 6 bins for every year and pooled, even empty; do not trim tails.",
+      "unit": "basis points of absolute executable log return"
+    },
+    "magnitude_return": "For classification_valid rows reconstruct log(open[exit_row]/open[entry_row]) directly from the pinned raw CSV float64 values; original R1a target_return is SIMPLE return and is independently checked. Retain true zero labels in economic summaries. Return magnitudes are outcomes, never features or entry filters.",
+    "one_bar_break_even": {
+      "fee_bps_per_side": 10,
+      "formula": "qstar=(m_minus+k/(1-z))/(m_plus+m_minus) when defined. Do not clip qstar to [0,1]; values>1 show no one-bar break-even under that descriptive cell. This is posthoc cell arithmetic, not an executable threshold for persistent holdings.",
+      "roundtrip_log_cost": "k=-log((1-f)^2*(1-s)/(1+s)), f=.001,s=.0002",
+      "slippage_bps_per_side": 2
+    },
+    "payoff_decomposition": "For any nonempty target valid cell, positive and negative signed contribution sums divided by all target valid count reconcile mean log return. When both nonflat sign classes exist, mean log return=(1-z)*(q*m_plus-(1-q)*m_minus). Retain reconstruction error. If a class is absent, its conditional mean and qstar are null; contribution identity still required.",
+    "periods": "Aggregate score summaries for every outer year, pooled, each UTC calendar month from 2023-01 through 2026-10 including partial October, and all four leave-one-outer-year-out aggregates. Retain zero-count months if present. There are 55 aggregate periods. These do not imply a crossing of every detailed cell table with every period: magnitude and decision cells are year plus pooled; score-bin cells are year-only; weighted gain and alignment are year plus pooled. Daily records retain zero-count days.",
+    "sample_integrity": "Per year/phase census full source rows, in phase, causal forecasts, label valid, binary, flat, forecast valid but future label invalid, gaps and boundaries. Partitions must cover eligible rows exactly and contributions reconcile global numerators/counts. Original source calendar gaps remain unchanged.",
+    "score_bins": {
+      "construction": "For each year/variant/family, use all finite causal INNER-validation probabilities, NumPy linear quantiles; sort unique cuts. Assign bins with searchsorted(cuts,p,side=right), equality goes upper. Preserve every resulting bin including empty outer bins. Record raw cuts, deduplicated cuts and training row/prediction digests. Apply fixed cuts to corresponding outer family. Report every year; no pooled ordinal bins across different year cuts.",
+      "interpretation": "B/G score bins have different memberships and are not matched causal comparisons. Adapted probabilities depend on validation labels through the fitted adapter; the quantile calculation uses no additional labels, and no outer label sets any cut.",
+      "quantiles": [
+        0.2,
+        0.4,
+        0.6,
+        0.8
+      ]
+    },
+    "score_distribution": "For each family/year and validation/outer causal phase, raw and adapted logit/probability mean, population standard deviation, min/max and linear 5/25/50/75/95 percentiles. Also record probability correction G-minus-B summaries. These distributions include forecast-valid rows without future labels.",
+    "scores": "Counts, up/down/true-flat, mean probability, up frequency conditional nonflat, logloss sum/mean, Brier sum/mean, threshold 0.5 accuracy and balanced accuracy, and AUC with half credit for exact ties. AUC/balanced accuracy are null when required classes absent. No bin-based exact Murphy decomposition is claimed.",
+    "status": "All diagnostics are descriptive. They cannot rescue a failed primary test or select a feature, horizon, period, threshold, cost assumption, outcome bin or new architecture.",
+    "variants": [
+      "raw",
+      "adapted"
+    ],
+    "weighted_gain": "For raw/adapted, pooled and per year only, sum(abs(logreturn)*(lossB-lossG))/sum(abs(logreturn)) over original binary mask. Retain numerator and denominator; null if zero denominator. No additional p value or success route. This is tilted-outcome logloss, not a proper score for original direction probability or realized profit."
+  },
+  "execution": {
+    "blas_threads": 2,
+    "clean_committed_tree_required": true,
+    "fresh_output_required": true,
+    "published_freeze_required": true,
+    "runtime": "Record exact code/commit/protocol/input identities, Python/package/BLAS/platform details, thread settings, commands, stage wall times and peak process RSS. No named speedup or compute limit claim. NumPy float64 except specified integers/booleans; JSON forbids NaN/Infinity and NPZ forbids object/pickle.",
+    "scientific_changes": "Any post-freeze scientific change requires a separately named amendment before execution. Implementation fixes consistent with this contract are recorded with new code identity; retain failed attempts.",
+    "workers": 1
+  },
+  "experiment_id": "btc-30m-affine-score-followup-d1",
+  "models": {
+    "adapter": "p_adapted = sigmoid(a + b*original_logit)",
+    "application": "Apply fixed a,b to all finite causal original logits in validation and corresponding outer bundles. Never gate a forecast on future label availability. Outer predictions use original pre-year refit logits, not the inner model.",
+    "base_families": [
+      "B",
+      "G"
+    ],
+    "initial_parameters": [
+      0.0,
+      1.0
+    ],
+    "lambda": 0.0001,
+    "limitations": "The original validation labels selected the base candidate and are reused for adaptation. Outer outcomes do not fit their own pipeline. The inner-validation and refit-outer score distributions may differ; this is a test of the specified transported adapter, not an oracle decomposition of calibration and discrimination.",
+    "no_base_refitting": "Use the exact retained selected R1a logits. B contains body and close-return signs; G adds current-to-prior endpoint comparisons and wick-presence columns. Base histories and regularization were selected separately in R1a and remain fixed.",
+    "objective": "mean(logaddexp(0,a+b*z)-y*(a+b*z)) + lambda/2*(a*a+(b-1)*(b-1))",
+    "optimizer": {
+      "alphas": "2**(-j), j=0..49; first finite Armijo-accepted point",
+      "armijo_c1": 0.0001,
+      "failure": "Retain every completed/rejected fit and diagnostics obtained before failure, seal an INCONCLUSIVE failure attempt, and do not score a partial success.",
+      "gradient": "mean((sigmoid(a+b*z)-y)*[1,z]) + lambda*[a,b-1]",
+      "gradient_max_acceptance": 1e-10,
+      "hessian": "mean(w*[1,z]^T*[1,z]) + lambda*I2; w=exp(-abs(v))/(1+exp(-abs(v)))^2",
+      "max_updates": 100,
+      "method": "Exact two-parameter Newton with positive-definite Cholesky and Armijo backtracking",
+      "success": "Finite objective/parameters/gradient with max(abs(gradient))<=1e-10, checked at initialization and after each update including update 100. A small objective change/step is not sufficient. Require positive-definite factorization and finite descent. No jitter, pseudoinverse, alternative optimizer, penalty change, clipping, dropped fold or outcome-selected fallback."
+    },
+    "slope": "Unconstrained real slope. Record b<0 and b==0 explicitly; a negative slope reverses ranking, so no monotone-calibration guarantee is claimed.",
+    "training": "For each outer year and family, use only binary_mask rows of that original selected INNER-validation bundle. Retain all eight fits. Do not fit on outer labels or validation logits recomputed using refit coefficients."
+  },
+  "predecessor": {
+    "admission": "Require the exact root identities, original manifest seal, full PASS audit bound to that manifest/analysis/protocol and all original years/timeframes. Verify every consumed file against the original manifest and every selected model against its prediction sidecar and selection record. Read only 30m selected prediction/model data for new calculations; the original full audit remains the evidence for the other original candidates and timeframes. Accept either the original run or an exact-byte scoped bundle containing all consumed original relative paths. Never rewrite predecessor files.",
+    "evidence_commit": "561f421fce2a23cef5178dfdc1b900748686f429",
+    "execution_commit": "6d48ec31b1a0f2686fbef795089f670c06fe43e0",
+    "freeze_commit": "3df6416a2de59ac396617be49326a834c94aca92",
+    "predictions": "All four years x validation/outer NPZ and JSON sidecars, all eight B/G selection records, all sixteen selected inner/refit coefficient files referenced by them, plus original provenance/features needed for identity checks. Sidecars bind every array dtype/shape/hash, model identity, source, phase, native keys and protocol.",
+    "protocol_path": "experiments/geometry_information/round1a_protocol.json",
+    "protocol_sha256": "cc13e36a818323d1ca488ca4c2af48775b47b267120a55c1011a6bf484191d34",
+    "raw_gain_reconciliation": {
+      "absolute_tolerance": 1e-10,
+      "annual_reference": "Reconstruct and reconcile every annual raw loss numerator/count with the original retained analysis and daily classification artifacts; this is integrity checking, not new evidence.",
+      "pooled_gain": 0.0005687510773535314
+    },
+    "report_manifest_sha256": "d3254a7843319fb381c975ef4311a683426621d2cfae4bec326baa340534990f",
+    "report_path": "benchmarks/reports/20261008-geometry-information-r1a",
+    "repository": "mikkokotila/Filang",
+    "required_root_files": {
+      "analysis.json": {
+        "bytes": 631954,
+        "sha256": "8d65f7e27ed993821b18961f3ac17ea4d20eb09bd04674e1f035c19e74fb9aa9"
+      },
+      "manifest.json": {
+        "bytes": 951583,
+        "sha256": "47cc05a02adea91c486a555f3e1d48fc13f505340db1557fb44180d45f0cb7a6"
+      },
+      "manifest.sha256": {
+        "bytes": 65,
+        "sha256": "c99239c3ba6f677b71bb0fd5b4fd9d069b8c0369d0dd09be53b1a29f3278a64d"
+      },
+      "protocol.json": {
+        "bytes": 39185,
+        "sha256": "cc13e36a818323d1ca488ca4c2af48775b47b267120a55c1011a6bf484191d34"
+      },
+      "run.json": {
+        "bytes": 9126,
+        "sha256": "488a4c14d109c0d45e9575df656c8baf5dfd1a20770343d1acfc970bd7b49d85"
+      },
+      "verification.json": {
+        "bytes": 144477,
+        "sha256": "3660e4827981caa12d4d3e9c91b2fa28683219f89d781b771222ed1c3e676aaf"
+      }
+    }
+  },
+  "primary_inference": {
+    "bootstrap": {
+      "base_seed": 20261008,
+      "confidence_interval": "NumPy linear 2.5/97.5 percentiles of ordinary resampled total numerator / resampled total count.",
+      "draw_order": "numpy.random.default_rng; replicate ascending, year ascending; for each D-day year draw ceil(D/L) int64 starts uniformly in [0,D), append circular consecutive blocks and truncate to D. The same indices are used for numerator/count, ordinary/centered float replicas and exact tails.",
+      "exact_tail": "Convert each executed float64 daily loss sum to exact signed integer numerators over a common positive power-of-two denominator. If S=sum original numerators, N=sum original binary counts, T=resampled numerator sum, Nstar=resampled count, use exact integer event N*T >= 2*S*Nstar. No floating comparison or epsilon. Retain full decimal integer encoding, original and resampled counts, ordinary and globally centered float replicas, exact boolean hits and draw identity.",
+      "p_value": "(1+exact_tail_hit_count)/(2000+1). One-sided alternative positive adjusted G increment.",
+      "primary_block_days": 7,
+      "replicates": 2000,
+      "seed": "base_seed + 1000*30 + block_days",
+      "sensitivity_block_days": [
+        1,
+        28
+      ],
+      "zero_denominator": "Original N must be positive and each resampled Nstar must be positive; any violation makes the required inference inconclusive, without redraw or omission."
+    },
+    "comparison": "adapted_B minus adapted_G binary log loss, stable logaddexp from transformed logits; identical original binary mask",
+    "criteria": [
+      "pooled adapted B-minus-G gain >0",
+      "primary 7 day 95% lower endpoint >0",
+      "primary one-sided exact-tail p <0.05",
+      "at least 3 of 4 annual adapted gain point estimates >0",
+      "partial 2026 adapted gain point estimate >0",
+      "all 8 fits and full independent audit pass"
+    ],
+    "daily": "Assign observations to original target-exit UTC date. Retain all 1376 calendar days across 2023, 2024, 2025 and partial 2026. Store paired loss sums float64 and binary counts int64; pooled estimate is total sum / total count, not a mean of daily ratios.",
+    "multiplicity": "One new primary comparison on the previously outcome-selected 30m lead. No within-D1 multiplicity adjustment is needed for this single route; neither this test nor its p-value controls the earlier adaptive campaign selection. Every other statistic and sensitivity is descriptive.",
+    "outcome": "supported only when every criterion passes; valid complete execution failing any criterion is not-supported for this complete stability claim. Missing required fit/artifact/audit makes the scientific result inconclusive. Preserve pooled support separately when the latest-year or annual condition fails."
+  },
+  "protocol_status": "Freeze this exact specification in a published commit before any F30-D1 market fit or new row-level outcome diagnostic. Source schemas, artifact identities, previously published results and synthetic tests may be inspected before publication.",
+  "references": [
+    {
+      "authors": "Gneiting and Raftery",
+      "title": "Strictly Proper Scoring Rules, Prediction, and Estimation",
+      "url": "https://sites.stat.washington.edu/people/raftery/Research/PDF/Gneiting2007jasa.pdf",
+      "use": "Conceptual distinction between proper probabilistic scoring and an economic decision utility; no source supplies this experiment result.",
+      "year": 2007
+    },
+    {
+      "authors": "Niculescu-Mizil and Caruana",
+      "title": "Predicting Good Probabilities With Supervised Learning",
+      "url": "https://icml.cc/Conferences/2005/proceedings/papers/079_GoodProbabilities_NiculescuMizilCaruana.pdf",
+      "use": "Motivation for a matched probability-adaptation diagnostic; the exact penalty, solver and criterion above are this experiment choices.",
+      "year": 2005
+    }
+  ],
+  "schema": "filang-30m-signal-followup-protocol-v1",
+  "scope": "One retrospective signal diagnosis on the outcome-selected 30m lead. This is not a tradeability test, fresh confirmation, conditional mutual-information estimate, isolated wick effect, or a search over geometry, model histories, penalties, thresholds, regimes or horizons.",
+  "target_and_phases": {
+    "boundary_rule": "Apply the strict target-exit cutoff independently for inner training, validation and refit. Feature history may extend before validation/outer start because it is already known; labels may not extend to or beyond the fitting/phase cutoff.",
+    "classification_eligibility": "Require all 12 original rows t-9..t+2 to be present and consecutive on the timeframe grid, with the ten feature candles in declared history. The current candle's OPEN timestamp must be >= phase_start and the target exit OPEN timestamp[t+2] must be strictly < phase_end. Do not import a prior-phase candle merely because its close is at the boundary.",
+    "decision_information_time": "timestamp[t]+interval_seconds, the scheduled close of the current source candle",
+    "direction": "sign(O[t+2]-O[t+1]); up=1, flat=0, down=-1",
+    "flat_policy": "Retain and report exactly flat labels. Exclude flat labels from logistic fitting and binary scores, not from causal prediction production or the economic ledger.",
+    "outer_folds": [
+      {
+        "inner_train_end_exclusive": "2022-01-01",
+        "inner_train_start": "2020-01-01",
+        "outer_end_exclusive": "2024-01-01",
+        "outer_start": "2023-01-01",
+        "refit_end_exclusive": "2023-01-01",
+        "refit_start": "2020-01-01",
+        "validation_end_exclusive": "2023-01-01",
+        "validation_start": "2022-01-01",
+        "year": 2023
+      },
+      {
+        "inner_train_end_exclusive": "2023-01-01",
+        "inner_train_start": "2020-01-01",
+        "outer_end_exclusive": "2025-01-01",
+        "outer_start": "2024-01-01",
+        "refit_end_exclusive": "2024-01-01",
+        "refit_start": "2020-01-01",
+        "validation_end_exclusive": "2024-01-01",
+        "validation_start": "2023-01-01",
+        "year": 2024
+      },
+      {
+        "inner_train_end_exclusive": "2024-01-01",
+        "inner_train_start": "2020-01-01",
+        "outer_end_exclusive": "2026-01-01",
+        "outer_start": "2025-01-01",
+        "refit_end_exclusive": "2025-01-01",
+        "refit_start": "2020-01-01",
+        "validation_end_exclusive": "2025-01-01",
+        "validation_start": "2024-01-01",
+        "year": 2025
+      },
+      {
+        "inner_train_end_exclusive": "2025-01-01",
+        "inner_train_start": "2020-01-01",
+        "outer_end_exclusive": "2026-10-08",
+        "outer_start": "2026-01-01",
+        "refit_end_exclusive": "2026-01-01",
+        "refit_start": "2020-01-01",
+        "validation_end_exclusive": "2026-01-01",
+        "validation_start": "2025-01-01",
+        "year": 2026
+      }
+    ],
+    "return": "O[t+2]/O[t+1]-1"
+  },
+  "type": "results"
+}

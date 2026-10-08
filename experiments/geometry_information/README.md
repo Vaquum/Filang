@@ -8,6 +8,18 @@
 
 [R2](ROUND2.md), separately frozen in PR #26, completed the conditional log-return and cost-aware policy experiment. Its full audit passed, with an explicit floating-tail arithmetic qualification; the economic criterion is not-supported at all five timeframes. The [complete report](../../benchmarks/reports/20261008-geometry-payoff-r2/README.md) retains all controls and outcomes. Its economic criterion is separate from this original information test.
 
+The user subsequently reopened the 30-minute research lead after the completed
+three-family campaign. [F30-D1](FOLLOWUP30.md) is that separately frozen diagnostic
+in PR #28. Its full audit passed: matched past-only affine score adaptation
+retains a pooled gain of 0.0004321659 nats, but only two annual effects are
+positive, 2025 and partial 2026 are negative, and magnitude-weighted gain is
+negative in every year. The complete stability claim is **not-supported**, and
+the declared economic-continuation gate fails. Its
+[complete report](../../benchmarks/reports/20261008-30m-signal-followup-d1/README.md)
+preserves the positive pooled result, all diagnostic cells, the first failed
+audit and the successful re-audit of the same producer output. The original R1
+specification below remains unchanged.
+
 ## Claim and prior exposure
 
 **Round 1 asks whether additive pooled endpoint geometry improves next executable-bar direction log loss beyond additive body and close-return sign history.** It tests information gain. Its fixed-policy trading outputs are diagnostics, with no model, timeframe, threshold or cost selection based on those outputs.

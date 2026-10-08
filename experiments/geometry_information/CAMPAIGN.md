@@ -176,3 +176,56 @@ The versioned collectors package complete independently audited runs, preserving
 compact evidence byte-for-byte and the exact identities of larger prediction and
 ledger bundles. Reproduction commands and every result remain in the individual
 reports; rerunning the same inspected observations does not create fresh evidence.
+
+## Separately authorized 30-minute follow-up — F30-D1
+
+After this campaign was completed, the user explicitly requested a follow-up to
+the 30-minute research lead. [PR #28](https://github.com/mikkokotila/Filang/pull/28)
+records a separate bounded study; the preceding campaign and its stop decision
+remain intact. The [frozen technical reference](FOLLOWUP30.md) and
+[complete report](../../benchmarks/reports/20261008-30m-signal-followup-d1/README.md)
+retain its specification, data exposure, evidence and interpretation.
+
+F30-D1 holds the R1a selected B/G models fixed and fits eight identical-form,
+past-only affine score adapters. It permits no new feature, history, policy or
+horizon search. Its complete claim adds a positive latest-period requirement to
+pooled and annual consistency. One economic mapping round is permitted only
+after that primary claim and the predeclared signed-payoff alignment conditions
+pass.
+
+The full audit passed, and the complete claim is **not-supported**. Adapted
+pooled B-minus-G log-loss gain is +0.0004321658981 nats per binary observation,
+with primary interval [0.0000761485182, 0.0008019818147] and exact nominal
+p=0.01299350325. About 76% of the original pooled improvement survives. The
+annual adapted gains are +0.001657179466, +0.000383977559, -0.000184917101 and
+-0.000295926598 for 2023 through partial 2026. Only two annual effects are
+positive, and the latest period remains negative. Without 2023, the adapted
+aggregate gain is -0.000009693612.
+
+Magnitude-weighted adapted loss gain is negative in every year and pooled
+(-0.001933623572). Positive ordinary gains occur in intermediate realized
+1–24 bp strata; the at-least-24 bp stratum has gain -0.001018513124. Those are
+ex-post diagnostic strata, not executable filters. When adapted G predicts up
+and B predicts down, G is correct on 50.88% of nonflat directions but the mean
+signed log return is -0.90409 bp because negative outcomes are larger. The
+opposite disagreement cell has a modest majority of correctly predicted down
+directions but positive mean signed return. Complete partitions are retained.
+
+Adapted drift-centered probability/payoff alignment is negative pooled and in
+2026, with only one positive annual value. The economic-continuation gate fails
+every alignment condition as well as the primary criterion. **F30-M1 is not
+opened; the bounded follow-up closes.** This preserves evidence for a small,
+temporally concentrated direction-score effect without claiming tradeability,
+fresh confirmation or a causal wick mechanism.
+
+The producer executed once in 11.562516 launcher seconds and accepted all eight
+adapters. Its first audit was inconclusive because a native receipt lacked the
+timeframe context expected by the inherited prediction oracle. The exact failed
+receipt and logs remain in the report. A reviewed verifier-only repair and an
+unmocked integration regression preceded the successful full re-audit of the
+same sealed producer. The producer was not rerun; its fitted adapters,
+forecasts and results remain unchanged.
+All 118,432 native keys, 393 array members, 55 aggregate periods, every detailed
+partition and 6,000 exact bootstrap tail bits passed. These operational timings
+are not a performance comparison. A future trading-edge claim would need a
+separately frozen prospective test and execution evidence.
