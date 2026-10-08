@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/run_round1.py",
+    "--data-dir",
+    "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction",
+    "--keys-dir",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1",
+    "--out",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1",
+    "--protocol",
+    "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/round1_protocol.json",
+    "--freeze-commit",
+    "b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd",
+    "--workers",
+    "5",
+    "--blas-threads",
+    "2"
+  ],
+  "exit_code": 1,
+  "elapsed_seconds": 77.74459174997173,
+  "finished_utc": "2026-10-08T16:03:43.537603+00:00",
+  "log": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1-execution.log"
+}

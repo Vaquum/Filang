@@ -2,6 +2,8 @@
 
 [round1_protocol.json](round1_protocol.json) is the executable scientific specification. It must be reviewed and committed before any real-data model fitting or outcome evaluation. The run must record that freeze commit and the exact protocol SHA-256. This document explains the contract; it does not report an experiment outcome.
 
+**Execution status:** the original R1 attempt stopped at its frozen optimizer limit and is scientifically inconclusive. Its [complete failure record](../../benchmarks/reports/20261008-geometry-information-r1-failed/README.md) preserves all retained fits and the independent forensic audit. The specification below remains the original contract; a numerical retry requires a separately frozen amendment.
+
 ## Claim and prior exposure
 
 **Round 1 asks whether additive pooled endpoint geometry improves next executable-bar direction log loss beyond additive body and close-return sign history.** It tests information gain. Its fixed-policy trading outputs are diagnostics, with no model, timeframe, threshold or cost selection based on those outputs.
@@ -56,6 +58,8 @@ Fit logistic regression in float64 with objective `mean(logaddexp(0,z)-y*z) + la
 Initialize coefficients at zero and the intercept at the logit of the fitting sample's Beta(1,1) up probability. A recorded stronger-to-weaker lambda warm start within the same exact sample/family/history is permitted. Cache reuse requires matching data, fitting rows/labels/boundaries, features, lambda, initializer and implementation identities. Failed or nonconverged candidates remain in the record; silently discarding them is prohibited.
 
 There are **640 inner candidates** and **40 selected refit pipelines**. Select B and G separately for each timeframe/year using validation log loss only. Scores within `1e-12` of the minimum tie; prefer shorter history, then stronger lambda. Freeze each selected refit through its outer year. Outer outcomes cannot select models or solver settings.
+
+That restriction is relative to each outer fold. The explicit rolling schedule allows an earlier outer year to become past training or validation data in a later fold. It never permits a fold's own outer outcomes to select or fit that fold's pipeline.
 
 Descriptive unconditional and lag-one models use Beta(1,1) smoothing on the corresponding allowed fitting sample. Lag one conditions on `sign(C[t]-C[t-1])` and falls back to unconditional when a stratum is absent. The predecessor exact-pattern model has a different target and is not imported as an R1 comparator.
 

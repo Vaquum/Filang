@@ -1,0 +1,11 @@
+{"features_verified": 15, "records": 237005, "producer_features_verified": true}
+{"features_verified": 30, "records": 118432, "producer_features_verified": true}
+{"features_verified": 60, "records": 59150, "producer_features_verified": true}
+{"features_verified": 120, "records": 29572, "producer_features_verified": true}
+{"features_verified": 240, "records": 14813, "producer_features_verified": true}
+{"forensic_minutes": 15, "all_retained_fits": 33, "rejected_fit": "b9ece4f7d694e25474ec97f1092224300e8a898cc19103e91383bc6de61158e8"}
+{"forensic_minutes": 30, "all_retained_fits": 33, "rejected_fit": "119800a79aef0e501e3237e760df31c4a4f824b8cf49464350fecc120d33e020"}
+{"forensic_minutes": 60, "all_retained_fits": 33, "rejected_fit": "888a791de9cd21d47caa9ee5b41b714466e20eb4fc31982f4559b741db404600"}
+{"forensic_minutes": 120, "all_retained_fits": 33, "rejected_fit": "1ec67b5e6ac2e14b23157042f98fc271c3ef2db6d8542f0e3363eb4edfea6d9f"}
+{"forensic_minutes": 240, "all_retained_fits": 29, "rejected_fit": "6c2f4d0084b976e4db98ba2ede29bd2eb0cecadad431e1bbfb8eb1d4d4371e2c"}
+{"status": "PASS", "stage": "failed", "receipt": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1-failed-verification.json"}

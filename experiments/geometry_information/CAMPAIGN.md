@@ -16,7 +16,8 @@ attempt, then retain the complete result and the remaining scientific question.
 |---|---|---|
 | [PR #22](https://github.com/mikkokotila/Filang/pull/22) | Predecessor complete-pattern direction experiment | [Protocol](../geometry_direction/protocol.json), [measured report](../../benchmarks/reports/20261008-bitcoin-direction/README.md) |
 | [PR #23](https://github.com/mikkokotila/Filang/pull/23) | Campaign governance and experiment records | [Law and gate](../../governance/README.md) |
-| [PR #24](https://github.com/mikkokotila/Filang/pull/24) | Round 1 additive geometry research | [Frozen protocol](round1_protocol.json), [design reference](README.md) |
+| [PR #24](https://github.com/mikkokotila/Filang/pull/24) | Round 1 additive geometry: numerical failure, inconclusive | [Frozen protocol](round1_protocol.json), [failure report](../../benchmarks/reports/20261008-geometry-information-r1-failed/README.md) |
+| Next separately published PR | Proposed frozen R1 solver amendment | Numerical-method follow-up; no result asserted here |
 
 The Round 1 protocol was frozen at commit
 [`b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd`](https://github.com/mikkokotila/Filang/commit/b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd),
@@ -24,7 +25,25 @@ with SHA-256
 `abf7a0424302160a951c90fe9be23391209e4007cb8f7b51a6462ca04cc1524a`.
 Native causal feature preparation preceded that freeze. Real-data fitting and
 predictive outcome evaluation must use the frozen specification and preserve
-their implementation identities. This index records no Round 1 outcome.
+their implementation identities.
+
+The first R1 attempt used clean implementation commit
+`17457a99ce3d5b25cd6ff33deefd6ed3fec60bca`. All five timeframe workers reached
+the original L-BFGS-B 1,000-iteration limit at a required weakly regularized G
+candidate. The scientific outcome is **inconclusive**: 151 accepted/scored inner
+candidates, five rejected inner candidates and five accepted B refits were
+retained; no outer predictions or economic ledgers were produced. The full
+failed-stage forensic audit passed, including all 161 fits and five rejected
+parameter attachments. Audit PASS certifies those records, not the predictive
+hypothesis. The launcher recorded 77.74459174997173 seconds to failed exit;
+this is an operational receipt, not a performance comparison.
+
+The numerical residue motivates a separately declared solver amendment, with
+no retrospective relaxation of R1 acceptance and no removal of this attempt.
+The frozen `outer_use` restriction is fold-relative, as its explicit schedule
+specifies: a year's outer labels cannot fit/select that year's pipeline, but
+may become already-past training/validation data for later chronological folds.
+This explains the existing schedule without changing the frozen JSON.
 
 1. **R1 — additive pooling.** Compare additive body/close-sign history against
    that history plus current-to-prior endpoint comparisons and wick-presence

@@ -489,7 +489,7 @@ done
   --freeze-commit b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd \\
   --workers 5 --blas-threads 1
 .venv-information/bin/python experiments/geometry_information/verify_round1.py \\
-  --stage all --run runs/geometry-information-r1 \\
+  --stage full --run runs/geometry-information-r1 \\
   --keys-root runs/geometry-information-keys-v1 \\
   --data-dir data/geometry-direction \\
   --protocol experiments/geometry_information/round1_protocol.json \\
@@ -635,7 +635,7 @@ def collect(run: Path, out: Path, keys_dir: Path | None = None) -> dict:
                               "{minutes*60}", "--history-start", "2020-01-01", "--end", "2026-10-08",
                               "--bars", "10", "--memory-mib", "256", "--max-rows", "2000000"]},
         "independent_audit_argv": [".venv-information/bin/python", "experiments/geometry_information/verify_round1.py",
-                                   "--stage", "all", "--run", "runs/geometry-information-r1", "--keys-root",
+                                   "--stage", "full", "--run", "runs/geometry-information-r1", "--keys-root",
                                    "runs/geometry-information-keys-v1", "--data-dir", "data/geometry-direction",
                                    "--protocol", "experiments/geometry_information/round1_protocol.json",
                                    "--out", "runs/geometry-information-r1/verification.json"],

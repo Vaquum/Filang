@@ -551,7 +551,16 @@ def cash_share_oracle(timestamps, opens, probability, *, start, end, interval_se
         cumulative_gross += gross_mark
         if before and not want:
             require(entry is not None, "oracle sale without entry")
-            trade_net = cumulative_net - entry["net_before_entry"]
+            # Reconstruct the completed trade from one unit of entry cash.
+            # This also preserves exactly flat zero-cost trades: cancellation
+            # across thousands of normalized log marks must not create wins.
+            purchased = (1-fee)/(entry["entry_open"]*(1+slip))
+            trade_wealth = purchased*price*(1-slip)*(1-fee)
+            if fee == 0 and slip == 0 and price == entry["entry_open"]:
+                trade_wealth = 1.0
+            trade_net = math.log(trade_wealth)
+            require(math.isclose(trade_net, cumulative_net-entry["net_before_entry"], abs_tol=1e-10, rel_tol=1e-10),
+                    "oracle trade/marked account reconciliation")
             trade = {k: v for k, v in entry.items() if k != "net_before_entry"}
             trade.update(exit_row=i, exit_timestamp=int(timestamps[i]), exit_open=price, exit_log_cost=cost,
                          gross_log_return=math.log(price / entry["entry_open"]), net_log_return=trade_net,
@@ -636,7 +645,7 @@ def read_npz(path):
     return result
 
 
-def audit_run_identity(args, protocol):
+def audit_run_identity(args, protocol, expected_status="COMPLETE_PENDING_INDEPENDENT_AUDIT"):
     root = args.run.resolve()
     manifest_path = root / "manifest.json"
     require((root / "manifest.sha256").read_text() == digest(manifest_path)+"\n", "producer manifest seal")
@@ -654,7 +663,7 @@ def audit_run_identity(args, protocol):
     protocol_sha = digest(args.protocol)
     require(protocol_sha == "abf7a0424302160a951c90fe9be23391209e4007cb8f7b51a6462ca04cc1524a", "unexpected frozen protocol")
     run = json_file(root / "run.json")
-    require(run["schema"] == "filang-information-run-v1" and run["status"] == "COMPLETE_PENDING_INDEPENDENT_AUDIT",
+    require(run["schema"] == "filang-information-run-v1" and run["status"] == expected_status,
             "producer run incomplete")
     require(run["protocol_sha256"] == protocol_sha and
             run["freeze_commit"] == "b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd", "freeze identity")
@@ -685,8 +694,33 @@ def audit_run_identity(args, protocol):
     return manifest, run
 
 
+def predecessor_binding(args, protocol):
+    """Bind supplied provenance to prior published evidence when available."""
+    folder = (HERE.parents[1] / protocol["predecessor"]["published_provenance_path"]).parent
+    manifest_path = folder / "manifest.json"
+    supplied = args.data_dir / "provenance.json"
+    if not manifest_path.exists():
+        return {"status": "UNAVAILABLE", "manifest_path": str(manifest_path),
+                "supplied_provenance_sha256": digest(supplied),
+                "scope": "Prior compact manifest absent locally; all frozen raw/prepared pins remain checked."}
+    manifest = json_file(manifest_path)
+    require(manifest["status"] == "PASS", "predecessor manifest status")
+    published = folder / "provenance.json"
+    record = manifest["files"]["provenance.json"]
+    require(published.stat().st_size == record["bytes"] and digest(published) == record["sha256"] == digest(supplied),
+            "predecessor published/supplied provenance binding")
+    prior_protocol = folder / "protocol.json"
+    record = manifest["files"]["protocol.json"]
+    require(prior_protocol.stat().st_size == record["bytes"] and digest(prior_protocol) == record["sha256"] ==
+            protocol["predecessor"]["protocol_sha256"], "predecessor manifest protocol binding")
+    return {"status": "PASS", "manifest_path": str(manifest_path), "manifest_sha256": digest(manifest_path),
+            "supplied_provenance_sha256": digest(supplied), "published_provenance_sha256": digest(published),
+            "protocol_sha256": digest(prior_protocol),
+            "scope": "Prior manifest binds exact supplied provenance and frozen predecessor protocol; unrelated prior report outputs not re-audited."}
+
+
 def audit_fit(model, source, receipt, feature, labels, fold, family, n, penalty, stage,
-              protocol_sha, implementation_sha, parent):
+              protocol_sha, implementation_sha, parent, require_accepted=True):
     rows = np.flatnonzero(labels["binary_mask"])
     y = (labels["direction"][rows] == 1).astype(np.uint8)
     bounds = ("inner_train_start", "inner_train_end_exclusive") if stage == "inner" else ("refit_start", "refit_end_exclusive")
@@ -720,8 +754,11 @@ def audit_fit(model, source, receipt, feature, labels, fold, family, n, penalty,
                 compare(np.asarray(model["gradient"]), gradient, "fit gradient"),
                 compare(model["max_abs_gradient"], float(np.max(np.abs(gradient))), "fit gradient maximum"),
                 compare(model["optimizer"]["reported_objective"], objective, "optimizer objective"))
-    require(model["accepted"] is True and model["optimizer"]["success"] is True and
-            np.max(np.abs(gradient)) <= 5e-6 and model["optimizer"]["status"] == 0, "unaccepted required fit")
+    acceptance = bool(model["optimizer"]["success"] and np.max(np.abs(gradient)) <= 5e-6)
+    require(model["accepted"] is acceptance, "stored acceptance disagrees with full optimizer/gradient criterion")
+    require((model["optimizer"]["status"] == 0) == model["optimizer"]["success"], "optimizer success/status disagreement")
+    if require_accepted:
+        require(acceptance, "unaccepted required fit")
     require(0 <= model["optimizer"]["iterations"] <= 1000 and model["optimizer"]["function_evaluations"] > 0 and
             model["optimizer"]["gradient_evaluations"] > 0, "optimizer iteration/evaluation bounds")
     return error
@@ -787,6 +824,391 @@ def audit_predictions(root, fold_root, phase, source, causal_rows, fold, models,
     return actual, metrics, error
 
 
+def audit_ledger(folder, expected):
+    error = 0.0
+    for name in ("metrics", "trades", "gaps"):
+        error = max(error, compare(json_file(folder / f"{name}.json"), expected[name], "ledger " + str(folder/name)))
+    error = max(error, compare(read_npz(folder / "trace.npz"), expected["trace"], "ledger opening trace " + str(folder)))
+    error = max(error, compare(read_npz(folder / "daily.npz"),
+                {name: expected[name] for name in ("daily_days", "daily_net_log", "daily_gross_log")}, "ledger calendar " + str(folder)))
+    return error
+
+
+def aggregate_ledger_oracle(parts, years):
+    chosen = [parts[year] for year in years]
+    daily = np.concatenate([p["daily_net_log"] for p in chosen])
+    changes = np.concatenate([p["trace"]["net_log_return"] for p in chosen])
+    metrics = [p["metrics"] for p in chosen]
+    trades = [trade for part in chosen for trade in part["trades"]]
+    total, gross = float(changes.sum()), sum(m["gross_log_return"] for m in metrics)
+    running, maximum, drawdown = 0.0, 0.0, 0.0
+    for value in changes:
+        running += float(value)
+        maximum = max(maximum, running)
+        drawdown = max(drawdown, 1-math.exp(running-maximum))
+    sides, seconds = sum(m["one_way_turnover"] for m in metrics), sum(m["seconds_long"] for m in metrics)
+    elapsed = sum(int(p["trace"]["timestamp"][-1]-p["trace"]["timestamp"][0]) for p in chosen)
+    mean = float(daily.sum()/len(daily))
+    std = math.sqrt(float(np.square(daily-mean).sum())/(len(daily)-1))
+    result = {"folds": years, "independent_annual_cash_resets": True, "calendar_days": len(daily),
+        "net_log_return": total, "net_return": math.expm1(total), "gross_log_return": gross, "gross_return": math.expm1(gross),
+        "log_cost_drag": sum(m["log_cost_drag"] for m in metrics), "max_drawdown": drawdown,
+        "annualized_daily_log_sharpe": mean/std*math.sqrt(365.25) if std else None,
+        "annualized_return": math.expm1(total*365.25/len(daily)), "one_way_turnover": sides,
+        "completed_trades": len(trades), "trade_win_rate": sum(t["net_return"] > 0 for t in trades)/len(trades) if trades else None,
+        "mean_trade_net_return": sum(t["net_return"] for t in trades)/len(trades) if trades else None,
+        "seconds_long": seconds, "exposure_fraction": seconds/elapsed,
+        "break_even_symmetric_cost_bps_per_side": -math.expm1(-gross/sides)*10000 if sides else None}
+    for field in ("active_days", "gap_count", "gap_gross_log_return", "delayed_exposure_changes"):
+        result[field] = sum(m[field] for m in metrics)
+    return result
+
+
+def audit_csv(path, expected):
+    with Path(path).open(newline="") as stream:
+        actual = list(csv.DictReader(stream))
+    require(len(actual) == len(expected), "CSV complete row coverage: " + str(path))
+    error = 0.0
+    for observed, desired in zip(actual, expected):
+        require(set(observed) == set(desired), "CSV columns: " + str(path))
+        for key, value in desired.items():
+            if value is None:
+                require(observed[key] == "", "CSV absent value " + key)
+            elif isinstance(value, bool):
+                require(observed[key] == str(value), "CSV bool " + key)
+            elif isinstance(value, (int, np.integer)):
+                require(observed[key] == str(value), "CSV integer " + key)
+            elif isinstance(value, (float, np.floating)):
+                error = max(error, compare(float(observed[key]), float(value), "CSV " + key))
+            else:
+                require(observed[key] == value, "CSV text " + key)
+    return error
+
+
+def full_stage(args, protocol, receipts, manifest, run):
+    root, protocol_sha = args.run, digest(args.protocol)
+    error, fits, selections, candidate_rows, daily_rows, results = 0.0, [], [], [], [], []
+    coverage = {"native_keys": sum(r["records_checked"] for r in receipts), "candidate_fits": 0, "refit_fits": 0,
+                "outer_predictions": 0, "validation_predictions": 0, "ledger_replays": 0, "all_records": True, "sampled": False}
+    global_features = json_file(root / "features.json")
+    compare(global_features["column_names"], {str(n): {f: feature_names(n, f) for f in FAMILIES} for n in HISTORIES},
+            "global feature names/order")
+    require(global_features["schema"] == "filang-information-features-v1" and
+            global_features["protocol_sha256"] == protocol_sha, "global feature identity")
+    expected_features = [json_file(root / f"{minutes}m/features.json") for minutes in TIMES]
+    compare(global_features["timeframes"], expected_features, "global/per-timeframe feature copies")
+    require(all(r["producer_feature_digests_checked"] for r in receipts), "producer feature matrices not all audited")
+    analysis = json_file(root / "analysis.json")
+    require(analysis["schema"] == "filang-information-analysis-v1" and analysis["protocol_sha256"] == protocol_sha and
+            analysis["status"] == "COMPLETE_PENDING_INDEPENDENT_AUDIT", "analysis incomplete/identity")
+    require(analysis["experiment_id"] == protocol["experiment_id"] and analysis["primary_scope"] == protocol["primary_scope"] and
+            analysis["prior_exposure"] == protocol["predecessor"]["prior_exposure"], "analysis scope/exposure")
+    compare(analysis["coverage"], {"inner_fits": 640, "selected_refits": 40, "timeframes": 5, "outer_folds": 4}, "analysis coverage")
+    for receipt, spec in zip(receipts, protocol["data"]["sources"]):
+        minutes = receipt["minutes"]
+        require(minutes == spec["minutes"], "ordered timeframe coverage")
+        folder = root / f"{minutes}m"
+        source = load_source(args.data_dir / f"{minutes}m/ohlcv.csv", minutes*60, spec["prepared_csv_sha256"])
+        ts = source["timestamp"]
+        candidates = np.arange(9, len(ts), dtype=np.int64)
+        causal_rows = candidates[(ts[candidates]-ts[candidates-9] == 9*minutes*60) &
+            (ts[candidates-9] >= epoch(protocol["data"]["history_start"])) & (ts[candidates] < epoch(protocol["data"]["end_exclusive"]))]
+        tf_fits, tf_selections, tf_candidates, folds, daily_folds = [], [], [], [], []
+        policies = ("B", "G", "unconditional", "lag1", "cash", "buy_hold")
+        scenarios = protocol["economic_diagnostic"]["cost_scenarios_bps_per_side"]
+        ledgers = {scenario["name"]: {policy: {} for policy in policies} for scenario in scenarios}
+        for fold in protocol["target_and_phases"]["outer_folds"]:
+            year, fold_root = fold["year"], folder / str(fold["year"])
+            train = phase_oracle(source, causal_rows, epoch(fold["inner_train_start"]), epoch(fold["inner_train_end_exclusive"]))
+            validation = phase_oracle(source, causal_rows, epoch(fold["validation_start"]), epoch(fold["validation_end_exclusive"]))
+            refit = phase_oracle(source, causal_rows, epoch(fold["refit_start"]), epoch(fold["refit_end_exclusive"]))
+            selected_inner, selected_refit, choices = {}, {}, {}
+            for family in FAMILIES:
+                models, independent_validation_losses = [], {}
+                for n in HISTORIES:
+                    fitting_features = raw_features(source["prices"], np.flatnonzero(train["binary_mask"]), n, family).astype(float)
+                    validation_features = raw_features(source["prices"], np.flatnonzero(validation["binary_mask"]), n, family).astype(float)
+                    parent = None
+                    for penalty in protocol["estimation"]["lambda_grid_descending"]:
+                        path = fold_root / family / "candidates" / f"n{n:02}-l{penalty:g}.json"
+                        model = json_file(path)
+                        require(model["path"] == str(path.relative_to(root)), "candidate file identity")
+                        error = max(error, audit_fit(model, source, receipt, fitting_features, train, fold, family, n, penalty,
+                                    "inner", protocol_sha, run["implementation"]["sha256"], parent))
+                        z = validation_features @ np.asarray(model["coefficients"]) + model["intercept"]
+                        metrics = score_oracle(validation["direction"][validation["binary_mask"]], stable_sigmoid(z), z,
+                                    int(np.sum(validation["classification_valid"] & (validation["direction"] == 0))))
+                        error = max(error, compare(model["validation_scores"], metrics, "candidate validation scores"))
+                        independent_validation_losses[model["fit_id"]] = metrics["binary_log_loss"]
+                        require(model["validation_mask_sha256"] == array_digest(validation["binary_mask"], np.uint8),
+                                "candidate validation sample")
+                        row = {"minutes": minutes, "outer_year": year, "family": family, "n": n, "lambda": penalty,
+                            "fit_id": model["fit_id"], "accepted": True, **metrics}
+                        tf_candidates.append(row)
+                        models.append(model)
+                        tf_fits.append(model)
+                        parent = model
+                        coverage["candidate_fits"] += 1
+                del fitting_features, validation_features
+                minimum = min(independent_validation_losses.values())
+                tied = [m for m in models if independent_validation_losses[m["fit_id"]] <= minimum+1e-12]
+                best = sorted(tied, key=lambda m: (m["n"], -m["lambda"]))[0]
+                path = fold_root / family / "refit.json"
+                fitted = json_file(path)
+                require(fitted["path"] == str(path.relative_to(root)), "refit file identity")
+                fitting_features = raw_features(source["prices"], np.flatnonzero(refit["binary_mask"]), best["n"], family).astype(float)
+                error = max(error, audit_fit(fitted, source, receipt, fitting_features, refit, fold, family, best["n"], best["lambda"],
+                            "refit", protocol_sha, run["implementation"]["sha256"], None))
+                del fitting_features
+                tf_fits.append(fitted)
+                coverage["refit_fits"] += 1
+                choice = {"minutes": minutes, "outer_year": year, "family": family, "n": best["n"], "lambda": best["lambda"],
+                    "validation_minimum_loss": minimum, "validation_selected_loss": best["validation_scores"]["binary_log_loss"],
+                    "inner_fit_id": best["fit_id"], "refit_fit_id": fitted["fit_id"], "inner_model_path": best["path"],
+                    "refit_model_path": fitted["path"]}
+                error = max(error, compare(json_file(fold_root / family / "selected.json"), choice, "validation selection"))
+                choices[family] = choice
+                tf_selections.append(choice)
+                selected_inner[family], selected_refit[family] = best, fitted
+            fold_result = {"year": year, "selected": choices}
+            for phase in ("validation", "outer"):
+                start, end = epoch(fold[f"{phase}_start"]), epoch(fold[f"{phase}_end_exclusive"])
+                phase_models, fitting_labels = (selected_inner, train) if phase == "validation" else (selected_refit, refit)
+                arrays, metrics, discrepancy = audit_predictions(root, fold_root, phase, source, causal_rows, fold,
+                                                phase_models, fitting_labels, protocol_sha, receipt)
+                error = max(error, discrepancy)
+                coverage[phase+"_predictions"] += 1
+                if phase == "outer":
+                    daily = daily_oracle(arrays, start, end)
+                    error = max(error, compare(read_npz(fold_root / "classification_daily.npz"), daily, "classification UTC daily units"))
+                    daily_folds.append(daily)
+                    for i, day in enumerate(daily["day"]):
+                        daily_rows.append({"minutes": minutes, "outer_year": year,
+                            "utc_date": datetime.fromtimestamp(int(day)*86400, timezone.utc).date().isoformat(),
+                            **{name: value[i].item() for name, value in daily.items()}})
+                    fold_result.update(scores=metrics, gain=metrics["B"]["binary_log_loss"]-metrics["G"]["binary_log_loss"], economics={})
+                for scenario in scenarios:
+                    name = scenario["name"]
+                    if phase == "outer": fold_result["economics"][name] = {}
+                    for policy in policies:
+                        p = arrays[f"p_{policy}"] if policy not in ("cash", "buy_hold") else np.full(len(ts), np.nan)
+                        ledger = cash_share_oracle(ts, source["prices"][:, 0], p, start=start, end=end,
+                            interval_seconds=source["interval_seconds"], fee_bps=scenario["fee"], slippage_bps=scenario["slippage"],
+                            policy=policy if policy in ("cash", "buy_hold") else "threshold",
+                            entry_threshold=protocol["economic_diagnostic"]["entry_threshold"],
+                            exit_threshold=protocol["economic_diagnostic"]["exit_threshold"])
+                        error = max(error, audit_ledger(fold_root / "economics" / phase / name / policy, ledger))
+                        coverage["ledger_replays"] += 1
+                        if phase == "outer":
+                            fold_result["economics"][name][policy] = ledger["metrics"]
+                            # Keep only what independently reset aggregate accounting needs.
+                            ledger["trace"] = {k: ledger["trace"][k] for k in ("timestamp", "net_log_return")}
+                            ledger.pop("gaps")
+                            ledgers[name][policy][year] = ledger
+                del arrays
+            folds.append(fold_result)
+            print(json.dumps({"verified_minutes": minutes, "verified_year": year,
+                              "candidate_fits": coverage["candidate_fits"], "ledger_replays": coverage["ledger_replays"]}), flush=True)
+        bootstrap = {}
+        settings = protocol["inference"]["bootstrap"]
+        producer_summary = json_file(folder / "summary.json")
+        for block in (7, 1, 28):
+            summary, values = bootstrap_oracle(daily_folds, minutes, block, settings["replicates"], settings["base_seed"])
+            retained = read_npz(folder / f"bootstrap-{block}.npz")
+            error = max(error, compare(retained, values, "bootstrap all replicas"))
+            # Numeric recomputation is independent; byte hashes bind the actual retained arrays.
+            summary.update(ordinary_sha256=array_digest(retained["ordinary"], "<f8"),
+                           centered_sha256=array_digest(retained["centered"], "<f8"))
+            bootstrap[str(block)] = summary
+        economics = {label: {name: {policy: aggregate_ledger_oracle(parts, included) for policy, parts in policies_.items()}
+                        for name, policies_ in ledgers.items()}
+                    for label, included in (("all_outer", list(YEARS)), ("continuous_2024_plus", [2024, 2025, 2026]))}
+        result = {"minutes": minutes, "folds": folds, "pooled_scores": pooled_score_oracle(folds), "bootstrap": bootstrap,
+                  "positive_years": sum(f["gain"] > 0 for f in folds), "economics": economics}
+        error = max(error, compare(producer_summary, result, "timeframe full summary"))
+        compare([json.loads(line) for line in (folder / "fits.jsonl").read_text().splitlines()], tf_fits, "timeframe fit catalogue")
+        error = max(error, compare(json_file(folder / "candidates.json"), tf_candidates, "timeframe candidate catalogue"))
+        compare(json_file(folder / "selected.json"), {"schema": "filang-information-selection-v1", "selections": tf_selections},
+                "timeframe selections")
+        fits.extend(tf_fits)
+        selections.extend(tf_selections)
+        candidate_rows.extend(tf_candidates)
+        results.append(result)
+        del ledgers
+    order = sorted(results, key=lambda result: (result["bootstrap"]["7"]["p_one_sided"], result["minutes"]))
+    previous = 0.0
+    for rank, result in enumerate(order):
+        previous = max(previous, min(1.0, (len(order)-rank)*result["bootstrap"]["7"]["p_one_sided"]))
+        result["p_holm"] = previous
+    for result in results:
+        primary = result["bootstrap"]["7"]
+        conditions = {"positive_gain": primary["gain"] > 0, "ci_above_zero": primary["ci95_low"] > 0,
+            "holm_below_005": result["p_holm"] < .05, "three_positive_years": result["positive_years"] >= 3}
+        result.update(conditions=conditions, criterion_met=all(conditions.values()), outcome="inconclusive",
+                      outcome_if_verified="supported" if all(conditions.values()) else "not-supported")
+    error = max(error, compare(analysis["timeframes"], results, "complete inference, Holm and decision conditions"))
+    compare([json.loads(line) for line in (root / "fits.jsonl").read_text().splitlines()], fits, "global complete fit catalogue")
+    compare(json_file(root / "selected.json"), {"schema": "filang-information-selection-v1", "selections": selections}, "global selections")
+    error = max(error, audit_csv(root / "candidates.csv", candidate_rows), audit_csv(root / "classification_daily.csv", daily_rows))
+    fit_paths = {f["path"] for f in fits}
+    retained_fit_paths = {p for p in manifest["files"] if ("/candidates/" in p and p.endswith(".json")) or p.endswith("/refit.json")}
+    require(len(fit_paths) == 680 and fit_paths == retained_fit_paths, "all retained fit coverage")
+    ledger_files = [p for p in manifest["files"] if "/economics/" in p and p.endswith("/metrics.json")]
+    require(len(ledger_files) == coverage["ledger_replays"] == 960, "all retained ledger coverage")
+    require(coverage == {"native_keys": 458972, "candidate_fits": 640, "refit_fits": 40, "outer_predictions": 20,
+        "validation_predictions": 20, "ledger_replays": 960, "all_records": True, "sampled": False}, "complete frozen experiment coverage")
+    return {"coverage": coverage, "max_numeric_error": error,
+        "audited_timeframes": list(TIMES), "audited_outer_years": list(YEARS),
+        "producer_manifest_sha256": digest(root / "manifest.json"), "analysis_sha256": digest(root / "analysis.json"),
+        "scientific_models_checked": True, "checks": {"raw_source_provenance": True, "all_native_keys": True,
+            "all_feature_columns": True, "all_fit_rows_labels_objectives_gradients": True,
+            "all_candidate_validation_scores_and_choices": True, "all_full_row_predictions_and_masks": True,
+            "all_daily_units_and_bootstrap_replicas": True, "holm_and_frozen_criteria": True,
+            "all_cash_share_ledger_traces": True, "all_reset_aggregate_ledgers": True,
+            "all_retained_artifact_identities": True, "no_optimizer_run_by_verifier": True}}
+
+
+def failed_stage(args, protocol, receipts, manifest, run):
+    """Audit the complete retained execution prefix, never infer market results.
+
+    R1 stopped at the first rejected fit in each independent timeframe worker.
+    Later required cells are missing by design and remain scientifically
+    inconclusive. This stage cannot emit the full-success receipt contract.
+    """
+    root, protocol_sha = args.run, digest(args.protocol)
+    error, failures, retained_paths, selection_paths, parameter_paths = 0.0, [], set(), set(), set()
+    coverage = {"native_keys": sum(r["records_checked"] for r in receipts), "fits": 0,
+        "candidate_fits": 0, "accepted_candidate_fits": 0, "candidate_validation_scores": 0,
+        "refit_fits": 0, "rejected_fits": 0, "selections": 0, "outer_predictions": 0,
+        "validation_predictions": 0, "ledger_replays": 0, "all_retained_records": True, "sampled": False}
+    require(all(r["producer_feature_digests_checked"] for r in receipts), "failed-run producer feature coverage")
+    require(sorted(f["minutes"] for f in run["failures"]) == list(TIMES), "failed worker coverage")
+    fold = protocol["target_and_phases"]["outer_folds"][0]
+    require(fold["year"] == 2023, "failed-run first outer fold")
+    for receipt, spec in zip(receipts, protocol["data"]["sources"]):
+        minutes, records, stopped = receipt["minutes"], [], False
+        source = load_source(args.data_dir / f"{minutes}m/ohlcv.csv", minutes*60, spec["prepared_csv_sha256"])
+        folder, fold_root = root / f"{minutes}m", root / f"{minutes}m/2023"
+        ts = source["timestamp"]
+        candidates = np.arange(9, len(ts), dtype=np.int64)
+        causal_rows = candidates[(ts[candidates]-ts[candidates-9] == 9*minutes*60) &
+            (ts[candidates-9] >= epoch(protocol["data"]["history_start"])) & (ts[candidates] < epoch(protocol["data"]["end_exclusive"]))]
+        train = phase_oracle(source, causal_rows, epoch(fold["inner_train_start"]), epoch(fold["inner_train_end_exclusive"]))
+        validation = phase_oracle(source, causal_rows, epoch(fold["validation_start"]), epoch(fold["validation_end_exclusive"]))
+        refit = phase_oracle(source, causal_rows, epoch(fold["refit_start"]), epoch(fold["refit_end_exclusive"]))
+        for family in FAMILIES:
+            models, independent_losses = [], {}
+            for n in HISTORIES:
+                features = raw_features(source["prices"], np.flatnonzero(train["binary_mask"]), n, family).astype(float)
+                validation_features = raw_features(source["prices"], np.flatnonzero(validation["binary_mask"]), n, family).astype(float)
+                parent = None
+                for penalty in protocol["estimation"]["lambda_grid_descending"]:
+                    path = fold_root / family / "candidates" / f"n{n:02}-l{penalty:g}.json"
+                    model = json_file(path)
+                    require(model["path"] == str(path.relative_to(root)), "failed-run candidate path")
+                    error = max(error, audit_fit(model, source, receipt, features, train, fold, family, n, penalty, "inner",
+                                protocol_sha, run["implementation"]["sha256"], parent, require_accepted=False))
+                    retained_paths.add(model["path"])
+                    records.append(model)
+                    coverage["fits"] += 1
+                    coverage["candidate_fits"] += 1
+                    if not model["accepted"]:
+                        expected_parameters = str(path.with_name(path.stem+"-failed-parameters.npz").relative_to(root))
+                        require(model["failure_parameters_path"] == expected_parameters, "failed raw parameter path")
+                        parameter_arrays = read_npz(root / expected_parameters)
+                        expected_arrays = {"theta": np.asarray([model["intercept"], *model["coefficients"]], dtype=np.float64),
+                            "gradient": np.asarray(model["gradient"], dtype=np.float64),
+                            "objective": np.asarray(model["objective"], dtype=np.float64)}
+                        compare(parameter_arrays, expected_arrays, "failed parameter array/JSON binding", tolerance=0)
+                        require(all(value.dtype == np.dtype("float64") for value in parameter_arrays.values()),
+                                "failed parameter array precision")
+                        require(array_digest(parameter_arrays["theta"], "<f8") == model["coefficient_sha256"],
+                                "failed parameter coefficient identity")
+                        parameter_paths.add(expected_parameters)
+                        require("validation_scores" not in model and "validation_mask_sha256" not in model,
+                                "rejected candidate was used for validation selection")
+                        require(model["optimizer"]["iterations"] == 1000 and model["optimizer"]["status"] == 1 and
+                                model["optimizer"]["success"] is False and
+                                "ITERATIONS REACHED LIMIT" in model["optimizer"]["message"], "unexpected R1 stop reason")
+                        record = {"minutes": minutes, "outer_year": 2023, "family": family, "n": n, "lambda": penalty,
+                            "fit_id": model["fit_id"], "path": model["path"], "objective": model["objective"],
+                            "max_abs_gradient": model["max_abs_gradient"], "gradient_threshold_satisfied": model["max_abs_gradient"] <= 5e-6,
+                            "accepted": False, "optimizer": model["optimizer"]}
+                        failures.append(record)
+                        worker = next(f for f in run["failures"] if f["minutes"] == minutes)
+                        compare(json_file(root / f"failure-{minutes}m.json"), worker, "worker failure record")
+                        require(model["fit_id"] in worker["traceback"], "worker stopped at retained rejected fit")
+                        coverage["rejected_fits"] += 1
+                        stopped = True
+                        break
+                    z = validation_features @ np.asarray(model["coefficients"]) + model["intercept"]
+                    metrics = score_oracle(validation["direction"][validation["binary_mask"]], stable_sigmoid(z), z,
+                                int(np.sum(validation["classification_valid"] & (validation["direction"] == 0))))
+                    error = max(error, compare(model["validation_scores"], metrics, "retained candidate validation scores"))
+                    require(model["validation_mask_sha256"] == array_digest(validation["binary_mask"], np.uint8), "retained validation rows")
+                    coverage["accepted_candidate_fits"] += 1
+                    coverage["candidate_validation_scores"] += 1
+                    independent_losses[model["fit_id"]] = metrics["binary_log_loss"]
+                    models.append(model)
+                    parent = model
+                if stopped:
+                    break
+            del features, validation_features
+            if stopped:
+                break
+            require(len(models) == 16, "selection attempted before complete family grid")
+            minimum = min(independent_losses.values())
+            tied = [m for m in models if independent_losses[m["fit_id"]] <= minimum+1e-12]
+            best = sorted(tied, key=lambda m: (m["n"], -m["lambda"]))[0]
+            path = fold_root / family / "refit.json"
+            fitted = json_file(path)
+            require(fitted["path"] == str(path.relative_to(root)), "retained refit path")
+            features = raw_features(source["prices"], np.flatnonzero(refit["binary_mask"]), best["n"], family).astype(float)
+            error = max(error, audit_fit(fitted, source, receipt, features, refit, fold, family, best["n"], best["lambda"],
+                        "refit", protocol_sha, run["implementation"]["sha256"], None))
+            del features
+            require("validation_scores" not in fitted, "refit used to recreate inner validation scores")
+            retained_paths.add(fitted["path"])
+            records.append(fitted)
+            coverage["fits"] += 1
+            coverage["refit_fits"] += 1
+            choice = {"minutes": minutes, "outer_year": 2023, "family": family, "n": best["n"], "lambda": best["lambda"],
+                "validation_minimum_loss": minimum, "validation_selected_loss": best["validation_scores"]["binary_log_loss"],
+                "inner_fit_id": best["fit_id"], "refit_fit_id": fitted["fit_id"], "inner_model_path": best["path"],
+                "refit_model_path": fitted["path"]}
+            selection = fold_root / family / "selected.json"
+            error = max(error, compare(json_file(selection), choice, "retained complete-family selection"))
+            selection_paths.add(str(selection.relative_to(root)))
+            coverage["selections"] += 1
+        require(stopped, "failed worker lacks rejected fit")
+        compare([json.loads(line) for line in (folder / "fits.jsonl").read_text().splitlines()], records, "all retained failure fit records")
+        print(json.dumps({"forensic_minutes": minutes, "all_retained_fits": len(records), "rejected_fit": failures[-1]["fit_id"]}), flush=True)
+    all_fit_paths = {p for p in manifest["files"] if ("/candidates/" in p and p.endswith(".json")) or p.endswith("/refit.json")}
+    require(retained_paths == all_fit_paths, "unaudited retained fit or post-failure continuation")
+    require(selection_paths == {p for p in manifest["files"] if p.endswith("/selected.json")}, "unaudited retained selection")
+    require(parameter_paths == {p for p in manifest["files"] if p.endswith("-failed-parameters.npz")} and len(parameter_paths) == 5,
+            "all retained failed parameter arrays")
+    forbidden = [p for p in manifest["files"] if (p.endswith(".npz") and p not in parameter_paths) or "/economics/" in p or
+                 p in ("analysis.json", "candidates.csv", "classification_daily.csv", "selected.json", "fits.jsonl") or
+                 p.endswith("/summary.json") or p.endswith("/outer.json") or p.endswith("/validation.json")]
+    require(not forbidden, "failed stage cannot certify prediction/inference/economic outputs: " + repr(forbidden))
+    expected = {"native_keys": 458972, "fits": 161, "candidate_fits": 156, "accepted_candidate_fits": 151,
+        "candidate_validation_scores": 151, "refit_fits": 5, "rejected_fits": 5, "selections": 5,
+        "outer_predictions": 0, "validation_predictions": 0, "ledger_replays": 0, "all_retained_records": True, "sampled": False}
+    require(coverage == expected, "R1 failed execution coverage")
+    return {"experiment_status": "FAILED", "outcome": "inconclusive", "criterion_evaluable": False,
+        "coverage": coverage, "failures": failures, "max_numeric_error": error, "audited_timeframes": list(TIMES),
+        "audited_outer_years": [2023], "producer_manifest_sha256": digest(root / "manifest.json"), "analysis_sha256": None,
+        "scientific_models_checked": False, "retained_model_parameters_checked": True,
+        "scientific_models_scope": "Every retained point and accepted candidate validation score checked; required grid incomplete, no outer predictions or scientific inference.",
+        "checks": {"raw_source_provenance": True, "all_native_keys_and_projections": True,
+            "all_retained_fit_rows_labels_objectives_gradients": True, "all_retained_acceptance_flags": True,
+            "all_failed_parameter_arrays": True,
+            "all_retained_candidate_validation_scores": True, "all_retained_complete_family_selections": True,
+            "all_worker_failure_records": True, "no_post_failure_predictions_or_economics": True,
+            "all_retained_artifact_identities": True, "no_optimizer_run_by_verifier": True}}
+
+
 def feature_stage(args, protocol):
     records = []
     for spec in protocol["data"]["sources"]:
@@ -807,7 +1229,7 @@ def feature_stage(args, protocol):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stage", choices=("features", "all"), default="all")
+    parser.add_argument("--stage", choices=("features", "failed", "full", "all"), default="full")
     parser.add_argument("--run", type=Path)
     parser.add_argument("--keys-root", type=Path, required=True)
     parser.add_argument("--data-dir", type=Path, required=True)
@@ -817,15 +1239,28 @@ def main(argv=None):
     started = time.perf_counter()
     protocol = json_file(args.protocol)
     require(protocol["schema"] == "filang-geometry-information-protocol-v1", "protocol schema")
+    model_stage = args.stage != "features"
+    full = args.stage in ("full", "all")
+    expected_status = "FAILED" if args.stage == "failed" else "COMPLETE_PENDING_INDEPENDENT_AUDIT"
+    require(not model_stage or args.run is not None, "--run required for model audit")
+    manifest, run = audit_run_identity(args, protocol, expected_status) if model_stage else (None, None)
     records = feature_stage(args, protocol)
-    require(args.stage == "features", "full scientific artifact adapter is not yet available; no full audit was certified")
-    result = {"schema": "filang-r1-independent-verification-v1", "status": "PASS", "stage": args.stage,
+    result = {"schema": "filang-geometry-information-verification-v1", "status": "PASS", "stage": "full" if full else args.stage,
               "protocol_sha256": digest(args.protocol), "verifier_sha256": digest(__file__),
               "native_records_checked": sum(r["records_checked"] for r in records),
               "all_raw_keys_and_projections_checked": True,
               "all_producer_feature_digests_checked": all(r["producer_feature_digests_checked"] for r in records),
               "scientific_models_checked": False, "features": records,
-              "elapsed_seconds": time.perf_counter() - started}
+              "predecessor_binding": predecessor_binding(args, protocol)}
+    if model_stage:
+        result.update((full_stage if full else failed_stage)(args, protocol, records, manifest, run))
+        # Rehash the manifest and every sealed file at the end as well, so an
+        # artifact changed while being audited cannot inherit a stale receipt.
+        audit_run_identity(args, protocol, expected_status)
+        require(result["producer_manifest_sha256"] == digest(args.run / "manifest.json"), "producer changed during audit")
+        if full:
+            require(result["analysis_sha256"] == digest(args.run / "analysis.json"), "analysis changed during audit")
+    result["elapsed_seconds"] = time.perf_counter() - started
     save_json(args.out, result)
     print(json.dumps({"status": "PASS", "stage": args.stage, "receipt": str(args.out)}), flush=True)
 

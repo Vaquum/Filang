@@ -1,0 +1,52 @@
+{
+  "collector_sha256": "d945c9cb63ae91bd54a7c215d40f3b6aa60b8ea2727ddd38b94a603020aa8ff4",
+  "coverage": {
+    "accepted_candidate_fits": 151,
+    "all_retained_records": true,
+    "candidate_fits": 156,
+    "candidate_validation_scores": 151,
+    "fits": 161,
+    "ledger_replays": 0,
+    "native_keys": 458972,
+    "outer_predictions": 0,
+    "refit_fits": 5,
+    "rejected_fits": 5,
+    "sampled": false,
+    "selections": 5,
+    "validation_predictions": 0
+  },
+  "criterion_evaluable": false,
+  "experiment_status": "FAILED",
+  "native_keys_retained_externally": {
+    "120m/keys.bin": {
+      "bytes": 1183112,
+      "sha256": "29cff22f39db0b1c1e265819706fca8ec850a4d770c65530350e39894c144622",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/120m/keys.bin"
+    },
+    "15m/keys.bin": {
+      "bytes": 9480432,
+      "sha256": "548fe299b7a245a3a59353df9d9518974673064c853364e198d54868ce915db0",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/15m/keys.bin"
+    },
+    "240m/keys.bin": {
+      "bytes": 592752,
+      "sha256": "1d4b7e4bb32f26fba83079aea8046ea342d1ef9c60d8059d6b03aaf39ec848a3",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/240m/keys.bin"
+    },
+    "30m/keys.bin": {
+      "bytes": 4737512,
+      "sha256": "b72e5aef5b33ddb79419f0198a0d7e7c41453814c5ffa93860c569bf72b8a10f",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/30m/keys.bin"
+    },
+    "60m/keys.bin": {
+      "bytes": 2366232,
+      "sha256": "40eca33b8e0765208f9e4d01de5419fedd8c196069fe70abc556c14467b95b85",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1/60m/keys.bin"
+    }
+  },
+  "outcome": "inconclusive",
+  "producer_manifest_sha256": "50636af271063eeadda9e5f8dafd8d115b0bb22b8f150d46d659b08e24e86856",
+  "schema": "filang-r1-failure-collection-v1",
+  "status": "PASS",
+  "verification_sha256": "3a4c1deb7293218b5f7adfa86afb1993b5e8766421cb0b6797d09367ba7a2c4c"
+}

@@ -1,0 +1,1 @@
+{"format":"geometry-keys-v1","source_read_validate_hash_seconds":0.011621500,"encode_write_seal_seconds":0.033853541,"elapsed_before_metadata_seconds":0.072873875,"records":14813,"memory_mib_limit":256,"max_rows_limit":2000000,"measurement":"operational_wall_clock_not_a_benchmark"}
