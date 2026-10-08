@@ -1,0 +1,23 @@
+/Users/mikkokotila/dev/Filang-research/.venv/lib/python3.13/site-packages/numpy/__config__.py:155: UserWarning: Install `pyyaml` for better output
+  warnings.warn("Install `pyyaml` for better output", stacklevel=1)
+completed 240m R3 outer fold 2023
+completed 120m R3 outer fold 2023
+completed 240m R3 outer fold 2024
+completed 60m R3 outer fold 2023
+completed 120m R3 outer fold 2024
+completed 240m R3 outer fold 2025
+completed 30m R3 outer fold 2023
+completed 240m R3 outer fold 2026
+completed 120m R3 outer fold 2025
+completed 60m R3 outer fold 2024
+completed 120m R3 outer fold 2026
+completed 15m R3 outer fold 2023
+completed 60m R3 outer fold 2025
+completed 30m R3 outer fold 2024
+completed 60m R3 outer fold 2026
+completed 30m R3 outer fold 2025
+completed 15m R3 outer fold 2024
+completed 30m R3 outer fold 2026
+completed 15m R3 outer fold 2025
+completed 15m R3 outer fold 2026
+{"status": "COMPLETE_PENDING_INDEPENDENT_AUDIT", "out": "/Users/mikkokotila/dev/Filang-research/runs/geometry-interactions-r3", "inner_fits": 640, "refits": 40, "statistics_built": 25, "policy_choices": 60, "validation_ledgers": 420, "outer_ledgers": 400, "prediction_phases": 40}

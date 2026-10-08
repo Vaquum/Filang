@@ -1,0 +1,31 @@
+{
+  "attempt": "R3-independent-audit",
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "experiments/geometry_information/verify_round3.py",
+    "--stage",
+    "full",
+    "--run",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-interactions-r3",
+    "--data-dir",
+    "/Users/mikkokotila/dev/Filang-direction/data/geometry-direction",
+    "--keys-root",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-keys-v1",
+    "--protocol",
+    "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/round3_protocol.json",
+    "--out",
+    "/Users/mikkokotila/dev/Filang-research/runs/geometry-interactions-r3/verification.json"
+  ],
+  "completed_utc": "2026-10-08T18:12:32.848281+00:00",
+  "elapsed_seconds": 384.3349493750138,
+  "exit_code": 0,
+  "log": "/Users/mikkokotila/dev/Filang-research/runs/geometry-interactions-r3-verification.log",
+  "pid": 23526,
+  "producer_manifest_sha256": "5228f867081f31d1ad62c06a0a04d6aaa1811abaf3588cb713c72c8d04b36697",
+  "source_sha256": {
+    "experiments/geometry_information/tests/test_verify_round3.py": "8bf26b2c13991b65db0387050774fe71293c39e3b224bf55f924ef403c55f94c",
+    "experiments/geometry_information/verify_round1.py": "f24297886f02af19620bbad68b3eaf1e32ef2ec628f062f723a960ec60d63ff4",
+    "experiments/geometry_information/verify_round3.py": "cb4959bdd88751bc94098cc1d863f4fe19bb3b6346c84f264cdf7cbbb931f9c6"
+  },
+  "started_utc": "2026-10-08T18:06:08.514814+00:00"
+}

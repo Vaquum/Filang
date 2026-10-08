@@ -217,6 +217,8 @@ For a fresh checkout with no prepared inputs, use the existing preparation and
 native export commands. They preserve actual timestamps and missing grid bars:
 
 ```sh
+python3.13 -m venv .venv
+.venv/bin/python -m pip install -r requirements-direction.txt -r requirements-information.txt
 FILANG_DATA_DIR="$PWD/data/geometry-direction"
 FILANG_KEYS_DIR="$PWD/runs/geometry-interaction-replay-keys"
 .venv/bin/python scripts/prepare_direction.py --out "$FILANG_DATA_DIR"

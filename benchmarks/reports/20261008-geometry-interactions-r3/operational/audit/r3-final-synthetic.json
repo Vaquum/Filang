@@ -1,0 +1,70 @@
+{
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/geometry_information/tests",
+    "-v"
+  ],
+  "completed_utc": "2026-10-08T18:02:27.333603+00:00",
+  "elapsed_seconds": 96.82394899998326,
+  "exit_code": 0,
+  "log": "/Users/mikkokotila/dev/Filang-research/runs/r3-final-synthetic.log",
+  "source_files": {
+    "ROUND3.md": {
+      "bytes": 14538,
+      "sha256": "72aa91c1643e15dbd6e26c014d2d85f59f038f0a44bd7087d2779e7243de6c46"
+    },
+    "collect_round3.py": {
+      "bytes": 53950,
+      "sha256": "36614960d61f49d4526c8408d109ce67fcc583f65961700a7e4bcd09be25ceba"
+    },
+    "exact_bootstrap.py": {
+      "bytes": 9707,
+      "sha256": "4a8f71a135d6e80ed9c4f2b5debcd173e28a3d1a40331232cb8451476565b770"
+    },
+    "interaction_returns.py": {
+      "bytes": 4203,
+      "sha256": "2313c9d367f1f31d06bed0d5b7a150c698204e23dd63c886c882b70c08121ef6"
+    },
+    "interactions.py": {
+      "bytes": 7525,
+      "sha256": "2df9f3e35d22c89e88c206025b73adc0f6a3c31fb0370cf2a9f1f5b201e37b38"
+    },
+    "run_round3.py": {
+      "bytes": 41155,
+      "sha256": "d0fa702ce97a564305fe829748b1c520051cb439a5591efb71990a997a5c8953"
+    },
+    "tests/test_collect_round3.py": {
+      "bytes": 31499,
+      "sha256": "bfac85dbb01a3a76bc205849b2844742872aa85323ea302ae27627a27850db65"
+    },
+    "tests/test_exact_bootstrap.py": {
+      "bytes": 7285,
+      "sha256": "a983c2c75bea8f924506d94a6c2b36db30d50d2ec6acb2970764e01e256acd60"
+    },
+    "tests/test_interaction_returns.py": {
+      "bytes": 5612,
+      "sha256": "51c5e676a06d241e52869f717ce8f036b36f789febe21f6476b1d295770c09d5"
+    },
+    "tests/test_interactions.py": {
+      "bytes": 9892,
+      "sha256": "7b82bd0b08685ee9a4904bcce123f1180bd7254cdc4987f58f0df1910a68f157"
+    },
+    "tests/test_round3.py": {
+      "bytes": 12070,
+      "sha256": "c7c168c01020eb7a165431c322dc0b0ef97f3ee61a4e7b6d9ff4ff4f344006c8"
+    },
+    "tests/test_verify_round3.py": {
+      "bytes": 15114,
+      "sha256": "8bf26b2c13991b65db0387050774fe71293c39e3b224bf55f924ef403c55f94c"
+    },
+    "verify_round3.py": {
+      "bytes": 74807,
+      "sha256": "cb4959bdd88751bc94098cc1d863f4fe19bb3b6346c84f264cdf7cbbb931f9c6"
+    }
+  },
+  "started_utc": "2026-10-08T18:00:50.509755+00:00"
+}
