@@ -994,93 +994,98 @@ pub fn run_banks(
                     c.bank_budget,
                 )?;
                 let right = Tree::new(&entries_b, c.tree_budget)?;
-                for template in 0..c.rules.len() {
-                    let mut cursor = 0;
-                    while cursor < frontier.len() {
-                        let mut jobs = Vec::new();
-                        let mut pending_new = 0;
-                        while jobs.len() < workers && cursor < frontier.len() {
-                            let id = done
-                                .checked_add(jobs.len() as u64)
-                                .ok_or("task count overflow")?;
-                            let committed = tasks.join(format!("task-{id:08}.chk")).exists();
-                            if !committed && max_tasks > 0 && new_tasks + pending_new >= max_tasks {
-                                break;
-                            }
-                            if !committed {
-                                pending_new += 1;
-                            }
-                            jobs.push((id, frontier[cursor], committed));
-                            cursor += 1;
+                // Keep template-major task addresses, but permit a worker batch
+                // to cross template boundaries while sharing this one tree pair.
+                let pair_tasks = frontier
+                    .len()
+                    .checked_mul(c.rules.len())
+                    .ok_or("pair task count overflow")?;
+                let mut cursor = 0;
+                while cursor < pair_tasks {
+                    let mut jobs = Vec::new();
+                    let mut pending_new = 0;
+                    while jobs.len() < workers && cursor < pair_tasks {
+                        let id = done
+                            .checked_add(jobs.len() as u64)
+                            .ok_or("task count overflow")?;
+                        let committed = tasks.join(format!("task-{id:08}.chk")).exists();
+                        if !committed && max_tasks > 0 && new_tasks + pending_new >= max_tasks {
+                            break;
                         }
-                        if jobs.is_empty() {
-                            complete = false;
-                            break 'outer;
+                        if !committed {
+                            pending_new += 1;
                         }
-                        let batch = std::thread::scope(|scope| -> Result<Vec<(Task, bool)>> {
-                            let mut handles = Vec::new();
-                            for (id, node, committed) in jobs {
-                                let r = range.clone();
-                                let ctxt = &context;
-                                let dir = &tasks;
-                                let l = &left;
-                                let rr = &right;
-                                let banks = &banks;
-                                handles.push(scope.spawn(move || {
-                                    source_task(
-                                        c,
-                                        source,
-                                        banks,
-                                        d,
-                                        r,
-                                        ctxt,
-                                        dir,
-                                        id,
-                                        [a, b],
-                                        template,
-                                        l,
-                                        rr,
-                                        node,
-                                        backend,
-                                        proof,
-                                        capture,
-                                    )
-                                    .map(|t| (t, committed))
-                                }));
-                            }
-                            handles
-                                .into_iter()
-                                .map(|h| h.join().map_err(|_| "task worker panicked".to_owned())?)
-                                .collect()
-                        })?;
-                        for (t, committed) in batch {
-                            if committed {
-                                reused = reused.checked_add(1).ok_or("task count overflow")?;
-                            } else {
-                                new_tasks =
-                                    new_tasks.checked_add(1).ok_or("task count overflow")?;
-                            }
-                            covered = covered
-                                .checked_add(t.work.logical)
-                                .ok_or("whole coverage overflow")?;
-                            regions = regions
-                                .checked_add(t.regions)
-                                .ok_or("region count overflow")?;
-                            pairs = pairs
-                                .checked_add(t.work.signature_pairs)
-                                .ok_or("signature-pair count overflow")?;
-                            visits = visits
-                                .checked_add(t.work.node_pairs as u128)
-                                .ok_or("tree-visit count overflow")?;
-                            certified = certified
-                                .checked_add(t.work.proved_regions as u128)
-                                .ok_or("certificate count overflow")?;
-                            result_hash.update(&t.encode(&context));
-                            if best.as_ref().map_or(true, |v| t.best.better(v)) {
-                                best = Some(t.best);
-                            }
-                            done = done.checked_add(1).ok_or("task count overflow")?;
+                        let template = cursor / frontier.len();
+                        let node = frontier[cursor % frontier.len()];
+                        jobs.push((id, node, template, committed));
+                        cursor += 1;
+                    }
+                    if jobs.is_empty() {
+                        complete = false;
+                        break 'outer;
+                    }
+                    let batch = std::thread::scope(|scope| -> Result<Vec<(Task, bool)>> {
+                        let mut handles = Vec::new();
+                        for (id, node, template, committed) in jobs {
+                            let r = range.clone();
+                            let ctxt = &context;
+                            let dir = &tasks;
+                            let l = &left;
+                            let rr = &right;
+                            let banks = &banks;
+                            handles.push(scope.spawn(move || {
+                                source_task(
+                                    c,
+                                    source,
+                                    banks,
+                                    d,
+                                    r,
+                                    ctxt,
+                                    dir,
+                                    id,
+                                    [a, b],
+                                    template,
+                                    l,
+                                    rr,
+                                    node,
+                                    backend,
+                                    proof,
+                                    capture,
+                                )
+                                .map(|t| (t, committed))
+                            }));
                         }
+                        handles
+                            .into_iter()
+                            .map(|h| h.join().map_err(|_| "task worker panicked".to_owned())?)
+                            .collect()
+                    })?;
+                    for (t, committed) in batch {
+                        if committed {
+                            reused = reused.checked_add(1).ok_or("task count overflow")?;
+                        } else {
+                            new_tasks = new_tasks.checked_add(1).ok_or("task count overflow")?;
+                        }
+                        covered = covered
+                            .checked_add(t.work.logical)
+                            .ok_or("whole coverage overflow")?;
+                        regions = regions
+                            .checked_add(t.regions)
+                            .ok_or("region count overflow")?;
+                        pairs = pairs
+                            .checked_add(t.work.signature_pairs)
+                            .ok_or("signature-pair count overflow")?;
+                        visits = visits
+                            .checked_add(t.work.node_pairs as u128)
+                            .ok_or("tree-visit count overflow")?;
+                        certified = certified
+                            .checked_add(t.work.proved_regions as u128)
+                            .ok_or("certificate count overflow")?;
+                        result_hash.update(&t.encode(&context));
+                        if best.as_ref().map_or(true, |v| t.best.better(v)) {
+                            best = Some(t.best);
+                        }
+                        done = done.checked_add(1).ok_or("task count overflow")?;
                     }
                 }
                 eprintln!(
