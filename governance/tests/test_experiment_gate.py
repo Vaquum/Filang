@@ -114,6 +114,37 @@ class RecordTests(unittest.TestCase):
         body = record().replace("- [x]", "- [ ]") + "\n```md\n" + record() + "\n```"
         self.assertFalse(check(body)["passed"])
 
+    def test_raw_html_examples_cannot_supply_record(self):
+        for tag in ["pre", "code", "script", "style", "textarea", "PRE", "CoDe"]:
+            with self.subTest(tag=tag):
+                wrapped = f'<{tag} class="example">\n{record()}\n</{tag}>'
+                self.assertFalse(check(wrapped)["passed"])
+                self.assertTrue(check(record() + "\n" + wrapped)["passed"])
+                self.assertFalse(check(record().replace("- [x]", "- [ ]")
+                                       + "\n" + wrapped)["passed"])
+
+    def test_unclosed_and_multiline_html_examples_fail_closed(self):
+        for prefix in ["<pre>\n", "<code>\n", "<SCRIPT src='example'>\n",
+                       "<textarea\nclass='example'>\n", "<pre\n"]:
+            with self.subTest(prefix=prefix):
+                self.assertFalse(check(prefix + record())["passed"])
+
+    def test_html_inside_fenced_or_quoted_example_does_not_hide_real_record(self):
+        for prefix in ["```html\n<pre>\n```\n", "> <pre>\n", "    <pre>\n"]:
+            self.assertTrue(check(prefix + record())["passed"])
+
+    def test_literal_comment_in_example_does_not_hide_real_record(self):
+        for prefix in ['```python\nprint("<!--")\n```\n', "> <!--\n",
+                       "    <!--\n", "\t<!--\n", "<pre>\n<!--\n</pre>\n"]:
+            with self.subTest(prefix=prefix):
+                self.assertTrue(check(prefix + record())["passed"])
+
+    def test_operative_comments_hide_inline_and_multiline_records(self):
+        self.assertFalse(check("<!--" + record() + "-->")["passed"])
+        self.assertTrue(check("<!--\n> -->\n" + record())["passed"])
+        self.assertTrue(check("<!-- hidden -->\n" + record())["passed"])
+        self.assertFalse(check(record().replace("- [x]", "- <!--x-->[ ]"))["passed"])
+
     def test_unclosed_comment_or_fence_fails_closed(self):
         for prefix in ["<!--\n", "```md\n", "~~~\n"]:
             self.assertFalse(check(prefix + record())["passed"])

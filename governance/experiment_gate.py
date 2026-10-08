@@ -63,22 +63,64 @@ def load_policy(path: Path) -> dict:
 
 
 def visible(text: str) -> str:
-    text = re.sub(r"<!--.*?(?:-->|\Z)", "", text, flags=re.DOTALL)
     output: list[str] = []
     fence: tuple[str, int] | None = None
+    html_close: re.Pattern | None = None
+    comment = False
+    html_open = re.compile(r"<(pre|code|script|style|textarea)(?=[\s/>]|$)", re.IGNORECASE)
     for line in text.splitlines():
         marker = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
-        if fence:
+        if html_close:
+            if html_close.search(line):
+                html_close = None
+            output.append("")
+            continue
+        elif fence:
             if marker and marker[1][0] == fence[0] and len(marker[1]) >= fence[1] and not marker[2].strip():
                 fence = None
             output.append("")
-        elif marker:
+            continue
+        # Comment delimiters in an existing comment are literal, even when a
+        # line looks like a quote or code. Delimiters inside actual examples
+        # are ignored below and cannot swallow a later operative record.
+        if comment:
+            end = line.find("-->")
+            if end < 0:
+                output.append("")
+                continue
+            comment = False
+            line = line[end + 3:]
+            marker = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+        if marker:
             fence = (marker[1][0], len(marker[1]))
             output.append("")
         elif line.startswith(("    ", "\t")) or re.match(r"^ {0,3}>", line):
             output.append("")
         else:
-            output.append(line)
+            pieces: list[str] = []
+            while "<!--" in line:
+                start = line.index("<!--")
+                html = html_open.search(line)
+                if html and html.start() < start:
+                    break
+                pieces.append(line[:start])
+                end = line.find("-->", start + 4)
+                if end < 0:
+                    comment = True
+                    line = ""
+                    break
+                line = line[end + 3:]
+            line = "".join(pieces) + line
+            # Raw HTML example containers do not make Markdown headings or
+            # checkboxes operative. An unclosed container stays hidden to EOF.
+            html = html_open.search(line)
+            if html:
+                closing = re.compile(rf"</\s*{html[1]}\s*>", re.IGNORECASE)
+                if not closing.search(line, html.end()):
+                    html_close = closing
+                output.append("")
+            else:
+                output.append(line)
     return "\n".join(output)
 
 
