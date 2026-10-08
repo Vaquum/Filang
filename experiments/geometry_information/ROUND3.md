@@ -2,8 +2,15 @@
 
 This is the final hypothesis family in the [geometry information campaign](CAMPAIGN.md).
 It follows the complete R2 record, including its unsupported economic criterion,
-controls and numerical audit-development history. Protocol, freeze, predecessor
-merge and execution identities will be recorded before market fitting.
+controls and numerical audit-development history. The exact [protocol](round3_protocol.json)
+and [catalogue](round3_catalogue.json) were published in [PR #27](https://github.com/mikkokotila/Filang/pull/27)
+at freeze commit `bcc49b113c59f2a2c72524605d26b2dedca98353`, after verified R2
+merge `9fd79511541845c435e39fc25fb1d75ad42d1174` and before any R3 market fitting.
+The protocol SHA-256 is
+`486fd2b2f1bfa0e4e2ce19b77485386cef833c8b6341d5eca2403556dcdf67a7`.
+The catalogue SHA-256 is
+`dca090d73c32419bc525b71101f6cf0b584b1c8b91cf79808d4ed2f5d710bcdb`.
+Each execution retains its own clean implementation commit and imported code hashes.
 
 ## Question and controlled change
 
@@ -196,3 +203,80 @@ This is the third and final family in the frozen campaign budget. Retain its
 full supported/not-supported/inconclusive result and stop the campaign, without
 expanding architecture, thresholds, costs or horizons until a favorable result
 appears.
+
+## Reproduction and retained evidence
+
+Use the completed PR #27 implementation tree. The freeze commit contains the
+scientific specification and catalogue; it is not the full executable tree.
+The recorded environment uses Python 3.13.2 and the repository's pinned
+`requirements-direction.txt` and `requirements-information.txt`. Choose unused
+output directories. Existing pinned data and native keys can be reused without
+rebuilding them; every run verifies their complete source and artifact identities.
+
+For a fresh checkout with no prepared inputs, use the existing preparation and
+native export commands. They preserve actual timestamps and missing grid bars:
+
+```sh
+FILANG_DATA_DIR="$PWD/data/geometry-direction"
+FILANG_KEYS_DIR="$PWD/runs/geometry-interaction-replay-keys"
+.venv/bin/python scripts/prepare_direction.py --out "$FILANG_DATA_DIR"
+cargo +1.63.0 build --release --locked --offline
+for minutes in 15 30 60 120 240
+do
+  target/release/filang geometry-key-export \
+    --data "$FILANG_DATA_DIR/${minutes}m/ohlcv.csv" \
+    --interval-seconds "$((minutes * 60))" \
+    --history-start 2020-01-01 --end 2026-10-08 --bars 10 \
+    --out "$FILANG_KEYS_DIR/${minutes}m"
+done
+```
+
+The data preparer uses the original immutable direction protocol and rejects
+changed downloads or invalid source data. The native export includes every
+causal ten-bar row, including rows without an available next-bar label. Native
+context and executable hashes may differ when rebuilding on another platform;
+each fresh export and replay records its actual identities. Replaying the
+original retained byte identities requires the original sealed artifacts.
+
+Run the producer and full independent audit from a clean committed worktree:
+
+```sh
+.venv/bin/python experiments/geometry_information/run_round3.py \
+  --data-dir "$FILANG_DATA_DIR" --keys-dir "$FILANG_KEYS_DIR" \
+  --out runs/geometry-interactions-r3-replay \
+  --protocol experiments/geometry_information/round3_protocol.json \
+  --freeze-commit bcc49b113c59f2a2c72524605d26b2dedca98353 \
+  --workers 5 --blas-threads 2
+OPENBLAS_NUM_THREADS=2 OMP_NUM_THREADS=2 VECLIB_MAXIMUM_THREADS=2 \
+.venv/bin/python experiments/geometry_information/verify_round3.py \
+  --stage full --run runs/geometry-interactions-r3-replay \
+  --data-dir "$FILANG_DATA_DIR" --keys-root "$FILANG_KEYS_DIR" \
+  --protocol experiments/geometry_information/round3_protocol.json \
+  --out runs/geometry-interactions-r3-replay/verification.json
+.venv/bin/python experiments/geometry_information/collect_round3.py \
+  --run runs/geometry-interactions-r3-replay --keys-dir "$FILANG_KEYS_DIR" \
+  --out runs/geometry-interactions-r3-replay-report
+```
+
+The executable rejects unrecognized protocol bytes, the wrong freeze, a dirty
+worktree, changed input bindings or an existing run directory. The collector
+requires a full accepted audit and preserves the producer's original pending-audit
+status. It joins that immutable record to the audit without rewriting the run.
+A separately supplied `--launcher` receipt and repeated `--audit-receipt` arguments
+can retain external command, exit, timing and log evidence alongside the report.
+
+Every timeframe retains all coefficients, fitting statistics, model and policy
+choices, ledger metrics and array-member identities. Four annual NPZ bundles
+contain complete predictions and all ledger traces, trades, gaps and calendar-day
+returns. A fifth NPZ contains all ordinary, centered and exact-hit bootstrap
+arrays; `bootstrap-exact.json` retains the complete signed integer encodings.
+NPZ loads forbid pickle. The compact report copies all compact records and binds
+the external bundles by exact bytes, hashes and member counts. No losing trial,
+cash choice, outer year or timeframe is removed.
+
+Runtime receipts include package and BLAS details, process/thread settings,
+sufficient-statistics construction, fit/selection/policy/inference/serialization
+stage timings and peak memory. Some phase timings explicitly encompass nested
+work; they must not be added as if every interval were disjoint. The measured
+producer and independent audit wall times are operational evidence, without a
+matched speedup or compute-ceiling claim.
