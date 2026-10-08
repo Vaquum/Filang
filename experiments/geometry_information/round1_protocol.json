@@ -1,0 +1,204 @@
+{
+  "schema": "filang-geometry-information-protocol-v1",
+  "experiment_id": "btc-geometry-information-r1-additive",
+  "attempt_id": "R1",
+  "type": "results",
+  "protocol_status": "pre-fitting and predictive-evaluation specification; execution must bind the reviewed freeze commit and exact protocol SHA-256. Native causal feature preparation occurred before publication; no R1 model fitting, selection or predictive outcome evaluation preceded this freeze.",
+  "claim": "Additive pooled endpoint geometry improves next executable-bar binary direction log loss beyond additive candle-body and close-return sign history under the declared retrospective chronological selection procedure.",
+  "primary_scope": "Information gain, not demonstrated tradeability; fixed-policy economic outputs are diagnostics and cannot select a model, timeframe, cost assumption or threshold.",
+  "predecessor": {
+    "pull_request": "https://github.com/mikkokotila/Filang/pull/22",
+    "protocol_path": "experiments/geometry_direction/protocol.json",
+    "protocol_sha256": "065b1f3c31908537cc8b274cff4699b90852381bc54f2c39ab039776ca7fb7bf",
+    "report_path": "benchmarks/reports/20261008-bitcoin-direction/README.md",
+    "published_provenance_path": "benchmarks/reports/20261008-bitcoin-direction/provenance.json",
+    "prepared_provenance_path": "data/geometry-direction/provenance.json",
+    "provenance_contract": "Verify the predecessor manifest binding when available, record the exact supplied provenance SHA-256, and require every raw-source and prepared-CSV identity below to agree. A pathname alone is insufficient.",
+    "residue": "Exact complete-pattern lookup selected two bars; longer windows became almost entirely unseen. No primary incremental result beyond lag-one direction passed the predecessor criterion. R1 pools atomic relationships rather than treating each full configuration as a separate identity.",
+    "prior_exposure": "All 2020-01-01 through 2026-10-07 snapshots and the predecessor's 2025-2026 outcomes have already been inspected. Every fold in this protocol is retrospective. Neither nesting nor this new protocol makes these observations fresh or previously untouched."
+  },
+  "campaign": {
+    "maximum_rounds": 3,
+    "rounds": [
+      {"id": "R1", "hypothesis_family": "Additive pooled geometry beyond sign history", "scope": "This fully specified protocol."},
+      {"id": "R2", "hypothesis_family": "A small economic-selection family can exploit conditional payoffs after declared costs", "scope": "A future, separately frozen protocol may test limited selectivity, hysteresis and return-magnitude modelling; no R2 outcome is implied by R1 diagnostics."},
+      {"id": "R3", "hypothesis_family": "Limited interpretable geometry interactions add information beyond additive models", "scope": "Proceed only when the recorded R1/R2 residue justifies this distinct test; freeze its finite grammar, support rules and selection procedure before running it."}
+    ],
+    "stopping_rule": "Stop without a positive-edge claim when the three-round budget is exhausted or the recorded residue does not justify another declared round. Do not extend the search merely until a favorable backtest appears.",
+    "governance": "Each named results or performance attempt follows CLAUDE.md Law 1: a pre-run falsifiable claim, criterion and method; complete observations; supported/not-supported/inconclusive outcome; retained failures, deviations, residue and next steps. Any scientific change after this freeze requires a versioned amendment and a new named attempt before execution.",
+    "future_confirmation": "An eventual tradeability claim requires a separately frozen prospective procedure evaluated on observations arriving after that freeze. R1 supplies no prospective confirmation or authorization to trade money."
+  },
+  "data": {
+    "history_start": "2020-01-01",
+    "end_exclusive": "2026-10-08",
+    "timezone": "UTC",
+    "timeframes_minutes": [15, 30, 60, 120, 240],
+    "source_rows_total": 459503,
+    "csv_schema": ["timestamp", "open", "high", "low", "close", "volume"],
+    "price_semantics": "Finite positive IEEE-754 binary64 OHLC values, exact comparisons, no epsilon or inferred tick size. Low <= min(open,close) <= max(open,close) <= high. Volume is validated as source data but is never a feature.",
+    "time_semantics": "Original UTC candle opening timestamps, strictly increasing and on the timeframe grid. Preserve actual source rows, reject duplicates and off-grid times, never fill prices or compress gaps.",
+    "sources": [
+      {"minutes": 15, "repo": "vaquum/binance_btcusdt_15m_klines", "revision": "46344429039d7b268dfadcb20bee2435cfb6cdd5", "filename": "btcusdt_15m_kline_20200101_to_20261007.parquet", "sha256": "e3b2a6521596ffe661cd21c71a311934913170c4b597dc5e7e582c881c49c6be", "expected_source_rows": 237149, "expected_source_bytes": 21239943, "prepared_csv_sha256": "0e361a9d8773578b54453affc313fe9504b6e367a666001bb168383b700e2e3c", "missing_grid_bars": 163},
+      {"minutes": 30, "repo": "vaquum/binance_btcusdt_30m_klines", "revision": "9ebf9f0f26c13e2e34a5a2808082d73127f142e5", "filename": "btcusdt_30m_kline_20200101_to_20261007.parquet", "sha256": "41302c042e9048359d2595c6b2424482097097a3d49c91ea5af2ca7975482df8", "expected_source_rows": 118576, "expected_source_bytes": 10750427, "prepared_csv_sha256": "65da774e7ecbe88156e1a0daf029d69b85bd6ec17013f46025f8d313b53e83b5", "missing_grid_bars": 80},
+      {"minutes": 60, "repo": "vaquum/binance_btcusdt_1h_klines", "revision": "0e32b55575e24c0748aad7cb9140caf0fb04913c", "filename": "btcusdt_1h_kline_20200101_to_20261007.parquet", "sha256": "2885f7b4c1d0b1bd0e08fa4f20145eae93160f2eee5ba04fb4dad34e3c85b883", "expected_source_rows": 59294, "expected_source_bytes": 5397332, "prepared_csv_sha256": "3fb0d11cc8d60b3d47d63a69398c4bbdeb79d7d79ae510fd669335746a4c21a9", "missing_grid_bars": 34},
+      {"minutes": 120, "repo": "vaquum/binance_btcusdt_2h_klines", "revision": "cffd0d94bf33bcd4455d1846f13dbf3a9854b11f", "filename": "btcusdt_2h_kline_20200101_to_20261007.parquet", "sha256": "564ec4bfc5effc13da47b57fe5dac71fa7d625386946aa115b0783c6ee18a917", "expected_source_rows": 29653, "expected_source_bytes": 2719852, "prepared_csv_sha256": "f8230b440abc10c1fa9e4b41e440796f457df328ebd5947d8b64811918c79d4b", "missing_grid_bars": 11},
+      {"minutes": 240, "repo": "vaquum/binance_btcusdt_4h_klines", "revision": "45183e45055b759ad803547e9fdb124033fdabfb", "filename": "btcusdt_4h_kline_20200101_to_20261007.parquet", "sha256": "e0b5256141b88d1d3a73d2f243c2ccb3b9fcb2d633c93cee9a2a687c60f6c08e", "expected_source_rows": 14831, "expected_source_bytes": 1423274, "prepared_csv_sha256": "569880fbd855a4eeba310dcf096f6b14695fca5f99e7793fb534754d336d8857", "missing_grid_bars": 1}
+    ],
+    "outer_gap_audit": "The 2023-03-24 outer-period gap contains 10 missing 15-minute bars, 5 missing 30-minute bars, 2 missing 60-minute bars and 1 missing 120-minute bar; 240-minute outer data have no gap. Outer 2024 through the exclusive 2026-10-08 end are continuous. Recompute and verify this timestamp-only statement before reporting economics."
+  },
+  "native_features": {
+    "command": "geometry-key-export",
+    "bars": 10,
+    "mode": "oriented",
+    "endpoint_order": ["low", "body_bottom", "body_top", "high"],
+    "lag_order": "current_first",
+    "causal_eligibility": "Source row t has ten actual consecutive candles t-9 through t, all at or after history_start. No future candle or label is consulted. Include the final source row when its past window is valid.",
+    "feature_source": "Every B and G feature is decoded from this same native oriented ten-bar key. No raw numeric return, absolute price, ratio, volume or non-geometry feature enters B or G.",
+    "files": ["keys.bin", "context.json", "timings.json", "manifest.json", "manifest.sha256"],
+    "binary_abi": {
+      "version": "FGKEYS01",
+      "header_bytes": 168,
+      "header_fields": [
+        {"offset": 0, "bytes": 8, "type": "ASCII", "value": "FGKEYS01"},
+        {"offset": 8, "bytes": 64, "type": "ASCII lowercase hex SHA-256", "meaning": "context.json exact bytes"},
+        {"offset": 72, "bytes": 64, "type": "ASCII lowercase hex SHA-256", "meaning": "source CSV exact bytes"},
+        {"offset": 136, "bytes": 8, "type": "LE u64", "meaning": "source_rows"},
+        {"offset": 144, "bytes": 8, "type": "LE u64", "meaning": "interval_seconds"},
+        {"offset": 152, "bytes": 8, "type": "LE u64", "value": 10},
+        {"offset": 160, "bytes": 8, "type": "LE u64", "meaning": "record_count"}
+      ],
+      "record": "40 bytes, struct <5Q: zero-based original CSV data-row index excluding header, then GeometryKey words 0,1,2,3; concatenate words least-significant first into 256 bits.",
+      "key_bits": "Endpoint rank at bit 6*(4*lag+endpoint), width six bits, for lags 0..9 and endpoint indices 0..3. Bits 240..249 are per-lag up flags, set iff close>open. Bits 250..253 hold literal width 10. Bit 254 is oriented=1. Bit 255 is reserved=0. Down versus flat is distinguished by unequal versus equal body ranks when the up flag is zero.",
+      "seal": "Final 64 bytes are the lowercase ASCII hex SHA-256 of all preceding bytes. Total length is 168 + 40*record_count + 64. Reject trailing bytes, invalid ranks/flags, duplicate/unordered indices, or mismatching context/source identities."
+    },
+    "manifest_contract": "manifest.sha256 is the final completion marker and hashes manifest.json exact bytes. Bind the context, record count, keys payload and whole-file hashes/bytes, engine identity and timings hash before decoding."
+  },
+  "features": {
+    "histories": [2, 3, 5, 10],
+    "families": ["B", "G"],
+    "shared_history": "All fitting, validation and outer classification rows use the same causal n10 validity, including candidates with shorter n. Forecast-policy economics also uses that causal n10 validity; future-label validity never suppresses a causal prediction.",
+    "B": {
+      "description": "Additive body-direction and close-return-direction indicators computable within n candles.",
+      "column_order": "First lags k=0..n-1, with body[k].up then body[k].down. Then lags k=0..n-2, with cc[k].up then cc[k].down. Flat is the omitted category in both cases.",
+      "body_direction": "Up iff upflag=1; down iff upflag=0 and body_bottom<body_top; flat iff body_bottom=body_top.",
+      "close_rank": "body_top when upflag=1; body_bottom otherwise, including a flat body.",
+      "cc_direction": "Compare close_rank[k] to close_rank[k+1] from the same global key.",
+      "dimension": "4*n-2"
+    },
+    "G": {
+      "description": "B followed by pooled current-to-prior endpoint relations and individual wick-presence bits, with no interactions.",
+      "column_order": "Start with B in its exact order. For k=1..n-1, current endpoint a=0..3 and prior endpoint b=0..3 in the declared endpoint order, append comparison[k,a,b].less then comparison[k,a,b].equal; greater is omitted. Finally, for k=0..n-1 append wick[k].lower_present then wick[k].upper_present.",
+      "comparison": "Compare rank[0,a] with rank[k,b].",
+      "wick_presence": "Lower iff rank[k,low]<rank[k,body_bottom]; upper iff rank[k,body_top]<rank[k,high].",
+      "dimension": "38*n-34"
+    },
+    "dimensions": {"2": {"B": 6, "G": 42}, "3": {"B": 10, "G": 80}, "5": {"B": 18, "G": 156}, "10": {"B": 38, "G": 346}},
+    "representation": "Fixed binary indicator columns, evaluated in float64. No scaling, learned encoding, feature screening, constant-column removal, orientation search axis or feature interaction. Zero-support columns remain defined and penalized. G contains B as a feature family but has greater capacity; use no equal-capacity claim."
+  },
+  "target_and_phases": {
+    "return": "O[t+2]/O[t+1]-1",
+    "direction": "sign(O[t+2]-O[t+1]); up=1, flat=0, down=-1",
+    "decision_information_time": "timestamp[t]+interval_seconds, the scheduled close of the current source candle",
+    "classification_eligibility": "Require all 12 original rows t-9..t+2 to be present and consecutive on the timeframe grid, with the ten feature candles in declared history. The current candle's OPEN timestamp must be >= phase_start and the target exit OPEN timestamp[t+2] must be strictly < phase_end. Do not import a prior-phase candle merely because its close is at the boundary.",
+    "flat_policy": "Retain and report exactly flat labels. Exclude flat labels from logistic fitting and binary scores, not from causal prediction production or the economic ledger.",
+    "outer_folds": [
+      {"year": 2023, "inner_train_start": "2020-01-01", "inner_train_end_exclusive": "2022-01-01", "validation_start": "2022-01-01", "validation_end_exclusive": "2023-01-01", "refit_start": "2020-01-01", "refit_end_exclusive": "2023-01-01", "outer_start": "2023-01-01", "outer_end_exclusive": "2024-01-01"},
+      {"year": 2024, "inner_train_start": "2020-01-01", "inner_train_end_exclusive": "2023-01-01", "validation_start": "2023-01-01", "validation_end_exclusive": "2024-01-01", "refit_start": "2020-01-01", "refit_end_exclusive": "2024-01-01", "outer_start": "2024-01-01", "outer_end_exclusive": "2025-01-01"},
+      {"year": 2025, "inner_train_start": "2020-01-01", "inner_train_end_exclusive": "2024-01-01", "validation_start": "2024-01-01", "validation_end_exclusive": "2025-01-01", "refit_start": "2020-01-01", "refit_end_exclusive": "2025-01-01", "outer_start": "2025-01-01", "outer_end_exclusive": "2026-01-01"},
+      {"year": 2026, "inner_train_start": "2020-01-01", "inner_train_end_exclusive": "2025-01-01", "validation_start": "2025-01-01", "validation_end_exclusive": "2026-01-01", "refit_start": "2020-01-01", "refit_end_exclusive": "2026-01-01", "outer_start": "2026-01-01", "outer_end_exclusive": "2026-10-08"}
+    ],
+    "boundary_rule": "Apply the strict target-exit cutoff independently for inner training, validation and refit. Feature history may extend before validation/outer start because it is already known; labels may not extend to or beyond the fitting/phase cutoff."
+  },
+  "estimation": {
+    "model": "p=expit(intercept + X*beta)",
+    "objective": "mean(logaddexp(0,z)-y*z) + lambda*sum(beta**2)/2, using binary y in {0,1}; the intercept is unpenalized",
+    "lambda_grid_descending": [0.1, 0.01, 0.001, 0.0001],
+    "numeric_type": "float64",
+    "optimizer": {"implementation": "scipy.optimize.minimize", "method": "L-BFGS-B", "jac": "analytic", "bounds": null, "maxiter": 1000, "ftol": 1e-12, "gtol": 1e-7, "maxls": 50},
+    "initializer": "All beta coefficients zero; intercept logit((up+1)/(up+down+2)) computed only from the fitting sample. Require both binary classes in every fit.",
+    "warm_start": "Permitted only from a stronger to the immediately next weaker lambda within the same family, n and exact fitting sample; record initializer/parent-model identity and coefficient hash. Otherwise use the declared zero/prior initializer.",
+    "acceptance": "Optimizer success must be true, all coefficients/objective/gradient finite, and maximum absolute analytic gradient over intercept and beta <=5e-6. A gradient check and independent recomputation are required. Nonconverged candidates cannot be silently dropped or used as selected models.",
+    "cache": "Reuse only when exact source/feature/protocol/implementation identities, fitting row and label hashes, phase boundaries, family, n, lambda and initializer identity all agree. Record every hit and the original accepted fit. Cache reuse cannot change candidate coverage or selection.",
+    "selection": "Independently within each timeframe, outer year and family, select minimum validation binary log loss from 4 histories x 4 lambdas. Scores <=minimum+1e-12 tie; prefer shortest n, then strongest (largest) lambda. Refit only that choice on all eligible pre-outer-year data and freeze through its outer fold.",
+    "candidate_count": {"per_family_timeframe_fold": 16, "all_inner_candidates": 640, "selected_refit_pipelines": 40},
+    "outer_use": "Outer labels participate only in scoring. They cannot select n, lambda, solver settings, features, family, timeframe, costs or trading thresholds."
+  },
+  "descriptive_baselines": {
+    "unconditional": "P(up)=(up+1)/(up+down+2), Beta(1,1), fitted on eligible binary pre-outer-year rows.",
+    "lag1": "Separate Beta(1,1) up probabilities conditional on sign(C[t]-C[t-1]) in {-1,0,1}; use the fitted unconditional probability if a stratum has no observations.",
+    "sample_and_validation": "Use the same shared classification-fitting sample as the selected pipeline's corresponding phase: inner training for validation predictions, all pre-year refit data for outer predictions. No hyperparameter selection.",
+    "excluded": "Do not refit or import the predecessor exact-pattern model: its label differs from R1's executable open-to-open target."
+  },
+  "inference": {
+    "primary_comparison": "Selected B binary log loss minus selected G binary log loss; positive is improvement from geometry.",
+    "metrics": ["binary_log_loss", "brier", "accuracy", "balanced_accuracy", "binary_class_counts", "flat_counts", "per_outer_year_results", "pooled_results"],
+    "probability_threshold": 0.5,
+    "pooling": "Pool all eligible binary outer observations from the four folds with equal per-observation weight. Also report every fold separately; 2026 is a partial calendar year.",
+    "daily_unit": "UTC date of target exit opening timestamp[t+2]; retain every calendar day within each outer fold, including zero-count days.",
+    "bootstrap": {
+      "method": "Paired circular moving-block bootstrap, stratified by outer calendar fold, resampling (daily paired sum, daily observation count) together.",
+      "primary_block_days": 7,
+      "sensitivity_block_days": [1, 28],
+      "replicates": 2000,
+      "base_seed": 20261008,
+      "generator": "numpy.random.default_rng(base_seed + 1000*timeframe_minutes + block_days)",
+      "draw_order": "For replicate 0..1999, process outer years 2023,2024,2025,2026 in ascending order. In each fold of D full calendar days, draw ceil(D/block_days) independent int64 block starts uniformly from [0,D), append consecutive circular day indices for each start, and truncate to D days. Concatenate the four fold contributions without changing their lengths. Reuse the same indices for all paired statistics at that timeframe/block length.",
+      "estimate": "Sum of all paired loss differences divided by total binary observations.",
+      "confidence_interval": "2.5th and 97.5th percentiles of ordinary bootstrapped per-observation gains; NumPy linear quantile interpolation.",
+      "null_centering": "For each day set centered_sum = original_paired_sum - observed_pooled_gain*day_count, using the same global pooled gain for every fold. Resample centered (sum,count) pairs with the same indices; do not center each year's mean separately.",
+      "one_sided_p": "(1 + number of centered bootstrap gains >= observed pooled gain)/(2000+1). Alternative: geometry improves the baseline.",
+      "interpretation": "Conditional retrospective uncertainty for the frozen selected pipelines; this does not account away prior research exposure or establish a fresh confirmatory test."
+    },
+    "multiplicity": "Holm adjustment across the five primary timeframe p-values, ordered by raw p then ascending timeframe. Accuracy, other baselines, per-year tables, block sensitivities and economics are descriptive and have no additional success route.",
+    "success_per_timeframe": ["Pooled B-minus-G log-loss gain >0", "Primary seven-day paired 95% interval has lower endpoint >0", "One-sided primary p after Holm correction across all five timeframes <0.05", "At least three of the four outer-year point estimates are >0"],
+    "outcome": "Supported for a timeframe only when all four success conditions hold and its complete fit/integrity/audit requirements pass. A valid completed test failing the criterion is not-supported, not proof of zero information. Missing/failed required fits or audit failures make the affected result inconclusive; never shrink the five-timeframe family silently or publish a positive campaign result from an incomplete required audit."
+  },
+  "economic_diagnostic": {
+    "status": "Descriptive only; no R1 economic model selection or demonstrated-tradeability claim.",
+    "instrument_and_exposure": "BTCUSDT spot, normalized initial equity 1, long/cash positions {1,0}, no leverage, no shorting, no borrowing, no funding or cash yield.",
+    "forecast_policies": ["selected_B", "selected_G", "unconditional", "lag1"],
+    "administrative_benchmarks": ["cash", "buy_hold"],
+    "entry_threshold": 0.5,
+    "exit_threshold": 0.5,
+    "threshold_equality": "Long at p>=0.5; cash below. A missing causal feature history is NaN, causing a cash request only after that source candle's close is known.",
+    "timeline": "Run on full original observed timestamps and opens, independently of future classification-label eligibility. Produce a probability for every causally valid n10 feature row in the phase, including rows whose future classification label is absent. Never suppress a signal because a future bar is missing.",
+    "signal_and_execution": "At an observed opening j, apply only the signal from immediately preceding observed candle j-1, whose scheduled information time is timestamp[j-1]+interval_seconds. Its source candle OPEN must be >= outer_start. If the next grid bar is absent, retain the queued decision and assume execution at the next observed open. Report delay=max(0,timestamp[j]-signal_close).",
+    "gap_policy": "Carry existing holdings over the actual price change to the next observed open. Never exit or erase P&L before a future gap. After a gap makes past n10 history unavailable, forecast policies request cash at the first subsequently known candle close. A missing dataset bar is not evidence the exchange was closed: delayed fills are an explicit diagnostic proxy, not reconstructed live fills.",
+    "reset_and_end": "Start each outer fold in cash with no imported pending signal. Force cash at the last observed opening strictly before outer_end, charge a sale if long, and prohibit a new entry at that terminal opening. Every fold is an administratively independent ledger.",
+    "buy_hold": "Desired long after the first in-fold observed candle, independent of n10 feature availability; hold across gaps until the shared scheduled terminal liquidation. Cash/reset/fill/mark/cost conventions otherwise match the forecast policies.",
+    "cost_scenarios_bps_per_side": [{"name": "zero", "fee": 0, "slippage": 0}, {"name": "reduced", "fee": 5, "slippage": 1}, {"name": "primary", "fee": 10, "slippage": 2}, {"name": "stress", "fee": 20, "slippage": 4}],
+    "cost_interpretation": "Fixed sensitivity scenarios, not asserted account-specific or historical exchange fees. The primary diagnostic is fee10+slippage2 bps per side; no favorable scenario substitutes for it.",
+    "ledger_math": "Let f=fee_bps/10000 and s=slippage_bps/10000. While long, mark equity by O[j]/O[previous_observed]. A buy at O*(1+s), charging fee from cash, multiplies mid-mark equity by (1-f)/(1+s). A sell at O*(1-s) with fee f multiplies equity by (1-s)*(1-f). Cash earns zero. Charge only exposure changes, including terminal liquidation.",
+    "daily_allocation": "Allocate each observed-opening marked return and cost to the UTC date of that opening; retain every calendar day. The continuous 2024+ summary concatenates independently reset 2024,2025,2026 annual ledgers rather than carrying positions secretly across their boundaries.",
+    "required_outputs": ["net/gross returns and daily log returns", "open-marked maximum drawdown", "annualized daily-log Sharpe with zero cash yield", "turnover", "completed trades and trade returns", "active days and elapsed-time exposure", "cost drag and fixed-path cost break-even", "delayed exposure changes", "gap durations and gap-crossing marked returns", "2023 separate from continuous 2024+", "all signal/fill/position/mark/cost trace fields"],
+    "limitations": "OHLC opens are execution reference prices, not guaranteed fills after a closed-candle event. These data do not establish spread, depth, market impact, order-size capacity or sub-bar latency. Open-marked drawdown is not a reconstruction of the intrabar path."
+  },
+  "runtime": {
+    "intended_versions": {"python": "3.13.2", "numpy": "2.5.1", "scipy": "1.18.1", "polars": "1.42.1", "threadpoolctl": "3.7.0"},
+    "hardware_target": "Apple M1 Max, 10 logical cores, 64 GiB RAM",
+    "concurrency": "Before importing numerical libraries, explicitly set and record VECLIB_MAXIMUM_THREADS, OPENBLAS_NUM_THREADS, OMP_NUM_THREADS and other relevant thread controls. Use bounded process parallelism; record chosen workers and per-process limits before execution. These operational settings are not scientific tuning axes.",
+    "configuration_receipts": "Retain Python/package/platform versions, numpy.show_config and available runtime/BLAS details, threadpoolctl output even when empty, environment thread controls, process limits, code/engine hashes, exact commands and per-stage timings/peak memory. Apple Accelerate may not appear in threadpoolctl.",
+    "performance_claims": "Measure feature export, fitting, analysis, economic replay and independent verification separately. Any named optimization or performance claim needs its own pre-run performance attempt and parity evidence; the predecessor's sweep timings are not forecasts of nested model-fit runtime."
+  },
+  "artifact_contract": {
+    "paths": "All declared artifact paths are relative to the run root unless an external exact-byte input is explicitly identified. A final manifest records schema, byte length and SHA-256 for every retained artifact; JSON forbids NaN/Infinity and binary containers prohibit pickle/object arrays.",
+    "protocol.json": "Exact frozen protocol bytes.",
+    "run.json": "Freeze commit, protocol SHA, prior PR/provenance identities, raw/prepared inputs, native contexts and engine, implementation files/commits, dependencies/runtime, execution settings, commands, stage status/timings and all amendments/deviations.",
+    "features.json": "Native key artifact bindings and exact B/G column names/order/dimensions per n.",
+    "fits.jsonl": "Every candidate and selected refit: stable fit_id, family/n/lambda, source/feature/implementation identities, row/label hashes and strict sample bounds/counts, initializer/warm-parent/cache provenance, float64 intercept and full ordered beta, objective, optimizer status/message/iterations/evaluations, maximum absolute analytic gradient and acceptance outcome. Failed attempts remain recorded.",
+    "candidates.csv": "All 640 inner candidates, validation class/flat counts and log-loss/Brier/accuracy/balanced-accuracy scores, fit identity and convergence status. No missing candidate can disappear from selection coverage.",
+    "selected.json": "Forty timeframe/fold/family choices, minimum validation loss and tie resolution, original inner-training model identity and selected pre-year refit identity. Bind both prediction phases to the correct fitted model.",
+    "predictions": "For each timeframe/fold, retain validation and outer NPZ artifacts plus JSON identity sidecars. Arrays align to the entire original CSV: row_index int64, causal_feature_valid bool, classification_valid bool, direction int8, target_return float64, entry_row/exit_row int64, and p_B/p_G/p_unconditional/p_lag1 plus logit_B/logit_G float64. Invalid labels use classification_valid=false, direction=0, target_return=NaN and entry/exit=-1. Prediction arrays are NaN outside their phase or unavailable causal n10 history, but remain populated when only a future label is unavailable. In valid labels, direction=0 means an actual flat outcome. Bind phase bounds, sample/model/feature/source hashes and array/file digests in sidecars. Persist selected INNER-validation full-row causal probabilities from the inner-training fit as well as OUTER probabilities from the refit; future R2 must not recreate these with a model fitted on their own labels.",
+    "classification_daily.csv": "Per timeframe/fold/UTC target-exit date: binary and flat counts, selected B/G loss sums, paired B-minus-G loss sum, correct counts, and descriptive baseline score sums. Include zero-count calendar days.",
+    "analysis.json": "Every candidate/selected identity, per-fold and pooled scores, bootstrap settings/estimates/intervals/raw and Holm p-values, every success-condition boolean and explicit supported/not-supported/inconclusive outcomes with caveats.",
+    "economics": "Every forecast/administrative policy and all four cost scenarios: metrics, complete daily arrays, trade list, gaps list, and full observed-open trace with original row/time/open, signal row/close/probability, delay, positions before/desired/after, gross mark, cost and net return. Retain per-fold and clearly defined aggregate summaries.",
+    "verification.json": "Independent audit identities, scope, counts, maximum numerical discrepancies, failures and pass/inconclusive outcome. A sampled audit cannot stand in for the required full audit.",
+    "report_package": "Commit protocol, aggregate/all-candidate results, model parameters, independent audit and execution receipts. Large full-row predictions/traces may remain sealed in reproducible run artifacts; link their identities and reproduction commands. Never claim an artifact was independently verified when only its checksum was inspected."
+  },
+  "required_independent_audit": {
+    "independence": "Do not import producer feature/target/estimator/ledger computational helpers. Independently reconstruct from the pinned raw OHLC CSV, and use an independent shares/cash economic oracle.",
+    "checks": ["Every exported causal n10 key and source-row mapping, including gaps and final rows", "Every B/G feature value and column order", "Every phase/label eligibility decision, target sign and flat, and strict fitting boundary", "Every candidate prediction/score from saved coefficients without refitting", "Analytic objective and gradient at retained fit coefficients and declared convergence acceptance", "Validation-only selection and deterministic ties", "Every selected inner-validation and outer full-row probability, including feature-valid rows without future labels", "Every paired daily count/sum, primary and sensitivity bootstrap and five-way Holm adjustment", "Every economic position, delayed fill, gap mark, cost, trade, terminal liquidation, daily return and aggregate metric", "All source/protocol/code/model/artifact identity bindings"],
+    "numeric_tolerance": "Report maximum errors. Coefficient-replay probabilities, objective and gradient must agree within absolute 1e-10 plus relative 1e-10; monetary/log-return reconciliation within absolute 1e-10 plus relative 1e-10. Integer identities, masks, labels, candidate coverage, positions and selected hyperparameters must agree exactly. Audit numerical ties using the declared 1e-12 selection rule, not a looser invented selector.",
+    "synthetic_requirements": ["Changing outer labels leaves selected n/lambda, fitting rows and frozen parameters unchanged", "Changing future rows cannot change an earlier causal feature or earlier available prediction", "Finite-difference gradient verification on nondegenerate synthetic data", "Native-key features match independent raw-OHLC features, including flat bodies, absent wicks and ties", "Boundary/gap/flat-label and full-row prediction coverage cases", "Ledger gap causality, no imported pending signal, cost math and terminal liquidation cases", "Bootstrap deterministic reference parity and Holm correction"]
+  }
+}
