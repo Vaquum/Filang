@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/Users/mikkokotila/dev/Filang-research/.venv/bin/python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/geometry_information/tests",
+    "-v"
+  ],
+  "completed_utc": "2026-10-08T18:55:59.816323+00:00",
+  "elapsed_seconds": 73.01789962500334,
+  "exit_code": 0,
+  "implementation_files": {
+    "experiments/geometry_information/FOLLOWUP30.md": "f8fa9bafb61f4baaa665d1e44110e39a84c6b287e7b96fd67efa94caba8d0804",
+    "experiments/geometry_information/collect_followup30.py": "f8039e2dfb04bbfd11ddd986e8e7ad8aa97f4e22a934fdc0d9830868144ede8a",
+    "experiments/geometry_information/followup30.py": "9557c08a0c340f620e20f0fe6da29bad16ef66c41a119e9df5d42409ac780f7f",
+    "experiments/geometry_information/run_followup30.py": "d779c9b0ae93150a5f919791a79837cecbb4e887bc9562806cdba5428fd499e0",
+    "experiments/geometry_information/tests/test_collect_followup30.py": "000d5d9ad0fcd089000e39f51fe5a6efab559c4e591ef4cb15142c292a5f4b49",
+    "experiments/geometry_information/tests/test_followup30.py": "9aa08297fb02da1aca3d40d605d265fcf7d2f1ba4035b00725bb52d60d07ae55",
+    "experiments/geometry_information/tests/test_verify_followup30.py": "543b72664ab4a3375b22acf5ff43147d8c443daec5a5b796fa5ade27118806ab",
+    "experiments/geometry_information/verify_followup30.py": "e103a32086787d9bd02f7079d84b4fb94cb31734df0c993b0d9df892d56fc277"
+  },
+  "log_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-followup30-d1-synthetic.log",
+  "log_sha256": "cdee81e621796938ef0853e260009152a6bc05e443f78397b3382be821e8ee4b",
+  "operation": "full information synthetic test suite before F30-D1 execution",
+  "schema": "filang-operation-receipt-v1",
+  "started_utc": "2026-10-08T18:54:46.799283+00:00",
+  "thread_environment": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "VECLIB_MAXIMUM_THREADS": "2"
+  }
+}

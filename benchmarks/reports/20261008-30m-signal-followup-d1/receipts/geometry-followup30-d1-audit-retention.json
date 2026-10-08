@@ -1,0 +1,12 @@
+{
+  "bytes": 2076,
+  "operation": "retain failed audit outside sealed producer before a fresh canonical audit",
+  "original_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-followup30-d1/verification.json",
+  "original_producer_not_rerun": true,
+  "original_status": "FAIL",
+  "preserved_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-followup30-d1-verification-first-failed.json",
+  "producer_manifest_sha256_unchanged": "67c6bea9a86b131c6c7c38b652784cffe1f0a113f342b2d5ef15ca249ae2b613",
+  "schema": "filang-audit-retention-receipt-v1",
+  "sha256": "8a6ef0d5e6e606101dc4dd2d6f9c39c4b8d834b15d302d4949a06c355009d000",
+  "timestamp_utc": "2026-10-08T19:02:34.218298+00:00"
+}

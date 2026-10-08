@@ -1,0 +1,7 @@
+/Users/mikkokotila/dev/Filang-research/.venv/lib/python3.13/site-packages/numpy/__config__.py:155: UserWarning: Install `pyyaml` for better output
+  warnings.warn("Install `pyyaml` for better output", stacklevel=1)
+accepted 30m 2023 adapters
+accepted 30m 2024 adapters
+accepted 30m 2025 adapters
+accepted 30m 2026 adapters
+COMPLETE_PENDING_INDEPENDENT_AUDIT /Users/mikkokotila/dev/Filang-research/runs/geometry-followup30-d1

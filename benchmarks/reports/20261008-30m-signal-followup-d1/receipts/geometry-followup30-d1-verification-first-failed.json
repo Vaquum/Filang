@@ -1,0 +1,13 @@
+{
+  "elapsed_seconds": 1.795992458006367,
+  "error": "'minutes'",
+  "freeze_commit": "ed7e0b9bccedebc6bda75d7ab701829a6a708c5f",
+  "independent_oracle_sha256": "f24297886f02af19620bbad68b3eaf1e32ef2ec628f062f723a960ec60d63ff4",
+  "protocol_sha256": "4099e7a6620387d0fbe2267819ca0d37dff0f52da3e6bf8689705e979adf497b",
+  "run": "/Users/mikkokotila/dev/Filang-research/runs/geometry-followup30-d1",
+  "schema": "filang-30m-signal-followup-verification-v1",
+  "stage": "full",
+  "status": "FAIL",
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_followup30.py\", line 1007, in main\n    result = full_audit(args)\n  File \"/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_followup30.py\", line 893, in full_audit\n    replay = check_predecessor_bundle(root / \"predecessor\", root / \"native/30m\", args.data_dir, protocol)\n  File \"/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_followup30.py\", line 445, in check_predecessor_bundle\n    values, scores, error = original.audit_predictions(root, root / f\"30m/{year}\", phase, source, causal_rows,\n                            ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n            fold, {family: models[year, family, stage] for family in FAMILIES}, fitting,\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n            protocol[\"predecessor\"][\"protocol_sha256\"], receipt)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_round1.py\", line 912, in audit_predictions\n    identities = {\"schema\": \"filang-information-predictions-v1\", \"minutes\": receipt[\"minutes\"],\n                                                                            ~~~~~~~^^^^^^^^^^^\nKeyError: 'minutes'\n",
+  "verifier_sha256": "876fcfde2896e0c3c77157e09adc9895b611cc8b9f7cd63ec06d31e9a98e0e89"
+}

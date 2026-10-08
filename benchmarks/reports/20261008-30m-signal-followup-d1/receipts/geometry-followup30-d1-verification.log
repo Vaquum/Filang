@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_followup30.py", line 1023, in <module>
+    main()
+    ~~~~^^
+  File "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_followup30.py", line 1007, in main
+    result = full_audit(args)
+  File "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_followup30.py", line 893, in full_audit
+    replay = check_predecessor_bundle(root / "predecessor", root / "native/30m", args.data_dir, protocol)
+  File "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_followup30.py", line 445, in check_predecessor_bundle
+    values, scores, error = original.audit_predictions(root, root / f"30m/{year}", phase, source, causal_rows,
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            fold, {family: models[year, family, stage] for family in FAMILIES}, fitting,
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            protocol["predecessor"]["protocol_sha256"], receipt)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mikkokotila/dev/Filang-research/experiments/geometry_information/verify_round1.py", line 912, in audit_predictions
+    identities = {"schema": "filang-information-predictions-v1", "minutes": receipt["minutes"],
+                                                                            ~~~~~~~^^^^^^^^^^^
+KeyError: 'minutes'

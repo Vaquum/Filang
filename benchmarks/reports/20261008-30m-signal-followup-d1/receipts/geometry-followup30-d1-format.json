@@ -1,0 +1,10 @@
+{
+  "ast_identical": true,
+  "new_sha256": "876fcfde2896e0c3c77157e09adc9895b611cc8b9f7cd63ec06d31e9a98e0e89",
+  "old_sha256": "e103a32086787d9bd02f7079d84b4fb94cb31734df0c993b0d9df892d56fc277",
+  "path": "experiments/geometry_information/verify_followup30.py",
+  "removed_final_newline_bytes": 1,
+  "retained_test_receipt": "geometry-followup30-d1-synthetic.json",
+  "schema": "filang-formatting-receipt-v1",
+  "timestamp_utc": "2026-10-08T19:00:04.895796+00:00"
+}
