@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "check_name": "pr_checks_experiment",
+  "template": ".github/PULL_REQUEST_TEMPLATE.md",
+  "law": "CLAUDE.md",
+  "experiment_types": [
+    "results",
+    "performance"
+  ],
+  "sections": {
+    "Hypothesis": [
+      "Claim",
+      "Decision criterion"
+    ],
+    "Experiment": [
+      "Method",
+      "Evidence"
+    ],
+    "Result": [
+      "Outcome",
+      "Observation"
+    ],
+    "Residue and next steps": [
+      "Residue",
+      "Next steps"
+    ]
+  },
+  "checklist_heading": "Completion checklist",
+  "checks": [
+    "Hypothesis: the claim and decision criterion are explicit.",
+    "Experiment: what was actually done and its reproducible evidence are recorded.",
+    "Result: the observations and supported/not-supported/inconclusive outcome are recorded.",
+    "Residue: limitations and concrete next steps for future PRs, or a justified stop, are recorded."
+  ],
+  "outcomes": [
+    "supported",
+    "not-supported",
+    "inconclusive"
+  ],
+  "maintenance_heading": "Maintenance declaration",
+  "maintenance_check": "This PR contains no results or performance attempt.",
+  "formal_path_prefixes": [
+    "benchmarks/reports/",
+    "models/"
+  ],
+  "title_type_hints": {
+    "perf": "performance",
+    "results": "results"
+  }
+}
