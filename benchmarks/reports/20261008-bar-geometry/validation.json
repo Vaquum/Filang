@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "native_tests_passed": 84,
+  "rust_toolchain": "1.63.0",
+  "clippy_warnings_denied": true,
+  "ci_source_commit": "be90fb50522ef782bf875541098094ff65d9c246",
+  "ci_run": "https://github.com/mikkokotila/Filang/actions/runs/37786701783",
+  "ci_operating_systems": [
+    "ubuntu-latest",
+    "macos-latest"
+  ],
+  "ci_conclusion": "success",
+  "independent_run_receipts": 31,
+  "independent_u128_receipts": 1,
+  "independent_frozen_replays": 2
+}

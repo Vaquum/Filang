@@ -642,6 +642,12 @@ certificates and native parallel certificates on the identical domain. Omit
 `--capture` only when a summary-only metric audit is intended. Reports retain
 each command, engine/configuration identities, verification receipts and
 physical-work counts. Timing includes setup, hashing and durable native output.
+On Unix, per-process `wait4` statistics record CPU time and peak resident memory;
+these are separate from the component payload budgets. `--modes` can select
+`leaf_scalar`, `certificates_scalar`, `certificates_native` or
+`certificates_parallel` for a targeted comparison. A report without the leaf
+control has no claimed leaf-control speedup. `--binary` chooses the executable,
+`--repeats` sets independent fresh runs, and `--workers` controls the parallel mode.
 
 Replay the frozen winner as two concrete patterns on a separate, explicitly
 declared period. The evaluation CSV must include causal history and end exactly

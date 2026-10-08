@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "full_year_runs_compared": [
+    "year-workers8/certificates_parallel-1",
+    "year-workers8/certificates_parallel-2",
+    "year-workers8/certificates_parallel-3",
+    "year-workers10/certificates_parallel-1",
+    "year-workers10/certificates_parallel-2",
+    "year-workers10/certificates_parallel-3",
+    "year-leaf/leaf_scalar-1"
+  ],
+  "logical_coverage_equal": true,
+  "concrete_selected_patterns_equal": true,
+  "all_ten_winner_metrics_match": true,
+  "frozen_same_period_metrics_match": true
+}

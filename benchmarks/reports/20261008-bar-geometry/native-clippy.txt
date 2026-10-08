@@ -1,0 +1,2 @@
+    Checking filang v0.9.0 (/Users/mikkokotila/dev/Filang-geometry)
+    Finished dev [unoptimized + debuginfo] target(s) in 2.35s

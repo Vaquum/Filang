@@ -67,6 +67,9 @@ def main():
     parser.add_argument("--workers", type=int, default=os.cpu_count() or 1)
     parser.add_argument("--capture", action="store_true")
     parser.add_argument("--ledger", choices=("auto", "python", "c"), default="auto")
+    parser.add_argument("--modes", nargs="+", choices=("leaf_scalar", "certificates_scalar",
+                        "certificates_native", "certificates_parallel"),
+                        help="run only these matched modes; default is all four")
     args = parser.parse_args()
     if not 1 <= args.repeats <= 100 or not 1 <= args.workers <= 1024:
         parser.error("repeats must be 1..100 and workers 1..1024")
@@ -85,6 +88,8 @@ def main():
         ("certificates_native", "auto", True, 1),
         ("certificates_parallel", "auto", True, args.workers),
     ]
+    if args.modes:
+        modes = [mode for mode in modes if mode[0] in args.modes]
     verifier = Path(__file__).resolve().with_name("verify_geometry.py")
     records = []
     reference_best = None
@@ -143,7 +148,7 @@ def main():
         label: statistics.median(r["seconds"] for r in records if r["mode"] == label)
         for label, *_ in modes
     }
-    baseline = medians["leaf_scalar"]
+    baseline = medians.get("leaf_scalar")
     result = {
         "version": 1, "status": "PASS", "platform": platform.platform(),
         "machine": platform.machine(), "logical_cpus": os.cpu_count(),
@@ -158,7 +163,8 @@ def main():
                         if r["mode"] == label and r["peak_rss_bytes"] is not None), default=None)
             for label, *_ in modes
         },
-        "speedup_vs_leaf_scalar": {name: baseline / value for name, value in medians.items()},
+        "speedup_vs_leaf_scalar": ({name: baseline / value for name, value in medians.items()}
+                                    if baseline is not None else None),
         "records": records,
         "interpretation": "logical addresses are exactly covered programs, not independent physical backtests; costs of setup, hashing and durable output are included",
     }

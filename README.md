@@ -51,6 +51,10 @@ and may still be substantial. Bank and tree budgets fail explicitly instead of
 pruning the domain. Native execution has no third-party dependencies and retains
 the Rust 1.63 minimum.
 
+[The measured geometry report](benchmarks/reports/20261008-bar-geometry/README.md)
+records exhaustive captured-control verification, full-year domain coverage,
+matched timings, worker scaling, peak memory and frozen replay.
+
 ## Earlier: dense atom pairs (0.8)
 
 `dense-sweep` independently varies both numerical neighborhoods, shares exact
@@ -117,7 +121,7 @@ study, but remained far behind the strongest fixed trend controls. This is not f
 untouched evidence or a claim of a robust generated edge.
 The original 0.1 campaign below is retained unchanged as historical evidence.
 
-## Current workflow: known-indicator parity first
+## Indicator workflow: known-indicator parity first
 
 [The measured parity report](benchmarks/reports/20260928-anchor-parity/README.md)
 records the passing anchor checks, complete-result comparisons, and matched

@@ -946,6 +946,7 @@ def verify_evaluation(root, data_path, ledger_backend="auto", output=None):
     start = bisect_left(timestamps, utc_date(report["start"]))
     end = len(candles)
     require(end - start >= 4 and timestamps[0] <= utc_date(report["start"])
+            and timestamps[start] == utc_date(report["start"])
             and timestamps[-1] + int(report["interval_seconds"]) == utc_date(report["end"]),
             "evaluation causal history/end")
     selected = list(csv.reader(io.StringIO((root / "selection.tsv").read_text()), delimiter="\t"))

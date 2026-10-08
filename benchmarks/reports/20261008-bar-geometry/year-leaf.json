@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "status": "PASS",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "logical_cpus": 10,
+  "binary_sha256": "4dded390c5ea711408452a0e705333dd2dd9f181b20d2caa38085b01fae9e717",
+  "config_sha256": "a57db4f67e36a875484540f2600df703eeaf7b11af7f9ce4e61ee270292efba6",
+  "capture": false,
+  "logical_addresses": "55851217669989216",
+  "verification_scope": "all bank memberships/full coverage and every retained task winner; not every region metric",
+  "median_seconds": {
+    "leaf_scalar": 107.24742399994284
+  },
+  "peak_rss_bytes": {
+    "leaf_scalar": 41140224
+  },
+  "speedup_vs_leaf_scalar": {
+    "leaf_scalar": 1.0
+  },
+  "records": [
+    {
+      "mode": "leaf_scalar",
+      "repeat": 1,
+      "seconds": 107.24742399994284,
+      "peak_rss_bytes": 41140224,
+      "cpu_seconds": 98.912286,
+      "average_cpu_cores": 0.9222812288717789,
+      "verification_seconds_outside_timer": 1.2482130420394242,
+      "backend": "scalar",
+      "workers": 1,
+      "logical_addresses": "55851217669989216",
+      "metric_regions": 87925122,
+      "tree_node_pairs": "175850052",
+      "certified_nonleaf_products": "0",
+      "signature_pair_products": "87925122",
+      "result_digest": "be5d1869ae14672cd2ea7a3153b226236c80930f86e851ca6aaca12cb37798cd",
+      "best_metrics": [
+        18.60238698737467,
+        20.51528821825436,
+        18.57933279094549,
+        1.2092586933726723,
+        1.8147924323961542,
+        4.0,
+        0.5469462169553327,
+        0.7980563396412823,
+        439.79128315200194,
+        2194.0
+      ],
+      "verification": "/Users/mikkokotila/dev/Filang-geometry/runs/geometry-development/year-leaf/leaf_scalar-1/verification/geometry.json",
+      "verification_sha256": "d98e0dbde9481aa9ee73f1f104a4477cc87547804edca3c8faa828285ebe10e6",
+      "all_captured_regions_verified": false,
+      "command": [
+        "/Users/mikkokotila/dev/Filang-geometry/target/release/filang",
+        "geometry-sweep",
+        "--config",
+        "/Users/mikkokotila/dev/Filang-geometry/runs/geometry-development/year.cfg",
+        "--out",
+        "/Users/mikkokotila/dev/Filang-geometry/runs/geometry-development/year-leaf/leaf_scalar-1",
+        "--backend",
+        "scalar",
+        "--workers",
+        "1",
+        "--certificates",
+        "false",
+        "--capture",
+        "false"
+      ]
+    }
+  ],
+  "interpretation": "logical addresses are exactly covered programs, not independent physical backtests; costs of setup, hashing and durable output are included"
+}
