@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package exact compact evidence and a measured report from an audited R1 run.
+"""Package exact compact evidence from an explicitly admitted audited R1-family run.
 
 This module uses only the standard library. It never fits a model, reruns an
 economic strategy, changes a scientific outcome, or edits the source run.
@@ -23,6 +23,45 @@ FREEZE_COMMIT = "b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd"
 PROTOCOL_SHA256 = "abf7a0424302160a951c90fe9be23391209e4007cb8f7b51a6462ca04cc1524a"
 TIMEFRAMES = (15, 30, 60, 120, 240)
 YEARS = (2023, 2024, 2025, 2026)
+
+# These original constants and default profile remain unchanged: collect_failed
+# imports them to preserve the historical R1 failure and its package identity.
+ORIGINAL_PROFILE = {
+    "attempt_id": "R1", "experiment_id": "btc-geometry-information-r1-additive",
+    "label": "Round 1", "protocol_sha256": PROTOCOL_SHA256, "freeze_commit": FREEZE_COMMIT,
+    "protocol_filename": "round1_protocol.json", "run_name": "geometry-information-r1",
+    "report_name": "20261008-geometry-information-r1", "final_pr": 24,
+}
+PROTOCOL_REGISTRY = {
+    PROTOCOL_SHA256: ORIGINAL_PROFILE,
+    "cc13e36a818323d1ca488ca4c2af48775b47b267120a55c1011a6bf484191d34": {
+        "attempt_id": "R1a", "experiment_id": "btc-geometry-information-r1a-newton",
+        "label": "Round 1a — numerical amendment",
+        "protocol_sha256": "cc13e36a818323d1ca488ca4c2af48775b47b267120a55c1011a6bf484191d34",
+        # Published protocol freeze; no CLI/env bypass of this registry.
+        "freeze_commit": "3df6416a2de59ac396617be49326a834c94aca92",
+        "protocol_filename": "round1a_protocol.json", "run_name": "geometry-information-r1a",
+        "report_name": "20261008-geometry-information-r1a", "final_pr": 25,
+    },
+}
+
+
+def admitted_protocol(run: Path, identity: dict) -> tuple[dict, dict]:
+    checksum = digest(run / "protocol.json")
+    require(checksum in PROTOCOL_REGISTRY, "protocol hash is not admitted by the explicit registry")
+    profile = dict(PROTOCOL_REGISTRY[checksum])
+    freeze = profile["freeze_commit"]
+    require(isinstance(freeze, str) and len(freeze) == 40 and all(c in "0123456789abcdef" for c in freeze),
+            "protocol freeze commit has not been published in the registry")
+    require(identity["protocol_sha256"] == checksum and identity["freeze_commit"] == freeze,
+            "run does not bind the exact registered protocol and freeze commit")
+    protocol = load_json(run / "protocol.json")
+    require(protocol["attempt_id"] == profile["attempt_id"] and protocol["experiment_id"] == profile["experiment_id"],
+            "protocol attempt identity differs from registry")
+    expected = [protocol["amendment"]] if "amendment" in protocol else []
+    require(identity["amendments"] == expected, "run amendment must equal the declared frozen protocol amendment")
+    require(identity["deviations"] == [], "undeclared deviations cannot be collected as the frozen experiment")
+    return profile, protocol
 
 
 def require(condition: bool, message: str) -> None:
@@ -85,20 +124,21 @@ def outcome(gain: float, lower: float, holm_p: float, positive_years: int) -> st
     return "supported" if gain > 0 and lower > 0 and holm_p < .05 and positive_years >= 3 else "not-supported"
 
 
-def write_package(out: Path, copies: dict[str, Path], generated: dict[str, bytes]) -> dict:
+def write_package(out: Path, copies: dict[str, Path], generated: dict[str, bytes], profile: dict | None = None) -> dict:
     """Validate destinations before writing; never replace differing evidence.
 
     Byte-preserved source records and newly generated files receive a separate
     package manifest. The manifest itself is sealed separately, avoiding a
     circular digest or rewriting the original producer manifest.
     """
+    profile = ORIGINAL_PROFILE if profile is None else profile
     require(not set(copies).intersection(generated), "duplicate package destination")
     records = {name: {**file_record(source), "source_path": str(source)}
                for name, source in sorted(copies.items())}
     records.update({name: {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "generated": True}
                     for name, data in sorted(generated.items())})
     manifest = {"schema": "filang-geometry-information-report-package-v1",
-                "freeze_commit": FREEZE_COMMIT, "protocol_sha256": PROTOCOL_SHA256,
+                "freeze_commit": profile["freeze_commit"], "protocol_sha256": profile["protocol_sha256"],
                 "files": records}
     manifest_bytes = json_bytes(manifest)
     generated = {**generated, "manifest.json": manifest_bytes,
@@ -158,9 +198,10 @@ def check_run_manifest(run: Path) -> tuple[dict, dict[str, Path]]:
     return manifest, sources
 
 
-def check_design(run: Path, analysis: dict) -> tuple[list[dict], list[dict], list[dict]]:
-    require(digest(run / "protocol.json") == PROTOCOL_SHA256, "protocol differs from frozen R1 bytes")
-    require(analysis["protocol_sha256"] == PROTOCOL_SHA256, "analysis protocol identity differs")
+def check_design(run: Path, analysis: dict, profile: dict | None = None) -> tuple[list[dict], list[dict], list[dict]]:
+    profile = ORIGINAL_PROFILE if profile is None else profile
+    require(digest(run / "protocol.json") == profile["protocol_sha256"], "protocol differs from registered frozen bytes")
+    require(analysis["protocol_sha256"] == profile["protocol_sha256"], "analysis protocol identity differs")
     require(analysis["status"] == "COMPLETE_PENDING_INDEPENDENT_AUDIT", "analysis is incomplete")
     frames = sorted(analysis["timeframes"], key=lambda x: x["minutes"])
     require([x["minutes"] for x in frames] == list(TIMEFRAMES), "primary timeframe coverage differs")
@@ -216,7 +257,8 @@ def economic_tables(frames: list[dict]) -> tuple[str, str]:
     return main, sensitivity
 
 
-def make_readme(frames: list[dict], verification: dict, identity: dict) -> str:
+def make_readme(frames: list[dict], verification: dict, identity: dict, profile: dict | None = None) -> str:
+    profile = ORIGINAL_PROFILE if profile is None else profile
     primary_rows, annual_rows, sensitivity_rows, score_rows = [], [], [], []
     supported = []
     for frame in frames:
@@ -268,7 +310,13 @@ def make_readme(frames: list[dict], verification: dict, identity: dict) -> str:
         "its primary-cost net log return is nonpositive. These are descriptive fixed-policy comparisons, "
         "without an economic selection or significance claim.")
     recorded_command = shlex.join(identity["command"]) if isinstance(identity["command"], list) else str(identity["command"])
-    return f"""# Bitcoin geometry information — Round 1 measured report
+    amendment_note = (
+        "This is the separately frozen R1a numerical amendment. The [original R1 failure](../20261008-geometry-information-r1-failed/README.md) "
+        "remains scientifically inconclusive. R1a changes the frozen numerical solver only; its objective, candidate grid, "
+        "selection, inference and economic criteria remain unchanged. All R1 partial inner scores were already exposed. "
+        "The complete amendment and exact solver are preserved in [protocol.json](protocol.json)."
+        if profile["attempt_id"] == "R1a" else "")
+    return f"""# Bitcoin geometry information — {profile['label']} measured report
 
 **{claim}** The full independent audit passed before this report was generated.
 This is an informational comparison of two finite, selected logistic model
@@ -280,6 +328,8 @@ selected geometry model G log loss**, measured in nats per eligible binary bar.
 Positive values favor geometry. These labels concern the subsequent executable
 reference interval, `O[t+2]/O[t+1]-1`, after information from candle `t` closes.
 Exactly flat targets are retained in counts and excluded from binary scoring.
+
+{amendment_note}
 
 ## Primary results and every success condition
 
@@ -403,10 +453,10 @@ The five source histories and earlier results were already examined before this
 round, including the predecessor [PR #22](https://github.com/mikkokotila/Filang/pull/22).
 Nested temporal fitting prevents the declared inner/outer fitting leakage;
 it does not create a fresh external holdout. The protocol was frozen at
-`{FREEZE_COMMIT}` before fitting or predictive evaluation. Native causal feature
+`{profile['freeze_commit']}` before fitting or predictive evaluation. Native causal feature
 preparation occurred earlier. This report follows the finite
 [campaign](../../../experiments/geometry_information/CAMPAIGN.md) and retains
-the frozen [protocol SHA-256]({"protocol.json"}): `{PROTOCOL_SHA256}`.
+the frozen [protocol SHA-256](protocol.json): `{profile['protocol_sha256']}`.
 
 The modeled projection uses additive current-to-prior endpoint relations. A
 negative result does not rule out every possible geometry function, interaction
@@ -440,7 +490,7 @@ Stop if no concrete residue supports a next hypothesis or the finite campaign
 budget is exhausted. Fresh confirmation requires later, genuinely uninspected
 observations, and a tradeability claim additionally requires execution evidence.
 
-{reproduction()}
+{reproduction(identity, profile)}
 
 {bibliography()}"""
 
@@ -457,76 +507,107 @@ def bibliography() -> str:
 """
 
 
-def reproduction() -> str:
-    return """## Reproduction
+def reproduction_commands(identity: dict, profile: dict) -> dict:
+    data = str(identity["input_paths"]["data_dir"])
+    keys = str(identity["input_paths"]["keys_dir"])
+    run = str(identity["input_paths"]["out"])
+    protocol = "experiments/geometry_information/" + profile["protocol_filename"]
+    python = ".venv-information/bin/python"
+    return {
+        "producer_command_as_recorded": identity["command"],
+        "native_export_argv": [["target/release/filang", "geometry-key-export", "--data",
+                                str(Path(data) / f"{m}m/ohlcv.csv"), "--out", str(Path(keys) / f"{m}m"),
+                                "--interval-seconds", str(m * 60), "--history-start", "2020-01-01",
+                                "--end", "2026-10-08", "--bars", "10", "--memory-mib", "256",
+                                "--max-rows", "2000000", "--resume", "true"] for m in TIMEFRAMES],
+        "fresh_run_argv": [python, "experiments/geometry_information/run_round1.py", "--data-dir", data,
+                           "--keys-dir", keys, "--out", "runs/" + profile["run_name"], "--protocol", protocol,
+                           "--freeze-commit", profile["freeze_commit"], "--workers", str(identity["settings"]["workers"]),
+                           "--blas-threads", str(identity["settings"]["blas_threads"])],
+        "independent_audit_argv": [python, "experiments/geometry_information/verify_round1.py", "--stage", "full",
+                                   "--run", run, "--keys-root", keys, "--data-dir", data,
+                                   "--protocol", protocol, "--out", str(Path(run) / "verification.json")],
+        "collection_argv": [python, "experiments/geometry_information/collect_round1.py", "--run", run,
+                            "--out", "benchmarks/reports/" + profile["report_name"]],
+    }
 
-Run from the repository root using Python 3.13.2 and the retained implementation
+
+def reproduction(identity: dict, profile: dict) -> str:
+    commands = reproduction_commands(identity, profile)
+    native = "\n".join(shlex.join(argv) for argv in commands["native_export_argv"])
+    fresh = shlex.join(commands["fresh_run_argv"])
+    audit = shlex.join(commands["independent_audit_argv"])
+    collect_command = shlex.join(commands["collection_argv"])
+    return f"""## Reproduction
+
+Run from the repository root using Python 3.13.2 and the recorded implementation
 identity. The freeze commit binds the scientific protocol; the run's code hashes
-identify the subsequent implementation. Thread limits are operational receipts,
-not scientific search parameters.
+identify its implementation. A forensic replay of retained outputs requires the
+completed PR #{profile['final_pr']} tree containing the final verifier and the
+unchanged producer files whose hashes are in [run.json](run.json). A protocol
+freeze commit alone may predate that implementation. A later campaign checkout
+with modified producer files must not audit this run under different code.
+
+The commands below use the recorded data and key roots, preserving paths that
+may be outside this research checkout. The data themselves must match the
+source and prepared-CSV hashes in [protocol.json](protocol.json). Paths can be
+relocated only while retaining those exact input identities. These commands
+reproduce work; do not execute them into an existing sealed run directory.
+Native preparation uses `--resume true`: an existing completed key cache is
+verified only when its source, context and executable identities match. The
+exporter rejects mismatches instead of overwriting a sealed cache. Use the
+recorded native executable for that check; if generating a new key cache,
+choose an unused key root and pass that same root to the fresh runner. The
+already sealed, matching key cache can also be reused directly by the runner
+without executing native preparation again.
 
 ```sh
 python3.13 -m venv .venv-information
 .venv-information/bin/python -m pip install -r requirements-information.txt
-export VECLIB_MAXIMUM_THREADS=1
-export OPENBLAS_NUM_THREADS=1
-export OMP_NUM_THREADS=1
-export MKL_NUM_THREADS=1
+export VECLIB_MAXIMUM_THREADS={identity['settings']['blas_threads']}
+export OPENBLAS_NUM_THREADS={identity['settings']['blas_threads']}
+export OMP_NUM_THREADS={identity['settings']['blas_threads']}
+export MKL_NUM_THREADS={identity['settings']['blas_threads']}
 cargo build --release
-for minutes in 15 30 60 120 240; do
-  target/release/filang geometry-key-export \\
-    --data "data/geometry-direction/${minutes}m/ohlcv.csv" \\
-    --out "runs/geometry-information-keys-v1/${minutes}m" \\
-    --interval-seconds "$((minutes * 60))" \\
-    --history-start 2020-01-01 --end 2026-10-08 --bars 10 \\
-    --memory-mib 256 --max-rows 2000000
-done
-.venv-information/bin/python experiments/geometry_information/run_round1.py \\
-  --data-dir data/geometry-direction \\
-  --keys-dir runs/geometry-information-keys-v1 \\
-  --out runs/geometry-information-r1 \\
-  --protocol experiments/geometry_information/round1_protocol.json \\
-  --freeze-commit b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd \\
-  --workers 5 --blas-threads 1
-.venv-information/bin/python experiments/geometry_information/verify_round1.py \\
-  --stage full --run runs/geometry-information-r1 \\
-  --keys-root runs/geometry-information-keys-v1 \\
-  --data-dir data/geometry-direction \\
-  --protocol experiments/geometry_information/round1_protocol.json \\
-  --out runs/geometry-information-r1/verification.json
+{native}
+{fresh}
 ```
 
-Use the exact native-export and staged-runner commands in
-[reproduction.json](reproduction.json), replacing input/output directory roots
-as needed while preserving their recorded hashes and arguments. The source pins
-and prepared-CSV hashes are in [protocol.json](protocol.json). Native causal
-keys must be produced by `geometry-key-export`; prediction generation must not
-substitute an independent Python feature extractor.
+The original recorded command is preserved above and in
+[reproduction.json](reproduction.json). The fresh-run example uses the registered
+`{profile['run_name']}` directory; choose an unused output location when repeating
+the computation. Match the recorded native engine identity when reproducing
+feature artifacts. Thread/process controls are operational receipts, not
+scientific selection axes.
 
-The run must declare
-`--freeze-commit b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd`.
-After the full independent verifier passes, collect the compact report:
+Audit and collect the retained original run without refitting:
 
 ```sh
-.venv-information/bin/python experiments/geometry_information/collect_round1.py \\
-  --run runs/geometry-information-r1 \\
-  --out benchmarks/reports/20261008-geometry-information-r1
+{audit}
+{collect_command}
 ```
 
-Large source-row prediction arrays and complete economic traces remain in the
-sealed run. [Retained-artifact identities](retained-artifacts.json) bind their
-relative paths, lengths and digests. This package preserves compact files byte
-for byte; its own [manifest](manifest.json) seals those copies and this generated
-report without changing the original producer manifest.
+The exact scientific identity is
+`{profile['protocol_filename']}@{profile['freeze_commit']}`, protocol SHA-256
+`{profile['protocol_sha256']}`. The collector admits only its pinned registry
+entry, requires its exact declared amendment record and no deviations, and
+cannot promote a partial or failed-stage audit to full scientific PASS.
+
+Large source-row predictions and complete economic traces remain in the sealed
+run. [Retained-artifact identities](retained-artifacts.json) bind their relative
+paths, lengths and digests. This package preserves compact files byte for byte;
+its separate [manifest](manifest.json) seals the copies and generated report
+without changing the original producer manifest.
 """
 
 
-def check_audit(run: Path, verification: dict, manifest: dict) -> None:
+def check_audit(run: Path, verification: dict, manifest: dict, profile: dict | None = None) -> None:
     """Require scientific replay, not a feature-only or checksum-only PASS."""
+    profile = ORIGINAL_PROFILE if profile is None else profile
     require(verification["schema"] == "filang-geometry-information-verification-v1" and
             verification["status"] == "PASS" and verification["stage"] == "full",
             "collection requires a complete independent scientific audit")
-    require(verification["protocol_sha256"] == PROTOCOL_SHA256, "audit protocol identity differs")
+    require(verification["protocol_sha256"] == profile["protocol_sha256"], "audit protocol identity differs")
     require(verification["producer_manifest_sha256"] == digest(run / "manifest.json"),
             "audit does not bind the current producer manifest")
     require(verification["analysis_sha256"] == digest(run / "analysis.json"),
@@ -540,8 +621,14 @@ def check_audit(run: Path, verification: dict, manifest: dict) -> None:
             coverage["all_records"] is True and coverage["sampled"] is False,
             "independent audit is sampled or has incomplete scientific coverage")
     ledger_files = [path for path in manifest["files"] if "/economics/" in path and path.endswith("/metrics.json")]
-    require(len(ledger_files) in (480, 960) and coverage["ledger_replays"] == len(ledger_files),
+    require(len(ledger_files) == coverage["ledger_replays"] == 960,
             "independent audit has not replayed every retained economic ledger")
+    for minutes in TIMEFRAMES:
+        for year in YEARS:
+            for phase in ("validation", "outer"):
+                require(f"{minutes}m/{year}/{phase}.npz" in manifest["files"] and
+                        f"{minutes}m/{year}/{phase}.json" in manifest["files"],
+                        "complete full-row prediction files and sidecars are required")
 
 
 def native_receipts(identity: dict, features: dict, override: Path | None) -> tuple[dict[str, Path], dict]:
@@ -572,20 +659,52 @@ def native_receipts(identity: dict, features: dict, override: Path | None) -> tu
     return copies, retained
 
 
-def collect(run: Path, out: Path, keys_dir: Path | None = None) -> dict:
+def operational_receipts(run: Path, identity: dict, launcher: Path | None,
+                         audit_receipts: tuple[Path, ...] | list[Path]) -> tuple[dict[str, Path], dict]:
+    """Read explicitly supplied external receipts without modifying the run."""
+    run = run.resolve()
+    copies, records = {}, {}
+
+    def include(path: Path, relative: str, role: str) -> None:
+        path = path.resolve()
+        require(path.is_file() and run not in path.parents,
+                "operational receipt must be an existing file outside the sealed run")
+        require(relative not in copies, "duplicate operational receipt destination: " + relative)
+        copies[relative] = path
+        records[relative] = {**file_record(path), "source_path": str(path), "role": role,
+                             "included_in_producer_manifest": False}
+
+    if launcher is not None:
+        launch = load_json(launcher)
+        require(launch["command"] == identity["command"], "launcher command differs from recorded producer command")
+        require(type(launch["exit_code"]) is int and launch["exit_code"] == 0,
+                "launcher must record a successful exit")
+        elapsed = launch["elapsed_seconds"]
+        require(type(elapsed) in (int, float) and math.isfinite(elapsed) and elapsed > 0,
+                "launcher duration must be finite and positive")
+        include(launcher, "operational/launcher.json", "successful producer launcher")
+        execution_log = Path(launch["log"]) if launch.get("log") else None
+        if execution_log is not None and execution_log.is_file():
+            include(execution_log, "operational/execution.log", "producer execution log")
+    for path in audit_receipts:
+        include(path, "operational/audit/" + path.name, "external audit-development or execution receipt")
+    return copies, records
+
+
+def collect(run: Path, out: Path, keys_dir: Path | None = None, launcher: Path | None = None,
+            audit_receipts: tuple[Path, ...] | list[Path] = ()) -> dict:
     run, out = run.resolve(), out.resolve()
     require(run != out and run not in out.parents and out not in run.parents,
             "report and source run must be separate directories")
     manifest, sources = check_run_manifest(run)
     analysis, identity = load_json(run / "analysis.json"), load_json(run / "run.json")
     verification = load_json(run / "verification.json")
-    require(identity["freeze_commit"] == FREEZE_COMMIT and identity["protocol_sha256"] == PROTOCOL_SHA256,
-            "run freeze identity differs")
+    profile, protocol = admitted_protocol(run, identity)
     require(identity["status"] == "COMPLETE_PENDING_INDEPENDENT_AUDIT", "producer run is incomplete")
     require(identity["source_provenance_sha256"] == digest(run / "provenance.json"),
             "run source provenance identity differs")
-    check_audit(run, verification, manifest)
-    frames, selected, fits = check_design(run, analysis)
+    check_audit(run, verification, manifest, profile)
+    frames, selected, fits = check_design(run, analysis, profile)
     copies = {}
     omitted = {}
     for relative, source in sources.items():
@@ -602,6 +721,9 @@ def collect(run: Path, out: Path, keys_dir: Path | None = None) -> dict:
     native_copies, native_external = native_receipts(identity, load_json(run / "features.json"), keys_dir)
     require(not set(copies).intersection(native_copies), "native report destinations overlap producer artifacts")
     copies.update(native_copies)
+    operational_copies, operational_records = operational_receipts(run, identity, launcher, audit_receipts)
+    require(not set(copies).intersection(operational_copies), "operational receipts overlap producer artifacts")
+    copies.update(operational_copies)
     # Operational wrappers may write receipts after the sealed scientific run.
     # Preserve their exact bytes, label their provenance separately, and never
     # imply that a later receipt was included in the producer's original seal.
@@ -620,40 +742,44 @@ def collect(run: Path, out: Path, keys_dir: Path | None = None) -> dict:
                 "verification_sha256": digest(run / "verification.json"),
                 "collection_streamed_and_checked_all_producer_files": True,
                 "external_files": omitted, "external_native_keys": native_external,
+                "external_operational_receipts": operational_records,
                 "later_operational_receipts": later,
                 "note": "Full independent scope is stated by verification.json; hashes alone are not scientific replay."}
     reproduction_record = {
-        "schema": "filang-r1-report-reproduction-v1", "freeze_commit": FREEZE_COMMIT,
-        "protocol_sha256": PROTOCOL_SHA256, "producer_command_as_recorded": identity["command"],
-        "implementation": identity["implementation"], "runtime": identity["runtime"],
-        "settings": identity["settings"],
-        "source_files": "Use data/geometry-direction/<minutes>m/ohlcv.csv with the exact protocol CSV hashes.",
-        "native_export": {
-            "executable": "The geometry-key-export binary whose SHA is bound by features.json/native context.",
-            "argv_template": ["target/release/filang", "geometry-key-export", "--data", "data/geometry-direction/{minutes}m/ohlcv.csv",
-                              "--out", "runs/geometry-information-keys-v1/{minutes}m", "--interval-seconds",
-                              "{minutes*60}", "--history-start", "2020-01-01", "--end", "2026-10-08",
-                              "--bars", "10", "--memory-mib", "256", "--max-rows", "2000000"]},
-        "independent_audit_argv": [".venv-information/bin/python", "experiments/geometry_information/verify_round1.py",
-                                   "--stage", "full", "--run", "runs/geometry-information-r1", "--keys-root",
-                                   "runs/geometry-information-keys-v1", "--data-dir", "data/geometry-direction",
-                                   "--protocol", "experiments/geometry_information/round1_protocol.json",
-                                   "--out", "runs/geometry-information-r1/verification.json"],
-        "collection_argv": [".venv-information/bin/python", "experiments/geometry_information/collect_round1.py",
-                            "--run", "runs/geometry-information-r1", "--out",
-                            "benchmarks/reports/20261008-geometry-information-r1"]}
+        "schema": "filang-r1-report-reproduction-v1", "freeze_commit": profile["freeze_commit"],
+        "protocol_sha256": profile["protocol_sha256"], "attempt_id": profile["attempt_id"],
+        "protocol_filename": profile["protocol_filename"], "amendments": identity["amendments"],
+        "deviations": identity["deviations"], "implementation": identity["implementation"],
+        "runtime": identity["runtime"], "settings": identity["settings"],
+        **reproduction_commands(identity, profile)}
+    if launcher is not None:
+        reproduction_record["collection_argv"].extend(["--launcher", str(launcher.resolve())])
+    for path in audit_receipts:
+        reproduction_record["collection_argv"].extend(["--audit-receipt", str(path.resolve())])
     collector_receipt = {"schema": "filang-r1-report-collection-v1", "status": "PASS",
+                         "attempt_id": profile["attempt_id"], "protocol_sha256": profile["protocol_sha256"],
+                         "freeze_commit": profile["freeze_commit"],
                          "collector_sha256": digest(Path(__file__).resolve()),
                          "producer_manifest_sha256": digest(run / "manifest.json"),
                          "verification_sha256": digest(run / "verification.json"),
                          "producer_files_checked": len(sources), "candidates": 640,
                          "fit_records": len(fits), "selected_refits": len(selected),
+                         "external_operational_receipts": operational_records,
                          "outcomes": {str(f["minutes"]): f["outcome_if_verified"] for f in frames}}
-    generated = {"README.md": make_readme(frames, verification, identity).encode(),
+    readme = make_readme(frames, verification, identity, profile)
+    if operational_records:
+        links = "\n".join(f"- [{relative}]({relative}) — {record['role']}."
+                          for relative, record in operational_records.items())
+        readme += ("\n## External operational receipts\n\n" + links +
+                   "\n\nThese exact-byte receipts are archived only in this report package. "
+                   "The launcher, when supplied, matches the recorded producer command, successful exit and positive duration. "
+                   "They are not added to the sealed run or represented as files in its original producer manifest. "
+                   "Scientific audit coverage remains defined by verification.json.\n")
+    generated = {"README.md": readme.encode(),
                  "retained-artifacts.json": json_bytes(retained),
                  "reproduction.json": json_bytes(reproduction_record),
                  "collection.json": json_bytes(collector_receipt)}
-    package = write_package(out, copies, generated)
+    package = write_package(out, copies, generated, profile)
     return {"status": "PASS", "out": str(out), "collected_files": len(package["files"]),
             "externally_retained_files": len(omitted), "outcomes": collector_receipt["outcomes"]}
 
@@ -663,8 +789,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--run", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--keys-dir", type=Path, help="Relocated native keys root; defaults to run.json's recorded input path")
+    parser.add_argument("--launcher", type=Path, help="External successful launcher JSON; its existing execution log is also retained")
+    parser.add_argument("--audit-receipt", type=Path, action="append", default=[],
+                        help="External audit log/receipt to preserve in the report only; repeatable")
     args = parser.parse_args(argv)
-    print(json.dumps(collect(args.run, args.out, args.keys_dir), sort_keys=True, allow_nan=False))
+    print(json.dumps(collect(args.run, args.out, args.keys_dir, args.launcher, args.audit_receipt),
+                     sort_keys=True, allow_nan=False))
 
 
 if __name__ == "__main__":

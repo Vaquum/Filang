@@ -33,6 +33,16 @@ FAMILIES = ("B", "G")
 YEARS = (2023, 2024, 2025, 2026)
 TOLERANCE = 1e-10
 HEX = re.compile(r"[0-9a-f]{64}\Z")
+R1_PROTOCOL_SHA256 = "abf7a0424302160a951c90fe9be23391209e4007cb8f7b51a6462ca04cc1524a"
+R1A_PROTOCOL_SHA256 = "cc13e36a818323d1ca488ca4c2af48775b47b267120a55c1011a6bf484191d34"
+# Admission is explicit. A reviewed draft is not executable until its actual
+# frozen commit is recorded here; neither a CLI flag nor run metadata admits it.
+SUPPORTED_PROTOCOLS = {
+    R1_PROTOCOL_SHA256: {"attempt_id": "R1", "freeze_commit": "b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd",
+                         "optimizer_method": "L-BFGS-B"},
+    R1A_PROTOCOL_SHA256: {"attempt_id": "R1a", "freeze_commit": "3df6416a2de59ac396617be49326a834c94aca92",
+                          "optimizer_method": "Newton-Cholesky-Armijo"},
+}
 
 
 def require(condition, message):
@@ -83,6 +93,50 @@ def json_file(path):
     def reject_constant(value):
         raise ValueError("nonfinite JSON value: " + value)
     return json.loads(Path(path).read_text(), parse_constant=reject_constant)
+
+
+def admitted_protocol(protocol_sha):
+    require(protocol_sha in SUPPORTED_PROTOCOLS, "unrecognized frozen protocol digest")
+    contract = SUPPORTED_PROTOCOLS[protocol_sha]
+    require(contract["freeze_commit"] is not None and
+            re.fullmatch(r"[0-9a-f]{40}", contract["freeze_commit"]), "protocol draft has no admitted freeze commit")
+    return contract
+
+
+def unchanged_scientific_contract(original, amended):
+    """Only the separately frozen numerical optimizer amendment is allowed."""
+    allowed = {"experiment_id", "attempt_id", "protocol_status", "estimation", "amendment"}
+    require(set(amended) == set(original) | {"amendment"}, "amendment top-level fields")
+    changed = {key for key in set(original) | set(amended) if original.get(key) != amended.get(key)}
+    require(changed == allowed, "amendment changed undeclared scientific fields")
+    original_estimation = {k: value for k, value in original["estimation"].items() if k != "optimizer"}
+    amended_estimation = {k: value for k, value in amended["estimation"].items() if k != "optimizer"}
+    require(original_estimation == amended_estimation, "amendment changed scientific estimation settings")
+    declaration = amended["amendment"]
+    require(declaration["changed_fields"] == ["experiment_id", "attempt_id", "protocol_status", "estimation.optimizer", "amendment"],
+            "amendment declared field coverage")
+    require(declaration["from_attempt"] == "R1" and declaration["from_protocol_sha256"] == R1_PROTOCOL_SHA256 and
+            declaration["from_freeze_commit"] == SUPPORTED_PROTOCOLS[R1_PROTOCOL_SHA256]["freeze_commit"], "amendment parent identity")
+
+
+def protocol_contract(protocol_path, original_path=None):
+    protocol_sha = digest(protocol_path)
+    contract = admitted_protocol(protocol_sha)
+    protocol = json_file(protocol_path)
+    require(protocol["attempt_id"] == contract["attempt_id"] and
+            protocol["estimation"]["optimizer"]["method"] == contract["optimizer_method"], "frozen attempt/method identity")
+    if protocol_sha == R1A_PROTOCOL_SHA256:
+        original_path = Path(original_path) if original_path is not None else HERE / "round1_protocol.json"
+        require(digest(original_path) == R1_PROTOCOL_SHA256, "original R1 protocol changed")
+        unchanged_scientific_contract(json_file(original_path), protocol)
+    return contract
+
+
+def run_protocol_binding(run, protocol, protocol_sha):
+    contract = admitted_protocol(protocol_sha)
+    require(run["protocol_sha256"] == protocol_sha and run["freeze_commit"] == contract["freeze_commit"], "freeze identity")
+    expected_amendments = [protocol["amendment"]] if protocol_sha == R1A_PROTOCOL_SHA256 else []
+    require(run["amendments"] == expected_amendments and run["deviations"] == [], "undeclared protocol amendment/deviation")
 
 
 def compare(actual, expected, label="value", tolerance=TOLERANCE):
@@ -661,13 +715,11 @@ def audit_run_identity(args, protocol, expected_status="COMPLETE_PENDING_INDEPEN
     require(actual == set(manifest["files"]), "unsealed or missing producer artifacts")
     require((root / "protocol.json").read_bytes() == args.protocol.read_bytes(), "producer frozen protocol bytes")
     protocol_sha = digest(args.protocol)
-    require(protocol_sha == "abf7a0424302160a951c90fe9be23391209e4007cb8f7b51a6462ca04cc1524a", "unexpected frozen protocol")
+    protocol_contract(args.protocol)
     run = json_file(root / "run.json")
     require(run["schema"] == "filang-information-run-v1" and run["status"] == expected_status,
             "producer run incomplete")
-    require(run["protocol_sha256"] == protocol_sha and
-            run["freeze_commit"] == "b1ac3bc49b8a616cc9e7b84112eb0a0934a8affd", "freeze identity")
-    require(not run["amendments"] and not run["deviations"], "undeclared protocol amendment/deviation")
+    run_protocol_binding(run, protocol, protocol_sha)
     require(json_digest(run["implementation"]["files"]) == run["implementation"]["sha256"], "implementation object identity")
     repo = HERE.parents[1]
     for relative, checksum in run["implementation"]["files"].items():
@@ -719,6 +771,60 @@ def predecessor_binding(args, protocol):
             "scope": "Prior manifest binds exact supplied provenance and frozen predecessor protocol; unrelated prior report outputs not re-audited."}
 
 
+def optimizer_record(optimizer, gradient, protocol_sha):
+    """Audit retained optimizer telemetry without taking an optimization step.
+
+    The numerical method is selected exclusively by the admitted protocol hash.
+    The terminal objective and every gradient coordinate are independently
+    reconstructed by audit_fit; counters/steps are checked against that method's
+    fixed budget. This does not claim to replay every historical Armijo trial.
+    """
+    method = admitted_protocol(protocol_sha)["optimizer_method"]
+    require(isinstance(optimizer["success"], bool) and
+            (optimizer["status"] == 0) == optimizer["success"], "optimizer success/status disagreement")
+    if method == "L-BFGS-B":
+        require(optimizer.get("method", "L-BFGS-B") == "L-BFGS-B", "R1 optimizer method differs")
+        require(0 <= optimizer["iterations"] <= 1000 and optimizer["function_evaluations"] > 0 and
+                optimizer["gradient_evaluations"] > 0, "optimizer iteration/evaluation bounds")
+        return
+    require(method == "Newton-Cholesky-Armijo" and optimizer["method"] == method, "R1a optimizer method differs")
+    reasons = {0: "gradient_tolerance", 1: "maximum_iterations", 2: "nonfinite_evaluation",
+        3: "nonfinite_hessian", 4: "factorization_failure", 5: "nonfinite_direction",
+        6: "non_descent_direction", 7: "line_search_failure", 8: "terminal_recomputation_failure"}
+    for field in ("status", "iterations", "function_evaluations", "gradient_evaluations", "hessian_evaluations", "nonfinite_line_search_trials"):
+        require(type(optimizer[field]) is int and optimizer[field] >= 0, "Newton integer counter: " + field)
+    status, iterations = optimizer["status"], optimizer["iterations"]
+    require(status in reasons and optimizer["stop_reason"] == reasons[status], "Newton stop reason/status")
+    require(iterations <= 100, "Newton update budget")
+    steps, backtracks, trials = optimizer["step_sizes"], optimizer["backtrack_counts"], optimizer["line_search_trial_counts"]
+    require(isinstance(steps, list) and isinstance(backtracks, list) and isinstance(trials, list) and
+            len(steps) == len(backtracks) == iterations, "Newton accepted update telemetry")
+    require(all(type(value) is int and 0 <= value < 50 for value in backtracks), "Newton backtracking budget")
+    require(all(isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and
+                value == 2.0**(-backtracks[i]) for i, value in enumerate(steps)), "Newton step size schedule")
+    require(all(type(value) is int and 1 <= value <= 50 for value in trials), "Newton line-search trial budget")
+    expected_trials = [value+1 for value in backtracks]
+    if status == 7:
+        expected_trials.append(50)
+    require(trials == expected_trials, "Newton trial/update counter reconciliation")
+    expected_hessians = iterations + int(status in (3, 4, 5, 6, 7))
+    require(optimizer["hessian_evaluations"] == expected_hessians, "Newton attempted Hessian count")
+    require(optimizer["function_evaluations"] == optimizer["gradient_evaluations"] == 1+sum(trials),
+            "Newton objective/gradient evaluation counts")
+    require(optimizer["nonfinite_line_search_trials"] <= sum(trials)-iterations, "Newton nonfinite trial count")
+    final_gradient = np.asarray(gradient, dtype=float)
+    norm = float(np.max(np.abs(final_gradient)))
+    require(np.isfinite(final_gradient).all(), "Newton terminal gradient finite")
+    if status == 0:
+        require(norm <= 1e-7, "Newton success requires gradient tolerance")
+    elif status == 1:
+        require(iterations == 100 and norm > 1e-7, "Newton iteration-limit termination")
+    elif status == 8:
+        require(norm > 1e-7, "Newton terminal recomputation failure condition")
+    else:
+        require(iterations < 100 and norm > 1e-7, "Newton failure must precede convergence/update limit")
+
+
 def audit_fit(model, source, receipt, feature, labels, fold, family, n, penalty, stage,
               protocol_sha, implementation_sha, parent, require_accepted=True):
     rows = np.flatnonzero(labels["binary_mask"])
@@ -756,11 +862,9 @@ def audit_fit(model, source, receipt, feature, labels, fold, family, n, penalty,
                 compare(model["optimizer"]["reported_objective"], objective, "optimizer objective"))
     acceptance = bool(model["optimizer"]["success"] and np.max(np.abs(gradient)) <= 5e-6)
     require(model["accepted"] is acceptance, "stored acceptance disagrees with full optimizer/gradient criterion")
-    require((model["optimizer"]["status"] == 0) == model["optimizer"]["success"], "optimizer success/status disagreement")
+    optimizer_record(model["optimizer"], gradient, protocol_sha)
     if require_accepted:
         require(acceptance, "unaccepted required fit")
-    require(0 <= model["optimizer"]["iterations"] <= 1000 and model["optimizer"]["function_evaluations"] > 0 and
-            model["optimizer"]["gradient_evaluations"] > 0, "optimizer iteration/evaluation bounds")
     return error
 
 
@@ -1239,6 +1343,9 @@ def main(argv=None):
     started = time.perf_counter()
     protocol = json_file(args.protocol)
     require(protocol["schema"] == "filang-geometry-information-protocol-v1", "protocol schema")
+    protocol_contract(args.protocol)
+    require(args.stage != "failed" or digest(args.protocol) == R1_PROTOCOL_SHA256,
+            "failed-stage prefix audit is specific to the original frozen R1 attempt")
     model_stage = args.stage != "features"
     full = args.stage in ("full", "all")
     expected_status = "FAILED" if args.stage == "failed" else "COMPLETE_PENDING_INDEPENDENT_AUDIT"

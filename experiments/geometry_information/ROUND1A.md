@@ -11,6 +11,30 @@ The authoritative [protocol](round1a_protocol.json) was published in commit
 An independent comparison found that only the attempt identifiers, protocol
 status, optimizer specification and amendment record differ from R1.
 
+## Recorded outcome
+
+The [complete measured report](../../benchmarks/reports/20261008-geometry-information-r1a/README.md)
+records a full execution and independent audit. All 680 fits passed the frozen
+acceptance test. The information claim is **supported at 30m only**: pooled
+B-minus-G gain 0.0005687511 nats per binary observation, 95% interval
+[0.0002508591, 0.0008935404], Holm-adjusted p=0.00249875, and three of four
+positive annual effects. The 2026 effect was negative. The other four primary
+timeframes are not supported by the complete criterion.
+
+No selected G fixed-threshold policy is profitable at primary or reduced costs
+when aggregating its four annual folds. Every one of the 20 G annual primary-cost
+net log returns is negative. Buy-and-hold and unconditional controls are positive;
+these observations do not establish that every possible geometry policy loses.
+The economic residue motivates a separately frozen test of conditional payoff
+and cost-aware policy selection.
+
+The original launcher measured 106.97062174999155 seconds for the complete
+producer. Independent full audit took 172.01818441599607 seconds, covering all
+458,972 native keys, 640 candidate fits, 40 refits, 40 full-row prediction
+artifacts, inference replicas and 960 ledger replays. Maximum checked numerical
+discrepancy was 2.128217602148652e-10, within the prescribed absolute-plus-relative
+tolerance. These are operational timings, without a matched speedup claim.
+
 ## Scientific contract
 
 The five source snapshots, exact geometry features, common ten-candle validity,

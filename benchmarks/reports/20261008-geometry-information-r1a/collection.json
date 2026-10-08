@@ -1,0 +1,44 @@
+{
+  "attempt_id": "R1a",
+  "candidates": 640,
+  "collector_sha256": "a500d470f38f9052a6f68100d09729bfd95e7e32500b66a29e2eda9383485d78",
+  "external_operational_receipts": {
+    "operational/audit/geometry-information-r1a-verification.log": {
+      "bytes": 2385,
+      "included_in_producer_manifest": false,
+      "role": "external audit-development or execution receipt",
+      "sha256": "86b76e7aba22f03d3ab72465ef35068e320765582cb3bee1cbb570540dfeaf26",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1a-verification.log"
+    },
+    "operational/execution.log": {
+      "bytes": 993,
+      "included_in_producer_manifest": false,
+      "role": "producer execution log",
+      "sha256": "66eb3e8a0448f7e40ca1392a5e61a6ee95d173d3440c488f2704d79a881075f5",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1a-execution.log"
+    },
+    "operational/launcher.json": {
+      "bytes": 1111,
+      "included_in_producer_manifest": false,
+      "role": "successful producer launcher",
+      "sha256": "a4e0590b6a17a1abdbb3ead56f64586c4bd1ec492ed10da6b72789efdb63c417",
+      "source_path": "/Users/mikkokotila/dev/Filang-research/runs/geometry-information-r1a-launch.json"
+    }
+  },
+  "fit_records": 680,
+  "freeze_commit": "3df6416a2de59ac396617be49326a834c94aca92",
+  "outcomes": {
+    "120": "not-supported",
+    "15": "not-supported",
+    "240": "not-supported",
+    "30": "supported",
+    "60": "not-supported"
+  },
+  "producer_files_checked": 5674,
+  "producer_manifest_sha256": "47cc05a02adea91c486a555f3e1d48fc13f505340db1557fb44180d45f0cb7a6",
+  "protocol_sha256": "cc13e36a818323d1ca488ca4c2af48775b47b267120a55c1011a6bf484191d34",
+  "schema": "filang-r1-report-collection-v1",
+  "selected_refits": 40,
+  "status": "PASS",
+  "verification_sha256": "3660e4827981caa12d4d3e9c91b2fa28683219f89d781b771222ed1c3e676aaf"
+}
