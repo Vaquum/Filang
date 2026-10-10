@@ -1,0 +1,90 @@
+{
+  "max_abs_numerical_discrepancy": 2.098943241435336e-11,
+  "outcome": "supported",
+  "primary": {
+    "checks": {
+      "at_least_three_positive_years": true,
+      "ci_lower_positive": true,
+      "independent_audit": true,
+      "latest_2026_positive": true,
+      "one_sided_p_below_0.05": true,
+      "positive_pooled": true
+    },
+    "ci95": [
+      0.0001315556771101833,
+      0.000766198276466162
+    ],
+    "gain_nats": 0.00044187777274489555,
+    "null_hits": 6,
+    "p": 0.0034982508745627187
+  },
+  "prior_timeframe_selection": true,
+  "producer_sha256": "083d78ed4d1778fe95a7a36ffb11467325d0c9b7767b2411277fcbfbfefcfa9a",
+  "protocol_sha256": "3f84a6331f1f6c07f3924dfefa9ede739efaa597c98448e382accc45cb2e56ea",
+  "retrospective_only": true,
+  "schema": "qinf-r0-independent-audit-v1",
+  "status": "PASS",
+  "timeframes": {
+    "120": {
+      "audited_predictions": 16500,
+      "max_prediction_discrepancy": 0.0,
+      "native_feature_valid": 29644,
+      "source_rows": 29653,
+      "years": [
+        2023,
+        2024,
+        2025,
+        2026
+      ]
+    },
+    "15": {
+      "audited_predictions": 131998,
+      "max_prediction_discrepancy": 0.0,
+      "native_feature_valid": 237133,
+      "source_rows": 237149,
+      "years": [
+        2023,
+        2024,
+        2025,
+        2026
+      ]
+    },
+    "240": {
+      "audited_predictions": 8248,
+      "max_prediction_discrepancy": 0.0,
+      "native_feature_valid": 14829,
+      "source_rows": 14831,
+      "years": [
+        2023,
+        2024,
+        2025,
+        2026
+      ]
+    },
+    "30": {
+      "audited_predictions": 66005,
+      "max_prediction_discrepancy": 0.0,
+      "native_feature_valid": 118560,
+      "source_rows": 118576,
+      "years": [
+        2023,
+        2024,
+        2025,
+        2026
+      ]
+    },
+    "60": {
+      "audited_predictions": 33011,
+      "max_prediction_discrepancy": 0.0,
+      "native_feature_valid": 59278,
+      "source_rows": 59294,
+      "years": [
+        2023,
+        2024,
+        2025,
+        2026
+      ]
+    }
+  },
+  "verifier_sha256": "c64178906c44af6fc808c6307dded7d93929a2f28d4f94cd541a06a1b055400a"
+}

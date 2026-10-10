@@ -8,6 +8,8 @@ A parametric financial-program language and factorized feature-discovery engine.
 
 **Optional structural abstraction layer (Phase 2):** [Caller-selected partial qualitative descriptions, exact refinement classes, and lossless residual reconstruction](docs/QUALITATIVE_GEOMETRY_ABSTRACTION.md) are exposed separately through `filang::geometry_abstraction`. No other Filang subsystem invokes the new layer.
 
+**Retrospective qualitative-information study (Phase 3):** [QINF-R0a](benchmarks/reports/20261010-qualitative-information-r0a/README.md) used fixed Phase 2 abstractions and a held-out lag-direction baseline across five already-inspected BTCUSDT timeframes. The independently audited 30-minute coding criterion passed, but the gain was small, the joint model did not outperform simpler fixed abstractions at 30m, and no prospective or trading-edge claim is made. The native exporter and experiment runner remain separate from the engine.
+
 ## Current: completed Bitcoin geometry research campaign
 
 The [finite campaign](experiments/geometry_information/CAMPAIGN.md) has completed
