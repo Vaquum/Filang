@@ -64,3 +64,5 @@ pub mod direction_cli;
 pub mod geometry_keys;
 
 pub mod geometry_keys_cli;
+
+pub mod geometry_algebra;

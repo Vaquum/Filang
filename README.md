@@ -4,6 +4,8 @@ A parametric financial-program language and factorized feature-discovery engine.
 
 **Status: runnable 0.10, with complete qualitative geometry and a completed, independently audited three-family research campaign.** Candle bodies and wicks have an exact canonical language, including missing wicks, doji, ties, opening gaps and global relationships. The native direction sweep maps two through ten candles, retains every observed pattern and label, and accounts exactly for the unobserved universe with arbitrary-precision counts. The existing dense full-risk geometry executor retains its checked `u128` strategy multiplicities. Broader factory requirements remain open in issue #1.
 
+**Optional qualitative algebra layer (Phase 1):** [Exact projection, overlap composition, one-candle extension, and oriented multiscale aggregation](docs/QUALITATIVE_GEOMETRY_ALGEBRA.md) are available as the separate `filang::geometry_algebra` Rust module. This is an opt-in layer over native geometry, not a change to the discovery or execution engine.
+
 ## Current: completed Bitcoin geometry research campaign
 
 The [finite campaign](experiments/geometry_information/CAMPAIGN.md) has completed
