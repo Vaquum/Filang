@@ -6,6 +6,8 @@ A parametric financial-program language and factorized feature-discovery engine.
 
 **Optional qualitative algebra layer (Phase 1):** [Exact projection, overlap composition, one-candle extension, and oriented multiscale aggregation](docs/QUALITATIVE_GEOMETRY_ALGEBRA.md) are available as the separate `filang::geometry_algebra` Rust module. This is an opt-in layer over native geometry, not a change to the discovery or execution engine.
 
+**Optional structural abstraction layer (Phase 2):** [Caller-selected partial qualitative descriptions, exact refinement classes, and lossless residual reconstruction](docs/QUALITATIVE_GEOMETRY_ABSTRACTION.md) are exposed separately through `filang::geometry_abstraction`. No other Filang subsystem invokes the new layer.
+
 ## Current: completed Bitcoin geometry research campaign
 
 The [finite campaign](experiments/geometry_information/CAMPAIGN.md) has completed
