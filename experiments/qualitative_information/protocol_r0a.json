@@ -1,0 +1,220 @@
+{
+  "schema": "filang-qualitative-information-r0a-v1",
+  "experiment_id": "QINF-R0a-BTC-RETROSPECTIVE",
+  "status": "predeclared checksum-only amendment before any Phase 3 outcome fitting",
+  "purpose": "Test whether fixed partial endpoint-order abstractions add held-out next-bar close-to-close directional predictive code-length beyond learned lag-one close direction; retrospective diagnostic, never prospective confirmation",
+  "previous_exposure": "ALL BTCUSDT snapshots, the 30-minute prior signal, and the 2023\u20132026 outcomes were inspected in prior Filang direction and R1\u2013R3 campaigns. This new modeling method cannot make the test dates fresh. The 30-minute primary timeframe was chosen because of those prior outcomes.",
+  "dependency_base": "Phase 2 commit 536fa53969ed1510057a72dd6ecd77c575b211ef on PR #30; Phase 1 PR #29",
+  "target": {
+    "window_order": "current-first [t,t-1], 2 full candles",
+    "geometry_mode": "oriented",
+    "y": "sign(close[t+1]-close[t])",
+    "lag_state": "sign(close[t]-close[t-1])",
+    "flat_policy": "Exclude exactly zero target returns from binary fit and score, retain and report them",
+    "feature_availability": "at close of candle t; future target available at close of candle t+1",
+    "gap_policy": "require t-1,t,t+1 to have contiguous UTC opening timestamps on the declared fixed grid; retain actual rows and never fill gaps",
+    "fold_boundary": "source candle t opens within fold, target candle t+1 must close strictly before the end-exclusive boundary; fitting can use only observations with target close strictly before outer fold start",
+    "validation": "strict positive finite OHLC, high>=max(open,close)>=min(open,close)>=low, nonnegative finite volume; unique increasing aligned timestamps; exact IEEE floating equality for ties"
+  },
+  "period": {
+    "history_start": "2020-01-01",
+    "outer_folds": [
+      {
+        "year": 2023,
+        "start": "2023-01-01",
+        "end": "2024-01-01"
+      },
+      {
+        "year": 2024,
+        "start": "2024-01-01",
+        "end": "2025-01-01"
+      },
+      {
+        "year": 2025,
+        "start": "2025-01-01",
+        "end": "2026-01-01"
+      },
+      {
+        "year": 2026,
+        "start": "2026-01-01",
+        "end": "2026-10-08"
+      }
+    ],
+    "training": "For each outer fold, fit baseline and alternatives separately on all eligible observations starting 2020-01-01 whose target close is strictly before fold start. No hyperparameter selection or model refit within the outer fold."
+  },
+  "schemas": {
+    "body": {
+      "pairs": [
+        [
+          "body_low",
+          "body_low"
+        ],
+        [
+          "body_low",
+          "body_high"
+        ],
+        [
+          "body_high",
+          "body_low"
+        ],
+        [
+          "body_high",
+          "body_high"
+        ]
+      ],
+      "body_directions": [
+        0,
+        1
+      ]
+    },
+    "range": {
+      "pairs": [
+        [
+          "low",
+          "low"
+        ],
+        [
+          "low",
+          "high"
+        ],
+        [
+          "high",
+          "low"
+        ],
+        [
+          "high",
+          "high"
+        ]
+      ],
+      "body_directions": []
+    },
+    "joint": {
+      "union": [
+        "body",
+        "range"
+      ],
+      "body_directions": [
+        0,
+        1
+      ]
+    }
+  },
+  "estimator": {
+    "baseline": "P(Y=up | lag_state)=(up_lag+0.5)/(n_lag+1), fallback to global (up+0.5)/(n+1) if lag stratum empty",
+    "alternatives": "P(Y=up | lag_state,signature)=(up_cell + alpha*P(Y=up|lag_state))/(n_cell+alpha), with zero n_cell falling back to corresponding baseline",
+    "alpha": 100,
+    "numerical": "float64 probabilities and natural-log binary log loss, no clipping needed because smoothed 0<p<1; report all eligible score rows and fit counts"
+  },
+  "primary": {
+    "timeframe_minutes": 30,
+    "comparator": "learned_lag1_close_direction",
+    "model": "joint",
+    "measure": "mean(log_loss_baseline - log_loss_joint) in nats per binary event, plus total saved bits=sum(log_loss_baseline-log_loss_joint)/ln(2)",
+    "criteria": [
+      "pooled difference > 0",
+      "primary 7-day paired moving-block bootstrap 95% percentile interval lower endpoint > 0",
+      "centered-null paired bootstrap one-sided p < 0.05",
+      "at least 3 of 4 annual point estimates positive",
+      "partial-2026 point estimate positive",
+      "complete independent audit passes"
+    ],
+    "conclusion": "All conditions passing => supported only as a *retrospective within-protocol criterion*, not fresh confirmation; completed failure => not-supported; missing data, incomplete run or failed audit => inconclusive.",
+    "caveat": "Primary was chosen due to prior data-selected 30m interest, so nominal p and interval do not account for that adaptive history."
+  },
+  "secondary": {
+    "timeframes_minutes": [
+      15,
+      60,
+      120,
+      240
+    ],
+    "models": [
+      "body",
+      "range",
+      "joint"
+    ],
+    "selection": "No secondary, time-frame or schema may replace primary or open a new success route; every secondary number is descriptive."
+  },
+  "uncertainty": {
+    "unit": "UTC day of target candle close",
+    "block_days": 7,
+    "replicates": 2000,
+    "seed": 20261010,
+    "sampling": "For each annual fold independently, sample circular contiguous blocks of days until its exact original number of calendar days is obtained; retain days with zero scored targets; resample paired daily difference sum and event count using the same indices",
+    "intervals": "2.5th and 97.5th percentiles of weighted pooled mean difference",
+    "p": "For centered null, subtract pooled observed per-event gain * daily target count from each day's difference sum; resample these centered sums using the same block indices. One-sided p=(hits of resampled centered gain >= observed gain + 1)/(replicates + 1)"
+  },
+  "placebo": {
+    "scope": "30m primary only, descriptive, not a p-value or evidence of a causal market null",
+    "shifts_days": [
+      14,
+      21,
+      28,
+      35,
+      42,
+      49,
+      56,
+      63,
+      70,
+      77,
+      84,
+      91,
+      98,
+      105,
+      112,
+      119
+    ],
+    "operation": "Within each outer fold's fitting events and separately its scored events, circularly rotate the ordered joint schema signature codes forward by s = nominal_days * 1440 / timeframe_minutes positions, wrapping within the phase. Leave Y and lag_state, baseline predictions, fold membership and counts unchanged. Refit shifted conditional cells; score shifted held-out signatures.",
+    "interpretation": "Breaks contemporaneous alignment while preserving marginal signature sequence and local autocorrelation, but is an intentionally noncausal placebo and does not preserve all joint OHLC dynamics."
+  },
+  "prospective_gate": {
+    "minimum_first_feature_open_utc": "2026-10-10",
+    "requirement": "Separately freeze an actual future source and its immutable provenance before labels are inspected. Nothing in this retrospective run is called prospective confirmation.",
+    "acceptance": "No claimed future confirmation in R0; future datasets or asset choices require a separately predeclared protocol and Law 1 outcome record."
+  },
+  "source_policy": {
+    "use": "Use exact pre-prepared CSVs from prior immutable Vaquum Binance BTCUSDT sources; verify full SHA-256, row count, grid, and original provenance; do not commit raw market data.",
+    "sources": [
+      {
+        "minutes": 15,
+        "expected_rows": 237149,
+        "csv_sha256": "0e361a9d8773578b54453affc313fe9504b6e367a666001bb168383b700e2e3c",
+        "raw_parquet_sha256": "e3b2a6521596ffe661cd21c71a311934913170c4b597dc5e7e582c881c49c6be"
+      },
+      {
+        "minutes": 30,
+        "expected_rows": 118576,
+        "csv_sha256": "65da774e7ecbe88156e1a0daf029d69b85bd6ec17013f46025f8d313b53e83b5",
+        "raw_parquet_sha256": "41302c042e9048359d2595c6b2424482097097a3d49c91ea5af2ca7975482df8"
+      },
+      {
+        "minutes": 60,
+        "expected_rows": 59294,
+        "csv_sha256": "3fb0d11cc8d60b3d47d63a69398c4bbdeb79d7d79ae510fd669335746a4c21a9",
+        "raw_parquet_sha256": "2885f7b4c1d0b1bd0e08fa4f20145eae93160f2eee5ba04fb4dad34e3c85b883"
+      },
+      {
+        "minutes": 120,
+        "expected_rows": 29653,
+        "csv_sha256": "f8230b440abc10c1fa9e4b41e440796f457df328ebd5947d8b64811918c79d4b",
+        "raw_parquet_sha256": "564ec4bfc5effc13da47b57fe5dac71fa7d625386946aa115b0783c6ee18a917"
+      },
+      {
+        "minutes": 240,
+        "expected_rows": 14831,
+        "csv_sha256": "569880fbd855a4eeba310dcf096f6b14695fca5f99e7793fb534754d336d8857",
+        "raw_parquet_sha256": "e0b5256141b88d1d3a73d2f243c2ccb3b9fcb2d633c93cee9a2a687c60f6c08e"
+      }
+    ]
+  },
+  "artifacts": {
+    "native": "One native Phase 2 signature key row per input bar (including feature-valid final rows with unknown future Y), source-index aligned; no future labels read by native encoder; source hashes checked",
+    "producer": "Complete per-year predictions (baseline and 3 fixed alternatives), fit summaries and annual/daily log-loss summaries; full source-index alignment",
+    "verifier": "Independent Python reconstruction of canonical endpoint weak-order relations and body directions, exact keys, lag/target eligibility, fit counts, and every scored prediction and log loss; report maximum discrepancy and reject missing or altered rows",
+    "report": "Frozen protocol identity, implementation commit and source checksums, exact metric values, uncertainty/placebo conditions, annual outcomes, complete results and any failures",
+    "full_arrays": "Keep full row-level artifacts in ignored local run directory; commit compact audited JSON reports and verification receipt.",
+    "performance": "No claim of a runtime speedup or throughput factor; all computation must be auditable, and execution times if recorded are operational receipts only."
+  },
+  "amends_protocol_sha256": "0ea24346e24eb33acb670125d0e6f212f77955dcf713d3fe061f96dea4937b66",
+  "amendment_scope": "Correct only the 120m prepared CSV SHA-256 transcription (r0 had 9ae8 after 7d7 instead of actual 8b64 after 7d); no hypothesis, source bytes, dates, models, criteria or statistical procedure changed."
+}

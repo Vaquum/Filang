@@ -1,0 +1,14 @@
+{
+  "attempt": "QINF-R0-INPUT-1",
+  "outcome": "inconclusive",
+  "stage": "input preflight before any model fitting or outcome evaluation",
+  "frozen_commit": "c6e1add2995e30eb7499e09f03ab6265a5755662",
+  "original_protocol_sha256": "0ea24346e24eb33acb670125d0e6f212f77955dcf713d3fe061f96dea4937b66",
+  "observations": [
+    "First preflight failed because implementation used 15/ instead of existing 15m/ input-directory convention; this was an implementation path correction without touching data.",
+    "Second preflight rejected 120m source hash that disagreed with pinned protocol. All data SHA checks run before creating output or fitting any label."
+  ],
+  "disposition": "No real-data fitting or scoring was performed. R0 remains byte-preserved and scientifically inconclusive; R0a corrects the miscopied hash only.",
+  "original_bad_120m_sha": "f8230b440abc10c1fa9e4b41e440796f457df328ebd5947d79ae8b64811918c79d4b",
+  "actual_pinned_120m_sha": "f8230b440abc10c1fa9e4b41e440796f457df328ebd5947d8b64811918c79d4b"
+}

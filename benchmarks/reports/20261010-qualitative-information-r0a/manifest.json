@@ -1,0 +1,71 @@
+{
+  "audit": "PASS",
+  "files": {
+    "external-full-input-native/120m.tsv": {
+      "bytes": 960134,
+      "retention": "local ignored run directory",
+      "sha256": "e22d267dfd6353994a438ef3450feec24161547843ffbe56898dbe0a5e48cacc"
+    },
+    "external-full-input-native/15m.tsv": {
+      "bytes": 7878910,
+      "retention": "local ignored run directory",
+      "sha256": "943313e237da09283e9720f968d5468134f3a15799e892dbf543addd7360ed08"
+    },
+    "external-full-input-native/240m.tsv": {
+      "bytes": 475107,
+      "retention": "local ignored run directory",
+      "sha256": "f40beff8a219960b6fbb7d35d2a68f7cc18e352bded4092604f53eab433dbbaa"
+    },
+    "external-full-input-native/30m.tsv": {
+      "bytes": 3886647,
+      "retention": "local ignored run directory",
+      "sha256": "e95002877eaba7d051a2f643310428cc880b2bf3ccd62515fa5d5deeb8b69cf2"
+    },
+    "external-full-input-native/60m.tsv": {
+      "bytes": 1930095,
+      "retention": "local ignored run directory",
+      "sha256": "4e0d359fd20ecc14bc70573ae725cde3dcfaf2f48db12bb6cb65b899b361893a"
+    },
+    "external-full-input-predictions/120m.tsv": {
+      "bytes": 2054438,
+      "retention": "local ignored run directory",
+      "sha256": "25c6108520de75bfec0e1fea7d79c9ed1dae227188082f5ceaec694261a39487"
+    },
+    "external-full-input-predictions/15m.tsv": {
+      "bytes": 16531464,
+      "retention": "local ignored run directory",
+      "sha256": "54de98fc02bd059a08baa02ac68f1640262b72e8efbbe39800e3401df46410e3"
+    },
+    "external-full-input-predictions/240m.tsv": {
+      "bytes": 1024411,
+      "retention": "local ignored run directory",
+      "sha256": "9d104fc7a0f21339c7aea595b2a476321e38119da29465f47272af44bba98059"
+    },
+    "external-full-input-predictions/30m.tsv": {
+      "bytes": 8237590,
+      "retention": "local ignored run directory",
+      "sha256": "4699d72eba6dda92cfeb10345b8b0976d1e170153d16d222a0a4bea5c8a4aafd"
+    },
+    "external-full-input-predictions/60m.tsv": {
+      "bytes": 4107252,
+      "retention": "local ignored run directory",
+      "sha256": "01de5d815edb7bbbdd40314674c0c68bb6a661bcbf36b608e0bbe0a016c26cd0"
+    },
+    "producer.json": {
+      "bytes": 25802,
+      "sha256": "083d78ed4d1778fe95a7a36ffb11467325d0c9b7767b2411277fcbfbfefcfa9a"
+    },
+    "result.json": {
+      "bytes": 25865,
+      "sha256": "4dbcb3e4dbeaab0470aac0053f229d949ef85d82093e242ed2284a4aed9640da"
+    },
+    "verification.json": {
+      "bytes": 2145,
+      "sha256": "636c26e5cf957ed3b5986f33933a3741c1e1b6367b6e831bebb3275d04909fa5"
+    }
+  },
+  "frozen_commit": "c2eecc24103b049866de2881ca8141ac194a0927",
+  "frozen_sha256": "3f84a6331f1f6c07f3924dfefa9ede739efaa597c98448e382accc45cb2e56ea",
+  "outcome": "supported",
+  "schema": "qinf-r0a-compact-manifest-v1"
+}
