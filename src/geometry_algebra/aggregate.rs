@@ -3,6 +3,7 @@ use crate::{
     geometry::{BodyDirection, GeometryMode, GeometryPattern},
     Result,
 };
+use std::cmp::Ordering;
 
 /// Order of candle rows supplied to aggregation. Existing Filang consumers
 /// may store a window newest-first; algebra must not silently reinterpret it.
@@ -62,12 +63,10 @@ pub fn aggregate_partition(
         let low = input[start..end].iter().map(|row| row[0]).min().unwrap();
         let high = input[start..end].iter().map(|row| row[3]).max().unwrap();
         rows.push([low, open.min(close), open.max(close), high]);
-        directions.push(if open < close {
-            BodyDirection::Up
-        } else if open > close {
-            BodyDirection::Down
-        } else {
-            BodyDirection::Flat
+        directions.push(match open.cmp(&close) {
+            Ordering::Less => BodyDirection::Up,
+            Ordering::Greater => BodyDirection::Down,
+            Ordering::Equal => BodyDirection::Flat,
         });
         start = end;
     }
