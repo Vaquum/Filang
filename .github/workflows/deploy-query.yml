@@ -32,6 +32,8 @@ jobs:
       DEPLOY_USER: ${{ secrets.TDW_USER || vars.DEPLOY_USER }}
       DEPLOY_DIR: ${{ vars.QUERY_DEPLOY_DIR || '/opt/query' }}
       DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+      # Not 8491: on this host that is Cube's field-data service. Vaquum/Portal's Caddyfile names the same port.
+      QUERY_PORT: '8493'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -66,6 +68,24 @@ jobs:
           test "$scanned" = "$pinned"
           printf '%s %s\n' "$DEPLOY_HOST" "$pinned" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+      - name: Refuse a port that another service holds
+        run: |
+          set -euo pipefail
+          # Query was first given a port on a guess. It was another service's: Query could not bind it, and the
+          # health check was answered by that service. So before anything is changed on the host, the port
+          # must be free or already answering as Query. An unreadable answer counts as taken.
+          # shellcheck disable=SC2029
+          state=$(ssh "$DEPLOY_USER@$DEPLOY_HOST" "QUERY_PORT=$QUERY_PORT bash -s" <<'REMOTE'
+          set -u
+          command -v ss >/dev/null || { echo unknown; exit 0; }
+          if ! ss -ltnH "sport = :$QUERY_PORT" | grep -q .; then echo free
+          elif curl -s --max-time 10 "http://127.0.0.1:$QUERY_PORT/healthz" | grep -q '"service":"filang-query"'; then echo query
+          else echo taken
+          fi
+          REMOTE
+          )
+          echo "port $QUERY_PORT is: $state"
+          test "$state" = free || test "$state" = query
       - name: Sync what the image is built from
         run: |
           set -euo pipefail
@@ -81,15 +101,28 @@ jobs:
           # from its public sources and fails if a single byte differs from the published digests.
           # shellcheck disable=SC2029
           ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_DIR/query' && docker compose up -d --build --remove-orphans && docker compose ps"
-      - name: Check that Query answers
+      - name: Check that it is Query that answers
         run: |
-          probe() { ssh "$DEPLOY_USER@$DEPLOY_HOST" "curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:8491/healthz || printf 000"; }
-          code=000
+          set -euo pipefail
+          # A 200 is not enough: the container must be running without a restart, and the answer must name Query.
+          check() {
+            # shellcheck disable=SC2029
+            ssh "$DEPLOY_USER@$DEPLOY_HOST" "QUERY_PORT=$QUERY_PORT DEPLOY_DIR='$DEPLOY_DIR' bash -s" <<'REMOTE'
+          set -u
+          cd "$DEPLOY_DIR/query" || exit 1
+          id=$(docker compose ps -q query)
+          test -n "$id" || { echo "no container"; exit 1; }
+          state=$(docker inspect -f '{{.State.Status}} restarts={{.RestartCount}}' "$id")
+          body=$(curl -s --max-time 10 "http://127.0.0.1:$QUERY_PORT/healthz" || true)
+          echo "$state $body"
+          test "$state" = "running restarts=0" || exit 1
+          printf '%s' "$body" | grep -q '"service":"filang-query"' || exit 1
+          printf '%s' "$body" | grep -q '"ok":true' || exit 1
+          REMOTE
+          }
           for _ in $(seq 1 18); do
-            code=$(probe || printf 000)
-            test "$code" = "200" && break
+            if check; then exit 0; fi
             sleep 5
           done
-          test "$code" = "200"
-          # shellcheck disable=SC2029
-          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_DIR/query' && docker compose ps --format '{{.Name}} {{.Status}}'"
+          echo "::error::Query did not come up as itself on port $QUERY_PORT."
+          exit 1

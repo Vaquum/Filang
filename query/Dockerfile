@@ -23,6 +23,6 @@ COPY query/index.html query/serve.mjs query/
 COPY query/bench query/bench
 COPY query/shared query/shared
 COPY --from=recording /work/data/recorded-bars.csv data/study/recorded-bars.csv
-ENV PORT=8491
+ENV PORT=8493
 USER 65534:65534
 CMD ["node", "query/serve.mjs"]
