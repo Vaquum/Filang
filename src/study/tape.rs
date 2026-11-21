@@ -86,13 +86,9 @@ impl Tape {
             let l = price(cells.next())?;
             let c = price(cells.next())?;
             let volume: f64 = number(cells.next(), "volume")?;
-            if !(0..=MAX_PRICE - interval).contains(&t)
-                || t % interval != 0
-                || !(l <= o.min(c) && o.max(c) <= h)
-                || !volume.is_finite()
-                || volume < 0.0
-                || cells.next().is_some()
-            {
+            let valid_timestamp = (0..=MAX_PRICE - interval).contains(&t) && t % interval == 0;
+            let valid_bar = l <= o.min(c) && o.max(c) <= h && volume.is_finite() && volume >= 0.0;
+            if !(valid_timestamp && valid_bar && cells.next().is_none()) {
                 return Err(format!("invalid recording row {}", row + 2));
             }
             if row == 0 {

@@ -354,7 +354,7 @@ mod tests {
                     right.set(0, b, true);
                 }
                 for and in [true, false] {
-                    let pick = if and { false } else { true };
+                    let pick = !and;
                     let expected = if a == Some(pick) || b == Some(pick) {
                         Some(pick)
                     } else if a.is_none() || b.is_none() {

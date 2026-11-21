@@ -2,8 +2,7 @@
 // data files, then drives the main interactions. It catches runtime errors in the browser code;
 // it does not replace a look at the page in a real browser. Usage: node verify/ui-smoke.js
 import fs from 'node:fs';
-import path from 'node:path';
-import { ROOT } from './node-env.js';
+import { inputPath } from '../native/inputs.mjs';
 
 // ---------------------------------------------------------------- tiny DOM
 const byId = new Map();
@@ -96,7 +95,7 @@ globalThis.window = { devicePixelRatio: 2, addEventListener() {} };
 globalThis.getComputedStyle = () => ({ getPropertyValue: () => '' });
 globalThis.location = { protocol: 'http:' };
 globalThis.fetch = async (p) => {
-  const f = path.join(ROOT, p);
+  const f = inputPath(p);
   if (!fs.existsSync(f)) return { ok: false, status: 404 };
   const b = fs.readFileSync(f);
   return { ok: true, status: 200, arrayBuffer: async () => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) };

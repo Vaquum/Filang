@@ -5,7 +5,7 @@ import { loadInputs } from '../native/inputs.mjs';
 import { startWorker } from '../native/worker.mjs';
 import { compile, QueryError } from '../native/compiler.mjs';
 import { analyze } from '../src/check.js';
-import { runCandidate, compileBool, kAnd, U } from '../src/engine.js';
+import { runCandidate, compileBool, kAnd, U, EvalContext } from '../src/engine.js';
 import { g1FromRecording } from '../src/g1.js';
 import { EXAMPLES } from '../src/examples.js';
 import { CANDLE_PATTERNS } from '../src/registry.js';
@@ -108,4 +108,39 @@ assert.equal(gStatus,200,geom.error);
 assert.equal(geom.work.geometryWindows,1);
 assert.equal(geom.work.candidates,2);
 console.log('Passed native batch parity and shared rolling-window and G1 preparation checks.');
+// The native worker also checks an observed prefix with deleted real rows.
+const hammer = analyze(find + 'hammer', e.env).candidates[0];
+const anchors = runCandidate(e.ctx, hammer).matches;
+const gap = anchors[0].i + 4;
+const cutoff = anchors.at(-1).i + 1;
+const csv = assets.get('recorded-bars.csv').toString('utf8').trimEnd().split('\n');
+const observed = csv.slice(0, cutoff + 2).filter((_, i) => i !== gap + 1 && i !== 72).join('\n') + '\n';
+const gappy = new EvalContext(e.rec.truncatedAfter(cutoff).withoutSlots([71, gap], 'delete recorded bars'), e.calendars);
+const gapWorker = await startWorker(e, observed);
+try {
+  const questions = [
+    find + 'hammer measure close_return(after: 1h)',
+    find + 'hammer or engulfing where not held(quiet_range(width_max: 3%), for: 48h) group by completed_trend(frame: 4h)',
+    find + 'channel_breakout(over: 1h) where range_contained(over: 4h, width_max: 2.5%)',
+  ];
+  for (const q of questions) {
+    const {wire} = compile(e,{query:q,source:e.digest,calendar:e.sessionsDigest});
+    const answer = await gapWorker.evaluate(wire);
+    assert.equal(answer.error, undefined);
+    const got = answer.results[0];
+    const expected = runCandidate(gappy, analyze(q,e.env).candidates[0]);
+    assert.equal(got.counts.absent, 2);
+    assert.deepEqual(got.eligible, expected.populations.eligible.rows.map(x => x.t));
+    assert.deepEqual(got.unknown.eligibility, expected.populations.unknownContextAnchors);
+    assert.deepEqual(got.unknown.detectorWithinContext, expected.populations.unknownDetector.rows.map(x => x.t));
+    assert.deepEqual(got.rows, expected.matches.map(x => ({
+      t:x.t, group:x.group?.key ?? null, out:x.out.map(({status,value}) => ({status,value})),
+    })));
+    if (q === questions[0]) {
+      assert.equal(got.rows[0].out[0].status,'unknown');
+      assert.equal(got.rows.at(-1).out[0].status,'censored');
+    }
+  }
+  console.log('Passed three native gap/prefix plans with recorded rows and distinct unknown and censored horizons.');
+} finally { gapWorker.close(); }
 } finally { worker?.close(); }

@@ -1,6 +1,6 @@
 import { buildEnvironment, DATA_FILES, EXTENSION_FILES } from './boot.js';
 import { analyze } from './check.js';
-import { runAnalysis } from './engine.js';
+import { runAnalysis, U } from './engine.js';
 import { printQuestion, parseExpression, lineCol } from './lang.js';
 import { g1FromRecording, parseG1 } from './g1.js';
 import { decodeDrawing } from '../composer/drawing.js';
@@ -172,9 +172,9 @@ function runText(text, { saved = null, startFresh = false, source = null, live =
   el('revert-edit').hidden = true;
   lastNative = null;
   if (!live) el('query').value = a.canonical;
-  el('query-state').textContent = 'Evaluated on recorded bars';
+  el('query-state').textContent = 'Preview on recorded bars';
   el('run').disabled = false;
-  el('save-open').disabled = false;
+  el('save-open').disabled = true;
   mount(el('errors'));
   notice('');
   if (!saved) clearSavedURL();
@@ -297,7 +297,7 @@ async function checkNative() {
     env = state.env,
     native = el('native');
   lastNative = null;
-  el('save-open').disabled = false;
+  el('save-open').disabled = true;
   native.textContent = 'Checking cases with Filang…';
   const pins = new Set(state.run.manifest.pins.extensions.map((e) => e.sha256));
   const request = {
@@ -326,12 +326,16 @@ async function checkNative() {
     const p = r.populations;
     const anchors = r.matches.map((x) => x.t),
       eligible = p.eligible.rows.map((x) => x.t);
+    const unknownEvent = [];
+    for (let i = 0; i < env.rec.n; i++) {
+      if (env.rec.present[i] && r.event.series.vals[i] === U) unknownEvent.push(env.rec.closeTime(i));
+    }
     const match =
       body.source === env.digest &&
       body.calendar === env.sessionsDigest &&
       body.counts.event === r.counts.T &&
       body.counts.nonmatching === p.nonmatching.count &&
-      body.unknown.event.length === r.counts.U &&
+      same(body.unknown.event, unknownEvent) &&
       same(body.unknown.eligibility, p.unknownContextAnchors) &&
       same(
         body.unknown.detectorWithinContext,
@@ -348,13 +352,7 @@ async function checkNative() {
           x.out.length === row.out.length &&
           x.out.every((cell, k) => {
             const target = row.out[k];
-            return (
-              target.status === cell.status &&
-              (cell.value === target.value ||
-                (Number.isFinite(cell.value) &&
-                  Number.isFinite(target.value) &&
-                  Math.abs(cell.value - target.value) < 1e-12))
-            );
+            return target.status === cell.status && target.value === cell.value;
           })
         );
       });
@@ -363,8 +361,10 @@ async function checkNative() {
     native.textContent = match
       ? `Filang verified · ${anchors.length.toLocaleString('en-US')} matches · ${eligible.length.toLocaleString('en-US')} eligible`
       : 'Filang and browser results differ';
-    if (!match) {
-      el('save-open').disabled = true;
+    if (match) {
+      el('save-open').disabled = false;
+      el('query-state').textContent = 'Verified on recorded bars';
+    } else {
       notice('The native and browser results disagree. This run cannot be saved as verified.', true);
     }
   } catch (error) {
@@ -383,7 +383,7 @@ function showDialog(...nodes) {
   if (!el('dialog').open) el('dialog').showModal();
 }
 function saveDialog() {
-  if (dirty || !state.run || lastNative === false) return;
+  if (dirty || !state.run || lastNative !== true) return;
   const name = h('input', {
     id: 'name',
     class: 'name-input',
