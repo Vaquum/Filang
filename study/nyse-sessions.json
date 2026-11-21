@@ -1,0 +1,625 @@
+{
+  "id": "nyse-core-2025-01-05-v1",
+  "start_date_inclusive": "2025-01-01",
+  "end_date_exclusive": "2025-06-01",
+  "zone": "America/New_York",
+  "sources": [
+    "https://www.nyse.com/publicdocs/ICE_NYSE_2025_Yearly_Trading_Calendar.pdf",
+    "https://www.nyse.com/trade/hours-calendars",
+    "https://beta.nyse.com/publicdocs/nyse/markets/american-options/rule-interpretations/2025/National_Day_of_Mourning_20250102.pdf"
+  ],
+  "sessions": [
+    {
+      "date": "2025-01-02",
+      "weekday": "Thursday",
+      "open_ms": 1735828200000,
+      "close_ms": 1735851600000
+    },
+    {
+      "date": "2025-01-03",
+      "weekday": "Friday",
+      "open_ms": 1735914600000,
+      "close_ms": 1735938000000
+    },
+    {
+      "date": "2025-01-06",
+      "weekday": "Monday",
+      "open_ms": 1736173800000,
+      "close_ms": 1736197200000
+    },
+    {
+      "date": "2025-01-07",
+      "weekday": "Tuesday",
+      "open_ms": 1736260200000,
+      "close_ms": 1736283600000
+    },
+    {
+      "date": "2025-01-08",
+      "weekday": "Wednesday",
+      "open_ms": 1736346600000,
+      "close_ms": 1736370000000
+    },
+    {
+      "date": "2025-01-10",
+      "weekday": "Friday",
+      "open_ms": 1736519400000,
+      "close_ms": 1736542800000
+    },
+    {
+      "date": "2025-01-13",
+      "weekday": "Monday",
+      "open_ms": 1736778600000,
+      "close_ms": 1736802000000
+    },
+    {
+      "date": "2025-01-14",
+      "weekday": "Tuesday",
+      "open_ms": 1736865000000,
+      "close_ms": 1736888400000
+    },
+    {
+      "date": "2025-01-15",
+      "weekday": "Wednesday",
+      "open_ms": 1736951400000,
+      "close_ms": 1736974800000
+    },
+    {
+      "date": "2025-01-16",
+      "weekday": "Thursday",
+      "open_ms": 1737037800000,
+      "close_ms": 1737061200000
+    },
+    {
+      "date": "2025-01-17",
+      "weekday": "Friday",
+      "open_ms": 1737124200000,
+      "close_ms": 1737147600000
+    },
+    {
+      "date": "2025-01-21",
+      "weekday": "Tuesday",
+      "open_ms": 1737469800000,
+      "close_ms": 1737493200000
+    },
+    {
+      "date": "2025-01-22",
+      "weekday": "Wednesday",
+      "open_ms": 1737556200000,
+      "close_ms": 1737579600000
+    },
+    {
+      "date": "2025-01-23",
+      "weekday": "Thursday",
+      "open_ms": 1737642600000,
+      "close_ms": 1737666000000
+    },
+    {
+      "date": "2025-01-24",
+      "weekday": "Friday",
+      "open_ms": 1737729000000,
+      "close_ms": 1737752400000
+    },
+    {
+      "date": "2025-01-27",
+      "weekday": "Monday",
+      "open_ms": 1737988200000,
+      "close_ms": 1738011600000
+    },
+    {
+      "date": "2025-01-28",
+      "weekday": "Tuesday",
+      "open_ms": 1738074600000,
+      "close_ms": 1738098000000
+    },
+    {
+      "date": "2025-01-29",
+      "weekday": "Wednesday",
+      "open_ms": 1738161000000,
+      "close_ms": 1738184400000
+    },
+    {
+      "date": "2025-01-30",
+      "weekday": "Thursday",
+      "open_ms": 1738247400000,
+      "close_ms": 1738270800000
+    },
+    {
+      "date": "2025-01-31",
+      "weekday": "Friday",
+      "open_ms": 1738333800000,
+      "close_ms": 1738357200000
+    },
+    {
+      "date": "2025-02-03",
+      "weekday": "Monday",
+      "open_ms": 1738593000000,
+      "close_ms": 1738616400000
+    },
+    {
+      "date": "2025-02-04",
+      "weekday": "Tuesday",
+      "open_ms": 1738679400000,
+      "close_ms": 1738702800000
+    },
+    {
+      "date": "2025-02-05",
+      "weekday": "Wednesday",
+      "open_ms": 1738765800000,
+      "close_ms": 1738789200000
+    },
+    {
+      "date": "2025-02-06",
+      "weekday": "Thursday",
+      "open_ms": 1738852200000,
+      "close_ms": 1738875600000
+    },
+    {
+      "date": "2025-02-07",
+      "weekday": "Friday",
+      "open_ms": 1738938600000,
+      "close_ms": 1738962000000
+    },
+    {
+      "date": "2025-02-10",
+      "weekday": "Monday",
+      "open_ms": 1739197800000,
+      "close_ms": 1739221200000
+    },
+    {
+      "date": "2025-02-11",
+      "weekday": "Tuesday",
+      "open_ms": 1739284200000,
+      "close_ms": 1739307600000
+    },
+    {
+      "date": "2025-02-12",
+      "weekday": "Wednesday",
+      "open_ms": 1739370600000,
+      "close_ms": 1739394000000
+    },
+    {
+      "date": "2025-02-13",
+      "weekday": "Thursday",
+      "open_ms": 1739457000000,
+      "close_ms": 1739480400000
+    },
+    {
+      "date": "2025-02-14",
+      "weekday": "Friday",
+      "open_ms": 1739543400000,
+      "close_ms": 1739566800000
+    },
+    {
+      "date": "2025-02-18",
+      "weekday": "Tuesday",
+      "open_ms": 1739889000000,
+      "close_ms": 1739912400000
+    },
+    {
+      "date": "2025-02-19",
+      "weekday": "Wednesday",
+      "open_ms": 1739975400000,
+      "close_ms": 1739998800000
+    },
+    {
+      "date": "2025-02-20",
+      "weekday": "Thursday",
+      "open_ms": 1740061800000,
+      "close_ms": 1740085200000
+    },
+    {
+      "date": "2025-02-21",
+      "weekday": "Friday",
+      "open_ms": 1740148200000,
+      "close_ms": 1740171600000
+    },
+    {
+      "date": "2025-02-24",
+      "weekday": "Monday",
+      "open_ms": 1740407400000,
+      "close_ms": 1740430800000
+    },
+    {
+      "date": "2025-02-25",
+      "weekday": "Tuesday",
+      "open_ms": 1740493800000,
+      "close_ms": 1740517200000
+    },
+    {
+      "date": "2025-02-26",
+      "weekday": "Wednesday",
+      "open_ms": 1740580200000,
+      "close_ms": 1740603600000
+    },
+    {
+      "date": "2025-02-27",
+      "weekday": "Thursday",
+      "open_ms": 1740666600000,
+      "close_ms": 1740690000000
+    },
+    {
+      "date": "2025-02-28",
+      "weekday": "Friday",
+      "open_ms": 1740753000000,
+      "close_ms": 1740776400000
+    },
+    {
+      "date": "2025-03-03",
+      "weekday": "Monday",
+      "open_ms": 1741012200000,
+      "close_ms": 1741035600000
+    },
+    {
+      "date": "2025-03-04",
+      "weekday": "Tuesday",
+      "open_ms": 1741098600000,
+      "close_ms": 1741122000000
+    },
+    {
+      "date": "2025-03-05",
+      "weekday": "Wednesday",
+      "open_ms": 1741185000000,
+      "close_ms": 1741208400000
+    },
+    {
+      "date": "2025-03-06",
+      "weekday": "Thursday",
+      "open_ms": 1741271400000,
+      "close_ms": 1741294800000
+    },
+    {
+      "date": "2025-03-07",
+      "weekday": "Friday",
+      "open_ms": 1741357800000,
+      "close_ms": 1741381200000
+    },
+    {
+      "date": "2025-03-10",
+      "weekday": "Monday",
+      "open_ms": 1741613400000,
+      "close_ms": 1741636800000
+    },
+    {
+      "date": "2025-03-11",
+      "weekday": "Tuesday",
+      "open_ms": 1741699800000,
+      "close_ms": 1741723200000
+    },
+    {
+      "date": "2025-03-12",
+      "weekday": "Wednesday",
+      "open_ms": 1741786200000,
+      "close_ms": 1741809600000
+    },
+    {
+      "date": "2025-03-13",
+      "weekday": "Thursday",
+      "open_ms": 1741872600000,
+      "close_ms": 1741896000000
+    },
+    {
+      "date": "2025-03-14",
+      "weekday": "Friday",
+      "open_ms": 1741959000000,
+      "close_ms": 1741982400000
+    },
+    {
+      "date": "2025-03-17",
+      "weekday": "Monday",
+      "open_ms": 1742218200000,
+      "close_ms": 1742241600000
+    },
+    {
+      "date": "2025-03-18",
+      "weekday": "Tuesday",
+      "open_ms": 1742304600000,
+      "close_ms": 1742328000000
+    },
+    {
+      "date": "2025-03-19",
+      "weekday": "Wednesday",
+      "open_ms": 1742391000000,
+      "close_ms": 1742414400000
+    },
+    {
+      "date": "2025-03-20",
+      "weekday": "Thursday",
+      "open_ms": 1742477400000,
+      "close_ms": 1742500800000
+    },
+    {
+      "date": "2025-03-21",
+      "weekday": "Friday",
+      "open_ms": 1742563800000,
+      "close_ms": 1742587200000
+    },
+    {
+      "date": "2025-03-24",
+      "weekday": "Monday",
+      "open_ms": 1742823000000,
+      "close_ms": 1742846400000
+    },
+    {
+      "date": "2025-03-25",
+      "weekday": "Tuesday",
+      "open_ms": 1742909400000,
+      "close_ms": 1742932800000
+    },
+    {
+      "date": "2025-03-26",
+      "weekday": "Wednesday",
+      "open_ms": 1742995800000,
+      "close_ms": 1743019200000
+    },
+    {
+      "date": "2025-03-27",
+      "weekday": "Thursday",
+      "open_ms": 1743082200000,
+      "close_ms": 1743105600000
+    },
+    {
+      "date": "2025-03-28",
+      "weekday": "Friday",
+      "open_ms": 1743168600000,
+      "close_ms": 1743192000000
+    },
+    {
+      "date": "2025-03-31",
+      "weekday": "Monday",
+      "open_ms": 1743427800000,
+      "close_ms": 1743451200000
+    },
+    {
+      "date": "2025-04-01",
+      "weekday": "Tuesday",
+      "open_ms": 1743514200000,
+      "close_ms": 1743537600000
+    },
+    {
+      "date": "2025-04-02",
+      "weekday": "Wednesday",
+      "open_ms": 1743600600000,
+      "close_ms": 1743624000000
+    },
+    {
+      "date": "2025-04-03",
+      "weekday": "Thursday",
+      "open_ms": 1743687000000,
+      "close_ms": 1743710400000
+    },
+    {
+      "date": "2025-04-04",
+      "weekday": "Friday",
+      "open_ms": 1743773400000,
+      "close_ms": 1743796800000
+    },
+    {
+      "date": "2025-04-07",
+      "weekday": "Monday",
+      "open_ms": 1744032600000,
+      "close_ms": 1744056000000
+    },
+    {
+      "date": "2025-04-08",
+      "weekday": "Tuesday",
+      "open_ms": 1744119000000,
+      "close_ms": 1744142400000
+    },
+    {
+      "date": "2025-04-09",
+      "weekday": "Wednesday",
+      "open_ms": 1744205400000,
+      "close_ms": 1744228800000
+    },
+    {
+      "date": "2025-04-10",
+      "weekday": "Thursday",
+      "open_ms": 1744291800000,
+      "close_ms": 1744315200000
+    },
+    {
+      "date": "2025-04-11",
+      "weekday": "Friday",
+      "open_ms": 1744378200000,
+      "close_ms": 1744401600000
+    },
+    {
+      "date": "2025-04-14",
+      "weekday": "Monday",
+      "open_ms": 1744637400000,
+      "close_ms": 1744660800000
+    },
+    {
+      "date": "2025-04-15",
+      "weekday": "Tuesday",
+      "open_ms": 1744723800000,
+      "close_ms": 1744747200000
+    },
+    {
+      "date": "2025-04-16",
+      "weekday": "Wednesday",
+      "open_ms": 1744810200000,
+      "close_ms": 1744833600000
+    },
+    {
+      "date": "2025-04-17",
+      "weekday": "Thursday",
+      "open_ms": 1744896600000,
+      "close_ms": 1744920000000
+    },
+    {
+      "date": "2025-04-21",
+      "weekday": "Monday",
+      "open_ms": 1745242200000,
+      "close_ms": 1745265600000
+    },
+    {
+      "date": "2025-04-22",
+      "weekday": "Tuesday",
+      "open_ms": 1745328600000,
+      "close_ms": 1745352000000
+    },
+    {
+      "date": "2025-04-23",
+      "weekday": "Wednesday",
+      "open_ms": 1745415000000,
+      "close_ms": 1745438400000
+    },
+    {
+      "date": "2025-04-24",
+      "weekday": "Thursday",
+      "open_ms": 1745501400000,
+      "close_ms": 1745524800000
+    },
+    {
+      "date": "2025-04-25",
+      "weekday": "Friday",
+      "open_ms": 1745587800000,
+      "close_ms": 1745611200000
+    },
+    {
+      "date": "2025-04-28",
+      "weekday": "Monday",
+      "open_ms": 1745847000000,
+      "close_ms": 1745870400000
+    },
+    {
+      "date": "2025-04-29",
+      "weekday": "Tuesday",
+      "open_ms": 1745933400000,
+      "close_ms": 1745956800000
+    },
+    {
+      "date": "2025-04-30",
+      "weekday": "Wednesday",
+      "open_ms": 1746019800000,
+      "close_ms": 1746043200000
+    },
+    {
+      "date": "2025-05-01",
+      "weekday": "Thursday",
+      "open_ms": 1746106200000,
+      "close_ms": 1746129600000
+    },
+    {
+      "date": "2025-05-02",
+      "weekday": "Friday",
+      "open_ms": 1746192600000,
+      "close_ms": 1746216000000
+    },
+    {
+      "date": "2025-05-05",
+      "weekday": "Monday",
+      "open_ms": 1746451800000,
+      "close_ms": 1746475200000
+    },
+    {
+      "date": "2025-05-06",
+      "weekday": "Tuesday",
+      "open_ms": 1746538200000,
+      "close_ms": 1746561600000
+    },
+    {
+      "date": "2025-05-07",
+      "weekday": "Wednesday",
+      "open_ms": 1746624600000,
+      "close_ms": 1746648000000
+    },
+    {
+      "date": "2025-05-08",
+      "weekday": "Thursday",
+      "open_ms": 1746711000000,
+      "close_ms": 1746734400000
+    },
+    {
+      "date": "2025-05-09",
+      "weekday": "Friday",
+      "open_ms": 1746797400000,
+      "close_ms": 1746820800000
+    },
+    {
+      "date": "2025-05-12",
+      "weekday": "Monday",
+      "open_ms": 1747056600000,
+      "close_ms": 1747080000000
+    },
+    {
+      "date": "2025-05-13",
+      "weekday": "Tuesday",
+      "open_ms": 1747143000000,
+      "close_ms": 1747166400000
+    },
+    {
+      "date": "2025-05-14",
+      "weekday": "Wednesday",
+      "open_ms": 1747229400000,
+      "close_ms": 1747252800000
+    },
+    {
+      "date": "2025-05-15",
+      "weekday": "Thursday",
+      "open_ms": 1747315800000,
+      "close_ms": 1747339200000
+    },
+    {
+      "date": "2025-05-16",
+      "weekday": "Friday",
+      "open_ms": 1747402200000,
+      "close_ms": 1747425600000
+    },
+    {
+      "date": "2025-05-19",
+      "weekday": "Monday",
+      "open_ms": 1747661400000,
+      "close_ms": 1747684800000
+    },
+    {
+      "date": "2025-05-20",
+      "weekday": "Tuesday",
+      "open_ms": 1747747800000,
+      "close_ms": 1747771200000
+    },
+    {
+      "date": "2025-05-21",
+      "weekday": "Wednesday",
+      "open_ms": 1747834200000,
+      "close_ms": 1747857600000
+    },
+    {
+      "date": "2025-05-22",
+      "weekday": "Thursday",
+      "open_ms": 1747920600000,
+      "close_ms": 1747944000000
+    },
+    {
+      "date": "2025-05-23",
+      "weekday": "Friday",
+      "open_ms": 1748007000000,
+      "close_ms": 1748030400000
+    },
+    {
+      "date": "2025-05-27",
+      "weekday": "Tuesday",
+      "open_ms": 1748352600000,
+      "close_ms": 1748376000000
+    },
+    {
+      "date": "2025-05-28",
+      "weekday": "Wednesday",
+      "open_ms": 1748439000000,
+      "close_ms": 1748462400000
+    },
+    {
+      "date": "2025-05-29",
+      "weekday": "Thursday",
+      "open_ms": 1748525400000,
+      "close_ms": 1748548800000
+    },
+    {
+      "date": "2025-05-30",
+      "weekday": "Friday",
+      "open_ms": 1748611800000,
+      "close_ms": 1748635200000
+    }
+  ]
+}
