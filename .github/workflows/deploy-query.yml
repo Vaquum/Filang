@@ -78,7 +78,9 @@ jobs:
           state=$(ssh "$DEPLOY_USER@$DEPLOY_HOST" "QUERY_PORT=$QUERY_PORT bash -s" <<'REMOTE'
           set -u
           command -v ss >/dev/null || { echo unknown; exit 0; }
-          if ! ss -ltnH "sport = :$QUERY_PORT" | grep -q .; then echo free
+          # ss failing, with or without output, is an unreadable answer: only a successful empty listing is free.
+          listening=$(ss -ltnH "sport = :$QUERY_PORT") || { echo unknown; exit 0; }
+          if [ -z "$listening" ]; then echo free
           elif curl -s --max-time 10 "http://127.0.0.1:$QUERY_PORT/healthz" | grep -q '"service":"filang-query"'; then echo query
           else echo taken
           fi
@@ -105,6 +107,9 @@ jobs:
         run: |
           set -euo pipefail
           # A 200 is not enough: the container must be running without a restart, and the answer must name Query.
+          # Another Query instance on the port answers the same way, so the container must also have bound the port
+          # itself, and all of it must hold over consecutive samples spanning at least ten seconds: a container that
+          # cannot bind exits and is restarted within that time, which its restart count then shows.
           check() {
             # shellcheck disable=SC2029
             ssh "$DEPLOY_USER@$DEPLOY_HOST" "QUERY_PORT=$QUERY_PORT DEPLOY_DIR='$DEPLOY_DIR' bash -s" <<'REMOTE'
@@ -116,12 +121,17 @@ jobs:
           body=$(curl -s --max-time 10 "http://127.0.0.1:$QUERY_PORT/healthz" || true)
           echo "$state $body"
           test "$state" = "running restarts=0" || exit 1
+          # serve.mjs prints this line only once it is listening, so it cannot come from an instance that lost the port.
+          docker logs "$id" 2>&1 | grep -qF "Filang query bench on http://127.0.0.1:$QUERY_PORT/" || { echo "this container is not listening on $QUERY_PORT"; exit 1; }
           printf '%s' "$body" | grep -q '"service":"filang-query"' || exit 1
           printf '%s' "$body" | grep -q '"ok":true' || exit 1
           REMOTE
           }
-          for _ in $(seq 1 18); do
-            if check; then exit 0; fi
+          held=0
+          for _ in $(seq 1 24); do
+            if check; then held=$((held + 1)); else held=0; fi
+            # three passes five seconds apart: the answer has held for at least ten seconds
+            if [ "$held" -ge 3 ]; then exit 0; fi
             sleep 5
           done
           echo "::error::Query did not come up as itself on port $QUERY_PORT."
