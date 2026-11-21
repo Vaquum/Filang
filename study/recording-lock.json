@@ -1,0 +1,10 @@
+{
+  "schema": "filang-study-recording/v1",
+  "files": {
+    "recorded-bars.csv": "21df2ed15f787479b3e871be0048b5721cd18e7e085881e4175975c8d056889a",
+    "composer/bars": "9f301d3f74a75d828814af74c59cf4781fa63b68f300379ddb47bc667f10b324",
+    "composer/activity": "7b59f7882fde0a7de11413f5b2a53f9b7cb628ad871036f0c430ec25e21f62b0",
+    "data-provenance.json": "5725646307fafc88a87a06c75bc2382f10ad6402114603db0d206c3b322720a0",
+    "nyse-sessions.json": "363823f32c9460349619877ae92b148e3b25ea4b05f109e1d28fe56ef43f9d97"
+  }
+}

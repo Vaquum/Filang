@@ -6,6 +6,15 @@ A parametric financial-program language and factorized feature-discovery engine.
 
 **Optional qualitative algebra layer (Phase 1):** [Exact projection, overlap composition, one-candle extension, and oriented multiscale aggregation](docs/QUALITATIVE_GEOMETRY_ALGEBRA.md) are available as the separate `filang::geometry_algebra` Rust module. This is an opt-in layer over native geometry, not a change to the discovery or execution engine.
 
+## Trader queries
+
+The [Filang query workspace](study/README.md) runs observed-market studies
+from a visual builder or formal text. It supports bilingual candle names,
+Composer drawings, typed filters, grouping, parameter choices, and pinned
+saved questions. The native study runner shares Filang's G1 representation
+and packed masks. Its close-to-close observations have their own
+[evaluation contract](study/native/README.md).
+
 ## Current: completed Bitcoin geometry research campaign
 
 The [finite campaign](experiments/geometry_information/CAMPAIGN.md) has completed
