@@ -99,6 +99,8 @@ export function drawLane(host, { agg, domain, lead, H, pbars, horizons, mode, un
   const bandCols = cols.filter((c) => inBand(c.k) && c.n);
   const dense = mode === 'density' && !agg.single;
   let bl = Math.min(...bandCols.map((c) => (dense ? c.lo10 : c.l))); let bh = Math.max(...bandCols.map((c) => (dense ? c.hi90 : c.h)));
+  // The printed range belongs to the lane's closes: none when it has none, even though the band then borrows the chart's scale.
+  const span = bandCols.length ? bh - bl : null;
   if (!bandCols.length || !(bh > bl)) { bl = domain[0]; bh = domain[1]; }
   const bd = [bl - (bh - bl) * 0.1, bh + (bh - bl) * 0.1];
   const to = (d) => (v) => padT + (1 - (Math.max(d[0], Math.min(d[1], v)) - d[0]) / (d[1] - d[0])) * inner;
@@ -148,7 +150,7 @@ export function drawLane(host, { agg, domain, lead, H, pbars, horizons, mode, un
     for (const c of cols) if (c.n) candle(c);
   }
   sc.end();
-  sc.layers.text.replaceChildren(s('text', { class: 'b-scale', x: (g0.band[0] + g0.band[1]) / 2, y: height - 4, 'text-anchor': 'middle' }, `${agg.single ? '' : 'MEDIAN '}RANGE ${unitText(bh - bl, unit).replace('+', '')}`),
+  sc.layers.text.replaceChildren(s('text', { class: 'b-scale', x: (g0.band[0] + g0.band[1]) / 2, y: height - 4, 'text-anchor': 'middle' }, `${agg.single ? '' : 'MEDIAN '}RANGE ${unitText(span, unit).replace('+', '')}`),
     ...(scale ? [s('text', { class: 'b-scale', x: W - 4, y: 11, 'text-anchor': 'end' }, unitText(domain[1], unit)), s('text', { class: 'b-scale', x: W - 4, y: height - 4, 'text-anchor': 'end' }, unitText(domain[0], unit)),
       s('text', { class: 'b-scale', x: 4, y: y(0) - 4 }, 'ANCHOR CLOSE')] : []));
 }
