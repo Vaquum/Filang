@@ -345,6 +345,7 @@ export class Checker {
   }
 
   arg(valueNode, param, def, resolved) {
+    if (param.type === 'Event') return this.slot(valueNode, 'find');
     if (param.type === 'Price' || param.type === 'Level') {
       const p = this.expr(valueNode);
       if (!p) return null;
@@ -444,8 +445,8 @@ export class Checker {
       case 'Number': {
         if (node.k !== 'num') return this.err('type', `${where} expects a plain number; got ${litDesc(node)}`, node);
         const rat = ratFromText(node.text);
-        if (dom.wholeMax !== undefined && (rat.den !== 1n || rat.num > BigInt(dom.wholeMax))) {
-          return this.err('domain', `${where} choose a whole number from 0 to ${dom.wholeMax}`, node);
+        if (dom.wholeMax !== undefined && (rat.den !== 1n || rat.num < BigInt(dom.wholeMin || 0) || rat.num > BigInt(dom.wholeMax))) {
+          return this.err('domain', `${where} choose a whole number from ${dom.wholeMin || 0} to ${dom.wholeMax}`, node);
         }
         return { t: 'Number', rat, text: node.text, ...span };
       }
@@ -739,7 +740,7 @@ export function registerExtension(registry, artifact, env) {
   const { id, version, kind, params, body } = artifact;
   if (!/^[a-z_][a-z0-9_]*$/.test(id || '')) return fail(`bad id ${id}`);
   if (!Number.isInteger(version) || version < 1) return fail('version must be a positive integer');
-  if (kind !== 'condition') return fail('only condition compositions are supported in this prototype');
+  if (kind !== 'condition' && kind !== 'event') return fail('compositions must declare condition or event');
   if (/_v[0-9]+$/.test(id)) return fail('an extension family id cannot end with a version suffix');
   const alias = version === 1 ? id : `${id}_v${version}`;
   const base = registry.get(id);
@@ -778,11 +779,11 @@ export function registerExtension(registry, artifact, env) {
   if (hasChoice(parsed.ast)) return fail('a composition body cannot contain choices');
   const tpl = artifact.label || id;
   const def = {
-    name: alias, id, version, kind: 'condition', result: 'Condition', status: 'extension',
+    name: alias, id, version, kind, result: kind === 'event' ? 'Event' : 'Condition', status: 'extension',
     title: artifact.title || id,
     summary: artifact.meaning || '',
     params: ps,
-    requires: ['bars.ohlc', 'calendar'],
+    requires: ['bars.ohlc'],
     formula: [`${id}(${ps.map((p) => p.name).join(', ')}) := ${body}`],
     anchor: 'the anchor t',
     availability: artifact.availability || 'as its components',

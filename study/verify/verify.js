@@ -187,7 +187,7 @@ test('typed errors name the offending span and are actionable', () => {
     ['on BTCUSDT 1h\nfind "Wick rejection"\nmeasure close_return(after: 1h)', '1h', 'capability', 'bars are not enabled', null],
     ['on BTCUSDT 15m\nfind value_area_reclaim()\nmeasure close_return(after: 1h)', 'value_area_reclaim', 'capability', 'trades.aggressor', 'OHLCV bars cannot substitute'],
     [Q('where relative_volume(over: 24h, min: 150%)'), 'relative_volume', 'capability', 'planned capability', null],
-    ['on BTCUSDT 15m\nfind breach_reclaim(prior_utc_day_low(), within: [1, 3])\nmeasure close_return(after: 1h)', 'breach_reclaim', 'capability', 'planned capability', null],
+    ['on BTCUSDT 15m\nfind breach_reclaim(prior_utc_day_low(), within_min: 1, within_max: 3)\nmeasure close_return(after: 1h)', 'prior_utc_day_low', 'capability', 'planned capability', null],
   ];
   for (const [src, want, kind, msg, hint] of cases) {
     const errs = errorsOf(src);

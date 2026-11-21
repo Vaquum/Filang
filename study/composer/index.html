@@ -324,6 +324,7 @@ button.nm{font:inherit;color:inherit;text-align:left;background:transparent;bord
       <div class="sample-controls"><button type="button" id="sample-prev" aria-label="Previous recorded bar">‹</button><input type="datetime-local" step="900" required id="sample-time"><button type="button" id="sample-next" aria-label="Next recorded bar">›</button><button type="submit">Load candle</button></div>
       <span id="sample-status" role="status"></span></form>
     <div class="transfer-action"><span id="drawing-label"></span><button type="button" id="send-g1" disabled>Use exact G1 in query lab ↗</button>
+      <button type="button" id="send-pins" hidden disabled>Use pins on fixed candles ↗</button>
       <details><summary>What carries over?</summary><p>The query uses the drawing’s complete endpoint order and selected direction mode. Pins and stretch define held-window exploration here. Closest windows use Composer’s similarity ranking. The drawing retains those settings when reopened. Next-bar filters apply to exploration only.</p></details></div>
   </section>
   <section id="ordinal-preview" hidden aria-label="Supplied G1">

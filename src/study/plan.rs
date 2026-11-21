@@ -28,6 +28,7 @@ pub(super) enum Node {
     Share(Field, usize, Ratio, Ratio),
     Multiple(usize, Ratio, Option<Ratio>),
     Reclaim(usize, usize, usize, bool),
+    Window(usize, usize),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -180,6 +181,14 @@ impl Plan {
                         None => return Err("missing maximum multiple or dash".into()),
                     },
                 ),
+                "window" => {
+                    let inner = reference(words.next(), &types, Some(Type::Bool))?;
+                    let n = offset(words.next())?;
+                    if n == 0 {
+                        return Err("candle window is empty".into());
+                    }
+                    Node::Window(inner, n)
+                }
                 "reclaim" => {
                     let id = price_ref(words.next(), &types)?;
                     if types[id] == Type::Price {

@@ -1,6 +1,6 @@
 import { parseRecording, sha256Hex } from '../src/data.js';
 import { parseG1, g1FromRecording } from '../src/g1.js';
-import { COMPOSER_REVISION, DEFAULT_ANCHOR, decodeDrawing, encodeDrawing, drawingG1 } from './drawing.js';
+import { COMPOSER_REVISION, DEFAULT_ANCHOR, decodeDrawing, encodeDrawing, drawingG1, pinnedExpression } from './drawing.js';
 
 const $ = (id) => document.getElementById(id);
 const CLOSE_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -63,12 +63,14 @@ export async function attachComposer(api) {
   const rec = await recording();
   const input = $('sample-time'),
     status = $('sample-status'),
-    send = $('send-g1');
+    send = $('send-g1'), pins = $('send-pins');
   let sample = null,
     ordinal = null,
     rankDrawing = null;
   function preview(code, pattern, reason) {
     ordinal = code;
+    pins.hidden = true;
+    pins.disabled = true;
     document.body.classList.add('ordinal-only');
     $('ordinal-preview').hidden = false;
     $('ordinal-code').textContent = code;
@@ -100,6 +102,8 @@ export async function attachComposer(api) {
   function show() {
     if (ordinal) return;
     const p = read();
+    pins.disabled = !pinnedExpression(p);
+    pins.hidden = pins.disabled;
     const anchor = sourceClose(p);
     document.body.classList.toggle('ordinal-distances', JSON.stringify(p.bars) === rankDrawing);
     const label = anchor
@@ -149,7 +153,7 @@ export async function attachComposer(api) {
   ]) {
     $(id).addEventListener('click', () => change(Date.parse(input.value + 'Z') + step * rec.barMs));
   }
-  send.addEventListener('click', () => {
+  function transfer(usePins) {
     try {
       const dest = destination();
       if (ordinal) {
@@ -162,6 +166,10 @@ export async function attachComposer(api) {
       if (JSON.stringify(p.bars) === rankDrawing) p.coordinates = 'ordinal';
       const serialized = encodeDrawing(p);
       decodeDrawing(serialized, code);
+      if (usePins) {
+        if (!pinnedExpression(p)) throw Error('Add at least one active pin to the drawing.');
+        dest.searchParams.set('pin-relations','1');
+      }
       dest.searchParams.set('g1', code);
       dest.searchParams.set('drawing', serialized);
       const anchor = sourceClose(p);
@@ -170,7 +178,9 @@ export async function attachComposer(api) {
     } catch (e) {
       status.textContent = e.message;
     }
-  });
+  }
+  send.addEventListener('click', () => transfer(false));
+  pins.addEventListener('click', () => transfer(true));
   api.onChange(show);
   input.value = inputTime(DEFAULT_ANCHOR);
   try {

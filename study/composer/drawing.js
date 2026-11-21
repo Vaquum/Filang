@@ -90,3 +90,32 @@ export function encodeDrawing(packet) {
   decodeDrawing(text);
   return text;
 }
+
+/** Manual pins as fixed-lag rules. Drawn distances supply only order and ties. */
+export function pinnedExpression(packet) {
+  const {bars, pins, oriented} = packet;
+  const point = ({bar,part}) => {
+    if (part === 'L' || part === 'H') return part === 'L' ? 'low' : 'high';
+    const candle = bars[bar];
+    if (!oriented) return part === 'B' ? 'body_low' : 'body_high';
+    const rising = candle.d === 'u' || candle.v[1] === candle.v[2];
+    return (part === 'T') === rising ? 'close' : 'open';
+  };
+  const call = (bar, name) => 'price(' + name + ', bars_ago: ' + (bars.length - 1 - bar) + ')';
+  const compare = (left, r, right) => 'candle_relation(' + left + ', is: ' +
+    (r < 0 ? 'below' : r > 0 ? 'above' : 'equal') + ', right: ' + right + ')';
+  const coordinate = ({bar,part}) => bars[bar].v['LBTH'.indexOf(part)];
+  const rules = new Set();
+  for (const pin of pins) {
+    if (pin.color) {
+      if (!oriented) continue;
+      const {bar} = pin, b = bars[bar];
+      rules.add(compare(call(bar,'close'), b.v[1] === b.v[2] ? 0 : b.d === 'u' ? 1 : -1, call(bar,'open')));
+    } else if (pin.a.bar !== pin.b.bar || pin.a.part !== pin.b.part) {
+      rules.add(compare(call(pin.a.bar,point(pin.a)), coordinate(pin.a)-coordinate(pin.b), call(pin.b.bar,point(pin.b))));
+    }
+  }
+  if (!rules.size) return null;
+  const event = [...rules].join(' and ');
+  return bars.length === 1 ? event : 'candle_window(' + event + ', bars: ' + bars.length + ')';
+}

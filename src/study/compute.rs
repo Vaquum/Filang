@@ -246,6 +246,16 @@ impl<'a> Eval<'a> {
                     )
                 })
             }
+            Node::Window(inner, bars) => {
+                let input = series[*inner].mask()?;
+                self.mask(|i| {
+                    if i + 1 < *bars || !tape.complete(i + 1 - bars, i + 1) {
+                        return None;
+                    }
+                    let (value, known) = input.at(i);
+                    known.then_some(value)
+                })
+            }
             Node::Reclaim(reference, min, max, high) => {
                 let (mask, breaches) =
                     reclaims(tape, series[*reference].prices()?, *min, *max, *high);

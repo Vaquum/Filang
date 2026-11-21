@@ -321,6 +321,8 @@ export function renderInspection(s, r, row) {
       ),
     ),
   );
+  const trace = row ? r.event.series.evidence?.(i) : null;
+  const breachSlot = trace ? rec.slotClosingAt(trace.breach) : i;
   const windows = [];
   const visit = (node) => {
     if (!node) return;
@@ -341,7 +343,15 @@ export function renderInspection(s, r, row) {
     if (node.item) visit(node.item);
   };
   r.cand.plan.wheres.forEach(visit);
-  drawCandles(canvas, { rec, anchorSlot: i, from: i - 22, to: i + 14, overlays: { windows } });
+  if (trace) {
+    list('chart-heading').append(h('p', {class:'reclaim-trace'},
+      `Breach ${isoUTC(trace.breach)} · First reclaim ${isoUTC(trace.reclaim)} · Frozen level ${rec.price(trace.level)}`));
+  }
+  drawCandles(canvas, {
+    rec, anchorSlot:i, from:Math.min(i - 22,breachSlot - 3), to:i + 14,
+    overlays: {windows, levels: trace ? [{from:breachSlot,to:i,price:trace.level,label:'Frozen level'}] : [],
+      times:trace && breachSlot !== i ? [{t:trace.breach,label:'Breach'}] : []},
+  });
   canvas.setAttribute(
     'aria-label',
     'Recorded 15-minute candles around ' + isoUTC(t) + '. ' + r.event.series.why(i),

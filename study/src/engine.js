@@ -242,6 +242,26 @@ export function eventSeries(ctx, p) {
     }
     return { vals, why };
   }
+  if (p.body) {
+    if (p.body.type === 'Event') return eventSeries(ctx,p.body);
+    return ctx.cached('series:' + p.identity, () => {
+      const scope = compileBool(ctx, p.body);
+      const vals = Int8Array.from(ctx.rec.present, (present, i) => present ? boolValueAt(scope,i) : U);
+      return {vals, why:i => scope.at(i).why};
+    });
+  }
+  if (p.name === 'candle_window') {
+    return ctx.cached('series:' + p.identity, () => {
+      const tested = eventSeries(ctx,p.args.event);
+      const {rec} = ctx, bars = Number(p.args.bars.rat.num);
+      let complete = 0;
+      const vals = Int8Array.from(rec.present, (present, i) => {
+        complete = present ? complete + 1 : 0;
+        return complete >= bars ? tested.vals[i] : U;
+      });
+      return {vals,why:i=> vals[i] === U ? 'The window or a required comparison is unknown.' : tested.why(i)};
+    });
+  }
   if (p.name === 'breach_reclaim' || p.name === 'candle_relation') return candleSeries(ctx, p);
   if (p.op === 'def' && p.def.patternId) return candlePatternSeries(ctx, p);
   if (p.op === 'def' && p.name === 'exact_g1') return exactGeometrySeries(ctx, p);

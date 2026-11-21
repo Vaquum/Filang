@@ -85,6 +85,7 @@ export function compile(bundle, { query, source, calendar, extensions = [], cand
       case 'prior_low': return intern(['prior-low', a.over.ms]);
       case 'prior_high': return intern(['prior-high', a.over.ms]);
       case 'breach_reclaim': return intern(['reclaim',emit(a.reference),a.within_min.rat.num,a.within_max.rat.num]);
+      case 'candle_window': return intern(['window',emit(a.event),a.bars.rat.num]);
       case 'candle_relation': return intern(['relate',emit(a.left),priceRelation[a.is.value],emit(a.right)]);
       case 'near_level': return intern(['near',emit(a.reference),emit(a.point),ratio(a.within)]);
       case 'candle_share': return intern(['share',a.part.value,a.bars_ago.rat.num,ratio(a.min),ratio(a.max)]);

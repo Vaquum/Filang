@@ -16,6 +16,7 @@ const over = { name: 'over', type: 'Duration', default: '4h',
   doc: 'Trailing window ending before the candle being tested.' };
 const bars = (name, defaultValue, doc) => ({
   name, type: 'Number', default: String(defaultValue), domain: { wholeMax: 64 }, doc,
+  caption: {within_min:'Earliest reclaim (candles)', within_max:'Latest reclaim (candles)', bars_ago:'Candles back'}[name],
 });
 const limit = (name, defaultValue, doc, domain = {}) => ({
   name, type: 'Ratio', default: defaultValue, domain, doc,
@@ -62,6 +63,15 @@ const defs = [
     missing:'An unavailable operand makes the relationship unknown.',
     template:a=>a.left+' '+a.is.toLowerCase()+' '+a.right,
     example:'candle_relation(price(close), is: above, right: price(high, bars_ago: 1))',
+  }),
+  setup({
+    name:'candle_window',kind:'event',result:'Event', title:'Consecutive candle pattern', positional:'event',
+    params:[level('event','Event','An event or combined candle relationships, tested at the final close.'),
+      {...bars('bars',2,'Consecutive candles required through this close.'), domain:{wholeMin:1,wholeMax:64}}],
+    summary:'Require a fully recorded consecutive window ending at the event close.',
+    missing:'An incomplete window makes the event unknown.',
+    template:a=>a.event+' in '+a.bars+' consecutive candles',
+    example:'candle_window(inside_bar, bars: 2)',
   }),
   setup({
     name:'candle_share', kind:'condition', result:'Condition', title:'Wick or body share', positional:'part',
