@@ -1,0 +1,182 @@
+{
+  "workload": "geometry-direction-sweep",
+  "flags": [
+    "--interval-seconds",
+    "900",
+    "--history-start",
+    "2025-01-01",
+    "--validation-start",
+    "2025-03-01",
+    "--test-start",
+    "2025-05-01",
+    "--end",
+    "2025-06-01",
+    "--bars",
+    "2,3,4,5,6,7,8,9,10",
+    "--modes",
+    "oriented,unoriented",
+    "--workers",
+    "1"
+  ],
+  "recording_sha256": "21df2ed15f787479b3e871be0048b5721cd18e7e085881e4175975c8d056889a",
+  "machine": "Apple M1 Max",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "rustc": "rustc 1.63.0 (4b91a6ea7 2022-08-08)",
+  "binary_sha256": {
+    "baseline": "df8ba336f141a802fa4eb6b19559522cea56557c8b6e16a2d4c34003cac81e15",
+    "candidate": "c24387bcb37df567389560d98c03824d924cd0f4c7311eec787fec36d4ef14b0"
+  },
+  "pairs": [
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "wall_seconds": 1.346887833904475,
+        "peak_rss_bytes": 10158080
+      },
+      "candidate": {
+        "wall_seconds": 1.8205182077363133,
+        "peak_rss_bytes": 10420224
+      }
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "wall_seconds": 1.3099537915550172,
+        "peak_rss_bytes": 7815168
+      },
+      "baseline": {
+        "wall_seconds": 1.3506580828689039,
+        "peak_rss_bytes": 7077888
+      }
+    },
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "wall_seconds": 1.3249195418320596,
+        "peak_rss_bytes": 10125312
+      },
+      "candidate": {
+        "wall_seconds": 1.3463605837896466,
+        "peak_rss_bytes": 7274496
+      }
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "wall_seconds": 1.3438074169680476,
+        "peak_rss_bytes": 7012352
+      },
+      "baseline": {
+        "wall_seconds": 1.3612981671467423,
+        "peak_rss_bytes": 9633792
+      }
+    },
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "wall_seconds": 1.3459566668607295,
+        "peak_rss_bytes": 10125312
+      },
+      "candidate": {
+        "wall_seconds": 1.3596777920611203,
+        "peak_rss_bytes": 10125312
+      }
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "wall_seconds": 1.3551530418917537,
+        "peak_rss_bytes": 7274496
+      },
+      "baseline": {
+        "wall_seconds": 1.3780499580316246,
+        "peak_rss_bytes": 10108928
+      }
+    },
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "wall_seconds": 1.377864541951567,
+        "peak_rss_bytes": 10158080
+      },
+      "candidate": {
+        "wall_seconds": 1.3766853343695402,
+        "peak_rss_bytes": 7241728
+      }
+    }
+  ],
+  "converted_sha256": "bec31233d28e96858f144e0ec32a6c4447a472c09b942a31d59f57137db9fbc2",
+  "median": {
+    "wall_seconds": {
+      "baseline": 1.3506580828689039,
+      "candidate": 1.3551530418917537,
+      "candidate_over_baseline": 1.003327976991262
+    },
+    "peak_rss_bytes": {
+      "baseline": 10125312,
+      "candidate": 7274496,
+      "candidate_over_baseline": 0.7184466019417476
+    }
+  },
+  "all_output_digests_equal": true,
+  "reference_output_sha256": {
+    "tasks/n02-oriented/events.tsv": "7c617b60f5c65ad6ef8202bcc9dd1a01567f303f156aea09a903d2a478630dcb",
+    "tasks/n02-oriented/patterns.tsv": "aa003f58db0576c47c4dcc9b2b1f34e10f65e7cf6227e62c2d150b6b856470e6",
+    "tasks/n02-unoriented/events.tsv": "97c9f4ac64d916f66adb84b7d8e669520a1eed0451c94cc653ae3f6504e8de69",
+    "tasks/n02-unoriented/patterns.tsv": "f3dc4623d58c264a101e0280f0d28281043327deba5bac47457be5442d237730",
+    "tasks/n03-oriented/events.tsv": "5ca6146f6730ff82d9dff3120738c640a4fbbd943f534134123848a54b72bc5c",
+    "tasks/n03-oriented/patterns.tsv": "5b4e4d9c40d3d31ed7082460403f513a3381903d0e3818b77e12939bb9fe9d7b",
+    "tasks/n03-unoriented/events.tsv": "7d1841b31f6458e120babbe860d6637cc7147f30f11933ffb5e640cdd0592c71",
+    "tasks/n03-unoriented/patterns.tsv": "780b3b43d0895da3b58ab7a1a718219b12f785ca4c8208fe0d695093d642f937",
+    "tasks/n04-oriented/events.tsv": "4d5a872d9fb2d8924a6e375c9d10e230dfc024edd0e55e361af035e2c41cb8c5",
+    "tasks/n04-oriented/patterns.tsv": "295b8cfc1d9e101ccf810a0feff9e7823a70c15e10697a751b8ef8c7263953f1",
+    "tasks/n04-unoriented/events.tsv": "976bb479889011716b4767855794d75ee3463d21586d4ac601d9e8a480b2bd44",
+    "tasks/n04-unoriented/patterns.tsv": "1743ca608093f874bad2e91901db74a5daa856981d7793ab0f578b0714a5fff0",
+    "tasks/n05-oriented/events.tsv": "68c5d34e2e3affc7df93d3fe1043327b0fa5bd24b650d5aea242f66a7d176f5c",
+    "tasks/n05-oriented/patterns.tsv": "56922f1dfd3459bf22fbb0476f52000e8e1dbae6b886011d698e686de2c59fe0",
+    "tasks/n05-unoriented/events.tsv": "68c5d34e2e3affc7df93d3fe1043327b0fa5bd24b650d5aea242f66a7d176f5c",
+    "tasks/n05-unoriented/patterns.tsv": "58aa1023cb5d5c8d8f262cd30ebeb66ef7c6a5134c1beacb970e128e900fd39a",
+    "tasks/n06-oriented/events.tsv": "b5ef00ef580083652f03f8b2fa2179e0edad5b83125f6ac58b6d806b4d420bce",
+    "tasks/n06-oriented/patterns.tsv": "057f6be6053561ccb9807774847c46f9de472c154cf52d09e20a80a79834d770",
+    "tasks/n06-unoriented/events.tsv": "b5ef00ef580083652f03f8b2fa2179e0edad5b83125f6ac58b6d806b4d420bce",
+    "tasks/n06-unoriented/patterns.tsv": "eb1a999df201d7c0706d6e5eca966ad6820e9a854532020eb939032360d16045",
+    "tasks/n07-oriented/events.tsv": "06d5200f1b13294fc582bb47b874d0b56baab7123ca3f6ceeb2aa5974daa5cd2",
+    "tasks/n07-oriented/patterns.tsv": "48bf5dbc9c94b44ae8b3f550c3c49336475a2f63684b8d3cc06bd80265c2e3c7",
+    "tasks/n07-unoriented/events.tsv": "06d5200f1b13294fc582bb47b874d0b56baab7123ca3f6ceeb2aa5974daa5cd2",
+    "tasks/n07-unoriented/patterns.tsv": "c52ffa02c24e5aa9279935c5c33a9ee68c2839a65aa135eb90751c48dd841b11",
+    "tasks/n08-oriented/events.tsv": "0951d656120a848bbe25b2a658eca4d1766d5b5db2ade8d995b069f6fd28c9ed",
+    "tasks/n08-oriented/patterns.tsv": "9744d1254a6d86a2a8cb1bfcf96e4838f5314db089f9e05f9ad323cca8b60b9f",
+    "tasks/n08-unoriented/events.tsv": "0951d656120a848bbe25b2a658eca4d1766d5b5db2ade8d995b069f6fd28c9ed",
+    "tasks/n08-unoriented/patterns.tsv": "1862f90c623c7247f62be4ce517e616bb7432aaec615c2df2a55ce2e1f755635",
+    "tasks/n09-oriented/events.tsv": "d00b19de730dae8dcd973d2e4695efc20bc8e8b513bbfab5373861b13dbc945e",
+    "tasks/n09-oriented/patterns.tsv": "8f9f56b2c102af7840904e93dd5078e040727b9ff4accf7625a3616e9c9045be",
+    "tasks/n09-unoriented/events.tsv": "d00b19de730dae8dcd973d2e4695efc20bc8e8b513bbfab5373861b13dbc945e",
+    "tasks/n09-unoriented/patterns.tsv": "3319417a719e52c62273d8e98b54bf5aad9f226b1153168cab54c3df5098296b",
+    "tasks/n10-oriented/events.tsv": "8e6a302f8ee3348a2c5ed36f064e7ffb91ac7b2d8a8b7e018780d253b2c4a5c0",
+    "tasks/n10-oriented/patterns.tsv": "1258d8e60983951abdffe0a07f7b7ad128c5460087a5c9183028aa800e1b3de2",
+    "tasks/n10-unoriented/events.tsv": "8e6a302f8ee3348a2c5ed36f064e7ffb91ac7b2d8a8b7e018780d253b2c4a5c0",
+    "tasks/n10-unoriented/patterns.tsv": "52281496dc431650b1d8ad12853e561898a397a964137f5c653aa9835d0271e1"
+  },
+  "supported": true
+}

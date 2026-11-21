@@ -1,0 +1,41 @@
+{
+  "artifact": "limen.sfd.definition",
+  "id": "quiet_friday_close",
+  "version": 1,
+  "title": "Quiet Friday close",
+  "kind": "condition",
+  "status": "agent-authored extension: a versioned composition of existing definitions; no new operator and no grammar change",
+  "request": "Add the phrase \"Quiet Friday close\".",
+  "meaning": "True at anchor t iff (1) the New York date of t is a Friday nyse_regular session, (2) t lies in that session's tail (close - last, close], and (3) quiet_range(window: 4h, width_max) was true at every 15m sample from t - quiet_for through t. The three parts combine with strong Kleene AND: one known false disproves it; otherwise any unknown part makes it unknown. With its defaults it is the starter question's three where clauses at last: 1h.",
+  "params": [
+    { "name": "last", "type": "Duration", "default": "1h", "domain": { "minMs": 60000 }, "doc": "tail length before the nyse_regular close (at most the shortest session)" },
+    { "name": "quiet_for", "type": "Duration", "default": "48h", "domain": { "barMultiple": true, "minMs": 900000, "maxMs": 604800000 }, "doc": "required uninterrupted quiet duration" },
+    { "name": "width_max", "type": "Ratio", "default": "2.5%", "domain": { "ratioMin": "0", "ratioMinExclusive": true, "ratioMax": "1" }, "doc": "quiet range limit: (highest high - lowest low) over 4h / close; the default equals \"Quiet range\" v1" }
+  ],
+  "body": "weekday(nyse_regular) = fri and session_tail(nyse_regular, last: last) and held(quiet_range(window: 4h, width_max: width_max), for: quiet_for)",
+  "depends": [
+    { "name": "weekday", "version": 1 },
+    { "name": "session_tail", "version": 1 },
+    { "name": "held", "version": 1 },
+    { "name": "quiet_range", "version": 1 },
+    { "calendar": "nyse_regular", "table": "nyse-core-2025-01-05-v1" }
+  ],
+  "label": "quiet Friday close (last {last} of a Friday nyse_regular session; 4h width ≤ {width_max} held {quiet_for})",
+  "example": "quiet_friday_close(last: 1h)",
+  "availability": "Uses only the anchor timestamp, the pinned calendar and bars that closed at or before t.",
+  "missing": "Outside calendar coverage, or in the quiet warmup with no known false, it is unknown. Known closed dates are false.",
+  "replay": "Version 1 replays from the pinned component versions and the calendar table above. Changing any component, default or this body requires quiet_friday_close@2; version 1 stays unchanged.",
+  "conformance": [
+    { "anchor": "2025-05-02T19:15:00Z", "args": {}, "expect": "true", "note": "Fri 15:15 EDT; the 2.5% quiet range has held since 2025-04-23 17:45Z" },
+    { "anchor": "2025-05-02T20:00:00Z", "args": {}, "expect": "true", "note": "Fri 16:00 EDT: the session close itself is inside the tail" },
+    { "anchor": "2025-03-28T19:30:00Z", "args": {}, "expect": "true", "note": "Fri 15:30 EDT, the bar the starter adds when widening to 1h" },
+    { "anchor": "2025-01-03T21:00:00Z", "args": {}, "expect": "true", "note": "EST date: the 16:00 EST close is 21:00Z" },
+    { "anchor": "2025-05-02T19:00:00Z", "args": {}, "expect": "false", "note": "15:00 EDT is outside (15:00, 16:00]" },
+    { "anchor": "2025-03-28T19:30:00Z", "args": { "last": "30m" }, "expect": "false", "note": "15:30 EDT is outside (15:30, 16:00]" },
+    { "anchor": "2025-05-01T19:30:00Z", "args": {}, "expect": "false", "note": "Thursday session" },
+    { "anchor": "2025-04-18T19:30:00Z", "args": {}, "expect": "false", "note": "Good Friday: a known closed date in the pinned table" },
+    { "anchor": "2025-04-04T19:30:00Z", "args": {}, "expect": "false", "note": "the quiet range broke at 2025-04-04 19:00Z (4h width 2.54% > 2.5%)" },
+    { "anchor": "2025-03-28T19:30:00Z", "args": { "width_max": "2%" }, "expect": "false", "note": "the same bar fails with width_max 2% (the range broke at 2025-03-28 17:45Z, 4h width 2.06%)" },
+    { "anchor": "2025-01-01T00:15:00Z", "args": {}, "expect": "unknown", "note": "New York date 2024-12-31 is outside calendar coverage, and the 48h quiet window is still in warmup" }
+  ]
+}
