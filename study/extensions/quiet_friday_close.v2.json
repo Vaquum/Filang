@@ -1,0 +1,33 @@
+{
+  "artifact": "limen.sfd.definition",
+  "id": "quiet_friday_close",
+  "version": 2,
+  "title": "Quiet Friday close · whole range",
+  "kind": "condition",
+  "request": "Give me a version of Quiet Friday close that uses whole-range containment.",
+  "meaning": "The anchor closes in the selected tail of a Friday NYSE regular session. The high minus the low across the whole trailing window is at most width_max times the anchor close.",
+  "params": [
+    { "name": "last", "type": "Duration", "default": "1h", "domain": { "minMs": 60000 }, "doc": "elapsed time before the NYSE close" },
+    { "name": "quiet_for", "type": "Duration", "default": "48h", "domain": { "barMultiple": true, "minMs": 1800000, "maxMs": 604800000 }, "doc": "length of the whole trailing range" },
+    { "name": "width_max", "type": "Ratio", "default": "2.5%", "domain": { "ratioMin": "0", "ratioMinExclusive": true, "ratioMax": "1" }, "doc": "maximum whole-range width as a share of the anchor close" }
+  ],
+  "body": "weekday(nyse_regular) = fri and session_tail(nyse_regular, last: last) and range_contained(over: quiet_for, width_max: width_max)",
+  "depends": [
+    { "name": "weekday", "version": 1 },
+    { "name": "session_tail", "version": 1 },
+    { "name": "range_contained", "version": 1 },
+    { "calendar": "nyse_regular", "table": "nyse-core-2025-01-05-v1" }
+  ],
+  "label": "Friday NYSE close, last {last}, whole {quiet_for} range ≤ {width_max}",
+  "example": "quiet_friday_close_v2(last: 1h)",
+  "availability": "Uses the pinned calendar and bars completed by the anchor.",
+  "missing": "A known false condition excludes the anchor. Otherwise missing required history or calendar coverage yields unknown.",
+  "replay": "The explicit v2 call pins the whole-range definition. The unqualified v1 call retains rolling-range persistence.",
+  "conformance": [
+    { "anchor": "2025-03-28T19:30:00Z", "args": {}, "expect": "false", "note": "The whole 48h range spans 4.98% of the close." },
+    { "anchor": "2025-03-28T19:30:00Z", "args": { "width_max": "6%" }, "expect": "true", "note": "The same recorded range fits the wider threshold." },
+    { "anchor": "2025-03-28T19:30:00Z", "args": { "width_max": "6%", "last": "30m" }, "expect": "false", "note": "The half-hour tail starts strictly after this close." },
+    { "anchor": "2025-04-18T19:30:00Z", "args": {}, "expect": "false", "note": "The NYSE was closed on Good Friday." },
+    { "anchor": "2025-01-01T00:15:00Z", "args": {}, "expect": "unknown", "note": "The New York date precedes calendar coverage and the recording lacks earlier bars." }
+  ]
+}
