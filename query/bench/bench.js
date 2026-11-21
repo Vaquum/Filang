@@ -497,7 +497,11 @@ function casesTable(host, lane, rows, removed) {
 
 function renderDrawer() {
   const el = $('#drawer');
-  if (!ui.drawer) return;
+  if (!ui.drawer) { delete el.dataset.tab; return; }
+  // The query editor must survive a redraw: rebuilding the drawer would detach the textarea being typed in,
+  // drop its focus after every valid keystroke, and send the next keys to the global shortcuts.
+  if (ui.drawer === 'query' && el.dataset.tab === 'query' && el.contains(formal.el)) return;
+  el.dataset.tab = ui.drawer;
   const { sel, res } = ctx; const R = rec(); const body = h('div', { class: 'body' });
   const head = (title, text, ...seg) => h('header', null, label(title, 'title'), note(text), h('span', { class: 'seg' }, seg), quiet('Close', () => togglePanel(ui.drawer)));
   if (ui.drawer === 'cases') {
