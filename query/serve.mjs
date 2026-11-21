@@ -45,7 +45,8 @@ const server = createServer(async (req, res) => {
     if (path === 'healthz') {
       const gone = await missing();
       res.writeHead(gone.length ? 503 : 200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
-      return res.end(JSON.stringify(gone.length ? { ok: false, missing: gone.length } : { ok: true }));
+      // The answer names the service: a deploy must be able to tell Query from whatever else holds a port.
+      return res.end(JSON.stringify(gone.length ? { service: 'filang-query', ok: false, missing: gone.length } : { service: 'filang-query', ok: true }));
     }
     if (path.split('/').some((s) => s === '..')) { res.writeHead(400); return res.end(); }
     const file = locate(path);
