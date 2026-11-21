@@ -1,0 +1,67 @@
+// Server for the Filang query bench.
+// It serves this folder, plus the study engine and its pinned recording read-only, so the bench runs real
+// Filang queries in the browser. It has no login of its own: in production it listens on 127.0.0.1 only,
+// behind the host's Caddy and the Portal login.
+import { createServer } from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
+import { extname, join, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = fileURLToPath(new URL('.', import.meta.url));
+const STUDY = resolve(process.env.FILANG_STUDY || join(HERE, '../study'));
+const DATA = resolve(process.env.FILANG_STUDY_DATA || join(STUDY, '../data/study'));
+const host = process.env.HOST || '127.0.0.1';
+const port = Number(process.env.PORT || process.argv[2] || 8790);
+
+const mime = new Map([
+  ['.html', 'text/html; charset=utf-8'], ['.css', 'text/css; charset=utf-8'],
+  ['.js', 'text/javascript; charset=utf-8'], ['.mjs', 'text/javascript; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'], ['.csv', 'text/csv; charset=utf-8'],
+  ['.svg', 'image/svg+xml'],
+]);
+// Only what the browser engine imports is exposed from the study folder.
+const studyAsset = /^(?:(?:src|composer|extensions)\/(?:[\w.-]+\/)*[\w.-]+\.(?:js|json)|[\w-]+\.json)$/;
+const pageAsset = /^(?:index\.html|(?:bench|shared)\/[\w.-]+\.(?:js|css))$/;
+// The bench cannot answer without these, so their absence is a failed health check, not a blank page.
+const required = [join(DATA, 'recorded-bars.csv'), join(STUDY, 'data-provenance.json'), join(STUDY, 'nyse-sessions.json'), join(STUDY, 'src/engine.js'), join(STUDY, 'composer/patterns.js')];
+
+function locate(path) {
+  if (path === 'study/recorded-bars.csv') return join(DATA, 'recorded-bars.csv');
+  if (path.startsWith('study/')) {
+    const rest = path.slice(6);
+    return studyAsset.test(rest) ? join(STUDY, rest) : null;
+  }
+  const name = path === '' ? 'index.html' : path;
+  if (!pageAsset.test(name)) return null;
+  const file = resolve(HERE, name);
+  return file.startsWith(HERE.endsWith(sep) ? HERE : HERE + sep) ? file : null;
+}
+const missing = async () => (await Promise.all(required.map((file) => stat(file).then(() => null, () => file)))).filter(Boolean);
+
+const server = createServer(async (req, res) => {
+  try {
+    if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); return res.end(); }
+    const path = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname).slice(1);
+    if (path === 'healthz') {
+      const gone = await missing();
+      res.writeHead(gone.length ? 503 : 200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      return res.end(JSON.stringify(gone.length ? { ok: false, missing: gone.length } : { ok: true }));
+    }
+    if (path.split('/').some((s) => s === '..')) { res.writeHead(400); return res.end(); }
+    const file = locate(path);
+    if (!file) { res.writeHead(404); return res.end('Not found'); }
+    const body = await readFile(file);
+    // Every response sits behind the Portal login, so nothing is cached past a logout.
+    res.writeHead(200, { 'Content-Type': mime.get(extname(file)) || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    res.end(req.method === 'HEAD' ? undefined : body);
+  } catch (e) {
+    res.writeHead(e.code === 'ENOENT' ? 404 : e instanceof URIError ? 400 : 500);
+    res.end(e.code === 'ENOENT' ? 'Not found' : 'Server error');
+    if (e.code !== 'ENOENT' && !(e instanceof URIError)) console.error(e);
+  }
+});
+for (const sig of ['SIGTERM', 'SIGINT']) process.once(sig, () => server.close(() => process.exit(0)));
+server.listen(port, host, async () => {
+  const gone = await missing();
+  console.log(`Filang query bench on http://${host}:${port}/ · engine ${STUDY}${gone.length ? ` · MISSING ${gone.join(', ')}` : ''}`);
+});
