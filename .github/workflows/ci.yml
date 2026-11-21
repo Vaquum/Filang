@@ -42,3 +42,14 @@ jobs:
         run: |
           "$RUNNER_TEMP/filang-direction-verify/bin/python" -m pip install -r requirements-information.txt
           "$RUNNER_TEMP/filang-direction-verify/bin/python" -m unittest discover -s experiments/geometry_information/tests -v
+      - name: Filang query workspace and native parity on recorded BTCUSDT
+        if: runner.os == 'Linux'
+        run: |
+          curl --fail --silent --show-error --location --retry 2 -o "$RUNNER_TEMP/filang-study.parquet" https://raw.githubusercontent.com/Vaquum/Limen/383d4accbfa20fe062cd09de83e265886542aa8f/tests/fixtures/spot_15m_20250101_20250531.parquet
+          curl --fail --silent --show-error --location --retry 2 -o "$RUNNER_TEMP/filang-composer-bars.py" https://raw.githubusercontent.com/Vaquum/Composer/133e3017ba9143f7dc255df7218ff7bfe46d9d06/bars.py
+          python3 -m venv "$RUNNER_TEMP/filang-study-python"
+          "$RUNNER_TEMP/filang-study-python/bin/python" -m pip install polars==1.42.1 pyarrow==23.0.1
+          "$RUNNER_TEMP/filang-study-python/bin/python" study/prepare_recording.py --parquet "$RUNNER_TEMP/filang-study.parquet" --encoder "$RUNNER_TEMP/filang-composer-bars.py"
+          npm --prefix study run verify
+          node study/verify/native.mjs
+          node study/verify/candle-native.mjs

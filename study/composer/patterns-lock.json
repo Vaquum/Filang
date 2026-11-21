@@ -1,0 +1,9 @@
+{
+  "repository": "Vaquum/Composer",
+  "revision": "10f837496439d2f52b7f68fe4f9e1daeb827e3bc",
+  "files": {
+    "patterns.js": "a4a9288c529fd81ae6a87b9e272d1e9907d958079704a597ad50bc6fcad10f51",
+    "pattern-browser.js": "4e789338e87f55a0f932c1e040af6202f9cb9bcd5479529529b0b51f253059a6",
+    "matcher.js": "2b2dba8ef5aa693f1ba35a2139bd3deb658b3bae9ea117cd5373406682a95ed4"
+  }
+}

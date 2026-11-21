@@ -1,0 +1,27 @@
+.lab-transfer { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:start; gap:10px 24px; padding:10px 0; border-bottom:1px solid var(--hair); }
+.lab-transfer form,.transfer-action { display:grid; gap:3px; min-width:0; }
+.lab-transfer label,#drawing-label { font-size:12px; color:var(--ink-2); }
+.sample-controls { display:flex; gap:3px; flex-wrap:wrap; }
+.lab-transfer input,.sample-controls button,.transfer-action>button { font:inherit; font-size:13px; color:var(--ink); background:var(--paper); border:1px solid var(--hair); border-radius:5px; padding:4px 8px; }
+.sample-controls button:disabled { opacity:.4; }
+#sample-status {font-size:12px;color:var(--ink-2);}
+.transfer-action>button {background:var(--ai);color:var(--paper);font-weight:600;}
+.transfer-action>button:disabled {opacity:.5;}
+.transfer-action details {font-size:12px; color:var(--ink-2); max-width:360px;}
+.transfer-action summary {cursor:pointer;}
+.transfer-action p {margin:4px 0;}
+@media(max-width:680px) { .lab-transfer {gap:6px;} .sample-controls input {max-width:100%;} }
+body.ordinal-only .work,body.ordinal-only header.top .tools>:not(#home) { display:none; }
+#ordinal-preview {padding:1rem 0;}
+#ordinal-preview h2 {font-family:var(--font-mincho);}
+#ordinal-code {overflow-wrap:anywhere;}
+.ordinal-rows {overflow:auto;max-height:55vh;}
+.ordinal-rows table {border-collapse:collapse;}
+.ordinal-rows td,.ordinal-rows th {text-align:right;padding:.25rem .65rem;border-bottom:1px solid var(--hair);}
+.ordinal-rows caption {text-align:left;}
+@media(max-width:680px) {
+  .top .tools {flex-wrap:wrap;max-width:100%;gap:8px;}
+  .lab-transfer form,.lab-transfer .transfer-action {max-width:100%;}
+}
+
+body.ordinal-distances #names button[data-kind=ratio] { display:none; }
