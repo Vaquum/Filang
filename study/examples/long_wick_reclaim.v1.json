@@ -1,0 +1,25 @@
+{
+  "artifact": "limen.sfd.definition",
+  "id": "long_wick_reclaim",
+  "version": 1,
+  "kind": "event",
+  "title": "Long-wick reclaim of a prior low",
+  "meaning": "Same-candle reclaim of the prior low with a long lower wick and an unusually wide range.",
+  "label": "long-wick reclaim of a prior {lookback} low",
+  "params": [
+    {"name": "lookback", "type": "Duration", "default": "4h", "domain": {"barMultiple": true, "minMs": 900000, "maxMs": 604800000}},
+    {"name": "wick", "type": "Ratio", "default": "50%", "domain": {"ratioMax": "1"}},
+    {"name": "expansion", "type": "Ratio", "default": "1.5"}
+  ],
+  "body": "breach_reclaim(prior_low(over: lookback)) and candle_share(lower_wick, min: wick) and range_multiple(over: lookback, min: expansion)",
+  "depends": [
+    {"name": "breach_reclaim", "version": 1},
+    {"name": "prior_low", "version": 1},
+    {"name": "candle_share", "version": 1},
+    {"name": "range_multiple", "version": 1}
+  ],
+  "conformance": [
+    {"anchor": "2025-01-04T09:30:00Z", "expect": "true"},
+    {"anchor": "2025-01-01T04:15:00Z", "expect": "false"}
+  ]
+}
