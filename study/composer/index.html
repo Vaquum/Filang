@@ -1,0 +1,2443 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Composer · recorded BTCUSDT</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  /* Layout: one sheet of paper. The composition sits in the middle with wide ma; the closest instances in BTCUSDT history answer in a scroll beneath it; its identity is written last. */
+  --paper: #f3efe5;      /* kinari, unbleached washi */
+  --paper-2: #ebe5d8;    /* deeper paper for wells */
+  --ink: #2a2824;        /* sumi */
+  --ink-2: #6b655b;      /* usuzumi, diluted ink */
+  --ink-3: #a1998b;      /* faint ink */
+  --hair: #dad2c2;       /* ash hairline */
+  --mist: rgba(42, 40, 36, 0.1);
+  --up: #4f8a69;         /* rokusho, verdigris */
+  --down: #b5533f;       /* akani, red ochre */
+  --flat: #8c8679;       /* nibi, dull grey */
+  --ai: #2f587a;         /* ai, indigo */
+  --ai-soft: rgba(47, 88, 122, 0.1);
+  --shu: #b6432e;        /* shu, seal vermilion */
+  --tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.15 0 0 0 0 0.12 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --font-mincho: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-ui: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --font-code: "M PLUS 1 Code", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1d1c19; --paper-2: #26241f; --ink: #ece6d7; --ink-2: #aba393; --ink-3: #726b5f; --hair: #3a3731; --mist: rgba(236, 230, 215, 0.09);
+    --up: #74ab8c; --down: #d47862; --flat: #9b9485; --ai: #8aabca; --ai-soft: rgba(138, 171, 202, 0.14); --shu: #e07a5f;
+    --tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.86 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1d1c19; --paper-2: #26241f; --ink: #ece6d7; --ink-2: #aba393; --ink-3: #726b5f; --hair: #3a3731; --mist: rgba(236, 230, 215, 0.09);
+  --up: #74ab8c; --down: #d47862; --flat: #9b9485; --ai: #8aabca; --ai-soft: rgba(138, 171, 202, 0.14); --shu: #e07a5f;
+  --tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.86 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; overflow-x: hidden; overflow-y: auto; background-color: var(--paper); background-image: var(--tex); color: var(--ink); font: 14px/1.6 var(--font-ui); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; }
+button:disabled { cursor: default; }
+:focus-visible { outline: 1.5px solid var(--ai); outline-offset: 3px; border-radius: 4px; }
+[lang="ja"] { font-family: var(--font-mincho); }
+.ja { font-family: var(--font-mincho); color: var(--ink-3); font-size: .92em; margin-inline-start: .35em; letter-spacing: .04em; }
+
+/* Cache the native paper while its document origin is stationary. */
+@media (min-width: 1181px) {
+  :root[data-paper-cache] { background-color:var(--paper);background-image:var(--tex);background-attachment:fixed; }
+  :root[data-paper-cache] body { background-color:transparent;background-image:none; }
+}
+.app { min-height: 100%; display: flex; flex-direction: column; padding-inline: 16px; padding-block: 0 14px; }
+.top { display: flex; align-items: center; gap: 22px; padding-block: 14px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; margin-inline-end: auto; }
+.seal { width: 32px; height: 32px; border-radius: 3px; background: var(--shu); color: var(--paper); display: grid; place-items: center; font: 600 19px/1 var(--font-mincho); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .12); }
+.brand-name { font: 600 18px/1.2 var(--font-mincho); letter-spacing: .03em; }
+.brand-sub { font-size: 12px; color: var(--ink-2); }
+.tools { display: flex; align-items: center; gap: 14px; }
+.seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 7px; background: var(--paper-2); }
+.seg button { padding: 3px 10px 4px; border-radius: 5px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 0 0 1px var(--hair); }
+.home { font-size: 12.5px; color: var(--ink-2); text-decoration: none; letter-spacing: .08em; text-transform: uppercase; }
+.home:hover { color: var(--ink); }
+.icon { width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center; color: var(--ink-2); font-size: 16px; }
+.icon:hover:not(:disabled) { background: var(--paper-2); color: var(--ink); }
+.icon:disabled { opacity: .3; }
+
+.stage { flex: 1; display: flex; flex-direction: column; }
+.cvwrap { overflow: hidden; position: relative; flex: 1; min-height: max(360px, var(--forecast-min-height, 0px)); }
+.cvwrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; outline: none; }
+.hint { position: absolute; left: 28px; top: 56px; right: 24px; margin: 0; font-size: 12px; color: var(--ink-3); pointer-events: auto; }
+/* the paper narrows beside the panes and the reference: the hint then goes under the dock instead of into a thin column */
+.cvwrap { container-type: inline-size; }
+@container (max-width: 800px) { .hint { top: 96px; } .forecast-controls { top: 54px !important; } }
+.hint.pinning { color: var(--ai); }
+.dock { position: absolute; right: 24px; top: 12px; display: flex; align-items: center; gap: 10px; }
+.space { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px 0 11px; border-radius: 9px; background: var(--paper-2); cursor: pointer; }
+.space .ma { font: 500 15px/1 var(--font-mincho); color: var(--ink-2); margin-inline-end: 3px; }
+.space .ico { width: 14px; height: 14px; flex: none; fill: var(--ink-3); }
+input[type="range"] { -webkit-appearance: none; appearance: none; height: 22px; margin: 0; background: transparent; cursor: pointer; }
+input[type="range"]:focus-visible { outline: none; }
+input[type="range"]::-webkit-slider-runnable-track { height: 1px; background: var(--ink-3); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; margin-top: -6.5px; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 1.5px var(--ink-2); }
+input[type="range"]:hover::-webkit-slider-thumb, input[type="range"]:active::-webkit-slider-thumb { box-shadow: 0 0 0 1.5px var(--ink); }
+input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1.5px var(--ai), 0 0 0 5px var(--ai-soft); }
+input[type="range"]::-moz-range-track { height: 1px; background: var(--ink-3); }
+input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 1.5px var(--ink-2); }
+input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 1.5px var(--ai), 0 0 0 5px var(--ai-soft); }
+input[type="range"]:disabled { cursor: default; opacity: .4; }
+.space input { width: 112px; }
+.bars { display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: 9px; background: var(--paper-2); }
+.bars button { width: 30px; height: 28px; border-radius: 6px; font: 400 18px/1 var(--font-mincho); color: var(--ink); }
+.bars button:hover:not(:disabled) { background: var(--paper); box-shadow: 0 0 0 1px var(--hair); }
+.bars button:disabled { opacity: .3; }
+.bars .nb { min-width: 64px; text-align: center; font-size: 12.5px; color: var(--ink-2); }
+.bars .nb b { font: 500 15px/1 var(--font-mincho); color: var(--ink); margin-inline-end: 4px; }
+
+.forecast-controls { position: absolute; top: 14px; left: 24px; display: flex; align-items: center; gap: 8px; }
+.forecast-controls .chip { min-width: 76px; justify-content: center; height: 30px; }
+.forecast-mode-picker { display:flex; gap:2px; padding:2px; border-radius:7px; background:var(--paper-2); }
+.forecast-mode-picker button { width:32px; height:30px; padding:6px; border-radius:5px; color:var(--ink-3); }
+.forecast-mode-picker button[aria-checked="true"] { color:var(--ink); background:var(--paper); box-shadow:0 0 0 1px var(--hair); }
+.forecast-controls svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; }
+.fan-switch { display:flex; align-items:center; gap:7px; color:var(--ink-2); }
+.fan-switch input { appearance:none; width:30px; height:17px; border-radius:10px; margin:0; background:var(--ink-3); position:relative; cursor:pointer; }
+.fan-switch input::after { content:''; position:absolute; width:13px; height:13px; left:2px; top:2px; border-radius:50%; background:var(--paper);  }
+.fan-switch input:checked { background:var(--ai); }
+.fan-switch input:checked::after { transform:translateX(13px); }
+.forecast-panel,.forecast-body,.forecast-fan-hits { position:absolute; inset:0; pointer-events:none; }
+.forecast-panel { padding:0; background:none; border-radius:0; box-shadow:none; display:block; container-type:normal; }
+.forecast-body { z-index:2; }
+.forecast-fan-hits { z-index:1; }
+.forecast-body button,.forecast-body .forecast-note,.forecast-fan-hits button,.forecast-fan-point { position:absolute; pointer-events:auto; background:transparent; padding:0; border:0; color:transparent; }
+.forecast-path-row { pointer-events:none !important; }
+.forecast-path-row span { position:absolute; pointer-events:auto; }
+.forecast-path-rate { display:flex; align-items:center; justify-content:flex-end; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+.forecast-path-row[aria-pressed="true"] .forecast-path-rate { color:var(--ink); font-weight:500; }
+.forecast-panel[data-phase="refreshing"] .forecast-path-rate,.forecast-panel[data-phase="error"] .forecast-path-rate { opacity:.4; }
+.forecast-body button:focus-visible,.forecast-fan-hits button:focus-visible { outline:1.5px solid var(--ai); outline-offset:2px; }
+.forecast-message,.forecast-retry { position:absolute; font-size:11px; pointer-events:auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:3; }
+.forecast-tooltip { position:fixed; z-index:90; max-width:min(370px,calc(100vw - 16px)); max-height:calc(100vh - 16px); overflow:auto; padding:12px 14px; background:var(--paper); color:var(--ink); border-radius:7px; box-shadow:0 0 0 1px var(--hair),0 7px 24px rgba(0,0,0,.12); font-size:12px; line-height:1.5; pointer-events:none; }
+
+.forecast-status { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.pane[data-updating="true"] .pane-body { opacity:.55; }
+
+/* the history answers: three ways of matching, mixed freely, and a scroll of instances */
+.match { border-top: 1px solid var(--hair); padding-block: 12px 4px; padding-inline: 12px 4px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.mbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.grp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; }
+.ctl { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 11px; border-radius: 9px; background: var(--paper-2); font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+.ctl .k { font: 500 15px/1 var(--font-mincho); color: var(--ink); }
+.ctl .v { color: var(--ink); font-variant-numeric: tabular-nums; min-width: 6.5em; }
+.ctl input[type="range"] { width: 92px; }
+.ctl .step { width: 24px; height: 24px; border-radius: 6px; font: 400 16px/1 var(--font-mincho); color: var(--ink); }
+.ctl .step:hover:not(:disabled) { background: var(--paper); box-shadow: 0 0 0 1px var(--hair); }
+.ctl .step:disabled { opacity: .3; }
+.pinctl { padding: 0 8px 0 3px; }
+.pinbtn { display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px 0 8px; border-radius: 7px; color: var(--ink-2); }
+.pinbtn:hover { background: var(--paper); box-shadow: 0 0 0 1px var(--hair); }
+.pinbtn .n { font: 500 12px/1 var(--font-code); color: var(--ink); font-variant-numeric: tabular-nums; }
+.pinbtn[aria-pressed="true"] { background: var(--ai); color: var(--paper); box-shadow: none; }
+.pinbtn[aria-pressed="true"] .k, .pinbtn[aria-pressed="true"] .n { color: var(--paper); }
+.clear { font-size: 12px; color: var(--ai); padding: 0 2px; }
+.seg.mini button { padding: 2px 8px 3px; font-size: 12px; }
+.nextctl { padding-inline-end: 8px; }
+.nextctl[data-any="true"] #nmeas { opacity: .35; pointer-events: none; }
+.nval { display: inline-flex; align-items: center; gap: 5px; color: var(--ink-2); }
+.nval input { width: 54px; height: 24px; border: 0; border-radius: 6px; padding: 0 6px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--hair); font: 12px/1 var(--font-code); color: var(--ink); }
+.nval input:focus-visible { outline: 1.5px solid var(--ai); outline-offset: 1px; }
+.tfs { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.chip { min-width: 76px; justify-content: center; height: 30px; padding: 0 9px; border-radius: 8px; font-size: 12px; color: var(--ink-3); box-shadow: inset 0 0 0 1px var(--hair); white-space: nowrap; }
+.chip b { font: 500 12px/1 var(--font-code); color: var(--ink-2); margin-inline-start: 5px; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { background: var(--paper-2); color: var(--ink); box-shadow: none; }
+.chip[aria-pressed="true"] b { color: var(--ink); }
+.status { display: flex; align-items: center; gap: 10px; min-height: 22px; font-size: 12.5px; color: var(--ink-2); }
+.status .msg { min-width: 0; }
+@media (min-width: 1181px) { .status { align-items: flex-start; } .status .prog { margin-top: 17px; } }
+.status .msg b { color: var(--ink); font-weight: 500; }
+.prog { flex: none; width: 90px; height: 1px; background: var(--hair); position: relative; overflow: hidden; }
+.prog i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ai); width: 0; }
+.emaki { display: flex; align-items: flex-start; gap: 10px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; padding-block: 2px 10px; scrollbar-width: thin; scrollbar-color: var(--hair) transparent; height: 182px; }
+.emaki.stale .card { opacity: .45; }
+.card { flex: none; width: 140px; display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 6px 6px 7px; border-radius: 8px; background: var(--paper-2); }
+.card:hover, .card:focus-visible { box-shadow: 0 0 0 1px var(--ink-3); }
+.card[aria-pressed="true"] { box-shadow: 0 0 0 1.5px var(--ai); }
+.card svg { width: 100%; height: auto; display: block; margin-bottom: 3px; }
+.card .when { font-size: 11.5px; color: var(--ink); line-height: 1.35; }
+.card .fl { font: 400 11px/1.35 var(--font-code); color: var(--ink-3); }
+.card .nx { font-size: 11.5px; line-height: 1.35; color: var(--ink-3); margin-top: 2px; padding-top: 3px; border-top: 1px solid var(--hair); font-variant-numeric: tabular-nums; }
+.card .nx.nu { color: var(--up); } .card .nx.nd { color: var(--down); }
+.card .br { font-size: 11px; color: var(--shu); line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.empty { font-size: 12.5px; color: var(--ink-3); align-self: center; padding-inline: 4px; }
+.cu { fill: var(--up); } .cd { fill: var(--down); } .cz { fill: var(--flat); }
+.skip { fill-opacity: .22; }
+.mk { fill: none; stroke: var(--shu); stroke-width: 1.3; }
+.mkl { fill: none; stroke: var(--shu); stroke-width: 1; stroke-dasharray: 2 2; }
+
+.ident { border-top: 1px solid var(--hair); margin-top: 6px; padding-block: 14px 0; padding-inline: 28px 8px; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px 40px; align-items: start; }
+.idl { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.names { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; min-height: 24px; }
+.nm { font-size: 13px; color: var(--ink); }
+.nm [lang="ja"] { font-size: 15px; margin-inline-end: 6px; color: var(--ink); }
+.nm .who { color: var(--ink-3); font-size: 12px; margin-inline-end: 6px; }
+.nm .note { color: var(--ink-3); }
+.nm.none { color: var(--ink-3); font-size: 12.5px; }
+.desc { margin: 0; font-size: 12.5px; color: var(--ink-2); max-width: 78ch; display: flex; flex-direction: column; gap: 2px; }
+.codebox { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; min-width: 0; }
+.codebox code { min-height: 1.4em; font: 400 12px/1.4 var(--font-code); color: var(--ink-2); overflow-wrap: anywhere; }
+.codebox .dom { font-size: 12px; color: var(--ink-3); }
+.link { font-size: 12px; color: var(--ai); }
+
+/* the panes: what sets the matching windows apart (left), and what the shape became (right) */
+.work { flex: 1; display: grid; grid-template-columns: minmax(248px, 290px) minmax(0, 1fr) minmax(256px, 300px); align-items: stretch; }
+.pane { padding: 16px 16px 20px; display: flex; flex-direction: column; min-width: 0; }
+.lpane { border-right: 1px solid var(--hair); }
+.rpane { border-left: 1px solid var(--hair); }
+@media (max-width: 1180px) {
+  .work { grid-template-columns: minmax(0, 1fr); }
+  .stage { order: -1; }
+  .lpane, .rpane { border: 0; border-top: 1px solid var(--hair); }
+}
+/* 参照: the reference, a full-height pane on the left that pushes the workspace right, as in the cube explorer */
+.ref { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px 18px; border-right: 1px solid var(--hair); min-width: 0; box-sizing: border-box; position: sticky; top: 0; align-self: start; height: 100vh; }
+.ref[hidden] { display: none; }
+.work[data-reference="open"] { --ref-w: clamp(300px, 26vw, 420px); grid-template-columns: var(--ref-w) minmax(240px, 290px) minmax(340px, 1fr) minmax(250px, 300px); }
+.ref-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ref-head h2 { margin: 0; font: 600 18px/1.3 var(--font-mincho); }
+.ref-intro { margin: 0; color: var(--ink-2); font-size: 12.5px; }
+.ref-label { margin: 0 0 -6px; color: var(--ink-2); font-size: 12px; }
+#ref-topic { width: 100%; min-height: 40px; font: inherit; font-size: 13.5px; color: var(--ink); background: var(--paper-2); border: 1px solid var(--hair); border-radius: 8px; padding: 6px 10px; }
+.ref-seq { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); }
+.ref-seq button, .ref-targets button { min-height: 36px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--hair); font-size: 12.5px; color: var(--ink); text-align: left; line-height: 1.35; }
+.ref-seq button:hover:not(:disabled), .ref-targets button:hover { background: var(--paper-2); }
+.ref-seq button:disabled { opacity: .4; cursor: default; }
+.ref-body { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; }
+.ref-group { margin: 2px 0 6px; color: var(--ink-2); font-size: 12px; letter-spacing: .04em; }
+.ref h3 { margin: 0 0 4px; font: 600 17px/1.4 var(--font-mincho); }
+.ref dl { margin: 0; }
+.ref dt { font-weight: 700; margin: 14px 0 3px; font-size: 13px; }
+.ref dd { margin: 0; font-size: 13.5px; line-height: 1.62; }
+.ref-targets { display: flex; flex-wrap: wrap; gap: 8px; flex: none; }
+.ref-targets button[aria-pressed="true"] { border-color: var(--ai); color: var(--ai); background: var(--ai-soft); }
+.ref-status { margin: 0; flex: none; font-size: 12px; color: var(--ink-2); }
+.ref-status:empty { display: none; }
+#ref-spot { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 60; pointer-events: none; }
+#ref-spot .shade { fill: rgba(20, 18, 15, .6); pointer-events: auto; cursor: pointer; }
+#ref-spot .frame { fill: none; stroke: var(--ai); stroke-width: 2; }
+@media (max-width: 1180px) {
+  .work[data-reference="open"] { grid-template-columns: var(--ref-w) minmax(320px, 1fr); }
+  .work[data-reference="open"] > .ref { grid-column: 1; grid-row: 1 / span 3; }
+}
+@media (max-width: 700px) {
+  .work[data-reference="open"] { grid-template-columns: minmax(0, 1fr); }
+  .work[data-reference="open"] > .ref { position: fixed; inset: 0; z-index: 50; height: 100%; background: var(--paper); }
+}
+
+/* one screen: on a wide screen the page is the window, so the strip of similar windows is always in view; the panes
+   and the reference scroll inside themselves, and the paper takes what the controls and the strip leave */
+@media (min-width: 1181px) {
+  body { overflow: hidden; }
+  .app { height: 100vh; height: 100dvh; min-height: 0; box-sizing: border-box; }
+  .work { min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .work > .pane, .work > .ref { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  .ref { position: static; height: auto; align-self: stretch; }
+  .stage { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  .cvwrap { min-height: max(300px, var(--forecast-min-height, 0px)); }
+  /* the paper takes what is left, so whatever is below it keeps one height while its words change: the status keeps
+     two lines and the progress bar its place, the names one line, the two sentences two, and the code one */
+  .status { height: 36px; line-height: 18px; }
+  .status .msg { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .prog[hidden] { display: block; visibility: hidden; }
+  .names { flex-wrap: nowrap; height: 24px; overflow: hidden; white-space: nowrap; }
+  .desc { height: 40px; }
+  .desc span { line-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .codebox code { flex: 1 0 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (max-width: 900px) {
+  .cvwrap { min-height: max(62vh, var(--forecast-min-height, 0px)); }
+  .ident { grid-template-columns: minmax(0, 1fr); padding-inline: 4px; }
+}
+@media (max-width: 600px) {
+  .dock { right: 4px; gap: 6px; }
+  .space { padding-inline: 10px; }
+  .space .ico { display: none; }
+  .space input { width: 76px; }
+  .hint { left: 12px; right: 12px; }
+  .match { padding-inline: 0; }
+  .ctl input[type="range"] { width: 72px; }
+  .ctl .v { min-width: 0; }
+  .nextctl { height: auto; flex-wrap: wrap; white-space: normal; padding-block: 5px; row-gap: 6px; }
+}
+
+#pattern-browser{box-sizing:border-box;width:min(550px,calc(100% - 24px));max-height:85vh;overflow:auto;padding:20px;color:var(--ink);background:var(--paper);border:1px solid var(--hair);border-radius:8px}
+#pattern-browser::backdrop{background:#181a1a82}
+.pattern-heading,.pattern-pickers{display:flex;align-items:center;gap:12px;justify-content:space-between}
+#pattern-browser h2,#pattern-browser h3{margin:0;font-family:inherit}
+#pattern-browser p{margin:8px 0 16px;line-height:1.45}
+#pattern-browser label{display:block;font-size:13px}
+#pattern-browser select,#pattern-browser input{display:block;box-sizing:border-box;width:100%;min-height:34px;margin:4px 0 12px;background:var(--paper);color:var(--ink);border:1px solid var(--hair);border-radius:3px;padding:4px 8px;font:inherit}
+.pattern-pickers label:first-child{flex:1;min-width:0}
+#pattern-results details{border-top:1px solid var(--hair);padding:5px 0;font-size:13px}
+#pattern-results summary{cursor:pointer}#pattern-results details p{margin:6px 0}
+button.nm{font:inherit;color:inherit;text-align:left;background:transparent;border:0;padding:0;cursor:pointer}
+</style>
+<link rel="stylesheet" href="panes.css">
+<link rel="stylesheet" href="motion.css">
+<link rel="stylesheet" href="bridge.css">
+
+<dialog id="pattern-browser" aria-labelledby="pattern-heading">
+  <div class="pattern-heading"><h2 id="pattern-heading">Named candle patterns</h2><button id="close-patterns" type="button" aria-label="Close pattern browser">Close</button></div>
+  <p>Search completed BTCUSDT candles by geometry. Each match ends at the close of its final bar.</p>
+  <label for="pattern-filter">English or Japanese name</label><input id="pattern-filter" type="search" autocomplete="off" placeholder="Hammer, カラカサ…">
+  <div class="pattern-pickers"><label>Pattern<select id="pattern-list"></select></label><label>Timeframe<select id="pattern-frame"></select></label></div>
+  <h3 id="pattern-title"></h3><p id="pattern-aliases" hidden></p><p id="pattern-rule"></p>
+  <button type="button" id="send-named">Use this named rule in study</button>
+  <p id="pattern-status" role="status"></p><div id="pattern-results"></div>
+</dialog>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="seal" aria-hidden="true">足</div>
+      <div><div class="brand-name">Composer</div><div class="brand-sub">Compose bars freely in the g1 language<span class="ja" lang="ja">ローソク足</span></div></div>
+    </div>
+    <div class="tools">
+      <a class="home" id="home" href="../" hidden>Query lab</a>
+      <div class="seg" id="mode" role="group" aria-label="Direction"><button type="button" data-v="1">Up / down<span class="ja" lang="ja">陽陰</span></button><button type="button" data-v="0">Shape only<span class="ja" lang="ja">形</span></button></div>
+      <button class="icon" type="button" id="undo" aria-label="Undo" title="Undo (⌘Z)">↶</button>
+      <button class="icon" type="button" id="redo" aria-label="Redo" title="Redo (⇧⌘Z)">↷</button>
+      <button type="button" class="link" id="browse-patterns">Named patterns</button>
+      <button class="icon" type="button" id="reftoggle" aria-label="Reference" aria-expanded="false" aria-pressed="false" aria-controls="ref" title="Reference: how to read the panels"><svg viewBox="0 0 16 16" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="6.3"/><path d="M8 7.2v4M8 4.6v.4"/></svg></button>
+      <button class="icon" type="button" id="theme" aria-label="Switch between washi and sumi" title="Washi or sumi">◐</button>
+    </div>
+  </header>
+
+  <section class="lab-transfer" aria-label="Query lab handoff">
+    <form id="sample-form"><label for="sample-time">Recorded close · UTC</label>
+      <div class="sample-controls"><button type="button" id="sample-prev" aria-label="Previous recorded bar">‹</button><input type="datetime-local" step="900" required id="sample-time"><button type="button" id="sample-next" aria-label="Next recorded bar">›</button><button type="submit">Load candle</button></div>
+      <span id="sample-status" role="status"></span></form>
+    <div class="transfer-action"><span id="drawing-label"></span><button type="button" id="send-g1" disabled>Use exact G1 in query lab ↗</button>
+      <button type="button" id="send-pins" hidden disabled>Use pins on fixed candles ↗</button>
+      <details><summary>What carries over?</summary><p>The query uses the drawing’s complete endpoint order and selected direction mode. Pins and stretch define held-window exploration here. Closest windows use Composer’s similarity ranking. The drawing retains those settings when reopened. Next-bar filters apply to exploration only.</p></details></div>
+  </section>
+  <section id="ordinal-preview" hidden aria-label="Supplied G1">
+    <h2>Supplied G1 pattern</h2><code id="ordinal-code"></code><p id="ordinal-why"></p>
+    <div class="ordinal-rows"><table><caption>Oldest candle first · global endpoint ranks</caption><thead><tr><th>Bar</th><th>Low</th><th>Body low</th><th>Body high</th><th>High</th><th>Direction</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <div class="work">
+  <aside class="ref" id="ref" aria-labelledby="ref-title" hidden>
+    <div class="ref-head"><h2 id="ref-title">Reference</h2><button type="button" class="icon" id="ref-close" aria-label="Close the reference">✕</button></div>
+    <p class="ref-intro">How to read the panels accurately. Show highlights the part a topic is about.</p>
+    <label class="ref-label" for="ref-topic">Topic</label>
+    <select id="ref-topic"></select>
+    <div class="ref-seq"><button type="button" id="ref-prev">Previous</button><span id="ref-pos"></span><button type="button" id="ref-next">Next</button></div>
+    <div class="ref-body" id="ref-body"><article id="ref-article"></article></div>
+    <div class="ref-targets" id="ref-targets"></div>
+    <p class="ref-status" id="ref-status" role="status" aria-live="polite"></p>
+  </aside>
+  <aside class="pane lpane" data-side="left" data-loading="true" aria-label="What sets the matching windows apart">
+    <div class="pane-switch" role="group" aria-label="Left pane layout">
+      <button type="button" class="pane-step" data-step="-1" aria-label="Previous left pane design">‹</button>
+      <button type="button" class="pane-current" aria-haspopup="menu" aria-expanded="false" aria-controls="left-design-menu"><span aria-live="polite">Signal first</span><i aria-hidden="true">⌄</i></button>
+      <button type="button" class="pane-step" data-step="1" aria-label="Next left pane design">›</button>
+      <div class="pane-menu" id="left-design-menu" role="menu" aria-label="Left pane designs" hidden></div>
+    </div>
+    <header class="pane-header">
+      <h2>What differs</h2>
+      <div class="pane-context" id="lcap"><strong>Matching windows</strong><span class="pane-meta">Loading BTCUSDT history…</span></div>
+    </header>
+    <div class="pane-body">
+      <div class="pane-section pane-flow prows" id="lrows"></div>
+      <section class="pane-section pane-next" id="lnextsec">
+        <h3>Next bar rose</h3>
+        <div id="lnext"></div>
+      </section>
+      <details class="pane-section pane-details" data-detail="left-method"><summary>How these readings are measured</summary><div id="lmethod"></div></details>
+    </div>
+  </aside>
+  <main class="stage" aria-label="Composition">
+    <div class="cvwrap" id="cvwrap">
+      <canvas id="cv" tabindex="0" aria-label="Bar composition. Drag shadows and body edges; left and right arrows choose a bar; up and down arrows move it; space changes the first bar's colour, and every later bar's colour follows from where it sits against the previous close; plus and minus add or remove a bar; the bracket keys make the drawn bars narrower or wider; P starts pinning relations."></canvas>
+      <div class="forecast-controls" id="forecast-controls">
+        <div class="forecast-mode-picker" id="forecast-modes" role="radiogroup" aria-label="Continuation mode">
+          <button type="button" role="radio" data-view="paths" aria-label="Paths" aria-checked="false" data-tip="Paths: compare the most frequent complete six-bar closing-state sequences. Each row has its own whole-sequence probability. All ranked rows stay visible."><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3"/><path d="M9 17h4a5 5 0 0 0 0-10h2"/><circle cx="18" cy="7" r="3"/></svg></button>
+          <button type="button" role="radio" data-view="branches" aria-label="Branches" aria-checked="false" data-tip="Branches: choose the next closing state, then see later probabilities conditional on the states you chose. The denominator is the complete windows remaining after those choices."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14M5 12c8 0 5-7 13-7M5 12h13M5 12c8 0 5 7 13 7"/><circle cx="5" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="19" r="2"/></svg></button>
+          <button type="button" role="radio" data-view="states" aria-label="States" aria-checked="true" data-tip="States: each future column totals 100%. Its faint green, grey and red areas show how often that bar closed above, inside or below the original combo range. These are per-bar marginal probabilities, not probabilities of a complete sequence."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v18h16M7 7h4v10H7zM15 4h4v13h-4zM7 11h4M15 9h4"/></svg></button>
+        </div>
+        <label class="fan-switch" data-tip="Fan underlay: show or hide the historical closing-price distribution beneath any mode. The five lines show 10th, 25th, median, 75th and 90th percentiles at each future bar; this distribution always uses the original matching cohort."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M4 18 10 5l5 8 6-10M4 18l6-6 5 4 6-4"/></svg><input type="checkbox" id="fan-underlay" role="switch" aria-label="Fan underlay" checked></label>
+      </div>
+      <section class="forecast-panel" id="forecast-panel" aria-label="Continuation scenarios">
+        <div class="forecast-fan-hits" id="forecast-fan-hits"></div>
+        <div class="forecast-body" id="forecast-body"></div>
+        <span class="forecast-message" id="forecast-message" data-tip="Matching complete historical continuations."></span>
+        <button type="button" class="forecast-retry" id="forecast-retry" data-tip="Retry the dataset or matcher request without resetting the drawing, modes or previous result." hidden>Retry</button>
+      </section>
+      <p class="forecast-status" id="forecast-status" role="status" aria-live="polite"></p>
+      <div class="forecast-tooltip" id="forecast-tooltip" role="tooltip" hidden></div>
+      <p class="hint" id="hint" data-tip="Green, grey and red forecasts describe the future close relative to the original matching combo’s highest and lowest wicks. Exact boundary closes are Inside. Root candle colours describe close versus open. These are different measurements.">Closing state · green above / grey inside / red below the combo range</p>
+      <div class="dock">
+        <label class="space" title="Width of the drawn bars · [ and ] · pinch on the paper">
+          <svg class="ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="3" y="2" width="1.5" height="10" rx=".7"/><rect x="9.5" y="2" width="1.5" height="10" rx=".7"/></svg>
+          <input type="range" id="space" min="0" max="1" step="0.001" aria-label="Width of the drawn bars">
+          <svg class="ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="1.5" y="2" width="4.5" height="10" rx=".7"/><rect x="8" y="2" width="4.5" height="10" rx=".7"/></svg>
+        </label>
+        <div class="bars" role="group" aria-label="Bars">
+          <button type="button" id="rm" aria-label="Remove the last bar" title="Remove the last bar">−</button>
+          <span class="nb" id="nb" aria-live="polite"></span>
+          <button type="button" id="add" aria-label="Add a bar" title="Add a bar">+</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="match" aria-label="In the BTCUSDT history">
+      <div class="mbar">
+        <div class="grp">
+        <label class="ctl" title="骨 Skeleton: hold the order of the composition's landmarks exactly, from its strongest highs and lows (bones) to every swing">
+          <span class="k" lang="ja" aria-hidden="true">骨</span>Skeleton
+          <input type="range" id="skel" min="0" max="1" step="1" value="0" aria-label="Skeleton detail, from off to every swing">
+          <span class="v" id="skelv">off</span>
+        </label>
+        <span class="ctl pinctl">
+          <button type="button" class="pinbtn" id="pins" aria-pressed="false" title="結 Pins: tap two points on the drawing to hold how they relate · P"><span class="k" lang="ja" aria-hidden="true">結</span>Pins<span class="n" id="pinv">0</span></button>
+          <button type="button" class="clear" id="clearpins" hidden>Clear</button>
+        </span>
+        <span class="ctl" title="伸 Stretch: let the drawn bars pick themselves out of a longer run of BTCUSDT bars, in order. The first and last drawn bars are the run's first and last bars; up to this many bars between them are skipped and ignored. Applies while something is held.">
+          <span class="k" lang="ja" aria-hidden="true">伸</span>Stretch
+          <button type="button" class="step" id="stless" aria-label="Less stretch">−</button>
+          <span class="v" id="stv" style="min-width: 4.6em; text-align: center">+0 bars</span>
+          <button type="button" class="step" id="stmore" aria-label="More stretch">+</button>
+        </span>
+        </div>
+        <div class="grp">
+        <span class="ctl nextctl" id="nextctl" data-any="true" title="次 Next bar: keep only instances whose next bar rose or fell, at all or by at least a threshold. Measured from the window's last close to the next close; ATR is the engine's 14-bar Wilder average true range at the window's last bar.">
+          <span class="k" lang="ja" aria-hidden="true">次</span>Next bar
+          <span class="seg mini" id="ndir" role="group" aria-label="Next bar direction"><button type="button" data-v="0">any</button><button type="button" data-v="1">▲ up</button><button type="button" data-v="-1">▼ down</button></span>
+          <span class="seg mini" id="nmeas" role="group" aria-label="By how much"><button type="button" data-v="any">at all</button><button type="button" data-v="bps">bps</button><button type="button" data-v="atr">ATR</button></span>
+          <label class="nval" id="nvalw" hidden>≥<input id="nval" type="number" inputmode="decimal" min="0.1" step="1" aria-label="Threshold"></label>
+        </span>
+        <span class="tfs" id="tfs" role="group" aria-label="Timeframes"><button type="button" class="chip" data-k="0" aria-pressed="true" title="Leave out 15m">15m</button><button type="button" class="chip" data-k="1" aria-pressed="true" title="Leave out 30m">30m</button><button type="button" class="chip" data-k="2" aria-pressed="true" title="Leave out 1h">1h</button><button type="button" class="chip" data-k="3" aria-pressed="true" title="Leave out 2h">2h</button><button type="button" class="chip" data-k="4" aria-pressed="true" title="Leave out 4h">4h</button></span>
+        <span class="seg" id="xsel" role="group" aria-label="How many instances"><button type="button" data-x="12">12</button><button type="button" data-x="24">24</button><button type="button" data-x="48">48</button></span>
+        </div>
+      </div>
+      <div class="status"><span class="prog" id="prog" hidden><i></i></span><span class="msg" id="mmsg" aria-live="polite">Loading the recorded BTCUSDT 15m bars…</span></div>
+      <div class="emaki" id="emaki" aria-label="Closest instances in the BTCUSDT history"></div>
+    </section>
+
+    <footer class="ident">
+      <div class="idl"><div class="names" id="names"></div><div class="desc" id="desc"></div></div>
+      <div class="codebox"><code id="code"></code><button type="button" class="link" id="copy">Copy</button><span class="dom" id="dom"></span></div>
+    </footer>
+  </main>
+  <aside class="pane rpane" data-side="right" data-loading="true" aria-label="What the shape became">
+    <div class="pane-switch" role="group" aria-label="Right pane layout">
+      <button type="button" class="pane-step" data-step="-1" aria-label="Previous right pane design">‹</button>
+      <button type="button" class="pane-current" aria-haspopup="menu" aria-expanded="false" aria-controls="right-design-menu"><span aria-live="polite">Signal first</span><i aria-hidden="true">⌄</i></button>
+      <button type="button" class="pane-step" data-step="1" aria-label="Next right pane design">›</button>
+      <div class="pane-menu" id="right-design-menu" role="menu" aria-label="Right pane designs" hidden></div>
+    </div>
+    <header class="pane-header">
+      <h2>What followed</h2>
+      <div class="pane-context" id="rcap">Loading the continuation…</div>
+    </header>
+    <div class="pane-body">
+      <section class="pane-section pane-next" id="rnextsec" hidden><h3>Next bar rose</h3><div id="rnext"></div></section>
+      <div class="pane-section pane-flow" id="rbecame"></div>
+      <div class="pane-section pane-flow" id="rfan"></div>
+      <section class="pane-section pane-next" id="rnearsec">
+        <h3>One comparison away</h3>
+        <p class="pcap" id="ncap"></p>
+        <div class="pane-neighbors" id="rnear"></div>
+      </section>
+      <details class="pane-section pane-details" data-detail="right-method"><summary>How to read the continuation</summary><div id="rmethod"></div></details>
+    </div>
+  </aside>
+  </div>
+</div>
+
+<script src="motion.js"></script>
+<script src="pane-designs.js"></script>
+<script src="forecast.js"></script>
+<script src="context.js"></script>
+<script src="patterns.js"></script>
+<script src="pattern-browser.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* ================= utilities ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const sgn = x => (x > 0 ? 1 : x < 0 ? -1 : 0);
+const Flow = TactileFlow;
+const calm = () => Flow.reduced();
+// Cache Mac WebKit's paper on the existing root, outside resizing body content.
+// Preserve document coordinates by restoring the body background when scrolled.
+const PAPER_CACHE=navigator.platform.includes('Mac')&&!('filter' in document.createElement('canvas').getContext('2d'));
+if(PAPER_CACHE){
+  const origin=()=>document.documentElement.toggleAttribute('data-paper-cache',scrollY===0&&document.body.scrollTop===0);
+  origin();addEventListener('scroll',event=>{if(event.target===document||event.target===document.body||event.target===document.documentElement)origin();},{capture:true,passive:true});
+}
+
+function dense(arr) { const s = Array.from(new Set(arr)).sort((a, b) => a - b), m = new Map(); s.forEach((v, i) => m.set(v, i)); return arr.map(v => m.get(v)); }
+/* ---- the feel of a drag: pure functions of the pointer, checked by checks/drag.mjs ---- */
+// A press barely moves what it holds until it is clearly a drag, then the part catches up with the pointer within a few px:
+// continuous, monotonic, and one to one beyond about two slops.
+const SLOP = 3;
+const eased = dy => dy * (1 - Math.exp(-(dy * dy) / (SLOP * SLOP)));
+// Past the canvas edge the part gives like rubber instead of stopping at a wall: it slows smoothly and never quite
+// reaches GIVE px beyond the edge.
+const GIVE = 28;
+function give(u, lo, hi) {
+  if (u < lo) return lo - GIVE * (1 - Math.exp((u - lo) / GIVE));
+  if (u > hi) return hi + GIVE * (1 - Math.exp((hi - u) / GIVE));
+  return u;
+}
+// 寄せ: near a level the part eases onto it, rests there exactly for a short stretch, and eases off again. `marks` are px,
+// ascending and distinct; a mark's reach stops halfway to its neighbours, so reaches never overlap and the place is a
+// continuous, monotonic function of the pointer with a matching slope where each reach begins and ends. Returns the
+// place, the mark it is near (-1 for none), whether it rests on that mark exactly, and how near it is (0 to 1).
+const DETENT_REACH = 9, DETENT_REST = 2.5;
+function detent(u, marks, reach = DETENT_REACH, rest = DETENT_REST) {
+  let j = -1, best = Infinity;
+  for (let i = 0; i < marks.length; i++) { const d = Math.abs(u - marks[i]); if (d < best) { best = d; j = i; } }
+  if (j < 0) return { y: u, j: -1, at: false, near: 0 };
+  const m = marks[j];
+  const r = Math.min(reach, j > 0 ? (m - marks[j - 1]) / 2 : reach, j < marks.length - 1 ? (marks[j + 1] - m) / 2 : reach);
+  if (!(r > 0) || best >= r) return { y: u, j: -1, at: false, near: 0 };
+  const p = Math.min(rest, r * 0.35);
+  if (best <= p) return { y: m, j, at: true, near: 1 };
+  // a cubic from rest (slope 0) to the pointer's own pace (slope 1 in px) across the rest of the reach
+  const x = (best - p) / (r - p), k = (r - p) / r, h = (3 - k) * x * x + (k - 2) * x * x * x;
+  return { y: m + Math.sign(u - m) * r * h, j, at: false, near: 1 - x };
+}
+// marks in px, ascending, one per place
+function markSet(list) {
+  list.sort((a, b) => a.y - b.y);
+  const out = [];
+  for (const m of list) if (!out.length || m.y - out[out.length - 1].y > 1e-6) out.push(m);
+  return out;
+}
+/* ---- end of the feel ---- */
+/* ---- the chain: pure functions, checked by checks/chain.mjs ---- */
+// BTCUSDT trades around the clock, so every bar opens where the previous bar closed. A drawn bar is [low, body bottom,
+// body top, high] with a direction; its open and close are the body's ends in that direction. The free prices of a
+// drawing are the first bar's open and every bar's close, low and high; every later open is the previous close.
+const closeOf = (v, d) => (d === 'u' ? v[2] : v[1]);
+const openOf = (v, d) => (d === 'u' ? v[1] : v[2]);
+function chainParams(bars) {
+  return { o0: openOf(bars[0].v, bars[0].d), c: bars.map(b => closeOf(b.v, b.d)), l: bars.map(b => b.v[0]), h: bars.map(b => b.v[3]), d: bars.map(b => b.d) };
+}
+// the bars those prices make: each body runs from its open to its close, its colour is which way it went (a bar that
+// closes where it opened is a doji and keeps the direction it had), and its shadows reach at least its body
+function chainBars(P) {
+  return P.c.map((c, i) => {
+    const o = i ? P.c[i - 1] : P.o0, lo = Math.min(o, c), hi = Math.max(o, c);
+    return { v: [Math.min(P.l[i], lo), lo, hi, Math.max(P.h[i], hi)], d: c > o ? 'u' : c < o ? 'd' : P.d[i] };
+  });
+}
+const copyParams = P => ({ o0: P.o0, c: P.c.slice(), l: P.l.slice(), h: P.h.slice(), d: P.d.slice() });
+// moving a bar: the first moves whole; a later one swings from where it opened, its close and shadows moving together
+// while its open stays on the previous close
+function moveParams(P, i, dv) {
+  const Q = copyParams(P);
+  if (i === 0) Q.o0 += dv;
+  Q.c[i] += dv; Q.l[i] += dv; Q.h[i] += dv;
+  return Q;
+}
+// the first bar's colour is chosen by trading its open and close: its body stays, and the next bar opens at its other end
+function flipParams(P) { const Q = copyParams(P); Q.o0 = P.c[0]; Q.c[0] = P.o0; Q.d[0] = P.d[0] === 'u' ? 'd' : 'u'; return Q; }
+/* ---- end of the chain ---- */
+function rr(ctx, x, y, w, h, r) { r = Math.max(0, Math.min(r, w / 2, h / 2)); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function fitCanvas(cv, w, h, dpr = Math.min(2, window.devicePixelRatio || 1), reserve = false) {
+  const W = Math.round(w * dpr), H = Math.round(h * dpr);
+  // Offscreen capacity grows in chunks instead of reallocating for every reference-panel pixel.
+  if (reserve ? cv.width < W || cv.height < H || cv.flowDpr !== dpr : cv.width !== W || cv.height !== H) {
+    cv.width = reserve ? Math.ceil(W/64)*64 : W; cv.height = reserve ? Math.ceil(H/64)*64 : H;
+  }
+  cv.flowDpr=dpr;cv.flowWidth=W;cv.flowHeight=H;
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return ctx;
+}
+function paintCanvas(ctx,cv,x,y,w,h){ctx.drawImage(cv,0,0,cv.flowWidth??cv.width,cv.flowHeight??cv.height,x,y,w,h);}
+const FONT_UI = '"Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif';
+const FONT_MIN = '"Shippori Mincho", "Hiragino Mincho ProN", serif';
+
+/* ================= theme ================= */
+const COL = {};
+function rgbOf(s) { s = s.trim(); if (s[0] === '#') { const n = parseInt(s.slice(1, 7), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; } const m = s.match(/[\d.]+/g); return m ? m.slice(0, 3).map(Number) : [128, 128, 128]; }
+function readTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  ['paper', 'paper-2', 'ink', 'ink-2', 'ink-3', 'hair', 'mist', 'up', 'down', 'flat', 'ai', 'ai-soft', 'shu'].forEach(k => { COL[k] = cs.getPropertyValue('--' + k).trim(); });
+  COL.rgb = { u: rgbOf(COL.up), d: rgbOf(COL.down), z: rgbOf(COL.flat) };
+}
+readTheme();
+const rgbStr = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+
+/* ================= what the engine knows ================= */
+// exact complete-domain sizes per window length (geometry-count; docs/BAR_GEOMETRY.md section 7)
+const DOMAIN = {
+  o: { 1: '12', 2: '7,452', 3: '32,160,252', 4: '508,608,936,252', 5: '21,386,422,752,715,452', 6: '1,971,122,519,237,375,505,852', 7: '349,946,534,568,771,563,626,027,452', 8: '109,093,488,682,843,434,702,978,214,200,252', 9: '55,702,085,623,739,099,432,122,993,642,929,144,252', 10: '44,121,589,533,882,676,853,417,959,154,810,808,313,579,452' },
+  u: { 1: '8', 2: '2,568', 3: '5,592,968', 4: '44,418,808,968', 5: '936,239,675,880,968', 6: '43,216,321,851,028,552,968', 7: '3,840,691,551,111,678,501,624,968', 8: '599,170,270,107,067,142,441,692,696,968', 9: '153,066,871,555,466,967,822,330,084,645,768,968', 10: '60,654,091,922,379,541,904,994,268,730,790,100,840,968' },
+};
+const NWORD = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+const KANJI = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+const ORD_JA = Array.from({ length: 20 }, (_, i) => { const n = i + 1, t = Math.floor(n / 10), u = n % 10; return (t ? (t > 1 ? KANJI[t] : '') + '十' : '') + (u ? KANJI[u] : '') + '本目'; });
+// the engine keys and counts windows up to ten bars; matching on held relations reads the bars directly, so compositions may go further
+const MINN = 1, MAXN = 20;
+// a step of the fan takes this share of a bar's place across the paper; the matcher's fan looks six bars ahead
+const FAN_PITCH = 0.62, FAN_STEPS = 6;
+const TF_LABELS = ['15m'];
+
+/* ================= the composition: free prices, exact order ================= */
+// Every bar keeps the actual prices you draw. The g1 identity is derived from them exactly as the
+// engine's encoder does: sort all endpoints, equal prices share a rank, direction from open vs close.
+function newBar(v, d) { return { v: Float64Array.from(v), d, dv: Float64Array.from(v), vv: new Float64Array(4), x: null, vx: 0, a: 0, va: 0, col: null }; }
+let labDrawingChanged = () => {};
+const S = {
+  bars: [newBar([30, 42, 56, 68], 'u'), newBar([18, 36, 62, 80], 'd')], colored: true, sel: 1, space: 0.68,
+  pins: [],            // relations you hold: { a: {bar, part}, b: {bar, part} } or { bar, color: true }; parts are L, B, T, H as drawn
+  skel: 0,             // 0 off, then 1 (bones) to the number of skeleton levels (every swing)
+  stretch: 0,          // BTCUSDT bars the drawn bars may skip, between their first and last
+  x: 12, tfOn: [true], pinMode: false,
+  next: { dir: 0, measure: 'any', bps: 10, atr: 1 },   // 次: which next bars to keep; thresholds keep their own defaults
+};
+try { const v = parseFloat(localStorage.getItem('ashi.width')); if (v >= 0 && v <= 1) S.space = v; } catch (err) { /* spacing simply starts at its default */ }
+const hist = { past: [], future: [] };
+const snap = () => ({ bars: S.bars.map(b => ({ v: Array.from(b.v), d: b.d })), pins: JSON.parse(JSON.stringify(S.pins)) });
+function pushHist(s) { hist.past.push(s || snap()); if (hist.past.length > 400) hist.past.shift(); hist.future = []; }
+function identity() {
+  const vals = []; for (const b of S.bars) for (let k = 0; k < 4; k++) vals.push(b.v[k]);
+  return { r: dense(vals), d: S.bars.map(b => (b.v[1] === b.v[2] ? 'z' : b.d)), n: S.bars.length };
+}
+const codeOf = id => `g1:${S.colored ? 'o' : 'u'}:` + Array.from({ length: id.n }, (_, i) => id.r.slice(i * 4, i * 4 + 4).join(',') + (S.colored ? ',' + id.d[i] : '')).join(';');
+function epName(d, k) {
+  if (k === 0) return 'low'; if (k === 3) return 'high';
+  if (!S.colored) return k === 1 ? 'body bottom' : 'body top';
+  if (d === 'z') return 'open = close';
+  return (k === 1) === (d === 'u') ? 'open' : 'close';
+}
+const EP_JA = { low: '安値', high: '高値', open: '始値', close: '終値', 'open = close': '始値 = 終値' };
+const SEG_NAME = { 0: 'lower shadow', 1: 'body', 2: 'upper shadow' };
+
+/* ================= what a match holds ================= */
+// prices a held relation can name; the matcher reads the same kinds from BTCUSDT bars: 0 open, 1 high, 2 low, 3 close, 4 body bottom, 5 body top
+const PART_K = { L: 0, B: 1, T: 2, H: 3 };
+const KIND_LETTER = ['O', 'H', 'L', 'C', 'B', 'T'];
+const dirOf = i => { const b = S.bars[i]; return b.v[1] === b.v[2] ? 0 : b.d === 'u' ? 1 : -1; };
+// 鎖: the drawing keeps the chain after every change, and every bar's colour is which way it went from its open
+function chain() { setBars(chainBars(chainParams(S.bars))); }
+function setBars(out) { S.bars.forEach((b, i) => { b.v.set(out[i].v); b.d = out[i].d; }); }
+function ohlcOf(i) { const [l, lo, hi, h] = S.bars[i].v, d = dirOf(i); return d >= 0 ? [lo, h, l, hi] : [hi, h, l, lo]; }
+function kindOf(bar, part) {
+  if (part === 'H') return 1; if (part === 'L') return 2;
+  if (!S.colored) return part === 'T' ? 5 : 4;
+  const d = dirOf(bar); return part === 'T' ? (d >= 0 ? 3 : 0) : (d >= 0 ? 0 : 3);
+}
+function priceOf(bar, kind) { const [o, h, l, c] = ohlcOf(bar); return [o, h, l, c, Math.min(o, c), Math.max(o, c)][kind]; }
+const relWordOf = r => (r > 0 ? 'above' : r < 0 ? 'below' : 'level with');
+function partName(bar, part) {
+  if (part === 'H') return 'high'; if (part === 'L') return 'low';
+  if (!S.colored) return part === 'T' ? 'body top' : 'body bottom';
+  const d = dirOf(bar); if (d === 0) return 'open = close';
+  return (part === 'T') === (d > 0) ? 'close' : 'open';
+}
+// a high (low) that beats every bar within k bars on both sides has strength k; the extremes of the whole composition have strength n
+function landmarks() {
+  const n = S.bars.length, out = [];
+  for (const [part, k, s] of [['H', 3, 1], ['L', 0, -1]]) for (let i = 0; i < n; i++) {
+    const v = j => S.bars[j].v[k] * s;
+    let st = 0;
+    while (st < n) {
+      const lo = i - (st + 1), hi = i + (st + 1);
+      if (lo < 0 && hi >= n) { st = n; break; }
+      if ((lo >= 0 && !(v(i) > v(lo))) || (hi < n && !(v(i) > v(hi)))) break;
+      st++;
+    }
+    if (st > 0) out.push({ bar: i, part, k: st });
+  }
+  return out;
+}
+const skelLevels = () => [...new Set(landmarks().map(m => m.k))].sort((a, b) => b - a);
+function skelMarks() { const lv = skelLevels(); if (!S.skel || !lv.length) return []; const min = lv[Math.min(S.skel, lv.length) - 1]; return landmarks().filter(m => m.k >= min); }
+// everything held right now, as the matcher needs it, each with a short label
+function heldNow() {
+  const out = [], seen = new Set(), n = S.bars.length;
+  const rel = (a, ka, b, kb, from) => {
+    if (a === b && ka === kb) return;
+    const key = a < b || (a === b && ka < kb) ? `${a}.${ka}|${b}.${kb}` : `${b}.${kb}|${a}.${ka}`;
+    if (seen.has(key)) return; seen.add(key);
+    const r = sgn(priceOf(a, ka) - priceOf(b, kb));
+    out.push({ h: { a: [a, ka], b: [b, kb], rel: r }, label: `${KIND_LETTER[ka]}${a + 1} ${r > 0 ? '>' : r < 0 ? '<' : '='} ${KIND_LETTER[kb]}${b + 1}`, from });
+  };
+  for (const p of S.pins) {
+    if (p.color) { if (S.colored && !seen.has('c' + p.bar)) { seen.add('c' + p.bar); const d = dirOf(p.bar); out.push({ h: { color: true, bar: p.bar, dir: d }, label: `bar ${p.bar + 1} ${d > 0 ? 'up' : d < 0 ? 'down' : 'open = close'}`, from: 'pin' }); } continue; }
+    rel(p.a.bar, kindOf(p.a.bar, p.a.part), p.b.bar, kindOf(p.b.bar, p.b.part), 'pin');
+  }
+  const marks = skelMarks();
+  if (marks.length) {
+    const pts = [];
+    if (S.colored) pts.push([0, 0]);
+    for (const m of marks) pts.push([m.bar, m.part === 'H' ? 1 : 2]);
+    if (S.colored) pts.push([n - 1, 3]);
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) rel(pts[i][0], pts[i][1], pts[j][0], pts[j][1], 'skeleton');
+    for (const m of marks) for (const j of [m.bar - 1, m.bar + 1]) if (j >= 0 && j < n) { const k = m.part === 'H' ? 1 : 2; rel(m.bar, k, j, k, 'skeleton'); }
+  }
+  return out;
+}
+
+const Ops = {
+  select(i) { i = clamp(i, 0, S.bars.length - 1); if (S.sel === i) return; S.sel = i; refresh(); },
+  // only the first bar's colour is chosen; every later bar's is which way it went from the previous close (the chain)
+  flip(i) { const b = S.bars[i]; if (i > 0 || !S.colored || b.v[1] === b.v[2]) return; pushHist(); setBars(chainBars(flipParams(chainParams(S.bars)))); Stage.fit(); refresh(); },
+  add() {
+    if (S.bars.length >= MAXN) return;
+    pushHist();
+    // the new bar carries on the way the last one went, from where it closed
+    const last = S.bars[S.bars.length - 1], span = Stage.view.thi - Stage.view.tlo;
+    const range = last.v[3] - last.v[0] || span * 0.12;
+    const shift = 0.55 * range * (last.d === 'd' ? -1 : 1);
+    S.bars.push(newBar(Array.from(last.v, x => x + shift), last.d));
+    S.sel = S.bars.length - 1;
+    chain(); Stage.fit(); refresh();
+  },
+  remove() {
+    if (S.bars.length <= MINN) return;
+    pushHist();
+    Stage.retire(S.bars.pop());
+    const n = S.bars.length;
+    S.pins = S.pins.filter(p => (p.color ? p.bar < n : p.a.bar < n && p.b.bar < n));
+    if (S.sel >= n) S.sel = n - 1;
+    Stage.fit(); refresh();
+  },
+  nudge(i, px) {
+    const G = Stage.geom(), dv = px * (Stage.view.hi - Stage.view.lo) / G.plotH;
+    pushHist(); setBars(chainBars(moveParams(chainParams(S.bars), i, dv)));
+    Stage.fit(); refresh();
+  },
+  restore(st) {
+    for (let i = 0; i < st.bars.length; i++) { if (S.bars[i]) { S.bars[i].v.set(st.bars[i].v); S.bars[i].d = st.bars[i].d; } else S.bars.push(newBar(st.bars[i].v, st.bars[i].d)); }
+    while (S.bars.length > st.bars.length) Stage.retire(S.bars.pop());
+    S.pins = JSON.parse(JSON.stringify(st.pins));
+    if (S.sel >= S.bars.length) S.sel = S.bars.length - 1;
+    Stage.fit(); refresh();
+  },
+  undo() { const s = hist.past.pop(); if (!s) return; hist.future.push(snap()); Ops.restore(s); },
+  redo() { const s = hist.future.pop(); if (!s) return; hist.past.push(snap()); Ops.restore(s); },
+  pin(a, b) {
+    if (a.bar === b.bar && a.part === b.part) return;
+    const same = p => !p.color && ((p.a.bar === a.bar && p.a.part === a.part && p.b.bar === b.bar && p.b.part === b.part) || (p.a.bar === b.bar && p.a.part === b.part && p.b.bar === a.bar && p.b.part === a.part));
+    if (S.pins.some(same)) return;
+    pushHist(); S.pins.push({ a: { ...a }, b: { ...b } }); refresh();
+  },
+  colorPin(bar) {
+    pushHist();
+    const i = S.pins.findIndex(p => p.color && p.bar === bar);
+    if (i >= 0) S.pins.splice(i, 1); else S.pins.push({ bar, color: true });
+    refresh();
+  },
+  unpin(i) { pushHist(); S.pins.splice(i, 1); refresh(); },
+  clearPins() { if (!S.pins.length) return; pushHist(); S.pins = []; refresh(); },
+};
+
+/* ================= relations, names and words ================= */
+function band(x1, x2, y1, y2) {
+  if (x1 === y1 && x2 === y2) return 3;
+  if (x1 >= y1 && x2 <= y2) return 4;
+  if (x1 <= y1 && x2 >= y2) return 2;
+  if (x1 > y1) return x1 >= y2 ? 0 : 1;
+  return x2 <= y1 ? 6 : 5;
+}
+function pairSentence(id, i, j) {
+  const p = id.r.slice(i * 4, i * 4 + 4), q = id.r.slice(j * 4, j * 4 + 4), n = `Bar ${i + 1}`;
+  const BODY = [`sits at or above ${n}'s body`, `overlaps ${n}'s body from above`, `covers ${n}'s body`, `spans exactly ${n}'s body`, `sits within ${n}'s body`, `overlaps ${n}'s body from below`, `sits at or below ${n}'s body`];
+  const RANGE = [`trades entirely at or above ${n}`, `shifts up while overlapping ${n}`, `is an outside bar`, `spans exactly ${n}'s range`, `is an inside bar`, `shifts down while overlapping ${n}`, `trades entirely at or below ${n}`];
+  const w = (a, b, hi, eq, lo) => (a > b ? hi : a === b ? eq : lo);
+  const ties = new Set(q.filter(x => p.includes(x))).size;
+  return `Bar ${j + 1}'s body ${BODY[band(q[1], q[2], p[1], p[2])]}, and it ${RANGE[band(q[0], q[3], p[0], p[3])]}: ${w(q[3], p[3], 'higher high', 'equal high', 'lower high')}, ${w(q[0], p[0], 'higher low', 'equal low', 'lower low')}` + (ties ? `; ${ties === 1 ? 'one shared level' : ties + ' shared levels'}.` : '.');
+}
+// Check the drawing's actual distances as well as its endpoint order.
+function namesOf() {
+  const [o,h,l,c] = [0,1,2,3].map(k => S.bars.map((_,i) => ohlcOf(i)[k]));
+  const names = [];
+  for (let i = 0; i < S.bars.length; i++) {
+    for (const p of CandlePatterns.patterns) {
+      if (p.group || (p.oriented && !S.colored) || !CandlePatterns.compile(p.id)(o,h,l,c,i)) continue;
+      const who = p.bars === 1 ? 'Bar ' + (i+1) : 'Bars ' + (i-p.bars+2) + '–' + (i+1);
+      names.push([who,p]);
+    }
+  }
+  return names;
+}
+
+/* ================= the paper ================= */
+const HINT_DRAW = 'Closing state · green above / grey inside / red below the combo range';
+const HINT_PIN = 'Tap two points to hold how they relate · tap a body to hold its colour · tap a knot to let it go · Esc when done';
+const FAN_OPTIONS={strength:1,softness:1,lines:1,median:true};
+const Forecast = {
+  view:'states',fan:true,prefix:'',selected:'',source:null,sourceKey:'',rendered:'',current:false,phase:'loading',
+  panel:$('#forecast-panel'),body:$('#forecast-body'),fanHits:$('#forecast-fan-hits'),context:null,
+  field(G){return ForecastViews.field(G);},
+  init(){
+    try{
+      const saved=JSON.parse(localStorage.getItem('ashi.forecast'));
+      if(['paths','branches','states'].includes(saved?.view))this.view=saved.view;
+      else if(saved?.grid)this.view='states';
+      else if(saved?.view==='fan')this.view='states';
+      if(typeof saved?.fan==='boolean')this.fan=saved.fan;
+    }catch(err){/* preferences remain usable without storage */}
+    document.body.appendChild($('#forecast-tooltip'));
+    this.context=ForecastContext.install(Stage.wrap,$('#forecast-tooltip'),Flow);
+    $('#forecast-modes').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)this.choose(b.dataset.view);});
+    $('#forecast-modes').addEventListener('keydown',e=>{
+      if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+      const modes=['paths','branches','states'],i=modes.indexOf(this.view);
+      this.choose(modes[e.key==='Home'?0:e.key==='End'?2:(i+(e.key==='ArrowRight'?1:2))%3]);
+      $('#forecast-modes').querySelector('[aria-checked="true"]').focus();e.preventDefault();e.stopPropagation();
+    });
+    $('#fan-underlay').addEventListener('change',e=>{this.fan=e.target.checked;this.remember();App.redraw();});
+    $('#forecast-retry').addEventListener('click',()=>Match.retry());
+    this.body.addEventListener('click',e=>{
+      const b=e.target.closest('button');if(!b||!this.current||b.getAttribute('aria-disabled')==='true')return;
+      if(b.dataset.path)this.selected=b.dataset.path;
+      else if(b.dataset.prefix!==undefined)this.select(b.dataset.prefix);
+      App.redraw();
+    });
+    for(const el of Stage.wrap.querySelectorAll('[title]')){
+      el.dataset.tip=el.getAttribute('title');el.removeAttribute('title');
+    }
+    this.controls();
+  },
+  controls(){
+    $('#forecast-modes').querySelectorAll('[data-view]').forEach(b=>{
+      const on=b.dataset.view===this.view;b.setAttribute('aria-checked',String(on));b.tabIndex=on?0:-1;
+    });
+    $('#fan-underlay').checked=this.fan;Flow.switchControl($('#fan-underlay'));
+  },
+  remember(){this.controls();try{localStorage.setItem('ashi.forecast',JSON.stringify({view:this.view,fan:this.fan}));}catch(err){/* optional storage */}},
+  choose(view){
+    if(!['paths','branches','states'].includes(view))return;
+    this.view=view;
+    if(view==='paths'&&this.source&&!this.source.sequences.slice(0,4).some(([key])=>key===this.selected))this.selected=this.source.sequences[0]?.[0]||'';
+    this.remember();App.redraw();
+  },
+  select(prefix){
+    if(!this.source||!/^[UID]{0,6}$/.test(prefix))return;
+    const set=ForecastViews.subset(this.source,prefix);if(!set.n)return;
+    this.prefix=prefix;this.selected=set.sequences[0][0];
+  },
+  example(){return null;},
+  reserve(w,lx,top){
+    const height=`${Math.ceil(top+300)}px`;
+    if(Stage.wrap.style.getPropertyValue('--forecast-min-height')!==height)Stage.wrap.style.setProperty('--forecast-min-height',height);
+    return 0;
+  },
+  sync(G){
+    const next=ForecastViews.reconcile(this,{fresh:Match.fresh(),failed:Match.failed,data:Match.result?.panes?.cont,key:Match.resultKey});
+    const changed=next.source!==this.source;Object.assign(this,next);
+    const c=this.source,F=this.field(G),busy=['loading','refreshing'].includes(this.phase);
+    const semantic=[this.view,this.prefix,this.selected,this.phase,this.current,this.fan].join('|');
+    if(changed||semantic!==this.semantic){
+    this.semantic=semantic;
+    this.panel.setAttribute('aria-busy',String(busy));this.panel.dataset.phase=this.phase;
+    $('#forecast-retry').hidden=this.phase!=='error';
+    const messages={ready:'',loading:'Finding matching continuations…',refreshing:'Updating · previous result',sparse:'Fewer than 30 complete continuations',error:c?'Update failed · previous result':'Continuation unavailable'};
+    $('#forecast-message').textContent=messages[this.phase];
+    $('#forecast-message').dataset.tip=(messages[this.phase]||'Historical continuation probabilities')+'. '+(c?`${c.n.toLocaleString('en-GB')} matched windows with all six following bars. `:'No probability estimate is available. ')+(this.current?'':c?'These are the previous composition’s readings; outcome selection waits for the update. ':'')+ForecastViews.definition;
+    const status=`${messages[this.phase]||`${c?.n.toLocaleString('en-GB')} complete matched windows`}. ${this.view}. Fan ${this.fan?'on':'off'}.`;
+    if($('#forecast-status').textContent!==status)$('#forecast-status').textContent=status;
+    for(const pane of document.querySelectorAll('.pane')){pane.dataset.updating=String(!!Match.result&&!this.current);pane.setAttribute('aria-busy',String(busy));}
+    }
+    const key=`${this.view}|${this.prefix}|${this.selected}|${this.phase}`;
+    const sceneKey=`${this.view}|${this.prefix}`;
+    if(changed||sceneKey!==this.sceneKey&&(this.view==='branches'||this.sceneKey?.startsWith('branches|')))Stage.changeForecast();
+    this.sceneKey=sceneKey;
+    if(changed||key!==this.rendered){
+      const active=document.activeElement,focused=this.body.contains(active)?active?.dataset.key:null;
+      this.rendered=key;this.context?.cancelFor?.(this.body);this.context?.cancelFor?.(this.fanHits);
+      Flow.patch(this.body,this.markup(),false);
+      Flow.patch(this.fanHits,c?'<button type="button" class="forecast-fan-hit" data-kind="fan" aria-label="Historical closing-price fan"></button>'+c.fan.flatMap((q,j)=>q.map((_,k)=>`<span class="forecast-fan-point" data-step="${j}" data-quantile="${k}" data-key="fan-${j}-${k}"></span>`)).join(''):'',false);
+      this.placement=null;this.positions=new WeakMap();this.tipSource=null;
+      if(focused){const target=[...this.body.querySelectorAll('[data-key]')].find(b=>b.dataset.key===focused);target?.focus({preventScroll:true});}
+      App.redraw();
+    }
+    this.place(G,F);
+  },
+  outcomes(prefix=''){
+    if(this.cohortSource!==this.source){this.cohortSource=this.source;this.cohorts=new Map();}
+    if(!this.cohorts.has(prefix))this.cohorts.set(prefix,ForecastViews.outcomes(this.source,prefix));
+    return this.cohorts.get(prefix);
+  },
+  markup(){
+    const c=this.source,V=ForecastViews,escape=s=>String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;');
+    const stale=!this.current?' Previous composition’s result; wait for the current update.':'';
+    const tip=text=>`data-tip="${escape(text+stale)}"`;
+    const note=c?(this.view==='paths'?'Each row is an entire six-bar closing-state sequence, ranked by frequency. '+V.definition:this.view==='branches'?'Choose the next closing state to condition later columns on those earlier choices. '+V.definition:V.definition)+` All ${c.n.toLocaleString('en-GB')} complete matched windows contribute.`:'Waiting for complete matched windows; dashes are unavailable estimates, not zero.';
+    const heading=c&&this.view==='branches'&&this.prefix.length===6?V.pathTip(c,this.prefix):note;
+    let html=`<span class="forecast-note" data-kind="heading" ${tip(heading)}></span>`;
+    if(this.view==='paths'){
+      const leaders=c?.sequences.slice(0,4)||Array.from({length:4},()=>['',0]);
+      html+=leaders.map(([key,n],i)=>{
+        const text=c?V.pathTip(c,key):note;
+        return `<button type="button" class="forecast-path-row" data-kind="path" data-row="${i}" data-path="${key}" data-key="path-${key||i}" aria-pressed="${key===this.selected}" aria-disabled="${!this.current||!key}" aria-label="${escape(text)}" ${tip(text)}><span class="forecast-path-rate" ${tip(text)}>${c&&V.rate(n,c.n)?V.percent(V.rate(n,c.n)[0]):'–'}</span>${Array.from({length:6},(_,j)=>`<span class="forecast-path-mark" data-step="${j}" ${tip(key?`Bar +${j+1} closes ${V.names[key[j]].toLowerCase()}. This is one state of the complete sequence shown on this row; the row’s probability applies to all six states together. `+text:note)}></span>`).join('')}</button>`;
+      }).join('');
+      const other=c?c.n-leaders.reduce((n,[,k])=>n+k,0):0;
+      html+=`<span class="forecast-note" data-kind="other" ${tip(c?`${c.sequences.length-leaders.length} other complete sequences: ${V.interval(other,c.n)}. Together with the displayed rows these mutually exclusive sequences account for every complete window.`:note)}></span>`;
+    }else{
+      const prefix=this.view==='branches'?this.prefix:'',set=c?this.outcomes(prefix):null;
+      html+=Array.from({length:6},(_,j)=>V.states.map((s,k)=>{
+        const prior=this.view==='branches'&&j<prefix.length,n=set?.grid[j][k]||0;
+        const actionable=this.view==='branches'&&j===prefix.length&&n&&set.n>=30;
+        const selected=prior&&prefix[j]===s;
+        const text=c?(prior?(selected?`Bar +${j+1}, ${V.names[s]} is an earlier chosen closing state. Click to return before this bar and choose again.`:`Bar +${j+1}, ${V.names[s]} is excluded by your earlier choices.`):V.stateTip(c,prefix,j,s,set)+(this.view==='states'?' This coloured portion occupies that share of a column totaling 100%.':actionable?' Choose this outcome to update the following bars.':' Later columns describe the current cohort; they are not independent path odds.')):note;
+        const explanation=text+(c&&prefix.length===6?' '+V.pathTip(c,prefix):'');
+        return `<button type="button" class="forecast-cell-hit" data-kind="${this.view}" data-step="${j}" data-state="${s}" data-state-index="${k}" data-key="${this.view}-${j}-${s}" ${actionable?`data-prefix="${prefix+s}"`:selected?`data-prefix="${prefix.slice(0,j)}"`:''} aria-label="${escape(explanation)}" aria-disabled="${!this.current}" ${this.view==='branches'?`aria-pressed="${!!selected}"`:''} ${tip(explanation)}></button>`;
+      }).join('')).join('');
+      if(this.view==='branches')html+=`<button type="button" class="forecast-reset" data-kind="reset" data-prefix="" data-key="reset" aria-label="Return to the original combo" ${tip('Remove every chosen future state. Return all branch estimates to the original complete matching cohort.')}></button>`;
+    }
+    html+=Array.from({length:6},(_,j)=>`<span class="forecast-note" data-kind="step" data-step="${j}" ${tip(`Bar +${j+1}: ${j+1} bars after each matched combo, in that match’s timeframe. Selected timeframes are pooled; this column is not one fixed elapsed duration.`)}></span>`).join('');
+    return html;
+  },
+  place(G,F){
+    let lo=Infinity,hi=-Infinity;for(const b of S.bars){lo=Math.min(lo,b.dv[0]);hi=Math.max(hi,b.dv[3]);}
+    const placement=[G.w,G.h,G.forecastLeft,G.plotTop,G.plotBottom,...F.xs,F.width,lo,hi,Stage.view.lo,Stage.view.hi,this.semantic].join('|');
+    if(this.placement===placement)return;this.placement=placement;
+    const set=this.source?this.outcomes(this.view==='branches'?this.prefix:''):null;
+    this.positions??=new WeakMap();
+    const put=(el,x,y,w,h)=>{
+      const values=[x,y,Math.max(0,w),Math.max(0,h)].map(v=>Math.round(v*1000)/1000),before=this.positions.get(el);
+      if(!before){el.style.left='0px';el.style.top='0px';}
+      if(!before||before[0]!==values[0]||before[1]!==values[1])el.style.translate=`${values[0]}px ${values[1]}px`;
+      if(!before||before[2]!==values[2])el.style.width=`${values[2]}px`;
+      if(!before||before[3]!==values[3])el.style.height=`${values[3]}px`;
+      this.positions.set(el,values);
+    };
+    put($('#forecast-message'),F.left,F.top-22,F.right-F.left-50,22);put($('#forecast-retry'),F.right-48,F.top-22,48,22);
+    this.body.querySelectorAll('[data-kind]').forEach(el=>{
+      const j=+el.dataset.step,k=+el.dataset.stateIndex,kind=el.dataset.kind;
+      if(kind==='path'){
+        const row=+el.dataset.row;put(el,F.rateLeft,F.rowTop+row*F.rowHeight,F.right-F.rateLeft,F.rowHeight);
+        const rate=el.querySelector('.forecast-path-rate');put(rate,0,0,F.rateRight-F.rateLeft,F.rowHeight);rate.style.fontSize=`${F.rateFont}px`;
+        el.querySelectorAll('.forecast-path-mark').forEach((mark,i)=>put(mark,F.xs[i]-F.width/2-F.rateLeft,(F.rowHeight-18)/2,F.width,18));
+      }else if(kind==='states'){
+        const probs=set?.grid[j].map(n=>n/set.n)||[1/3,1/3,1/3];
+        put(el,F.xs[j]-F.width/2,F.top+F.height*probs.slice(0,k).reduce((a,b)=>a+b,0),F.width,F.height*probs[k]);
+      }else if(kind==='branches')put(el,F.xs[j]-F.width/2,F.branchTop+k*F.branchHeight,F.width,F.branchHeight-4);
+      else if(kind==='heading')put(el,F.left,F.top-2,Math.min(280,F.right-F.left),22);
+      else if(kind==='other')put(el,F.left,F.top+F.height-18,Math.min(220,F.right-F.left),20);
+      else if(kind==='reset')put(el,F.right-58,F.top,58,22);
+      else if(kind==='step')put(el,F.xs[j]-14,G.plotBottom+22,28,24);
+    });
+    this.fanHits.hidden=!this.fan||!this.source;
+    if(this.source){
+      const c=this.source,fan=this.fanHits.querySelector('[data-kind="fan"]');
+      const tipsChanged=this.tipSource!==c||this.tipCurrent!==this.current;
+      if(tipsChanged)fan.dataset.tip=ForecastViews.fanTip(c)+(this.current?'':' Previous composition’s fan.');
+      put(fan,G.forecastLeft+8,G.plotTop,F.xs[5]-G.forecastLeft-8,G.plotH);
+      this.fanHits.querySelectorAll('[data-quantile]').forEach(el=>{
+        const j=+el.dataset.step,k=+el.dataset.quantile,y=Stage.Y(lo+c.fan[j][k]*(hi-lo),G);
+        put(el,F.xs[j]-9,y-5,18,10);if(tipsChanged)el.dataset.tip=ForecastViews.fanTip(c,j,k)+(this.current?'':' Previous composition’s fan.');
+      });
+      this.tipSource=c;this.tipCurrent=this.current;
+    }
+  },
+};
+const Stage = {
+  wrap: $('#cvwrap'), cv: $('#cv'), hint: $('#hint'),
+  view: { cur: new Float64Array([0, 100]), vel: new Float64Array(2), tgt: new Float64Array([0, 100]), get lo() { return this.cur[0]; }, get hi() { return this.cur[1]; }, get tlo() { return this.tgt[0]; }, get thi() { return this.tgt[1]; } },
+  traces: [], scalarVelocity: {}, scene: 1, sceneVelocity: 0, ghosts: [], drag: null, hov: null, ptr: null, snapV: null, snapA: 0, fanA: 0, ready: false,
+  fanWeight: 1, exampleWeight: 0, futureBars: null,
+  plot: { cur: new Float64Array(2), vel: new Float64Array(2), tgt: new Float64Array(2), ready: false },
+  pinFrom: null, pinHov: null, pinPress: null, trace: null,
+  measureBox(){return this.box={w:this.wrap.clientWidth,h:this.wrap.clientHeight,hintTop:this.hint.offsetTop,hintHeight:this.hint.offsetHeight};},
+  geom() {
+    const {w,h,hintTop,hintHeight}=this.frameBox||this.measureBox(),N=S.bars.length;
+    // the plot starts below the hint, which wraps onto several lines on a phone. Where it starts and ends follows the
+    // canvas, but eases there and holds still while you drag, so a change of layout around the paper never jumps the drawing
+    const top = Math.max(70, hintTop + hintHeight + 24), P = this.plot;
+    const fixed=ForecastViews.geometry(w,N),bw=fixed.baseBw*(.55+S.space*.65);
+    const {spacing,xs}=fixed,extra=Forecast.reserve(w,fixed.forecastLeft,top);
+    P.tgt[0] = top; P.tgt[1] = Math.max(top + 160, h - 84 - extra);
+    if (!P.ready || calm()) { P.cur.set(P.tgt); P.vel.fill(0); P.ready = h > 0; }
+    const plotTop = P.cur[0], plotBottom = P.cur[1];
+    return { w, h, N, plotTop, plotBottom, plotH: plotBottom - plotTop, ...fixed,spacing,bw,xs };
+  },
+  Y(v, G) { const { lo, hi } = this.view; return G.plotBottom - (v - lo) / (hi - lo) * G.plotH; },
+  // frame the composition with room to pull past its extremes, and the whole fan when there is one; stay still unless
+  // the frame no longer fits well
+  fit(force) {
+    let mn = Infinity, mx = -Infinity;
+    for (const b of S.bars) for (let k = 0; k < 4; k++) { mn = Math.min(mn, b.v[k]); mx = Math.max(mx, b.v[k]); }
+    let lo = mn - Math.max(mx - mn, 1) * 0.22, hi = mx + Math.max(mx - mn, 1) * 0.22;
+    const c = Match.result && Match.result.panes && Match.result.panes.cont,hasFan=!!c&&mx>mn;
+    if (hasFan) {
+      // the fan's closes are in the shape's own scale: 0 is the drawing's low, 1 its high
+      let a = Infinity, z = -Infinity;
+      for (const q of c.fan) { a = Math.min(a, q[0]); z = Math.max(z, q[4]); }
+      const fLo = mn + a * (mx - mn), fHi = mn + z * (mx - mn), pad = (fHi - fLo) * 0.06;
+      lo = Math.min(lo, fLo - pad); hi = Math.max(hi, fHi + pad); mn = Math.min(mn, fLo); mx = Math.max(mx, fHi);
+    }
+    const span = Math.max(mx - mn, 1);
+    // The inset must fit inside the fan's 6% padding. A 7% inset
+    // immediately refitted even tiny updates and repainted every candle.
+    const cur = this.view.thi - this.view.tlo,inset=hasFan?.04:.07;
+    const inLo = this.view.tlo + cur * inset, inHi = this.view.thi - cur * inset;
+    if (force || !this.ready || mn < inLo || mx > inHi || span < cur * 0.4) { this.view.tgt[0] = lo; this.view.tgt[1] = hi; }
+    if (!this.ready || calm()) { this.view.cur.set(this.view.tgt); this.view.vel.fill(0); this.ready = true; }
+  },
+  retire(b) {
+    if (!calm() && b.x !== null && b.a > 0) this.ghosts.push({ dv: Float64Array.from(b.dv), x: b.x, col: b.col.slice(), a: b.a, va: b.va, startX: b.x, vx: b.vx });
+  },
+  scalar(key, target, dt, epsilon = .002) {
+    const values = [this[key]], velocities = [this.scalarVelocity[key] || 0];
+    const busy = Flow.advance(values, velocities, [target], dt, epsilon, calm());
+    this[key] = clamp(values[0], 0, 1); this.scalarVelocity[key] = velocities[0];
+    return busy;
+  },
+  changeForecast() {
+    if (this.forecastSurface?.flowBox && !calm()) {
+      const current=this.forecastSurface,old=this.departingForecast,C=current.flowBox,O=old?.flowBox;
+      const box={x:Math.min(C.x,O?.x??C.x),y:Math.min(C.y,O?.y??C.y)};
+      box.w=Math.max(C.x+C.w,O?O.x+O.w:0)-box.x;box.h=Math.max(C.y+C.h,O?O.y+O.h:0)-box.y;
+      const snapshot=document.createElement('canvas'),ctx=fitCanvas(snapshot,box.w,box.h);ctx.translate(-box.x,-box.y);
+      const opacity=canvas=>{const n=parseFloat(canvas.style.opacity);return Number.isFinite(n)?n:1;};
+      ctx.globalAlpha=opacity(current);
+      if(this.washState)this.paintWash(ctx,this.washState);
+      paintCanvas(ctx,current,C.x,C.y,C.w,C.h);
+      if(old){ctx.globalCompositeOperation='destination-over';ctx.globalAlpha=opacity(old);paintCanvas(ctx,old,O.x,O.y,O.w,O.h);}
+      old?.remove();current.remove();this.departingForecast=snapshot;this.forecastSurface=null;this.layer(snapshot,box);snapshot.style.opacity='1';
+      this.scene = 0;
+    } else { this.scene = 1; this.sceneVelocity = 0; this.departingForecast?.remove();this.departingForecast = null; }
+  },
+  settle(paint=true) {
+    const G = this.geom(),id=identity(); this.view.cur.set(this.view.tgt); this.view.vel.fill(0); this.plot.cur.set(this.plot.tgt); this.plot.vel.fill(0);
+    S.bars.forEach((b,i) => { b.x = G.xs[i]; b.vx = 0; b.dv.set(b.v); b.vv.fill(0); b.a = 1; b.va = 0; b.col=(S.colored?COL.rgb[id.d[i]]:COL.rgb.z).slice(); });
+    this.ghosts = []; this.traces = []; this.scene = 1; this.sceneVelocity = 0; this.departingForecast?.remove();this.departingForecast = null;
+    this.modeMix = Forecast.view === 'paths' ? 1 : 0; this.fanWeight = Forecast.fan ? 1 : 0;
+    this.fanA = Match.fresh() && !Match.failed ? 1 : Forecast.source ? .35 : 0;
+    this.tracePresence = this.trace ? 1 : 0;
+    if (this.trace) { this.trace.a = 1; this.trace.va = 0; }
+    this.scalarVelocity = {}; if(paint)this.draw();
+  },
+  step(dt) {
+    let busy = false;
+    Forecast.sync(this.geom());
+    const span = this.view.thi - this.view.tlo;
+    if (!this.drag && Flow.bounds(this.view.cur,this.view.vel,this.view.tgt,dt,calm())) busy = true;
+    this.geom();
+    if (!this.drag && Flow.bounds(this.plot.cur,this.plot.vel,this.plot.tgt,dt,calm())) busy = true;
+    const G = this.geom(), id = identity();
+    this.modeMix ??= Forecast.view === 'paths' ? 1 : 0;
+    this.tracePresence ??= this.trace ? 1 : 0;
+    for (const [key,target] of [['modeMix',Forecast.view === 'paths' ? 1 : 0],['fanWeight',Forecast.fan ? 1 : 0],['tracePresence',this.trace ? 1 : 0],['fanA',Match.fresh() && !Match.failed ? 1 : Forecast.source ? .35 : 0]]) if (this.scalar(key,target,dt)) busy = true;
+    if (this.departingForecast) {
+      const x=[this.scene],v=[this.sceneVelocity];
+      if (Flow.advance(x,v,[1],dt,.002,calm())) busy=true;
+      else{this.departingForecast.remove();this.departingForecast=null;}
+      this.scene=clamp(x[0],0,1);this.sceneVelocity=v[0];
+    }
+    S.bars.forEach((b,i) => {
+      const tx = G.xs[i]; if (b.x == null) { b.x = calm() ? tx : tx + Flow.model.travel; b.vx = 0; }
+      const x = [b.x], v = [b.vx];
+      if (Flow.advance(x,v,[tx],dt,.05,calm())) busy=true;
+      b.x=x[0];b.vx=v[0];
+      if (!(this.drag && this.drag.bar === i) && Flow.advance(b.dv,b.vv,b.v,dt,span*1e-4,calm())) busy=true;
+      // A spring may overshoot a collapsed shadow; the visual must still be a candle.
+      for(let k=1;k<4;k++)if(b.dv[k]<b.dv[k-1]){b.dv[k]=b.dv[k-1];b.vv[k]=0;}
+      const alpha=[b.a],av=[b.va];if(Flow.advance(alpha,av,[1],dt,.002,calm()))busy=true;
+      b.a=clamp(alpha[0],0,1);b.va=av[0];b.col=(S.colored?COL.rgb[id.d[i]]:COL.rgb.z).slice();
+    });
+    for(const g of this.ghosts){
+      const x=[g.x],v=[g.vx],a=[g.a],av=[g.va];
+      Flow.advance(x,v,[g.startX+Flow.model.travel],dt,.05,calm());Flow.advance(a,av,[0],dt,.002,calm());
+      g.x=x[0];g.vx=v[0];g.a=clamp(a[0],0,1);g.va=av[0];
+    }
+    this.ghosts=this.ghosts.filter(g=>g.a>.001);if(this.ghosts.length)busy=true;
+    for(const trace of [...this.traces,...(this.trace?[this.trace]:[])]){
+      const a=[trace.a],v=[trace.va||0];if(Flow.advance(a,v,[trace.retiring?0:1],dt,.002,calm()))busy=true;
+      trace.a=clamp(a[0],0,1);trace.va=v[0];
+    }
+    this.traces=this.traces.filter(t=>t.a>.001);
+    return busy;
+  },
+  hit(px, py) {
+    const G = this.geom();
+    for (let i = 0; i < G.N; i++) {
+      const b = S.bars[i], cx = b.x == null ? G.xs[i] : b.x;
+      if (Math.abs(px - cx) > G.spacing / 2) continue;
+      if (py < G.plotTop - 40) return null;
+      if (py > G.plotBottom + 12) return { kind: 'grip', bar: i };
+      // what you grab is what you see, even while the bar is still easing to where it goes
+      const yB = this.Y(b.dv[1], G), yT = this.Y(b.dv[2], G), bodyH = yB - yT;
+      const noU = b.v[3] === b.v[2], noL = b.v[0] === b.v[1];
+      if (bodyH < 6) {
+        if (Math.abs(py - (yT + yB) / 2) <= 10) return { kind: 'doji', bar: i };
+        return py < yT ? { kind: 'end', bar: i, group: [3], part: 'H' } : { kind: 'end', bar: i, group: [0], part: 'L' };
+      }
+      const edge = clamp(bodyH * 0.26, 6, 14);
+      if (py < yT - edge) return { kind: 'end', bar: i, group: [3], part: 'H' };
+      if (py <= yT + edge) return { kind: 'end', bar: i, group: noU ? [2, 3] : [2], part: 'T' };
+      if (py < yB - edge) return { kind: 'move', bar: i };
+      if (py <= yB + edge) return { kind: 'end', bar: i, group: noL ? [1, 0] : [1], part: 'B' };
+      return { kind: 'end', bar: i, group: [0], part: 'L' };
+    }
+    return null;
+  },
+  /* ----- pins: points you can tie together, drawn where the bars are now ----- */
+  points(i) {
+    const v = S.bars[i].v, out = [['T', 2], ['B', 1]];
+    if (v[3] !== v[2]) out.unshift(['H', 3]);
+    if (v[0] !== v[1]) out.push(['L', 0]);
+    if (v[1] === v[2]) out.splice(out.findIndex(p => p[0] === 'B'), 1);
+    return out.map(([part, k]) => ({ bar: i, part, k }));
+  },
+  at(p, G) { const b = S.bars[p.bar]; return { x: b.x == null ? G.xs[p.bar] : b.x, y: this.Y(b.dv[PART_K[p.part]], G) }; },
+  knotAt(pin, G) {
+    if (pin.color) { const b = S.bars[pin.bar], cx = b.x == null ? G.xs[pin.bar] : b.x; return { x: cx - G.bw / 2 - 11, y: (this.Y(b.dv[1], G) + this.Y(b.dv[2], G)) / 2 }; }
+    const A = this.at(pin.a, G), B = this.at(pin.b, G); return { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+  },
+  pinHit(px, py) {
+    const G = this.geom();
+    for (let i = S.pins.length - 1; i >= 0; i--) { const k = this.knotAt(S.pins[i], G); if (Math.hypot(px - k.x, py - k.y) <= 10) return { kind: 'knot', index: i }; }
+    let best = null, bd = 17;
+    for (let i = 0; i < S.bars.length; i++) for (const p of this.points(i)) { const q = this.at(p, G), d = Math.hypot((px - q.x) * 0.8, py - q.y); if (d < bd) { bd = d; best = { kind: 'point', bar: p.bar, part: p.part }; } }
+    if (best) return best;
+    for (let i = 0; i < S.bars.length; i++) {
+      const b = S.bars[i], cx = b.x == null ? G.xs[i] : b.x, yT = this.Y(b.dv[2], G), yB = this.Y(b.dv[1], G);
+      if (Math.abs(px - cx) <= G.bw / 2 + 4 && py >= yT - 2 && py <= yB + 2) return { kind: 'body', bar: i };
+    }
+    return null;
+  },
+  pinWord(h) {
+    if (!h) return this.pinFrom ? `Bar ${this.pinFrom.bar + 1} ${partName(this.pinFrom.bar, this.pinFrom.part)} · now tap a second point` : '';
+    if (h.kind === 'knot') { const p = S.pins[h.index]; if (!p) return ''; return p.color ? `Holding bar ${p.bar + 1}'s colour · tap to let it go` : `Holding bar ${p.a.bar + 1} ${partName(p.a.bar, p.a.part)} ${relWordOf(sgn(S.bars[p.a.bar].v[PART_K[p.a.part]] - S.bars[p.b.bar].v[PART_K[p.b.part]]))} bar ${p.b.bar + 1} ${partName(p.b.bar, p.b.part)} · tap to let it go`; }
+    if (h.kind === 'body') return S.colored ? `Hold bar ${h.bar + 1}'s colour` : 'Colours are not part of shape only';
+    const name = `Bar ${h.bar + 1} ${partName(h.bar, h.part)}`;
+    if (!this.pinFrom || (this.pinFrom.bar === h.bar && this.pinFrom.part === h.part)) return `${name} · tap to start a pin`;
+    const f = this.pinFrom, r = sgn(S.bars[f.bar].v[PART_K[f.part]] - S.bars[h.bar].v[PART_K[h.part]]);
+    return `Bar ${f.bar + 1} ${partName(f.bar, f.part)} ${relWordOf(r)} ${name.toLowerCase()} · tap to hold`;
+  },
+  // a bar or pin that is gone must not stay under the pointer or at the start of a pin
+  dropStale() {
+    const n = S.bars.length, gone = h => !!h && ((h.kind === 'knot' && !S.pins[h.index]) || (h.bar != null && h.bar >= n));
+    if (this.pinFrom && this.pinFrom.bar >= n) this.pinFrom = null;
+    if (gone(this.pinHov)) this.pinHov = null;
+    if (gone(this.hov)) this.hov = null;
+  },
+  pinDown(p) {
+    const h = this.pinHit(p.x, p.y);
+    if (h && h.kind === 'knot') { this.pinFrom = null; this.pinHov = null; Ops.unpin(h.index); return; }
+    if (h && h.kind === 'body') { this.pinFrom = null; if (S.colored) Ops.colorPin(h.bar); return; }
+    if (h && h.kind === 'point') {
+      const pt = { bar: h.bar, part: h.part };
+      if (this.pinFrom && !(this.pinFrom.bar === pt.bar && this.pinFrom.part === pt.part)) { const a = this.pinFrom; this.pinFrom = null; Ops.pin(a, pt); return; }
+      this.pinFrom = pt; this.pinPress = { x: p.x, y: p.y }; App.redraw(); return;
+    }
+    this.pinFrom = null; App.redraw();
+  },
+  pinUp(p) {
+    const press = this.pinPress; this.pinPress = null;
+    if (!press || !this.pinFrom || Math.hypot(p.x - press.x, p.y - press.y) < 8) return;
+    const h = this.pinHit(p.x, p.y);
+    if (h && h.kind === 'point' && !(h.bar === this.pinFrom.bar && h.part === this.pinFrom.part)) { const a = this.pinFrom; this.pinFrom = null; Ops.pin(a, { bar: h.bar, part: h.part }); }
+  },
+  partWord(h) {
+    if (!h) return '';
+    const b = S.bars[h.bar], d = identity().d[h.bar], name = k => { const n = epName(d, k); return EP_JA[n] && S.colored ? `${n} · ${EP_JA[n]}` : n; };
+    if (h.kind === 'grip') return `Bar ${h.bar + 1} · drag to move it`;
+    if (h.kind === 'move') return h.bar === 0 ? (S.colored ? 'drag to move · tap to change colour' : 'drag to move this bar') : `drag to swing its close and shadows · it opens where Bar ${h.bar} closed`;
+    if (h.kind === 'doji') return h.bar === 0 ? 'drag up or down to open a body' : 'drag its close up or down: up rises, down falls';
+    if (h.part === 'H') return b.v[3] === b.v[2] ? 'pull up for an upper shadow' : name(3);
+    if (h.part === 'L') return b.v[0] === b.v[1] ? 'pull down for a lower shadow' : name(0);
+    const k = h.part === 'T' ? 2 : 1;
+    // a later bar's open is the previous bar's close: holding it moves both
+    if (h.bar > 0 && b.v[1] !== b.v[2] && k === (b.d === 'u' ? 1 : 2)) return `${name(k)} · where Bar ${h.bar} closed · drag to move both`;
+    return name(k);
+  },
+  // where a point sits against its neighbours, in words
+  relWord(i, k) {
+    const v = S.bars[i].v[k], id = identity(), parts = [];
+    for (const j of [i - 1, i + 1]) {
+      if (j < 0 || j >= S.bars.length) continue;
+      const o = S.bars[j].v, dj = id.d[j], nm = `Bar ${j + 1}`;
+      let w = null;
+      for (let q = 0; q < 4; q++) if (o[q] === v) { w = `at ${nm}'s ${epName(dj, q)}`; break; }
+      if (!w) {
+        if (v < o[0]) w = `below ${nm}`; else if (v > o[3]) w = `above ${nm}`;
+        else for (let q = 1; q < 4; q++) if (v < o[q]) { w = `inside ${nm}'s ${SEG_NAME[q - 1]}`; break; }
+      }
+      parts.push(w);
+    }
+    for (let j = 0; j < S.bars.length; j++) if (Math.abs(j - i) > 1 && S.bars[j].v.includes(v)) parts.push(`level with Bar ${j + 1}`);
+    return parts.join(' · ');
+  },
+  local(e) { const r = this.cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; },
+  down(e) {
+    if (e.button !== 0) return;
+    const p = this.local(e);
+    if (S.pinMode) { e.preventDefault(); this.cv.focus({ preventScroll: true }); this.cv.setPointerCapture(e.pointerId); this.ptr = p; this.pinDown(p); return; }
+    const h = this.hit(p.x, p.y); if (!h) return;
+    e.preventDefault(); this.cv.focus({ preventScroll: true });
+    this.cv.setPointerCapture(e.pointerId);
+    if (S.sel !== h.bar) Ops.select(h.bar);
+    // the drawing stays exactly where it is under the pointer: a frame still easing stops where it is, not where it was going
+    this.view.tgt.set(this.view.cur); this.view.vel.fill(0);
+    this.plot.tgt.set(this.plot.cur);this.plot.vel.fill(0);
+    const presented=S.bars.map(b=>({v:Array.from(b.dv),d:b.d}));
+    this.drag = { ...h, y0:p.y, base:presented.map(b=>Float64Array.from(b.v)), P:chainParams(presented),start:snap(),moved:false };
+    this.ptr = p; App.kick();
+  },
+  move(e) {
+    const p = this.local(e); this.ptr = p;
+    if (S.pinMode) { this.pinHov = this.pinHit(p.x, p.y); this.cv.style.cursor = this.pinHov ? 'pointer' : 'crosshair'; App.redraw(); return; }
+    if (!this.drag) { const h = this.hit(p.x, p.y); this.hov = h; this.cv.style.cursor = !h ? '' : h.kind === 'move' || h.kind === 'grip' ? 'grab' : 'ns-resize'; App.redraw(); return; }
+    this.dragTo(p, e.altKey);
+  },
+  // The part you hold is a continuous, monotonic function of the pointer: a press eases into a drag (eased), the canvas
+  // edges give like rubber (give), and near another level the part eases onto it, rests there exactly and eases off
+  // again (detent); ⌥ passes levels freely. Everything is measured in px on the frame as it stood at the press, which
+  // stays still until you let go and then grows, if it must, to take the drawing in.
+  // 鎖: a drag moves one of the drawing's free prices (a close, the first bar's open, a low or a high) and the chain makes
+  // the bars from them, so the next bar opens where the moved one closes and every colour is which way its bar went.
+  dragTo(p, free) {
+    const d = this.drag, G = this.geom(), i = d.bar, n = S.bars.length, own = d.base[i], P0 = d.P;
+    const raw = p.y - d.y0, dy = eased(raw);
+    if (!d.moved && Math.abs(raw) >= SLOP) { d.moved = true; if (d.kind === 'move' || d.kind === 'grip') this.cv.style.cursor = 'grabbing'; }
+    const Y = v => this.Y(v, G), per = (this.view.hi - this.view.lo) / G.plotH, V = y => this.view.lo + (G.plotBottom - y) * per;
+    const top = 6, bottom = G.h - 6;
+    // where each bar's open and close sat at the press, and the prices this drag carries; every other price is a level
+    const oK = j => (P0.d[j] === 'u' ? 1 : 2), cK = j => 3 - oK(j);
+    const carried = new Set(), carry = (j, k) => carried.add(j * 4 + k);
+    const levels = () => { const out = []; d.base.forEach((v, j) => { for (let k = 0; k < 4; k++) if (!carried.has(j * 4 + k)) out.push(v[k]); }); return out; };
+    let P, lead;
+    this.snapV = null; this.snapA = 0;
+    if (d.kind === 'move' || d.kind === 'grip') {
+      // the first bar moves whole; a later one swings from its open, its close and shadows moving together
+      const moving = i === 0 ? [0, 1, 2, 3] : [0, cK(i), 3];
+      for (const k of moving) carry(i, k);
+      if (i + 1 < n) carry(i + 1, oK(i + 1));
+      // the places where one of the moving prices meets a level, as offsets from where the bar started
+      const marks = [];
+      for (const o of levels()) for (const k of moving) marks.push({ y: Y(o) - Y(own[k]), k, o });
+      // a bar that starts near a level starts at rest where it is, so that level's pull never moves it at the press
+      if (marks.some(m => Math.abs(m.y) < DETENT_REACH)) marks.push({ y: 0, k: moving[0], o: own[moving[0]], start: true });
+      const set = markSet(marks), lo = top - Y(own[3]), hi = bottom - Y(own[0]);
+      const u = lo < hi ? give(dy, lo, hi) : dy, r = free ? null : detent(u, set.map(m => m.y));
+      const m = r && r.at ? set[r.j] : null;
+      P = moveParams(P0, i, m ? m.o - own[m.k] : -(r ? r.y : u) * per);
+      // resting on a level is meeting it exactly: the prices that met it take its value, not a sum that may round
+      if (m) { const at = own[m.k]; if (i === 0 && P0.o0 === at) P.o0 = m.o; if (P0.c[i] === at) P.c[i] = m.o; if (P0.l[i] === at) P.l[i] = m.o; if (P0.h[i] === at) P.h[i] = m.o; }
+      if (r && r.j >= 0 && !set[r.j].start) { this.snapV = set[r.j].o; this.snapA = r.near; lead = set[r.j].k; }
+    } else {
+      // the free price the part is: a shadow's end, a close, the first bar's open, or the open of a later bar, which is
+      // the previous bar's close; a doji's point is its close. A close carries the shadow ends that sit on it
+      // which one is decided once, at the press: a close that crosses its open and turns the bar stays the held close
+      if (d.which == null) {
+        let w = 'c', of = i;
+        if (d.part === 'H') w = 'h';
+        else if (d.part === 'L') w = 'l';
+        else if (!(d.kind === 'doji' || own[1] === own[2]) && (d.part === 'T' ? 2 : 1) !== cK(i)) { if (i === 0) w = 'o0'; else of = i - 1; }
+        d.which = w; d.of = of; d.kind = 'end';
+      }
+      const which = d.which, j = d.of, flush = [];   // shadow ends that sit on a moving end, as [bar, 'h' | 'l']
+      const sits = (q, k) => { if (k === 2 && d.base[q][3] === d.base[q][2]) { carry(q, 3); flush.push([q, 'h']); } if (k === 1 && d.base[q][0] === d.base[q][1]) { carry(q, 0); flush.push([q, 'l']); } };
+      let from;
+      if (which === 'h') { carry(i, 3); from = P0.h[i]; }
+      else if (which === 'l') { carry(i, 0); from = P0.l[i]; }
+      else if (which === 'o0') { carry(0, oK(0)); sits(0, oK(0)); from = P0.o0; }
+      else { carry(j, cK(j)); sits(j, cK(j)); if (j + 1 < n) { carry(j + 1, oK(j + 1)); sits(j + 1, oK(j + 1)); } from = P0.c[j]; }
+      const u0 = Y(from), marks = levels().map(o => ({ y: Y(o), v: o }));
+      // a part that starts near a level starts at rest where it is, so that level's pull never moves it at the press
+      if (marks.some(m => Math.abs(m.y - u0) < DETENT_REACH)) marks.push({ y: u0, v: from, start: true });
+      const set = markSet(marks), u = give(u0 + dy, top, bottom), r = free ? null : detent(u, set.map(m => m.y));
+      const v = r && r.at ? set[r.j].v : V(r ? r.y : u);
+      if (r && r.j >= 0 && !set[r.j].start) { this.snapV = set[r.j].v; this.snapA = r.near; }
+      P = copyParams(P0);
+      if (which === 'h') P.h[i] = v; else if (which === 'l') P.l[i] = v; else if (which === 'o0') P.o0 = v; else P.c[j] = v;
+      for (const [q, s] of flush) P[s][q] = v;
+    }
+    // the bars the prices make; the ones that changed follow the pointer directly
+    const out = chainBars(P);
+    S.bars.forEach((b, q) => { if (b.d !== out[q].d || b.v.some((x, k) => x !== out[q].v[k])) { b.v.set(out[q].v); b.d = out[q].d; b.dv.set(b.v); b.vv.fill(0); } });
+    // what the held part is now: a close may have crossed its open and turned the bar
+    const nd = S.bars[i].d;
+    if (lead == null) lead = d.which === 'h' ? 3 : d.which === 'l' ? 0 : d.which === 'o0' || (d.which === 'c' && d.of === i - 1) ? (nd === 'u' ? 1 : 2) : (nd === 'u' ? 2 : 1);
+    if (d.kind === 'end') d.part = ['L', 'B', 'T', 'H'][lead];
+    d.lead = lead;
+    d.word = this.relWord(i, d.lead);
+    refresh();
+  },
+  up(e) {
+    // a drag that began before pin mode was switched on still ends as a drag, so its search is scheduled
+    if (S.pinMode && !this.drag) { if (e && e.type === 'pointerup') this.pinUp(this.local(e)); return; }
+    const d = this.drag; if (!d) return;
+    this.drag = null; this.snapV = null; this.snapA = 0; this.cv.style.cursor = '';
+    if (!d.moved) {
+      // a tap: whatever the press moved by a hair, on the bar or its neighbours, goes back exactly
+      S.bars.forEach((b,q)=>{b.v.set(d.start.bars[q].v);b.d=d.start.bars[q].d;});
+      if (d.kind === 'move') Ops.flip(d.bar);
+      refresh(); return;
+    }
+    const changed = S.bars.some((b,i)=>b.d!==d.start.bars[i].d||b.v.some((x,k)=>x!==d.start.bars[i].v[k]));
+    if (changed) pushHist(d.start);
+    this.fit(); refresh();
+  },
+  draw() {
+    const G = this.geom(); if (!G.w || !G.h) return;
+    this.drawForecast(null,G);
+    // Forecast crossfades and retained DOM departures do not change the root
+    // drawing. Leave its native pixels alone until a drawing input changes.
+    const quiet=!this.drag&&!this.hov&&!this.ptr&&!S.pinMode&&!S.pins.length&&!S.skel&&!this.trace&&!this.ghosts.length&&!this.traces.length;
+    const paintKey=quiet?JSON.stringify([this.paintVersion||0,Math.min(2,devicePixelRatio||1),G.w,G.h,G.plotTop,G.plotBottom,G.bw,
+      this.view.lo,this.view.hi,S.sel,S.colored,this.snapV,this.snapA,...S.bars.map(b=>[b.d,b.x,b.a,...b.v,...b.dv])]):null;
+    if(paintKey!==null&&this.rootPaintKey===paintKey)return;
+    this.rootPaintKey=null;
+    const ctx = fitCanvas(this.cv, G.w, G.h, Math.min(2, devicePixelRatio || 1), true), id = identity();
+    // Preserve a native-density backing store across reference-panel pixels.
+    // The wrapper clips spare capacity; CSS never scales the drawn coordinates.
+    const width = `${this.cv.width / this.cv.flowDpr}px`, height = `${this.cv.height / this.cv.flowDpr}px`;
+    if (this.cv.style.width !== width) this.cv.style.width = width;
+    if (this.cv.style.height !== height) this.cv.style.height = height;
+    // Capacity outside the live viewport stays clipped. Clear newly exposed
+    // pixels on expansion, without repainting the reserved backing store.
+    const clearW=Math.ceil(G.w*this.cv.flowDpr)/this.cv.flowDpr,clearH=Math.ceil(G.h*this.cv.flowDpr)/this.cv.flowDpr;
+    ctx.clearRect(0, 0, clearW, clearH);
+    if(!this.guideSurface)this.guideSurface=document.createElement('canvas');
+    const guide=fitCanvas(this.guideSurface,G.w,G.h,Math.min(2,devicePixelRatio||1),true);this.layer(this.guideSurface,{x:0,y:0,w:G.w,h:G.h},true);
+    guide.clearRect(0,0,clearW,clearH);
+    const Y = v => this.Y(v, G), x0 = 24, x1 = G.w - 52;
+    // Keep the root levels as faint rules; rank labels would overlap the future columns.
+    const sb = S.bars[S.sel];
+    const seen = new Set();
+    for (let k = 3; k >= 0; k--) {
+      const rank = id.r[S.sel * 4 + k]; if (seen.has(rank)) continue; seen.add(rank);
+      const y = Math.round(Y(sb.dv[k])) + 0.5;
+      guide.strokeStyle = COL.mist; guide.lineWidth = 1; guide.setLineDash([1, 4]);
+      guide.beginPath(); guide.moveTo(x0, y); guide.lineTo(x1, y); guide.stroke(); guide.setLineDash([]);
+    }
+    // 鎖: each bar opens where the one before it closed, a hairline from that close to this open
+    guide.strokeStyle = COL['ink-3']; guide.lineWidth = 1; guide.globalAlpha = this.trace ? 0.25 : 0.6;
+    for (let i = 1; i < G.N; i++) {
+      const a = S.bars[i - 1], c = S.bars[i], y = Y(closeOf(a.dv, a.d)), x0 = a.x + G.bw / 2, x1 = c.x - G.bw / 2;
+      if (x1 > x0) { guide.beginPath(); guide.moveTo(x0, y); guide.lineTo(x1, y); guide.stroke(); }
+    }
+    // exact ties between bars, besides the chain itself: the only equalities the engine sees
+    guide.strokeStyle = COL.ai; guide.lineWidth = 1; guide.setLineDash([3, 4]); guide.globalAlpha = this.trace ? 0.3 : 0.8;
+    for (let i = 0; i < G.N; i++) for (let j = i + 1; j < G.N; j++) {
+      const a = S.bars[i], c = S.bars[j], done = new Set(j === i + 1 ? [closeOf(a.v, a.d)] : []);
+      for (let k = 0; k < 4; k++) for (let q = 0; q < 4; q++) if (a.v[k] === c.v[q] && !done.has(a.v[k])) {
+        done.add(a.v[k]); const y = Math.round(Y(a.dv[k])) + 0.5;
+        guide.beginPath(); guide.moveTo(a.x, y); guide.lineTo(c.x, y); guide.stroke();
+      }
+    }
+    guide.setLineDash([]); guide.globalAlpha = 1;ctx.setLineDash([]); ctx.globalAlpha = 1;
+    // the level a dragged part is easing onto, drawn in as it comes near and full once it rests there
+    if (this.snapV !== null && this.snapA > 0.02) {
+      const y = Math.round(Y(this.snapV)) + 0.5;
+      guide.strokeStyle = COL.ai; guide.lineWidth = 1.2; guide.globalAlpha = this.snapA * this.snapA; guide.beginPath(); guide.moveTo(x0, y); guide.lineTo(x1, y); guide.stroke(); guide.globalAlpha = 1;
+    }
+    for (const g of this.ghosts) this.drawCandle(ctx, G, g.x, g.dv, g.col, g.a);
+    S.bars.forEach((b, i) => this.drawBar(ctx, G, i));
+
+    this.drawFutureLabels(ctx, G);
+    for(const trace of this.traces)this.drawTrace(ctx,G,trace);
+    this.drawTrace(ctx, G);
+    this.drawSkeleton(ctx, G);
+    this.drawPins(ctx, G);
+    const label = S.pinMode ? this.pinWord(this.pinHov) : null;
+    const hv = this.drag || this.hov;
+    if (this.ptr && (S.pinMode ? label : hv)) {
+      const t = S.pinMode ? label : this.drag && this.drag.moved ? `Bar ${this.drag.bar + 1} ${epName(id.d[this.drag.bar], this.drag.lead)} · ${this.drag.word || ''}` : this.partWord(hv);
+      ctx.font = `400 12px ${FONT_UI}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(t).width, x = clamp(this.ptr.x + 16, 8, G.w - tw - 24), y = clamp(this.ptr.y - 18, 14, G.h - 14);
+      ctx.fillStyle = COL['paper-2']; ctx.globalAlpha = 0.95; rr(ctx, x - 8, y - 11, tw + 16, 22, 5); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.fillStyle = COL.ink; ctx.fillText(t, x, y + 0.5);
+    }
+    this.rootPaintKey=paintKey;
+  },
+  drawCandle(ctx, G, cx, dv, col, a) {
+    const Y = v => this.Y(v, G), bw = G.bw, yL = Y(dv[0]), yB = Y(dv[1]), yT = Y(dv[2]), yH = Y(dv[3]);
+    const ww = clamp(bw * 0.05, 1.4, 2.6);
+    ctx.globalAlpha = a; ctx.fillStyle = rgbStr(col);
+    if (yL - yH > 0.5) { rr(ctx, cx - ww / 2, yH, ww, yL - yH, ww / 2); ctx.fill(); }
+    const bh = Math.max(2.5, yB - yT); rr(ctx, cx - bw / 2, (yT + yB) / 2 - bh / 2, bw, bh, clamp(bw * 0.05, 1.5, 3)); ctx.fill();
+    ctx.strokeStyle = COL.ink; ctx.globalAlpha = a * 0.1; ctx.lineWidth = 1; ctx.stroke();
+    ctx.globalAlpha = 1;
+    return { yL, yB, yT, yH };
+  },
+  drawBar(ctx, G, i) {
+    const b = S.bars[i], cx = b.x, bw = G.bw, sel = S.sel === i && !S.pinMode, act = S.pinMode ? null : this.drag || this.hov;
+    const { yL, yB, yT, yH } = this.drawCandle(ctx, G, cx, b.dv, b.col, b.a);
+    const col = rgbStr(b.col), bh = Math.max(2.5, yB - yT);
+    if (act && act.bar === i && !(this.drag && this.drag.moved && this.drag.kind !== 'end')) {
+      ctx.fillStyle = COL['ai-soft'];
+      const part = act.part, k = act.kind;
+      if (k === 'move' || k === 'grip') { rr(ctx, cx - bw / 2 - 6, yT - 6, bw + 12, bh + 12, 6); ctx.fill(); }
+      else if (k === 'doji' || part === 'T' || part === 'B') { const y = part === 'B' ? yB : yT; rr(ctx, cx - bw / 2 - 8, y - 5, bw + 16, 10, 5); ctx.fill(); }
+      else if (part === 'H') { const top = b.v[3] === b.v[2] && !(this.drag && this.drag.moved) ? yT - 26 : yH - 8; rr(ctx, cx - 11, top, 22, Math.max(14, yT - top), 9); ctx.fill(); }
+      else if (part === 'L') { const bot = b.v[0] === b.v[1] && !(this.drag && this.drag.moved) ? yB + 26 : yL + 8; rr(ctx, cx - 11, yB, 22, Math.max(14, bot - yB), 9); ctx.fill(); }
+    }
+    if (sel || (act && act.bar === i)) {
+      ctx.globalAlpha = sel ? 1 : 0.6;
+      ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.fillStyle = COL.paper;
+      const ring = (x, y, rad) => { ctx.beginPath(); ctx.arc(x, y, rad, 0, 6.2832); ctx.fill(); ctx.stroke(); };
+      const noU = Math.abs(yH - yT) < 0.5, noL = Math.abs(yL - yB) < 0.5;
+      if (!noU) ring(cx, yH, 3.6);
+      if (!noL) ring(cx, yL, 3.6);
+      ctx.strokeStyle = COL['ink-3']; ctx.setLineDash([2, 3]);
+      if (noU) { ctx.beginPath(); ctx.moveTo(cx, yT - 4); ctx.lineTo(cx, yT - 18); ctx.stroke(); ctx.setLineDash([]); ring(cx, yT - 21, 3); ctx.setLineDash([2, 3]); }
+      if (noL) { ctx.beginPath(); ctx.moveTo(cx, yB + 4); ctx.lineTo(cx, yB + 18); ctx.stroke(); ctx.setLineDash([]); ring(cx, yB + 21, 3); }
+      ctx.setLineDash([]);
+      ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+      const tk = 3 + clamp((G.spacing - bw) / 2 - 4, 2, 6);
+      for (const y of [yT, yB]) { ctx.beginPath(); ctx.moveTo(cx - bw / 2 - tk, y); ctx.lineTo(cx - bw / 2 - 3, y); ctx.moveTo(cx + bw / 2 + 3, y); ctx.lineTo(cx + bw / 2 + tk, y); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    }
+    const gy = G.plotBottom + 34, selLabel = S.sel === i;
+    ctx.globalAlpha = b.a; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = selLabel ? COL.ink : COL['ink-3'];
+    if (G.spacing >= 64) { ctx.font = `500 12.5px ${FONT_UI}`; ctx.fillText(`Bar ${i + 1}`, cx, gy); ctx.font = `500 11px ${FONT_MIN}`; ctx.fillText(ORD_JA[i], cx, gy + 16); }
+    else { ctx.font = `500 13px ${FONT_MIN}`; ctx.fillText(String(i + 1), cx, gy + 6); }
+    if (selLabel) { ctx.strokeStyle = COL.ai; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(cx - 13, gy + 30); ctx.quadraticCurveTo(cx, gy + 28, cx + 13, gy + 30.5); ctx.stroke(); ctx.lineCap = 'butt'; }
+    ctx.globalAlpha = 1;
+  },
+  // 続: the bars after the windows that match, each scaled so its own low and high sit on the drawing's, as a fan of
+  // their closes (10 to 90%, 25 to 75% and the median) from the last bar's close, with the shape's high and low carried on
+  layer(canvas,box,background=false){
+    if(!this.paintRoot){this.paintRoot=document.createElement('div');this.paintRoot.setAttribute('aria-hidden','true');this.paintRoot.inert=true;
+      Object.assign(this.paintRoot.style,{position:'absolute',inset:'0',overflow:'hidden',pointerEvents:'none'});this.wrap.insertBefore(this.paintRoot,this.cv);}
+    if(canvas.parentElement!==this.paintRoot){if(background)this.paintRoot.prepend(canvas);else this.paintRoot.append(canvas);}
+    canvas.flowBox={...box};canvas.setAttribute('aria-hidden','true');
+    const styles={left:`${box.x}px`,top:`${box.y}px`,right:'auto',bottom:'auto',width:`${canvas.width/canvas.flowDpr}px`,height:`${canvas.height/canvas.flowDpr}px`,pointerEvents:'none'};
+    for(const [key,value]of Object.entries(styles))if(canvas.style[key]!==value)canvas.style[key]=value;
+  },
+  drawForecast(ctx,G) {
+    if(!this.forecastSurface)this.forecastSurface=document.createElement('canvas');
+    const x=Math.max(0,Math.floor(G.forecastLeft-24)),y=Math.max(0,Math.floor(G.plotTop-24));
+    const box={x,y,w:G.w-x,h:Math.min(G.h,Math.ceil(G.plotBottom+24))-y};
+    const key = [Math.min(2,devicePixelRatio||1),this.paintVersion||0,G.w,G.h,G.plotTop,G.plotBottom,G.forecastLeft,G.forecastWidth,...G.futureXs,
+      this.view.lo,this.view.hi,this.modeMix,this.fanA,this.fanWeight,this.tracePresence,
+      Forecast.view,Forecast.prefix,Forecast.selected,Forecast.current,COL.paper,COL.up,COL.down,COL.ai,COL['ink-2'],
+      ...S.bars.flatMap(b=>[b.d,...b.dv])].join('|');
+    if (this.forecastPaint?.source !== Forecast.source || this.forecastPaint?.key !== key || this.forecastPaint?.canvas !== this.forecastSurface) {
+      const layer=fitCanvas(this.forecastSurface,box.w,box.h,Math.min(2,devicePixelRatio||1),true);
+      layer.clearRect(0,0,this.forecastSurface.width/this.forecastSurface.flowDpr,this.forecastSurface.height/this.forecastSurface.flowDpr);layer.translate(-x,-y);
+      this.layer(this.forecastSurface,box);
+      // Engines without canvas filters have no blur readback to avoid; keep
+      // their wash in the existing surface instead of adding compositor layers.
+      this.drawFan(layer,G,'filter' in layer);
+      if(Forecast.source){this.drawStates(layer,G);this.drawPaths(layer,G);this.drawBranches(layer,G);}else this.drawForecastEmpty(layer,G);
+      this.forecastPaint = { source: Forecast.source, key, canvas: this.forecastSurface };
+    }
+    if(this.washRoot)this.washRoot.style.opacity=String(this.departingForecast?this.scene:1);
+    if(this.departingForecast){
+      this.forecastSurface.style.opacity=String(this.scene);this.departingForecast.style.opacity=String(1-this.scene);
+    }else this.forecastSurface.style.opacity='1';
+  },
+  paintWash(ctx,state){
+    const {surface,width,height,texture,top,scaleY,pieces,weight,clip}=state,alpha=ctx.globalAlpha;
+    ctx.save();ctx.beginPath();ctx.rect(0,clip.top,clip.width,clip.height);ctx.clip();ctx.globalAlpha=alpha*weight;
+    for(const [left,right,start,finish]of pieces)ctx.drawImage(surface,(left-texture.x)/texture.w*width,0,(right-left)/texture.w*width,height,start,top,finish-start,texture.h*scaleY);
+    ctx.restore();
+  },
+  composeWash(state){
+    if(!this.washRoot){
+      this.washRoot=document.createElement('div');this.washRoot.inert=true;this.washRoot.setAttribute('aria-hidden','true');
+      this.washRoot.style.cssText='position:absolute;inset:0;pointer-events:none';
+      for(let i=0;i<2;i++){const part=document.createElement('div'),canvas=document.createElement('canvas');part.style.cssText='position:absolute;left:0;top:0;overflow:hidden;transform-origin:0 0;will-change:transform';canvas.style.cssText='position:absolute;top:0;right:auto;bottom:auto;pointer-events:none';part.append(canvas);this.washRoot.append(part);}
+    }
+    if(this.washRoot.nextSibling!==this.forecastSurface)this.paintRoot.insertBefore(this.washRoot,this.forecastSurface);
+    this.washRoot.hidden=false;
+    const {cache,surface,width,height,texture,top,scaleY,pieces,weight,clip}=state;
+    const clipping=`inset(${clip.top}px 0 ${Math.max(0,this.geom().h-clip.top-clip.height)}px 0)`;
+    if(this.washRoot.style.clipPath!==clipping)this.washRoot.style.clipPath=clipping;
+    for(let i=0;i<2;i++){
+      const part=this.washRoot.children[i],canvas=part.firstElementChild,[left,right,start,finish]=pieces[i];
+      if(canvas.washCache!==cache){canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(surface,0,0,width,height,0,0,width,height);canvas.washCache=cache;canvas.style.width=`${texture.w}px`;canvas.style.height=`${texture.h}px`;}
+      const styles={width:`${right-left}px`,height:`${texture.h}px`,transform:`matrix(${(finish-start)/(right-left)},0,0,${scaleY},${start},${top})`,opacity:String(weight)};
+      for(const [key,value]of Object.entries(styles))if(part.style[key]!==value)part.style[key]=value;
+      const offset=`${texture.x-left}px`;if(canvas.style.left!==offset)canvas.style.left=offset;
+    }
+  },
+  drawFan(ctx, G, composite=false) {
+    if(composite)this.washState=null;
+    const c=Forecast.source;
+    if(!c||this.fanA<.01||this.fanWeight<.01||G.w<1||G.h<1||G.fanStep<4){if(composite&&this.washRoot)this.washRoot.hidden=true;return;}
+    let lo=Infinity,hi=-Infinity;
+    for(const b of S.bars){lo=Math.min(lo,b.dv[0]);hi=Math.max(hi,b.dv[3]);}
+    if(!(hi>lo)){if(composite&&this.washRoot)this.washRoot.hidden=true;return;}
+    const last=S.bars[G.N-1],lx=G.forecastLeft;
+    const xs=G.futureXs,end=xs.at(-1);
+    const Y=u=>this.Y(lo+u*(hi-lo),G),y0=this.Y(closeOf(last.dv,last.d),G);
+    const neutral=rgbOf(COL['ink-2']),indigo=rgbOf(COL.ai);
+    const pigment=neutral.map((v,j)=>Math.round(v*.78+indigo[j]*.22));
+    const paint=rgbStr(pigment),weight=this.fanA*this.fanWeight*FAN_OPTIONS.strength*(1-(this.tracePresence||0)*.7);
+    // Reproject the soft wash while framing moves; its contours still use the
+    // exact current coordinates. Blur once again at rest for native final pixels.
+    const key=[(closeOf(last.dv,last.d)-lo)/(hi-lo),paint,FAN_OPTIONS.softness].join('|');
+    const projection=[G.w,G.h,G.plotTop,G.plotBottom,Y(0),Y(1),lx,...xs].join('|');
+    const moving=!!Flow.value(Ref.pane,'reference')||this.view.vel.some(Boolean)||this.plot.vel.some(Boolean)||S.bars.some(b=>b.vv.some(Boolean));
+    // Raster work is limited to the fan's clipped region; fading reuses its ink.
+    const box={x:Math.max(0,Math.floor(lx-24)),y:Math.max(0,Math.floor(G.plotTop-24))};
+    box.w=Math.max(1,G.w-box.x);box.h=Math.max(1,Math.min(G.h,Math.ceil(G.plotBottom+24))-box.y);
+    if(this.fanCache?.source!==c||this.fanCache.key!==key||!moving&&this.fanCache.projection!==projection){
+    if(!this.fanSurface)this.fanSurface=document.createElement('canvas');
+    const density=.4, wash=fitCanvas(this.fanSurface,box.w*density,box.h*density,1,true);
+    wash.clearRect(0,0,this.fanSurface.width,this.fanSurface.height);wash.scale(density,density);wash.translate(-box.x,-box.y);wash.fillStyle=paint;
+    const hull=(lower,upper)=>{
+      wash.beginPath();wash.moveTo(lx,y0);
+      c.fan.forEach((q,j)=>wash.lineTo(xs[j],Y(upper(q))));
+      for(let j=c.fan.length-1;j>=0;j--)wash.lineTo(xs[j],Y(lower(c.fan[j])));
+      wash.closePath();
+    };
+    // Low-density fill recedes into the paper; the actual quantile lines retain its shape.
+    hull(q=>q[0],q=>q[4]);wash.globalAlpha=.025;wash.fill();
+    for(let j=0;j<20;j++){
+      const t=j/20,lower=q=>t<.5?q[0]+(q[1]-q[0])*t*2:q[1]+(q[2]-q[1])*(t-.5)*2;
+      const upper=q=>t<.5?q[4]+(q[3]-q[4])*t*2:q[3]+(q[2]-q[3])*(t-.5)*2;
+      hull(lower,upper);wash.globalAlpha=.004;wash.fill();
+    }
+    wash.globalAlpha=1;wash.globalCompositeOperation='destination-in';
+    const fade=wash.createLinearGradient(lx,0,end,0);
+    fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(.08,'rgba(0,0,0,1)');
+    fade.addColorStop(.94,'rgba(0,0,0,1)');fade.addColorStop(1,'rgba(0,0,0,0)');
+    wash.fillStyle=fade;wash.fillRect(box.x,box.y,box.w,box.h);wash.globalCompositeOperation='source-over';
+    if(!this.fanBlurSurface)this.fanBlurSurface=document.createElement('canvas');
+    const blur=fitCanvas(this.fanBlurSurface,box.w*density,box.h*density,1,true);blur.clearRect(0,0,this.fanBlurSurface.width,this.fanBlurSurface.height);
+    blur.filter=`blur(${6*FAN_OPTIONS.softness*density}px)`;paintCanvas(blur,this.fanSurface,0,0,box.w*density,box.h*density);blur.filter='none';
+    this.fanCache={source:c,key,projection,box,root:lx,first:xs[0],end,zero:Y(0),one:Y(1)};
+    }
+    const cached=this.fanCache,texture=cached.box,surface=this.fanBlurSurface;
+    const scaleY=(Y(1)-Y(0))/(cached.one-cached.zero),top=Y(0)+(texture.y-cached.zero)*scaleY;
+    // The first interval and the five equally spaced future columns resize
+    // independently. Two image slices preserve all six quantile positions.
+    const pieces=[[texture.x,cached.first,lx+(texture.x-cached.root)*(xs[0]-lx)/(cached.first-cached.root),xs[0]],
+      [cached.first,texture.x+texture.w,xs[0],xs[0]+(texture.x+texture.w-cached.first)*(end-xs[0])/(cached.end-cached.first)]];
+    const state={cache:cached,surface,width:surface.flowWidth,height:surface.flowHeight,texture,top,scaleY,pieces,weight,clip:{top:G.plotTop-24,width:G.w,height:G.plotH+48}};
+    if(composite){this.washState=state;this.composeWash(state);}else this.paintWash(ctx,state);
+    ctx.save();ctx.beginPath();ctx.rect(0,G.plotTop-24,G.w,G.plotH+48);ctx.clip();ctx.globalAlpha=weight;
+    const line=ctx.createLinearGradient(lx,0,end,0);
+    line.addColorStop(0,rgbStr(pigment,0));line.addColorStop(.08,paint);
+    line.addColorStop(.94,paint);line.addColorStop(1,rgbStr(pigment,0));
+    ctx.strokeStyle=line;ctx.lineJoin='round';ctx.lineCap='round';
+    const contour=(k,alpha,width)=>{
+      ctx.globalAlpha=weight*FAN_OPTIONS.lines*alpha;ctx.lineWidth=width;
+      ctx.beginPath();ctx.moveTo(lx,y0);
+      c.fan.forEach((q,j)=>ctx.lineTo(xs[j],Y(q[k])));ctx.stroke();
+    };
+    contour(0,.17,.8);contour(4,.17,.8);
+    contour(1,.23,.8);contour(3,.23,.8);
+    if(FAN_OPTIONS.median)contour(2,.34,1);
+    ctx.restore();
+  },
+  drawStateGlyph(ctx,glyph,x,center){
+    const baseline=ctx.textBaseline;ctx.textBaseline='alphabetic';
+    const box=ctx.measureText(glyph);
+    ctx.fillText(glyph,x,center+(box.actualBoundingBoxAscent-box.actualBoundingBoxDescent)/2);
+    ctx.textBaseline=baseline;
+  },
+  drawStates(ctx,G) {
+    const mix=this.modeMix??(Forecast.view==='paths'?1:0);
+    if(Forecast.view==='branches'||mix>.999)return;
+    const c=Forecast.source,set=Forecast.outcomes(),F=Forecast.field(G);
+    ctx.save();
+    const opacity=(Forecast.current?1:.4)*(1-mix);
+    for(let j=0;j<6;j++){
+      const probs=set.grid[j].map(n=>n/set.n),sizes=probs.map(p=>p*F.height);
+      let y=F.top;
+      for(let k=0;k<3;k++){
+        const paper=rgbOf(COL.paper),color=rgbOf([COL.up,COL.flat,COL.down][k]);
+        ctx.globalAlpha=1-mix;ctx.fillStyle=rgbStr(paper.map((v,i)=>Math.round(v+(color[i]-v)*opacity*.29)));
+        ctx.fillRect(F.xs[j]-F.width/2,y,F.width,sizes[k]);
+        if(F.width>=30&&sizes[k]>=16){
+          ctx.globalAlpha=opacity*.82;ctx.fillStyle=COL.ink;ctx.font=`400 11px ${FONT_UI}`;ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillText(ForecastViews.percent(probs[k]),F.xs[j],y+sizes[k]/2);
+        }
+        y+=sizes[k];
+      }
+    }
+    ctx.restore();
+  },
+  drawPaths(ctx,G){
+    const mix=this.modeMix??(Forecast.view==='paths'?1:0);
+    if(Forecast.view==='branches'||mix<.001)return;
+    const c=Forecast.source,F=Forecast.field(G),leaders=c.sequences.slice(0,4),paper=rgbOf(COL.paper);
+    const colors={U:COL.up,I:COL.flat,D:COL.down},glyphs={U:'↑',I:'•',D:'↓'};
+    const alpha=(Forecast.current?1:.4)*mix,other=c.n-leaders.reduce((n,[,k])=>n+k,0);
+    const tint=(color,a)=>rgbStr(paper.map((v,j)=>Math.round(v+(rgbOf(color)[j]-v)*a)));
+    const fromY=(key,j)=>{const p=Forecast.outcomes().grid[j].map(n=>n/c.n),k='UID'.indexOf(key);return F.top+F.height*(p.slice(0,k).reduce((a,b)=>a+b,0)+p[k]/2);};
+    ctx.save();ctx.textBaseline='middle';ctx.textAlign='left';ctx.font=`400 11px ${FONT_UI}`;ctx.fillStyle=COL['ink-2'];ctx.globalAlpha=alpha;
+    ctx.fillText(F.right-F.left<170?'Whole-path odds':'Whole-path probability',F.left,F.top+8);
+    ctx.fillText(`Other paths ${ForecastViews.percent(other/c.n)}`,F.left,F.top+F.height-8);
+    leaders.forEach(([key],i)=>{
+      const on=key===Forecast.selected,center=F.rowTop+(i+.5)*F.rowHeight;
+      [...key].forEach((state,j)=>{
+        const y=fromY(state,j)*(1-mix)+center*mix;
+        ctx.globalAlpha=mix;ctx.fillStyle=tint(colors[state],alpha*(on?.35:.23));ctx.fillRect(F.xs[j]-F.width/2,y-9,F.width,18);
+        ctx.textAlign='center';ctx.fillStyle=COL.ink;ctx.globalAlpha=alpha*(on?.9:.68);ctx.font=`400 12px ${FONT_UI}`;
+        this.drawStateGlyph(ctx,glyphs[state],F.xs[j],y);
+      });
+    });
+    ctx.restore();
+  },
+  drawBranches(ctx,G){
+    if(Forecast.view!=='branches')return;
+    const c=Forecast.source,F=Forecast.field(G),set=Forecast.outcomes(Forecast.prefix),j=Forecast.prefix.length;
+    const glyphs={U:'↑',I:'•',D:'↓'},colors=[COL.up,COL.flat,COL.down],paper=rgbOf(COL.paper);
+    const fresh=Forecast.current?1:.4,showRates=F.width>=30,cellHeight=F.branchHeight-4;
+    ctx.save();ctx.beginPath();ctx.rect(F.left,F.top,F.right-F.left,F.height);ctx.clip();
+    ctx.textBaseline='middle';ctx.textAlign='left';ctx.font=`400 11px ${FONT_UI}`;ctx.fillStyle=COL['ink-2'];ctx.globalAlpha=fresh;
+    const title=j===6?`Complete path · ${ForecastViews.percent(set.n/c.n)}`:F.right-F.left<240?`+${j+1} · ${set.n.toLocaleString('en-GB')}`:`Choose +${j+1} · ${set.n.toLocaleString('en-GB')} matches`;
+    ctx.fillText(title,F.left,F.top+9);
+    ctx.textAlign='right';ctx.fillText('Reset',F.right-10,F.top+9);
+    for(let step=0;step<6;step++){
+      ['U','I','D'].forEach((state,k)=>{
+        const chosen=step<j,selected=chosen&&Forecast.prefix[step]===state,active=step===j;
+        const top=F.branchTop+k*F.branchHeight,center=top+cellHeight/2;
+        const color=rgbOf(colors[k]),strength=chosen?(selected?.35:.065):(active?.29:.19);
+        ctx.globalAlpha=1;ctx.fillStyle=rgbStr(paper.map((v,i)=>Math.round(v+(color[i]-v)*strength*fresh)));
+        ctx.fillRect(F.xs[step]-F.width/2,top,F.width,cellHeight);
+        ctx.fillStyle=COL.ink;ctx.globalAlpha=fresh*(chosen?(selected?.9:.2):active?.9:.65);ctx.textAlign='center';ctx.font=`400 12px ${FONT_UI}`;
+        this.drawStateGlyph(ctx,glyphs[state],F.xs[step],center+(showRates&&!chosen?-8:0));
+        if(showRates&&!chosen){
+          ctx.font=`400 11px ${FONT_UI}`;ctx.fillText(set.n>=30?ForecastViews.percent(set.grid[step][k]/set.n):'–',F.xs[step],center+8);
+        }
+      });
+    }
+    ctx.restore();
+  },
+  drawForecastEmpty(ctx,G){
+    const F=Forecast.field(G);ctx.save();ctx.globalAlpha=.16;ctx.fillStyle=COL['ink-3'];
+    if(Forecast.view==='paths')for(let i=0;i<4;i++)for(const x of F.xs)ctx.fillRect(x-F.width/2,F.rowTop+(i+.5)*F.rowHeight-9,F.width,18);
+    else for(const x of F.xs)ctx.fillRect(x-F.width/2,F.top,F.width,F.height);
+    ctx.restore();
+  },
+  drawExample(ctx, G) {
+    if (this.fanA < .01 || this.exampleWeight < .01 || !this.futureBars) return;
+    const bars = Array.from({ length:this.futureBars.length / 4 }, (_, j) => Array.from(this.futureBars.slice(j * 4, j * 4 + 4)));
+    let lo = Infinity, hi = -Infinity;
+    for (const b of S.bars) { lo = Math.min(lo, b.dv[0]); hi = Math.max(hi, b.dv[3]); }
+    if (!(hi > lo)) return;
+    const Y = u => this.Y(lo + u * (hi - lo), G), last = S.bars[G.N - 1];
+    const lx = (last.x == null ? G.xs[G.N - 1] : last.x) + G.bw / 2;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, G.plotTop - 24, G.w, G.plotH + 80); ctx.clip();
+    ctx.globalAlpha = this.fanA * this.exampleWeight * (this.trace ? .3 : .9);
+    ctx.strokeStyle = COL.ai; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(lx, this.Y(closeOf(last.dv, last.d), G));
+    bars.forEach((b, j) => ctx.lineTo(lx + (j + 1) * G.fanStep, Y(b[3]))); ctx.stroke();
+    if (Forecast.view === 'paths') bars.forEach(([o, h, l, c], j) => {
+      const x = lx + (j + 1) * G.fanStep, bw = Math.max(3, Math.min(G.bw * .6, G.fanStep * .5));
+      ctx.fillStyle = c > o ? COL.up : c < o ? COL.down : COL.flat;
+      ctx.fillRect(x - .8, Y(h), 1.6, Math.max(1, Y(l) - Y(h)));
+      ctx.fillRect(x - bw / 2, Y(Math.max(o, c)), bw, Math.max(2, Math.abs(Y(o) - Y(c))));
+    });
+    ctx.fillStyle = COL['ink-2']; ctx.font = `400 11px ${FONT_UI}`; ctx.textAlign = 'left';
+    ctx.fillText('Historical example', lx + 4, G.plotTop - 10);
+    ctx.restore();
+  },
+  drawFutureLabels(ctx, G) {
+    const lx=G.forecastLeft;
+    ctx.save(); ctx.fillStyle = COL['ink-2']; ctx.font = `400 11px ${FONT_UI}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let j = 1; j <= FAN_STEPS; j++) {
+      if (G.fanStep < 12 && j !== FAN_STEPS || G.fanStep < 22 && j !== 1 && j !== FAN_STEPS) continue;
+      ctx.fillText(`+${j}`, G.futureXs[j-1], G.plotBottom + 34);
+    }
+    ctx.restore();
+  },
+  // 写し: an instance from the history traced over the drawing, scaled to the drawing's height, one BTCUSDT bar per drawn bar
+  drawTrace(ctx, G, t = this.trace) {
+     if (!t || t.bars.length !== S.bars.length) return;
+    let cmin = Infinity, cmax = -Infinity, imin = Infinity, imax = -Infinity;
+    for (const b of S.bars) { cmin = Math.min(cmin, b.v[0]); cmax = Math.max(cmax, b.v[3]); }
+    for (const [, h, l] of t.bars) { imin = Math.min(imin, l); imax = Math.max(imax, h); }
+    const f = p => cmin + (p - imin) / (imax - imin || 1) * (cmax - cmin), Y = v => this.Y(f(v), G), bw = G.bw * 0.86;
+    ctx.save(); ctx.globalAlpha = 0.9 * t.a; ctx.lineWidth = 1.3;
+    const outline = ([o, h, l, c], cx) => {
+      const top = Y(Math.max(o, c)), bot = Y(Math.min(o, c));
+      ctx.strokeStyle = c > o ? COL.up : c < o ? COL.down : COL.flat;
+      ctx.beginPath(); ctx.moveTo(cx, Y(h)); ctx.lineTo(cx, top); ctx.moveTo(cx, bot); ctx.lineTo(cx, Y(l)); ctx.stroke();
+      ctx.setLineDash([4, 3]); ctx.strokeRect(cx - bw / 2, top, bw, Math.max(1, bot - top)); ctx.setLineDash([]);
+    };
+    t.bars.forEach((bar, i) => { const b = S.bars[i]; outline(bar, b.x == null ? G.xs[i] : b.x); });
+    if (t.next) {
+      // 次: the bar that followed, one step to the right, on the same scale
+      const last = S.bars[S.bars.length - 1], nx = (last.x == null ? G.xs[G.N - 1] : last.x) + G.spacing;
+      ctx.globalAlpha = 0.75 * t.a; outline(t.next, nx);
+      ctx.globalAlpha = t.a; ctx.font = `500 12px ${FONT_MIN}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = COL['ink-2'];
+      ctx.fillText('次', nx, Math.min(Y(t.next[1]), Y(Math.max(...t.bars.map(b => b[1])))) - 14);
+    }
+    ctx.restore();
+    ctx.font = `400 12px ${FONT_UI}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = COL['ink-2'];
+    if(t===this.trace)ctx.fillText(`写し · ${t.caption}`,28,G.plotTop-12);
+  },
+  drawSkeleton(ctx, G) {
+    const marks = skelMarks(); if (!marks.length) return;
+    const pts = marks.map(m => ({ bar: m.bar, k: m.part === 'H' ? 3 : 0 }));
+    if (S.colored) { const n = S.bars.length; pts.push({ bar: 0, k: dirOf(0) >= 0 ? 1 : 2 }, { bar: n - 1, k: dirOf(n - 1) >= 0 ? 2 : 1 }); }
+    ctx.fillStyle = COL.ink;
+    for (const p of pts) { const b = S.bars[p.bar], cx = b.x == null ? G.xs[p.bar] : b.x; ctx.beginPath(); ctx.arc(cx, this.Y(b.dv[p.k], G), 2.6, 0, 6.2832); ctx.fill(); }
+  },
+  drawPins(ctx, G) {
+    const on = S.pinMode;
+    if (on) {
+      // every point you can tie, as a faint ring
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < S.bars.length; i++) for (const p of this.points(i)) {
+        const q = this.at(p, G), hov = this.pinHov && this.pinHov.kind === 'point' && this.pinHov.bar === p.bar && this.pinHov.part === p.part;
+        const from = this.pinFrom && this.pinFrom.bar === p.bar && this.pinFrom.part === p.part;
+        ctx.strokeStyle = hov || from ? COL.ai : COL['ink-3']; ctx.fillStyle = from ? COL.ai : COL.paper;
+        ctx.beginPath(); ctx.arc(q.x, q.y, hov || from ? 5 : 3.4, 0, 6.2832); ctx.fill(); ctx.stroke();
+      }
+      if (this.pinFrom && this.ptr) {
+        const a = this.at(this.pinFrom, G); ctx.strokeStyle = COL.ai; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(this.ptr.x, this.ptr.y); ctx.stroke(); ctx.setLineDash([]);
+      }
+      if (this.pinHov && this.pinHov.kind === 'body') {
+        const b = S.bars[this.pinHov.bar], cx = b.x == null ? G.xs[this.pinHov.bar] : b.x, yT = this.Y(b.dv[2], G), yB = this.Y(b.dv[1], G);
+        ctx.fillStyle = COL['ai-soft']; rr(ctx, cx - G.bw / 2 - 5, yT - 5, G.bw + 10, Math.max(2.5, yB - yT) + 10, 6); ctx.fill();
+      }
+    }
+    // pins read as fine threads while you draw and come forward while you pin; a traced instance pushes them back
+    const base = on ? 0.95 : this.trace ? 0.22 : 0.5;
+    S.pins.forEach((pin, i) => {
+      const k = this.knotAt(pin, G), dim = pin.color && !S.colored, hov = on && this.pinHov && this.pinHov.kind === 'knot' && this.pinHov.index === i;
+      ctx.globalAlpha = base * (dim ? 0.4 : 1); ctx.strokeStyle = hov ? COL.shu : COL.ai; ctx.lineWidth = on ? 1.2 : 1;
+      if (pin.color) { const b = S.bars[pin.bar], cx = b.x == null ? G.xs[pin.bar] : b.x; ctx.beginPath(); ctx.moveTo(k.x + 4, k.y); ctx.lineTo(cx - G.bw / 2, k.y); ctx.stroke(); }
+      else { const A = this.at(pin.a, G), B = this.at(pin.b, G); ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke(); }
+      const rad = on ? 4.4 : 3.2;
+      ctx.globalAlpha = Math.min(1, base * 1.6) * (dim ? 0.4 : 1);
+      ctx.fillStyle = COL.paper; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(k.x, k.y, rad, 0, 6.2832); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = hov ? COL.shu : COL.ai; ctx.beginPath(); ctx.arc(k.x, k.y, on ? 1.7 : 1.2, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+  },
+};
+Stage.cv.addEventListener('pointerdown', e => Stage.down(e));
+Stage.cv.addEventListener('pointermove', e => Stage.move(e));
+Stage.cv.addEventListener('pointerup', e => Stage.up(e));
+Stage.cv.addEventListener('pointercancel', e => Stage.up(e));
+Stage.cv.addEventListener('pointerleave', () => { if (!Stage.drag) { Stage.hov = null; Stage.pinHov = null; Stage.ptr = null; App.redraw(); } });
+Stage.cv.addEventListener('keydown', e => {
+  const k = e.key;
+  if (k === 'ArrowLeft' || k === 'ArrowRight') { Ops.select(S.sel + (k === 'ArrowLeft' ? -1 : 1)); e.preventDefault(); }
+  else if (k === 'ArrowUp' || k === 'ArrowDown') { Ops.nudge(S.sel, (k === 'ArrowUp' ? 1 : -1) * (e.shiftKey ? 12 : 2)); e.preventDefault(); }
+  else if (k === ' ' || k === 'Enter') { Ops.flip(S.sel); e.preventDefault(); }
+  else if (k === '+' || k === '=') { Ops.add(); e.preventDefault(); }
+  else if (k === '-' || k === '_') { Ops.remove(); e.preventDefault(); }
+  else if (k === '[' || k === ']') { setSpace(S.space + (k === ']' ? 0.06 : -0.06)); e.preventDefault(); }
+  else if (k === 'p' || k === 'P') { setPinMode(!S.pinMode); e.preventDefault(); }
+  else if (k === 'Escape') { if (Stage.pinFrom) { Stage.pinFrom = null; App.redraw(); } else if (S.pinMode) setPinMode(false); }
+  else if (/^[0-9]$/.test(k)) { Ops.select(k === '0' ? 9 : +k - 1); e.preventDefault(); }
+});
+// a pinch on the paper spreads the bars apart or draws them together
+Stage.cv.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); setSpace(S.space - e.deltaY * 0.006); }, { passive: false });
+const canvasResize=new ResizeObserver(entries => {
+  Stage.measureBox();
+  if(entries.some(entry=>entry.target===Stage.wrap)&&!Flow.value($('#ref'),'reference'))Stage.resizePending=true;
+  App.redraw();
+});
+canvasResize.observe(Stage.wrap);canvasResize.observe(Stage.hint);
+
+/* ================= the history: one matcher, three ways of holding, mixed as you like ================= */
+const Match = {
+  worker: null, ready: false, failed: false, id: 0, shown: 0, sentKey: '', timer: 0, sent: null, result: null, resultSent:null, sticky: -1,
+  drawnKey: '', resultKey: '', presentationFrame:0,
+  start() {
+    try {
+      const el = document.getElementById('matcher-src'), src = el ? el.textContent.trim() : '';
+      this.worker = src && src !== '__MATCHER__' ? new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' }))) : new Worker('matcher.js');
+    } catch (err) { this.fail('This browser cannot run the matcher in the background, so the BTCUSDT history is unavailable.'); return; }
+    const worker = this.worker;
+    worker.onmessage = e => { if (this.worker === worker) this.onmsg(e.data); };
+    worker.onerror = e => { if (this.worker === worker) this.fail(`The matcher stopped: ${e.message || 'unknown error'}.`); };
+    loadBars()
+      .then(buffer => {
+        if (this.worker !== worker) return;
+        worker.postMessage({ type: 'bars', buffer }, [buffer]);
+        // Give matching data the whole connection first. Activity can fill the
+        // reserved readings after the first useful match, without doubling its wait.
+        loadPayload('activity').then(buffer => { if (this.worker === worker) worker.postMessage({ type: 'activity', buffer }, [buffer]); })
+          .catch(err => { if (this.worker !== worker) return; Panes.readings = 'failed'; Panes.note = err.message; if (this.result) Panes.render(this.result); });
+      })
+      .catch(err => { if (this.worker === worker) this.fail(`The BTCUSDT klines could not be loaded (${err.message}).`); });
+    this.schedule(true);
+  },
+  // the result on screen answers the drawing as it stands
+  current() { return !!this.result && this.result.id === this.id; },
+  // the result on screen answers the drawing as it is drawn now, not only the last search sent
+  fresh() { return !!this.result && this.resultKey === this.drawnKey; },
+  retry() {
+    if (this.worker) this.worker.terminate();
+    clearTimeout(this.timer);
+    this.worker = null; this.failed = false; this.ready = false; this.sentKey = ''; this.resultKey = ''; this.sent = null; this.id++;
+    this.drawnKey = this.key(); Panes.readings = 'loading'; this.start(); App.redraw();
+  },
+  key() { return JSON.stringify(this.query().q); },
+  fail(msg) {
+    namedPatterns.failed(msg);
+    this.flushPresentation();
+    this.failed = true; $('#prog').hidden = true; $('#mmsg').textContent = msg; $('#emaki').classList.add('stale');
+    if (!this.result) { $('#emaki').innerHTML = ''; Panes.clear(); }
+    App.redraw();
+  },
+  onmsg(m) {
+    if (m.type === 'named-pattern') { namedPatterns.result(m); return; }
+    if (m.type === 'ready') { this.ready = true; namedPatterns.ready(); this.until = m.to; if (!this.result) $('#mmsg').textContent = `Searching the BTCUSDT history, ${day(m.from)} to ${day(m.to)}…`; return; }
+    if (m.type === 'error') { this.fail(`The BTCUSDT klines could not be read: ${m.message}`); return; }
+    if (m.type === 'progress') { if (m.id === this.id) { $('#prog').hidden = false; $('#prog i').style.width = `${(m.f * 100).toFixed(1)}%`; } return; }
+    if (m.type === 'readings') { Panes.readings = 'ready'; if (this.sent) { this.sentKey = ''; this.send(); } return; }
+    if (m.type === 'readings-error') { Panes.readings = 'failed'; Panes.note = m.message; if (this.result) Panes.render(this.result); return; }
+    if (m.type === 'result' && m.id === this.id) {
+      this.result = m; this.resultSent=this.sent;this.resultKey = this.sentKey;
+      const sent=this.resultSent,cards=()=>{this.render(sent);Stage.fit();App.redraw();};
+      if((m.panes?.rows.length||0)>70){
+        this.presentation={result:m,tasks:[()=>Panes.render(m,'left',sent),()=>Panes.render(m,'right',sent),cards]};
+        this.queuePresentation();
+      }else{if(this.presentationFrame)cancelAnimationFrame(this.presentationFrame);this.presentationFrame=0;this.presentation=null;Panes.render(m);cards();}
+    }
+  },
+  queuePresentation(){
+    if(Flow.suspended()){this.flushPresentation();return;}
+    if(this.presentationFrame)return;
+    this.presentationFrame=requestAnimationFrame(()=>{this.presentationFrame=0;this.presentResult();});
+  },
+  presentResult(schedule=true){
+    const pending=this.presentation;if(!pending)return;
+    if(pending.result!==this.result){this.presentation=null;return;}
+    pending.tasks.shift()();
+    if(this.presentation!==pending)return;
+    if(!pending.tasks.length)this.presentation=null;
+    else if(schedule)this.queuePresentation();
+  },
+  flushPresentation(){if(this.presentationFrame)cancelAnimationFrame(this.presentationFrame);this.presentationFrame=0;while(this.presentation)this.presentResult(false);},
+  query() {
+    const held = heldNow();
+    const nx = S.next, next = nx.dir ? { dir: nx.dir, measure: nx.measure, value: nx.measure === 'bps' ? nx.bps : nx.measure === 'atr' ? nx.atr : 0 } : null;
+    return { held, q: { bars: S.bars.map((_, i) => ohlcOf(i)), oriented: S.colored, holds: held.map(h => h.h), stretch: S.stretch, x: S.x, tfs: S.tfOn.map(Number), next } };
+  },
+  // ask again once the drawing is still; while a bar is held the last answer stays, dimmed once the bar moves
+  schedule(now) {
+    if (this.failed || !this.worker) return;
+    clearTimeout(this.timer);
+    if (Stage.drag) { if (Stage.drag.moved) $('#emaki').classList.add('stale'); return; }
+    this.timer = setTimeout(() => this.send(), 0);
+  },
+  send() {
+    const { held, q } = this.query(), key = JSON.stringify(q);
+    if (key === this.sentKey) { $('#emaki').classList.remove('stale'); return; }
+    this.sentKey = key; this.sent = { held, q }; this.id++;
+    $('#emaki').classList.add('stale'); $('#prog').hidden = false; $('#prog i').style.width = '0%';
+    if (this.ready || !this.result) $('#mmsg').textContent = this.ready ? 'Searching the BTCUSDT history…' : 'Loading the recorded BTCUSDT 15m bars…';
+    this.worker.postMessage({ type: 'query', id: this.id, q });
+  },
+  render(sent=this.resultSent||this.sent) {
+    const r = this.result, held = sent.held, n = sent.q.bars.length,current=r.id===this.id;
+    this.presentedResults=r.results;this.presentedSent=sent;
+    if(current)$('#prog').hidden = true;
+    // every count in the sentence covers the timeframes shown, like the rates it is compared with; the chips keep all five
+    const F = r.filter, on = sent.q.tfs, sum = a => a.reduce((x, y, k) => x + (on[k] ? y : 0), 0);
+    const counts = r.mode === 'nearest' ? (F ? r.exactF : r.exact) : F ? r.countsF : r.counts, total = sum(r.counts), totalF = sum(r.countsF);
+    const totalAll = r.counts.reduce((x, y) => x + y, 0), where = on.every(Boolean) ? 'in the history' : 'on the timeframes shown';
+    renderChips(counts);
+    const pct = (a, b) => (!b ? '–' : a > 0 && 100 * a / b < 1 ? 'under 1%' : `${Math.round(100 * a / b)}%`), words = F ? nextWords(F) : '';
+    const pins = held.filter(h => h.from === 'pin').length, skel = held.length - pins;
+    const what = [pins ? `${pins} pin${pins > 1 ? 's' : ''}` : '', skel ? `${skel} skeleton relation${skel > 1 ? 's' : ''}` : ''].filter(Boolean).join(' and ');
+    const twins = sum(r.exact);
+    const twinsF = sum(r.exactF), relations = `${held.length === 1 ? 'the' : 'all'} ${held.length} relation${held.length === 1 ? '' : 's'} (${what})${r.stretch ? `, with up to ${r.stretch} bar${r.stretch > 1 ? 's' : ''} skipped` : ''}`;
+    const everyWindow = `${pct(r.base.pass, r.base.n)} of all windows`;
+    let msg;
+    if (r.mode === 'nearest') {
+      const tw = twins ? `${fmt(twins)} exact twin${twins > 1 ? 's' : ''} of the whole pattern ${where}` : `The whole ${NWORD[n] || n}-bar pattern has no exact twin ${where}`;
+      msg = F ? `<b>Nothing held.</b> Closest in shape among windows whose next bar ${words} (${everyWindow}). ${twins ? `${tw}; after ${fmt(twinsF)} of them it did.` : tw + '.'}`
+        : `<b>Nothing held.</b> Closest in shape first${sent.q.oriented ? ', with your colours' : ''}. ${tw}.`;
+    } else if (r.mode === 'held' && !total) {
+      msg = `<b>${fmt(totalAll)} window${totalAll === 1 ? '' : 's'}</b> hold ${relations}, all on timeframes you left out.`;
+    } else if (r.mode === 'held') {
+      const sp = r.split, seen = sp.up + sp.down + sp.flat;
+      msg = F ? `<b>${fmt(total)} window${total === 1 ? '' : 's'}</b> hold ${relations}; after <b>${fmt(totalF)}</b> of them (${pct(totalF, total)}) the next bar ${words}, against ${everyWindow}. Closest in shape first.`
+        : `<b>${fmt(total)} window${total === 1 ? '' : 's'}</b> hold ${relations}. After them the next bar rose ${pct(sp.up, seen)} and fell ${pct(sp.down, seen)} of the time (whole history: rose ${pct(r.base.up, r.base.n)}). Closest in shape first.`;
+    } else if (total) msg = `<b>${fmt(total)} window${total === 1 ? '' : 's'}</b> hold ${relations}, but after none of them the next bar ${words}. The nearest windows where it did are shown with the relations each one breaks.`;
+    else msg = `<b>No window holds ${relations}</b>${r.stretch ? ' even with bars skipped' : ''}. The nearest windows${F ? ` whose next bar ${words}` : ''} are shown with the relations each one breaks.`;
+    if(current)$('#mmsg').innerHTML = msg + ` <span style="color: var(--ink-3)">· ${r.ms < 1000 ? r.ms + ' ms' : (r.ms / 1000).toFixed(1) + ' s'}${this.until ? ` · BTCUSDT to ${day(this.until)}` : ''}</span>`;
+    const em = $('#emaki'); em.classList.toggle('stale',!current);
+    if (!r.results.length) { Flow.patch(em,`<p class="empty">${r.mode === 'held' ? 'Every window that holds is on a timeframe you left out. Include it above to see them.' : 'Nothing to show on the selected timeframes.'}</p>`); this.setTrace(-1); return; }
+    const selected=em.querySelector('[aria-pressed="true"]')?.dataset.motionKey;
+    Flow.patch(em,r.results.map((x,i)=>this.card(x,i,held)).join(''));
+    this.sticky=r.results.findIndex(x=>this.resultKeyOf(x)===selected);
+    em.querySelectorAll('.card').forEach((c,i)=>c.setAttribute('aria-pressed',String(i===this.sticky)));
+    this.setTrace(this.sticky);
+  },
+  resultKeyOf(r){return `${r.tf}:${r.start}:${r.picks.join(',')}`;},
+  thumbLayouts:new Map(),
+  card(r, i, held) {
+    const d = new Date(r.start * 1000), when = `${calendarDay.format(d)} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+    const broken = r.broken.map(i2 => held[i2].label);
+    const flips = r.flips === 0 ? 'exact' : `${r.flips} flip${r.flips === 1 ? '' : 's'}`, off = `${(r.off * 100).toFixed(1)}% off`;
+    const nx = r.next;
+    let next;
+    if (!nx) next = `<span class="nx" title="${r.nextWhy === 'gap' ? 'A bar is missing from the data right after this window' : 'The bar after this window is not in the data yet'}">次 ${r.nextWhy === 'gap' ? 'after a gap in the data' : 'not in the data yet'}</span>`;
+    else {
+      const mag = nx.atrx === nx.atrx ? `${Math.abs(nx.atrx).toFixed(2)} ATR` : `${Math.abs(nx.bps).toFixed(1)} bps`;
+      const tip = nx.dir ? `The next bar closed ${nx.atrx === nx.atrx ? Math.abs(nx.atrx).toFixed(2) + ' ATR, ' : ''}${Math.abs(nx.bps).toFixed(1)} bps ${nx.dir > 0 ? 'above' : 'below'} this window's last close` : 'The next bar closed exactly at this window\'s last close';
+      next = `<span class="nx ${nx.dir > 0 ? 'nu' : nx.dir < 0 ? 'nd' : ''}" title="${tip}">次 ${nx.dir > 0 ? '▲' : nx.dir < 0 ? '▼' : '—'} ${nx.dir ? mag : 'flat'}</span>`;
+    }
+    return `<button type="button" class="card" data-motion-key="${this.resultKeyOf(r)}" data-i="${i}" aria-pressed="false" title="Trace this instance over your drawing">${this.thumb(r, held)}
+      <span class="when">${r.tf} · ${esc(when)}</span><span class="fl" title="Scaled to the same height, its bar ends sit on average ${off.replace(' off', '')} of that height from yours. Exact means every comparison matches your drawing.">${off} · ${flips}${r.extra ? ` · ${r.extra} skipped` : ''}</span>${broken.length ? `<span class="br" title="Breaks ${esc(broken.join(', '))}">breaks ${esc(broken.join(', '))}</span>` : ''}${next}</button>`;
+  },
+  thumb(r, held) {
+    const w = 132, h = 80, pad = 5, bars = r.raw, n = bars.length;
+    const lo = Math.min(...bars.map(b => b[2])), hi = Math.max(...bars.map(b => b[1]));
+    const pitch = (w - 2 * pad) / n, bw = Math.max(1.4, pitch * 0.6), ww = Math.max(0.8, Math.min(1.4, pitch * 0.08));
+    const X = i => pad + pitch * (i + 0.5), Y = v => pad + (hi - v) / (hi - lo || 1) * (h - 2 * pad - 5);
+    let layout=this.thumbLayouts.get(n);
+    if(!layout){layout={wick:ww.toFixed(2),body:bw.toFixed(2),xs:bars.map((_,i)=>({wick:(X(i)-ww/2).toFixed(2),body:(X(i)-bw/2).toFixed(2)}))};this.thumbLayouts.set(n,layout);}
+    let s = `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true">`;
+    // bars the drawing skipped stay visible but faint, so the run reads as it happened
+    const kept = new Set(r.picks);
+    bars.forEach(([o, hh, l, c], i) => {
+      const cls = (c > o ? 'cu' : c < o ? 'cd' : 'cz') + (kept.has(i) ? '' : ' skip'), t = Y(Math.max(o, c)), b = Y(Math.min(o, c));
+      s += `<rect class="${cls}" x="${layout.xs[i].wick}" y="${Y(hh).toFixed(2)}" width="${layout.wick}" height="${Math.max(0.6, Y(l) - Y(hh)).toFixed(2)}"/><rect class="${cls}" x="${layout.xs[i].body}" y="${t.toFixed(2)}" width="${layout.body}" height="${Math.max(1, b - t).toFixed(2)}" rx="0.6"/>`;
+    });
+    for (const bi of r.broken) {
+      const hd = held[bi].h;
+      if (hd.color) { const b = bars[hd.bar], t = Y(Math.max(b[0], b[3])), bt = Y(Math.min(b[0], b[3])); s += `<rect class="mk" x="${(X(hd.bar) - bw / 2 - 2).toFixed(2)}" y="${(t - 2).toFixed(2)}" width="${(bw + 4).toFixed(2)}" height="${(Math.max(1, bt - t) + 4).toFixed(2)}" rx="1.5"/>`; continue; }
+      const pt = ([bar, kind]) => { const [o, hh, l, c] = bars[bar]; return [X(bar), Y([o, hh, l, c, Math.min(o, c), Math.max(o, c)][kind])]; };
+      const [x1, y1] = pt(hd.a), [x2, y2] = pt(hd.b);
+      s += `<line class="mkl" x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/><circle class="mk" cx="${x1.toFixed(2)}" cy="${y1.toFixed(2)}" r="2.4"/><circle class="mk" cx="${x2.toFixed(2)}" cy="${y2.toFixed(2)}" r="2.4"/>`;
+    }
+    s+='</svg>';
+    if(n<=4)return s;
+    // Keep native rect rasterization, but share one decoded vector image across
+    // live cards and their departure snapshots instead of cloning every candle.
+    const palette=`<style>.cu{fill:${COL.up}}.cd{fill:${COL.down}}.cz{fill:${COL.flat}}.skip{fill-opacity:.22}.mk{fill:none;stroke:${COL.shu};stroke-width:1.3}.mkl{fill:none;stroke:${COL.shu};stroke-width:1;stroke-dasharray:2 2}</style>`;
+    const source=s.replace('aria-hidden="true"',`xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"`).replace('>',`>${palette}`);
+    return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><image width="${w}" height="${h}" href="data:image/svg+xml;base64,${btoa(source)}"/></svg>`;
+  },
+  retint(){
+    const held=this.presentedSent?.held;
+    if(!held)return;
+    document.querySelectorAll('#emaki .card').forEach((card,i)=>{
+      const image=card.querySelector('svg image'),result=this.presentedResults?.[i];
+      if(image&&result){const template=document.createElement('template');template.innerHTML=this.thumb(result,held);image.setAttribute('href',template.content.querySelector('image').getAttribute('href'));}
+    });
+  },
+  setTrace(i) {
+    const r=i>=0?(this.presentedResults||this.result?.results)?.[i]:null;
+    if(!r){if(Stage.trace){Stage.trace.retiring=true;Stage.traces.push(Stage.trace);Stage.trace=null;}App.redraw();return;}
+    const d=new Date(r.start*1000),key=this.resultKeyOf(r);
+    const content={key,bars:r.drawn,next:r.next?r.next.bar:null,caption:`${r.tf} · ${calendarDay.format(d)} · ${(r.off*100).toFixed(1)}% off · ${r.flips===0?'exact':r.flips+' flips'}`};
+    if(Stage.trace?.key===key)Object.assign(Stage.trace,content);
+    else{if(Stage.trace){Stage.trace.retiring=true;Stage.traces.push(Stage.trace);}Stage.trace={...content,a:calm()?1:0,va:0};}
+    App.redraw();
+  },
+};
+// a day as the cards write it, "10 Oct 2026"
+const calendarDay=new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+const day = t => calendarDay.format(new Date(t * 1000));
+// 次 in words: "rose", "rose at least 10 bps", "fell at least 1 ATR"
+function nextWords(f) {
+  const verb = f.dir > 0 ? 'rose' : 'fell', v = Number.isInteger(f.value) ? String(f.value) : String(+f.value.toFixed(2));
+  return f.measure === 'bps' ? `${verb} at least ${v} bps` : f.measure === 'atr' ? `${verb} at least ${v} ATR` : verb;
+}
+// The bars come from Composer's server, which reads them from the Vaquum HuggingFace kline files;
+// the payload is accepted only if it starts with its own marker.
+async function loadPayload(path) {
+  for (let attempt = 0; ; attempt++) {
+    const response = await fetch(path);
+    if (response.status === 503 && attempt < 60) { await new Promise(resolve => setTimeout(resolve, 1000)); continue; }
+    if (!response.ok) throw new Error(`the server answered ${response.status}`);
+    const buffer = await response.arrayBuffer();
+    const expected = path === 'bars' ? '9f301d3f74a75d828814af74c59cf4781fa63b68f300379ddb47bc667f10b324' : '7b59f7882fde0a7de11413f5b2a53f9b7cb628ad871036f0c430ec25e21f62b0';
+    const {sha256Hex} = await import('../src/data.js');
+    if (sha256Hex(new Uint8Array(buffer)) !== expected) throw new Error(path + ' differs from the pinned recording.');
+    return buffer;
+  }
+}
+async function loadBars() {
+  const buffer = await loadPayload('bars');
+  const bytes = new Uint8Array(buffer);
+  if (!(bytes.length > 5 && String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]) === 'CBAR1')) throw new Error('the server sent something other than bars');
+  return bytes.buffer;
+}
+/* ================= the panes: what sets the matching windows apart, and what the shape became ================= */
+const pct = (x, d = 1) => `${(x * 100).toFixed(d)}%`;
+const Panes = {
+  readings: 'loading', note: '', views: { left: 'signal', right: 'signal' }, details: new Map(), layoutKeys: new Map(),
+  init() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('ashi.pane-designs'));
+      for (const side of ['left', 'right']) if (PaneDesigns.variants.some(v => v.id === saved?.[side])) this.views[side] = saved[side];
+    } catch (err) { /* each pane starts with Signal first */ }
+    for (const side of ['left', 'right']) {
+      const pane = $(`.pane[data-side="${side}"]`), control = $('.pane-switch', pane), menu = $('.pane-menu', control), pill = $('.pane-current', control);
+      menu.innerHTML = PaneDesigns.variants.map(v => `<button type="button" role="menuitemradio" data-design="${v.id}" aria-checked="false">${v.name}</button>`).join('');
+      control.addEventListener('click', e => {
+        const button = e.target.closest('button'); if (!button) return;
+        if (button.dataset.step) {
+          const at = PaneDesigns.variants.findIndex(v => v.id === this.views[side]);
+          this.choose(side, PaneDesigns.variants[(at + Number(button.dataset.step) + 3) % 3].id);
+        } else if (button.dataset.design) {
+          this.choose(side, button.dataset.design); pill.focus();
+        } else if (button === pill) {
+          const open = menu.hidden; this.closeMenus(menu); Flow.visible(menu,open); pill.setAttribute('aria-expanded', String(open));
+          if (open) menu.querySelector('[aria-checked="true"]').focus();
+        }
+      });
+      menu.addEventListener('keydown', e => {
+        const buttons = [...menu.querySelectorAll('button')], at = buttons.indexOf(document.activeElement);
+        if (['ArrowDown','ArrowUp','Home','End'].includes(e.key)) {
+          e.preventDefault();
+          buttons[e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length - 1 : (at + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length].focus();
+        }
+      });
+      this.controls(side);
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.pane-switch')) this.closeMenus();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      for (const menu of document.querySelectorAll('.pane-menu:not([hidden])')) { $('.pane-current', menu.parentElement).focus(); e.preventDefault(); }
+      this.closeMenus();
+    });
+  },
+  controls(side) {
+    const pane = $(`.pane[data-side="${side}"]`), v = PaneDesigns.variants.find(v => v.id === this.views[side]), pill = $('.pane-current', pane);
+    pill.querySelector('span').textContent = v.name; pill.setAttribute('aria-label', `${side === 'left' ? 'Left' : 'Right'} pane design: ${v.name}`);
+    for (const b of pane.querySelectorAll('[data-design]')) b.setAttribute('aria-checked', String(b.dataset.design === v.id));
+  },
+  closeMenus(except = null) {
+    for (const menu of document.querySelectorAll('.pane-menu')) { if(menu===except)continue;Flow.visible(menu,false); $('.pane-current', menu.parentElement).setAttribute('aria-expanded','false'); }
+  },
+  remember(side) {
+    const pane = $(`.pane[data-side="${side}"]`);
+    if (pane.dataset.view) this.details.set(side + '-' + pane.dataset.view, new Map([...pane.querySelectorAll('details[data-detail]')].map(d => [d.dataset.detail, d.open])));
+  },
+  choose(side, variant) {
+    this.remember(side); this.views[side] = variant; this.closeMenus(); this.controls(side);
+    try { localStorage.setItem('ashi.pane-designs', JSON.stringify(this.views)); } catch (err) { /* controls still work without storage */ }
+    if (Match.result) this.render(Match.result, side);
+  },
+  clear() {
+    this.layoutKeys.clear();
+    for (const id of ['lrows','lnext','rnext','rbecame','rfan','ncap','rnear']) $('#' + id).replaceChildren();
+    $('#lcap').textContent = 'Matching data unavailable.'; $('#rcap').textContent = 'Continuation unavailable.';
+  },
+  render(r, onlySide = null, sent=r===Match.result?Match.resultSent||Match.sent:Match.sent) {
+    const P = r.panes; if (!P) return;
+    const ctx = { barCount: sent?.q.bars.length??S.bars.length, timeframes: TF_LABELS.map((label,k) => ({label,k})).filter(t => sent?.q.tfs[t.k]), readings: this.readings, note: this.note, nextWords };
+    for (const side of onlySide ? [onlySide] : ['left','right']) {
+      this.remember(side);
+      const pane = $(`.pane[data-side="${side}"]`), variant = this.views[side];
+      pane.dataset.loading = String(side === 'left' ? !P.readings && this.readings === 'loading' : !P.cont && !Match.result);
+      const markup=side==='left'?{
+        lcap:PaneDesigns.caption(r,ctx),lrows:PaneDesigns.left(variant,r,ctx),lnext:PaneDesigns.next(r,ctx),lmethod:PaneDesigns.leftMethod(ctx.barCount)
+      }:{
+        rcap:`<strong>Next ${P.after} bars</strong><span class="pane-meta">${P.cont ? fmt(P.cont.n) + ' windows with all ' + P.after + ' bars available' : 'Complete continuations below 30'}</span>`,
+        rnext:PaneDesigns.next(r,ctx),rbecame:PaneDesigns.right(variant,r),rfan:PaneDesigns.terminal(P),rmethod:PaneDesigns.rightMethod(P.after),
+        rnear:P.near.length ? P.near.map((nb,i) => `<div class="pnear" data-motion-key="${nb.a}-${nb.b}-${nb.rel}"><span>${esc(this.nearWord(nb))}<small>${fmt(nb.n)} windows${nb.up ? ` · next rose ${pct(nb.up[0])} · 95% interval ${pct(nb.up[1])}–${pct(nb.up[2])}` : ' · next-bar estimate unavailable'}</small></span><button type="button" data-i="${i}" title="Put its closest instance on the canvas">Try it</button></div>`).join('') : '<p class="pcap">No neighboring patterns found on these timeframes.</p>'
+      };
+      // Generated pane styles only position absolute chart marks. Tabular figure
+      // substitutions keep text width; all other markup/layout changes still FLIP.
+      const layoutKey=variant+'|'+Object.values(markup).join('|').replace(/\s(?:style|aria-label|title)="[^"]*"/g,'').replace(/>([^<]*)</g,(_,text)=>'>'+text.replace(/[0-9]/g,'#')+'<');
+      const measure=this.layoutKeys.get(side)!==layoutKey;this.layoutKeys.set(side,layoutKey);
+      const retainReading=side==='left'&&pane.dataset.view===variant?PaneDesigns.readingUpdater(r):null;
+      const update=()=>Flow.batch(pane,()=>{
+      if(side==='right'){
+        Flow.disclosure($('#rnextsec'),variant==='bars');
+        $('#ncap').textContent = 'One changed bar-end comparison · selected timeframes';
+      }
+      for(const [id,html]of Object.entries(markup)){
+        const root=$('#'+id);
+        if(id==='lrows'&&!measure&&variant==='signal'&&Flow.update(root,html,memo=>PaneDesigns.updateSignal(root,r,memo)))continue;
+        if(id==='lrows'&&variant==='bars'&&pane.dataset.view==='bars'&&Flow.update(root,html,()=>PaneDesigns.updateBars(root,r,ctx.barCount),true))continue;
+        if(id==='lrows'&&variant==='ledger'&&pane.dataset.view==='ledger'&&Flow.update(root,html,(_,move)=>PaneDesigns.updateLedger(root,r,move),true))continue;
+        const template=id==='lrows'&&variant==='signal'&&retainReading?PaneDesigns.signalTemplate(root,r,ctx,retainReading):null;
+        Flow.patch(root,html,true,!measure,id==='lrows'?retainReading:null,template??html);
+      }
+      },measure,side==='left'&&(P.rows?.length||0)>70);
+      // The pane itself scrolls; its body has no painted size boundary. Keep its
+      // height natural while the visible rows/sections carry the position springs.
+      update();
+      pane.dataset.view = variant;
+      const remembered = this.details.get(side + '-' + variant);
+      for (const d of pane.querySelectorAll('details[data-detail]')) if (remembered?.has(d.dataset.detail)) d.open = remembered.get(d.dataset.detail);
+      Flow.details(pane);
+    }
+    if (typeof Ref !== 'undefined') Ref.schedule();
+  },
+  on(k) { return Match.sent && Match.sent.q.tfs[k]; },
+  // a comparison in words, the later bar end first: "Bar 2's close below bar 1's low"
+  nearWord(nb) {
+    const id = identity(), ba = nb.a >> 2, bb = nb.b >> 2, A = epName(id.d[ba], nb.a & 3), B = epName(id.d[bb], nb.b & 3);
+    return `Bar ${bb + 1}'s ${B} ${nb.rel < 0 ? 'above' : nb.rel > 0 ? 'below' : 'level with'} ${ba === bb ? 'its' : `bar ${ba + 1}'s`} ${A}`;
+  },
+  // put a neighbour's closest instance on the canvas, scaled to the drawing's height: the drawing then is that pattern exactly
+  tryNear(i) {
+    const nb = Match.result && Match.result.panes && Match.result.panes.near[i];
+    if (!nb || nb.bars.length !== S.bars.length) return;
+    let cmin = Infinity, cmax = -Infinity, imin = Infinity, imax = -Infinity;
+    for (const b of S.bars) { cmin = Math.min(cmin, b.v[0]); cmax = Math.max(cmax, b.v[3]); }
+    for (const [, h, l] of nb.bars) { imin = Math.min(imin, l); imax = Math.max(imax, h); }
+    const f = p => cmin + (p - imin) / (imax - imin || 1) * (cmax - cmin);
+    pushHist();
+    nb.bars.forEach(([o, h, l, c], k) => { const b = S.bars[k]; b.v.set([f(l), f(Math.min(o, c)), f(Math.max(o, c)), f(h)]); if (c !== o) b.d = c > o ? 'u' : 'd'; });
+    Stage.fit(); refresh();
+  },
+};
+$('#rnear').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) Panes.tryNear(+b.dataset.i); });
+
+/* ================= 参照: the reference, how to read the panels, as the cube explorer's System reference ================= */
+// One structure throughout: purpose, how to read it, how to use it. Targets name real parts of the page or the fan's
+// region on the canvas; reading never changes the drawing or the panels.
+const REF_TOPICS = [
+  { id: 'set', group: 'Which windows', title: 'Which windows the panels read',
+    purpose: 'Know exactly which windows every number in the panels describes.',
+    read: "With nothing held, the set is the exact twins: windows whose every comparison between bar ends (low, open, close, high), and whose colours while Up / down is on, are as drawn. With pins or a skeleton held, it is every window that keeps them; with stretch, each run from a first to a last bar is a window of its own, read on the bars it picks. The next-bar filter and the timeframe chips narrow the set further. When fewer than 30 exact twins exist, the closest windows stand in, and the caption says so.",
+    use: "Read the left pane's caption first: it names the set and how many windows are in it. Change what you hold, the stretch, the filter or the timeframes, and both panes follow.",
+    targets: [{ label: "Show the set's caption", selector: '#lcap' }, { label: 'Show what you hold', selector: '.mbar .grp:first-child' }, { label: 'Show the filter and timeframes', selector: '.mbar .grp:last-child' }] },
+  { id: 'readings', group: 'What sets them apart', title: 'The readings',
+    purpose: 'Compare what traded in the matching windows with what trades in any window, bar by bar.',
+    read: "Volume, trades and USDT per trade: a bar against the median of the eleven bars before it, so 1.00× is a typical bar. Maker share: the share of the bar's volume that the kline files record as maker volume. Range (high to low) and body (open to close, either way): in the 14-bar Wilder ATR at the bar before. Close in the prior day's range: where the last drawn bar closed between the previous UTC day's low (0%) and high (100%); below 0% or above 100% is outside that range. All are read from the Vaquum HuggingFace kline files.",
+    use: 'Signal first highlights the largest difference, then groups the ten largest readings. Comparison ledger ranks those readings; Bar by bar groups every reading by drawn bar. Expand the remaining readings or intervals for detail.',
+    targets: [{ label: 'Show the readings', selector: '#lrows' }] },
+  { id: 'row', group: 'What sets them apart', title: 'Reading a row',
+    purpose: 'Tell a real difference from noise before acting on it.',
+    read: "The bold value and the dot are the set's mean (for volume, trades and USDT per trade, the geometric mean); the band is its 95% interval. The value after vs and the tick are the mean over every window of the drawing's length on the timeframes shown. A band that stays clear of the tick is a clear difference; a band across it is not. Rows are ordered by the difference in standard deviations of all windows, largest first.",
+    use: 'Weigh a row by its band and its size, not its place in the order: with many windows, a small difference can be clear and still small.',
+    targets: [{ label: 'Show the first row', selector: '#lrows .prow' }] },
+  { id: 'next', group: 'What sets them apart', title: 'What came next',
+    purpose: 'See how often the bar after the set rose, against every window.',
+    read: "The share of the set whose next bar closed above the window's last close, with its Wilson 95% interval, against all windows of the drawing's length on the timeframes shown; below it, the same for each timeframe. The difference is clear only when the interval leaves out the all-windows rate. A next bar after a gap in the data, or not yet in the data, does not count. With the next-bar filter on, the set is chosen by its next bar, so no rate is given.",
+    use: 'Compare the timeframes: a rate that holds on each of them is sturdier than one carried by a single timeframe. A dash marks fewer than 30 windows.',
+    targets: [{ label: 'Show what came next', selector: '#lnextsec' }] },
+  { id: 'fan', group: 'What it became', title: 'The fan',
+    purpose: 'See where the shape tended to go over the next six bars, in the drawing’s own scale.',
+    read: "Each matching window with six bars after it is scaled so its own low and high sit on your drawing's low and high. From your last bar's close, the light band holds the middle 80% of their closes at each of the next six bars, the darker band the middle 50%, and the line the median. The dotted lines carry the shape's high and low to the right, and broken is the share whose next six bars went beyond them. When the set is larger than 20,000 windows, the bands come from a fixed sample of 20,000; the rates use every window.",
+    use: "Read the bands' height against the shape: a fan much taller than the drawing says the next six bars usually travel well beyond it. Hovering a card fades the fan and traces that one window instead.",
+    targets: [{ label: 'Show the fan', region: 'fan' }] },
+  { id: 'became', group: 'What it became', title: 'Broken, and where it closed',
+    purpose: "Read the fan's key outcomes as rates.",
+    read: "Broke above the shape's high: some bar of the next six went above the window's own high. Broke below the shape's low: likewise, below its low. Closed above the last bar's close: the sixth bar's close against the window's last close. Each is a share of the windows with six bars after them, with its Wilson 95% interval. A window can break both ways.",
+    use: 'Compare a break with its opposite, and with the drawings one comparison away.',
+    targets: [{ label: 'Show the rates', selector: '#rbecame' }] },
+  { id: 'scenarios', group: 'What it became', title: 'Bar-by-bar probabilities',
+    purpose: 'Read the probabilities of progressive sequences beside the composition.',
+    read: 'Paths ranks complete six-bar closing-state sequences by frequency. States splits each future column into the shares whose close is above, inside or below the original combo range. Above and Below are strict; Inside includes both boundaries. Branches conditions later columns on your earlier choices. The fan remains under all three modes and shows the full-cohort closing-price distribution, using its recorded sample. Probability counts use every complete continuation. Hover a measurement for its exact denominator and Wilson 95% interval; fewer than 30 supporting windows gives no estimate. Updates keep the clearly labeled previous result until a new one is committed.',
+    use: 'Select Paths, Branches or States with the three icons. Switch the fan independently. Width changes only the root candle bodies. Hover explains every mark after 500 ms; focus and touch explain immediately. Choose the next branch state to condition later bars, or an earlier selected state to return before it. Reset clears those choices. Outcomes cannot be selected during an update. Retry keeps your drawing and preferences.',
+    targets: [{ label: 'Show continuation controls', selector: '#forecast-controls' }] },
+  { id: 'near', group: 'What it became', title: 'One comparison away',
+    purpose: 'Find the drawings next to yours, and whether any of them reads differently.',
+    read: "Windows of your drawing's length, with its colours, that differ from it in exactly one comparison between bar ends, grouped by that comparison and listed by how many windows the history holds on the timeframes shown. Next rose is the share whose next bar rose, with its Wilson 95% interval. The next-bar filter does not apply here.",
+    use: 'Try it puts the closest-looking window of that group on the canvas, scaled to your drawing, so the drawing becomes that pattern exactly; Undo returns to yours.',
+    targets: [{ label: 'Show the neighbours', selector: '#rnearsec' }] },
+  { id: 'stats', group: 'Statistics', title: 'Intervals and limits',
+    purpose: 'Know what every number can and cannot say.',
+    read: "Every interval is 95%: Wilson for rates, t for means. Nothing is shown for fewer than 30 windows. All windows means every window of the drawing's length on the timeframes shown. No window crosses a gap in the data. These are observations of Binance BTCUSDT 15m bars recorded from January through May 2025: they describe what happened, not what will.",
+    use: 'Before trusting a difference, check its interval, its size, and whether it holds on each timeframe.',
+    targets: [{ label: 'Show the left pane', selector: '.lpane' }, { label: 'Show the right pane', selector: '.rpane' }] },
+];
+const Ref = {
+  cur: 0, active: null, raf: 0, back: null, lastShape: '',
+  pane: $('#ref'), work: $('.work'),
+  init() {
+    const sel = $('#ref-topic');
+    let group = null;
+    for (const t of REF_TOPICS) {
+      if (!group || group.label !== t.group) { group = document.createElement('optgroup'); group.label = t.group; sel.append(group); }
+      const o = document.createElement('option'); o.value = t.id; o.textContent = t.title; group.append(o);
+    }
+    const ns = 'http://www.w3.org/2000/svg';
+    this.spot = document.createElementNS(ns, 'svg'); this.spot.id = 'ref-spot'; this.spot.setAttribute('aria-hidden', 'true'); this.spot.hidden=true;this.spot.setAttribute('hidden','');
+    this.shade = document.createElementNS(ns, 'path'); this.shade.setAttribute('class', 'shade'); this.shade.setAttribute('fill-rule', 'evenodd');
+    this.frame = document.createElementNS(ns, 'rect'); this.frame.setAttribute('class', 'frame'); this.frame.setAttribute('rx', '6');
+    this.spot.append(this.shade, this.frame); document.body.append(this.spot);
+    this.shade.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); this.clear(); });
+    $('#reftoggle').addEventListener('click', () => (this.pane.hidden ? this.open() : this.close()));
+    $('#ref-close').addEventListener('click', () => this.close());
+    sel.addEventListener('change', () => this.render(REF_TOPICS.findIndex(t => t.id === sel.value)));
+    $('#ref-prev').addEventListener('click', () => this.render(this.cur - 1));
+    $('#ref-next').addEventListener('click', () => this.render(this.cur + 1));
+    $('#ref-targets').addEventListener('click', e => {
+      const b = e.target.closest('button[data-t]'); if (!b) return;
+      const t = REF_TOPICS[this.cur].targets[+b.dataset.t];
+      if (this.active === t) { this.clear(); return; }
+      this.clear(); this.active = t; b.setAttribute('aria-pressed', 'true'); this.schedule();
+    });
+    // a highlight owns Escape everywhere; the open pane owns it only from its own contents
+    document.addEventListener('keydown', e => {
+      if (this.pane.hidden || e.key !== 'Escape') return;
+      if (!this.active && !this.pane.contains(e.target)) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (this.active) this.clear(); else this.close();
+    }, true);
+    addEventListener('resize', () => this.schedule()); addEventListener('scroll', () => this.schedule(), true);
+    new ResizeObserver(() => this.schedule()).observe(document.body);
+    this.render(0);
+  },
+  transition(open) {
+    const wasHidden=this.pane.hidden,mobile=innerWidth<=700;
+    if(wasHidden&&!open&&!Flow.value(this.pane,'reference'))return;
+    if(!mobile&&(open||!wasHidden)&&!Flow.value(this.pane,'reference')){
+      this.work.style.gridTemplateColumns='';this.pane.hidden=false;this.work.dataset.reference='open';
+      const columns=getComputedStyle(this.work).gridTemplateColumns.split(' ').map(parseFloat);
+      this.columns=columns;
+      const style=getComputedStyle(this.pane);
+      this.contentWidth=columns[0]-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)-parseFloat(style.borderLeftWidth)-parseFloat(style.borderRightWidth);
+    }
+    this.pane.hidden=!open;this.pane.inert=!open;this.pane.setAttribute('aria-hidden',String(!open));
+    this.pane.dataset.flowVisible='';this.pane.style.setProperty('--flow-display','flex');
+    this.work.dataset.reference='open';this.pane.style.overflow='hidden';
+    if(!mobile)this.pane.style.setProperty('--flow-reference-content-width',`${this.contentWidth}px`);
+    Flow.spring(this.pane,'reference',{from:{progress:wasHidden?0:1},to:{progress:open?1:0},
+      write:({progress})=>{
+        const p=clamp(progress,0,1);this.pane.style.opacity=String(p);
+        if(mobile)this.pane.style.translate=`${(p-1)*Flow.model.travel}px 0`;
+        else if(innerWidth>1180)this.work.style.gridTemplateColumns=`${this.columns[0]*p}px ${330+(this.columns[1]-330)*p}px minmax(340px,1fr) ${340+(this.columns[3]-340)*p}px`;
+        else this.work.style.gridTemplateColumns=`${this.columns[0]*p}px minmax(320px,1fr)`;
+        App.redraw();this.schedule();
+      },done:()=>{
+        this.work.style.gridTemplateColumns='';this.pane.style.opacity='';this.pane.style.translate='';this.pane.style.overflow='';
+        this.pane.style.removeProperty('--flow-display');this.pane.style.removeProperty('--flow-reference-content-width');delete this.pane.dataset.flowVisible;
+        if(!open)delete this.work.dataset.reference;App.redraw();this.schedule();
+      }});
+  },
+  open() {
+    this.back = document.activeElement;this.transition(true);
+    $('#reftoggle').setAttribute('aria-expanded','true');$('#reftoggle').setAttribute('aria-pressed','true');
+    $('#ref-topic').focus({preventScroll:true});
+  },
+  close() {
+    const to=this.back&&this.back.isConnected&&!this.pane.contains(this.back)&&!this.back.closest('[hidden]')&&this.back.getClientRects().length?this.back:$('#reftoggle');
+    this.clear();this.transition(false);
+    $('#reftoggle').setAttribute('aria-expanded','false');$('#reftoggle').setAttribute('aria-pressed','false');
+    to.focus({preventScroll:true});
+  },
+  render(i) {
+    this.cur = clamp(i, 0, REF_TOPICS.length - 1);
+    const t = REF_TOPICS[this.cur];
+    this.clear();
+    $('#ref-topic').value = t.id;
+    Flow.resize($('#ref-article'),()=>Flow.patch($('#ref-article'),`<p class="ref-group">${esc(t.group)}</p><h3>${esc(t.title)}</h3><dl><dt>Purpose</dt><dd>${esc(t.purpose)}</dd><dt>Read</dt><dd>${esc(t.read)}</dd><dt>Use</dt><dd>${esc(t.use)}</dd></dl>`));
+    Flow.patch($('#ref-targets'),t.targets.map((x,k)=>`<button type="button" data-motion-key="${t.id}-${k}" data-t="${k}" aria-pressed="false">${esc(x.label)}</button>`).join(''));
+    $('#ref-pos').textContent = `${this.cur + 1} / ${REF_TOPICS.length}`;
+    $('#ref-prev').disabled = this.cur === 0; $('#ref-next').disabled = this.cur === REF_TOPICS.length - 1;
+    $('#ref-body').scrollTop = 0;
+  },
+  clear() {
+    this.active = null; this.lastShape = ''; Flow.visible(this.spot,false,0);
+    for (const b of document.querySelectorAll('#ref-targets button')) b.setAttribute('aria-pressed', 'false');
+    $('#ref-status').textContent = '';
+  },
+  schedule() { if (this.active && !this.raf) this.raf = requestAnimationFrame(() => { this.raf = 0; this.paint(); }); },
+  // the fan's place on the paper, from the stage's own geometry
+  fanRect() {
+    const r = Match.result, c = r && r.panes && r.panes.cont;
+    if (!c) return null;
+    const G = Stage.geom(), lx=G.forecastLeft;
+    const step = G.fanStep;
+    if (!(step >= 4)) return null;
+    const box = Stage.cv.getBoundingClientRect();
+    return { left: box.left + lx - 6, top: box.top + G.plotTop - 26, right: box.left + G.futureXs.at(-1) + G.forecastWidth/2, bottom: box.top + G.plotBottom + 48 };
+  },
+  bounds(t) {
+    if (t.region === 'fan') return this.fanRect();
+    const el = document.querySelector(t.selector);
+    if (!el || el.closest('[hidden]') || !el.getClientRects().length) return null;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 ? r : null;
+  },
+  paint() {
+    if (!this.active || this.pane.hidden) return;
+    const raw = this.bounds(this.active), doc = this.pane.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    if (!raw) { Flow.visible(this.spot,false,0); $('#ref-status').textContent = 'This part is not on the page right now: it appears once there are results to show.'; return; }
+    let l = Math.max(0, raw.left - 4), t = Math.max(0, raw.top - 4), r = Math.min(W, raw.right + 4), b = Math.min(H, raw.bottom + 4);
+    // keep the reference itself undimmed and unframed
+    if (l < doc.right && r > doc.left && t < doc.bottom && b > doc.top) { if (doc.width >= W - 16) b = Math.min(b, doc.top); else l = Math.max(l, doc.right); }
+    if (r <= l || b <= t) { Flow.visible(this.spot,false,0); $('#ref-status').textContent = 'This part is outside the visible area: scroll it into view to highlight it.'; return; }
+    const hole = (x, y, w, h) => `M${x},${y}h${w}v${h}h${-w}Z`;
+    const shape = `M0,0H${W}V${H}H0Z${hole(doc.left, doc.top, doc.width, doc.height)}${hole(l, t, r - l, b - t)}`;
+    if (shape !== this.lastShape) {
+      this.lastShape = shape; this.spot.setAttribute('viewBox', `0 0 ${W} ${H}`); this.shade.setAttribute('d', shape);
+      for (const [k, v] of Object.entries({ x: l, y: t, width: r - l, height: b - t })) this.frame.setAttribute(k, v);
+    }
+    Flow.visible(this.spot,true,0);this.spot.setAttribute('aria-hidden','true');
+    $('#ref-status').textContent = `Highlighted: ${this.active.label.replace(/^Show /, '')}. Escape or a click on the dimmed area stops it.`;
+  },
+};
+Ref.init();
+// timeframe chips: how many windows hold (or, with nothing held, how many exact twins), and whether each timeframe is included
+function renderChips(counts) {
+  Flow.patch($('#tfs'),TF_LABELS.map((tf, k) => `<button type="button" class="chip" data-k="${k}" aria-pressed="${S.tfOn[k]}" title="${S.tfOn[k] ? 'Leave out' : 'Include'} ${tf}">${tf}${counts ? `<b>${fmt(counts[k])}</b>` : ''}</button>`).join(''),false);
+}
+renderChips(null);
+const emaki = $('#emaki');
+emaki.addEventListener('pointerover', e => { const c = e.target.closest('.card'); if (c && Match.sticky < 0) Match.setTrace(+c.dataset.i); });
+emaki.addEventListener('pointerleave', () => { if (Match.sticky < 0) Match.setTrace(-1); });
+emaki.addEventListener('focusin', e => { const c = e.target.closest('.card'); if (c && Match.sticky < 0) Match.setTrace(+c.dataset.i); });
+emaki.addEventListener('click', e => {
+  const c = e.target.closest('.card'); if (!c) return;
+  const i = +c.dataset.i, again = Match.sticky === i;
+  emaki.querySelectorAll('.card').forEach(x => x.setAttribute('aria-pressed', 'false'));
+  Match.sticky = again ? -1 : i; if (!again) c.setAttribute('aria-pressed', 'true');
+  Match.setTrace(again ? -1 : i);
+});
+$('#tfs').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  const k = +b.dataset.k, on = S.tfOn.filter(Boolean).length;
+  if (S.tfOn[k] && on === 1) return; // keep at least one timeframe
+  S.tfOn[k] = !S.tfOn[k]; b.setAttribute('aria-pressed', String(S.tfOn[k])); refresh();
+});
+$('#ndir').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.next.dir = +b.dataset.v; refresh(); });
+$('#nmeas').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.next.measure = b.dataset.v; refresh(); if (b.dataset.v !== 'any') { const i = $('#nval'); i.focus(); i.select(); } });
+$('#nval').addEventListener('input', e => { const v = parseFloat(e.target.value), m = S.next.measure; if (m !== 'any' && v > 0) { S.next[m] = v; refresh(); } });
+$('#nval').addEventListener('blur', e => { const m = S.next.measure; if (m !== 'any') e.target.value = String(S.next[m]); });
+$('#xsel').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.x = +b.dataset.x; refresh(); });
+$('#skel').addEventListener('input', e => { S.skel = +e.target.value; refresh(); });
+$('#pins').addEventListener('click', () => setPinMode(!S.pinMode));
+$('#clearpins').addEventListener('click', () => Ops.clearPins());
+$('#stless').addEventListener('click', () => { S.stretch = Math.max(0, S.stretch - 1); refresh(); });
+$('#stmore').addEventListener('click', () => { S.stretch = Math.min(4, S.stretch + 1); refresh(); });
+function setPinMode(on) {
+  S.pinMode = on; Stage.pinFrom = null; Stage.pinHov = null; Stage.hov = null;
+  Stage.hint.textContent = on ? HINT_PIN : HINT_DRAW; Stage.hint.classList.toggle('pinning', on);
+  Stage.cv.style.cursor = on ? 'crosshair' : '';
+  if (on) Stage.cv.focus({ preventScroll: true });
+  refresh();
+}
+
+/* ================= the footer: identity ================= */
+function updateFooter() {
+  const id = identity(), n = id.n;
+  const names = namesOf();
+  Flow.patch($('#names'),names.length
+    ? names.map(([who,p]) => `<button type="button" class="nm" data-kind="${p.kind}" data-pattern="${p.id}"><span class="who">${who}</span><span lang="ja">${p.ja}</span>${p.name}</button>`).join('')
+    : '<span class="nm none">No catalog name fits these bars</span>',false);
+  const lines = [];
+  if (S.sel > 0) lines.push(pairSentence(id, S.sel - 1, S.sel));
+  if (S.sel < n - 1) lines.push(pairSentence(id, S.sel, S.sel + 1));
+  Flow.patch($('#desc'),lines.map(l=>`<span>${l}</span>`).join(''),false);
+  $('#code').textContent = codeOf(id);
+  $('#dom').textContent = n <= 10 ? `one of ${DOMAIN[S.colored ? 'o' : 'u'][n]} ${NWORD[n]}-bar patterns${S.colored ? '' : ' (shape only)'}` : `a ${NWORD[n]}-bar pattern, longer than the ten bars the engine counts`;
+}
+$('#copy').addEventListener('click', e => {
+  const btn = e.currentTarget, text = $('#code').textContent;
+  const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1400); };
+  const pick = () => { const r = document.createRange(); r.selectNodeContents($('#code')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+  try { navigator.clipboard.writeText(text).then(done, pick); } catch (err) { pick(); }
+});
+
+/* ================= the app ================= */
+const App = {
+  running: false, lastT: 0, dirty: false,
+  kick() { if (this.running) return; this.running = true; this.lastT = performance.now(); requestAnimationFrame(t => this.tick(t)); },
+  redraw() { this.dirty = true; this.kick(); },
+  tick(now) {
+    const dt = Math.min(0.032, Math.max(0, (now - this.lastT) / 1000)); this.lastT = now; this.dirty = false;
+    let busy = false;
+    // one bad frame must never stop the paper for good
+    try {
+      Stage.frameBox=Stage.box&&!Flow.value(Ref.pane,'reference')?Stage.box:Stage.measureBox();
+      if(Stage.resizePending){Stage.resizePending=false;if(!Flow.value(Ref.pane,'reference')){Stage.plot.ready=false;Stage.settle(false);}}
+      busy = Stage.step(dt); Stage.draw();
+    } catch (err) { console.error(err); }
+    finally{Stage.frameBox=null;}
+    if (busy || this.dirty) requestAnimationFrame(t => this.tick(t)); else this.running = false;
+  },
+};
+function refresh() {
+  chain();
+  Match.drawnKey = Match.key();
+  Stage.dropStale();
+  const n = S.bars.length;
+  if (n === 1) S.stretch = 0;
+  $('#nb').innerHTML = `<b>${n}</b>bars`;
+  $('#rm').disabled = n <= MINN; $('#add').disabled = n >= MAXN;
+  $('#add').title = n >= MAXN ? 'Twenty bars is as long as a composition goes' : 'Add a bar';
+  $('#mode').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.v === '1') === S.colored)));
+  $('#undo').disabled = !hist.past.length; $('#redo').disabled = !hist.future.length;
+  // the three ways of holding, as they stand
+  const lv = skelLevels(); S.skel = Math.min(S.skel, lv.length);
+  const sk = $('#skel'); sk.max = String(lv.length); sk.value = String(S.skel);
+  const marks = skelMarks().length + (S.skel && S.colored ? 2 : 0);
+  $('#skelv').textContent = !S.skel ? 'off' : S.skel === 1 ? `bones · ${marks} points` : S.skel === lv.length ? `every swing · ${marks}` : `${marks} points`;
+  $('#pins').setAttribute('aria-pressed', String(S.pinMode)); $('#pinv').textContent = String(S.pins.length); Flow.disclosure($('#clearpins'),!!S.pins.length,'width');
+  const anyHeld = S.pins.length > 0 || S.skel > 0;
+  $('#stv').textContent = `+${S.stretch} bar${S.stretch === 1 ? '' : 's'}`; $('#stv').style.color = anyHeld || !S.stretch ? '' : 'var(--ink-3)';
+  $('#stless').disabled = S.stretch <= 0; $('#stmore').disabled = n < 2 || S.stretch >= 4;
+  $('#xsel').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.x === S.x)));
+  // 次: one control; the measure and threshold only matter once a direction is chosen
+  const nx = S.next;
+  $('#nextctl').dataset.any = String(!nx.dir);
+  $('#ndir').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === nx.dir)));
+  $('#nmeas').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === nx.measure)));
+  const nv = $('#nval'); Flow.disclosure($('#nvalw'),!!nx.dir&&nx.measure!=='any','width');
+  if (nx.measure !== 'any') { nv.step = nx.measure === 'bps' ? '1' : '0.1'; nv.setAttribute('aria-label', `At least how many ${nx.measure === 'bps' ? 'basis points' : 'ATR'}`); if (document.activeElement !== nv) nv.value = String(nx[nx.measure]); }
+  updateFooter();
+  Match.schedule();
+  App.redraw();
+  labDrawingChanged();
+}
+$('#add').addEventListener('click', () => Ops.add());
+$('#rm').addEventListener('click', () => Ops.remove());
+$('#mode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const c = b.dataset.v === '1'; if (c !== S.colored) { S.colored = c; refresh(); } });
+$('#undo').addEventListener('click', () => Ops.undo());
+$('#redo').addEventListener('click', () => Ops.redo());
+addEventListener('keydown', e => {
+  if (!(e.metaKey || e.ctrlKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z') { e.preventDefault(); e.shiftKey ? Ops.redo() : Ops.undo(); } else if (k === 'y') { e.preventDefault(); Ops.redo(); }
+});
+// spacing is how you look at the composition, not part of it: it stays out of undo and out of the g1 code
+function setSpace(u) {
+  u = clamp(u, 0, 1); if (u === S.space) return;
+  S.space = u; $('#space').value = String(u);
+  try { localStorage.setItem('ashi.width', String(u)); } catch (err) { /* not remembered in this browser */ }
+  App.redraw();
+}
+$('#space').value = String(S.space);
+$('#space').addEventListener('input', e => setSpace(+e.target.value));
+function onTheme() { const root=document.documentElement;root.dataset.flowTheme='';Flow.finish();readTheme();Match.retint();Stage.paintVersion=(Stage.paintVersion||0)+1;void document.body.offsetWidth;delete root.dataset.flowTheme;Stage.departingForecast=null;App.redraw(); }
+$('#theme').addEventListener('click', () => {
+  const root = document.documentElement, cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.dataset.theme = cur === 'dark' ? 'light' : 'dark'; onTheme();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onTheme);
+
+// inside Portal (served under /composer/), offer the way back to the Portal landing
+if (/^\/composer(\/|$)/.test(location.pathname)) $('#home').hidden = false;
+const namedPatterns = installPatternBrowser(query => {
+  if (Match.failed) { queueMicrotask(() => namedPatterns.failed('The market data could not be loaded.')); return; }
+  if (Match.ready) Match.worker.postMessage({type:'named-pattern', ...query, catalogURL:new URL('patterns.js', document.baseURI).href});
+}, ['15m']);
+Panes.init();
+Forecast.init();
+$('#space').dataset.tip='Width of the drawn root candle bodies only. Their centers, future columns and fan stay fixed. [ and ] or pinch change the same setting.';
+Stage.fit(true);
+refresh();
+Match.start();
+
+import('./bridge.js').then(({attachComposer}) => attachComposer({
+  read: () => ({ bars: snap().bars, pins: snap().pins, oriented: S.colored, skeleton: S.skel, stretch:S.stretch, next:{...S.next},limit:S.x }),
+  apply: packet => {
+    S.colored=packet.oriented; S.skel=packet.skeleton; S.stretch=packet.stretch;
+    S.next={...packet.next}; S.x=packet.limit; S.sel=packet.bars.length-1;
+    S.pinMode=false; Stage.pinFrom=null; Stage.pinHov=null;
+    pushHist(); Ops.restore(packet); Stage.fit(true);
+  },
+  g1: () => codeOf(identity()),
+  onChange: callback => {labDrawingChanged=callback;},
+})).catch(error => { $('#sample-status').textContent = 'Could not open the recording. ' + error.message; });
+
+Flow.onSettle(()=>{if(Match.presentation){Match.flushPresentation();Flow.finish();}Stage.settle(!Stage.frameBox);App.redraw();});
+Flow.reveal($('.top'),0);Flow.reveal($('.stage'),0);Flow.reveal($('.lpane'));Flow.reveal($('.rpane'));
+if (document.fonts) { const fontsReady=()=>{Stage.paintVersion=(Stage.paintVersion||0)+1;Flow.finish();App.redraw();}; document.fonts.ready.then(fontsReady); document.fonts.addEventListener('loadingdone',fontsReady); }
+})();
+</script>
