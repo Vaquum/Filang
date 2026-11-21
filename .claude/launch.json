@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ux-directions",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["ux-directions/serve.mjs", "8790"],
+      "port": 8790
+    },
+    {
+      "name": "cube-reference",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8791", "--bind", "127.0.0.1", "--directory", "../Cube"],
+      "port": 8791
+    }
+  ]
+}
