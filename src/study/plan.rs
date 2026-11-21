@@ -1,8 +1,8 @@
 use super::{
-    predicate::{CandleRule, Ratio},
+    predicate::{CandleRule, Field, Ratio},
     tape::{number, DAYS, TRENDS},
 };
-use crate::{geometry::GeometryPattern, Result};
+use crate::{geometry::GeometryPattern, rules::Cmp, Result};
 use std::collections::HashSet;
 
 pub(super) const MAX_BATCH: usize = 64;
@@ -21,6 +21,14 @@ pub(super) enum Node {
     Equal(usize, usize, bool),
     Not(usize),
     Logic(Vec<usize>, bool),
+    Price(Field, usize),
+    Prior(usize, bool),
+    Relate(usize, Cmp, usize),
+    Near(usize, usize, Ratio),
+    Share(Field, usize, Ratio, Ratio),
+    Multiple(usize, Ratio, Option<Ratio>),
+    Reclaim(usize, usize, usize, bool),
+    Window(usize, usize),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -28,6 +36,9 @@ enum Type {
     Bool,
     Day,
     Trend,
+    Price,
+    PriorLow,
+    PriorHigh,
 }
 
 pub(super) struct Query {
@@ -55,6 +66,24 @@ fn reference(value: Option<&str>, types: &[Type], want: Option<Type>) -> Result<
     match types.get(index) {
         Some(actual) if want.map_or(true, |t| *actual == t) => Ok(index),
         _ => Err("plan reference is forward, missing or wrong type".into()),
+    }
+}
+
+fn price_ref(value: Option<&str>, types: &[Type]) -> Result<usize> {
+    let id = reference(value, types, None)?;
+    if matches!(types[id], Type::Price | Type::PriorLow | Type::PriorHigh) {
+        Ok(id)
+    } else {
+        Err("expected an endpoint price or prior level".into())
+    }
+}
+
+fn offset(value: Option<&str>) -> Result<usize> {
+    let n = number(value, "candle offset")?;
+    if n <= 64 {
+        Ok(n)
+    } else {
+        Err("candle offset exceeds 64".into())
     }
 }
 
@@ -94,6 +123,83 @@ impl Plan {
                     steps(number(words.next(), "range duration")?, frame)?,
                     Ratio::parse(words.next().ok_or("missing range ratio")?)?,
                 ),
+                "price" => {
+                    kind = Type::Price;
+                    let field = Field::parse(words.next().ok_or("missing candle price point")?)?;
+                    if !matches!(
+                        field,
+                        Field::Open
+                            | Field::Close
+                            | Field::High
+                            | Field::Low
+                            | Field::BodyLow
+                            | Field::BodyHigh
+                    ) {
+                        return Err("expected a candle endpoint".into());
+                    }
+                    Node::Price(field, offset(words.next())?)
+                }
+                "prior-low" | "prior-high" => {
+                    let high = op == "prior-high";
+                    kind = if high {
+                        Type::PriorHigh
+                    } else {
+                        Type::PriorLow
+                    };
+                    Node::Prior(steps(number(words.next(), "prior window")?, frame)?, high)
+                }
+                "relate" => Node::Relate(
+                    price_ref(words.next(), &types)?,
+                    Cmp::parse(words.next().ok_or("missing price comparison")?)?,
+                    price_ref(words.next(), &types)?,
+                ),
+                "near" => Node::Near(
+                    price_ref(words.next(), &types)?,
+                    price_ref(words.next(), &types)?,
+                    Ratio::parse(words.next().ok_or("missing distance")?)?,
+                ),
+                "share" => {
+                    let part = match words.next() {
+                        Some("body") => Field::Body,
+                        Some("lower_wick") => Field::Lower,
+                        Some("upper_wick") => Field::Upper,
+                        _ => return Err("unknown candle part".into()),
+                    };
+                    Node::Share(
+                        part,
+                        offset(words.next())?,
+                        Ratio::parse(words.next().ok_or("missing minimum share")?)?,
+                        Ratio::parse(words.next().ok_or("missing maximum share")?)?,
+                    )
+                }
+                "multiple" => Node::Multiple(
+                    steps(number(words.next(), "median window")?, frame)?,
+                    Ratio::magnitude(words.next().ok_or("missing minimum multiple")?)?,
+                    match words.next() {
+                        Some("-") => None,
+                        Some(x) => Some(Ratio::magnitude(x)?),
+                        None => return Err("missing maximum multiple or dash".into()),
+                    },
+                ),
+                "window" => {
+                    let inner = reference(words.next(), &types, Some(Type::Bool))?;
+                    let n = offset(words.next())?;
+                    if n == 0 {
+                        return Err("candle window is empty".into());
+                    }
+                    Node::Window(inner, n)
+                }
+                "reclaim" => {
+                    let id = price_ref(words.next(), &types)?;
+                    if types[id] == Type::Price {
+                        return Err("reclaim needs a prior range level".into());
+                    }
+                    let (min, max) = (offset(words.next())?, offset(words.next())?);
+                    if min > max {
+                        return Err("reclaim minimum exceeds maximum".into());
+                    }
+                    Node::Reclaim(id, min, max, types[id] == Type::PriorHigh)
+                }
                 "breakout" => Node::Breakout(steps(number(words.next(), "lookback")?, frame)?),
                 "held" => Node::Held(
                     reference(words.next(), &types, Some(Type::Bool))?,
@@ -130,7 +236,7 @@ impl Plan {
                 }
                 "eq" | "ne" => {
                     let lhs = reference(words.next(), &types, None)?;
-                    if types[lhs] == Type::Bool {
+                    if !matches!(types[lhs], Type::Day | Type::Trend) {
                         return Err("comparison needs categories".into());
                     }
                     Node::Equal(
@@ -171,6 +277,11 @@ impl Plan {
             };
             let context = optional(words.next(), Some(Type::Bool))?;
             let group = optional(words.next(), None)?;
+            if group.map_or(false, |id| {
+                !matches!(types[id], Type::Bool | Type::Day | Type::Trend)
+            }) {
+                return Err("group needs a Boolean or category".into());
+            }
             let mut seen = HashSet::new();
             let horizons = words
                 .map(|s| {

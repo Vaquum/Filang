@@ -1,5 +1,6 @@
 //! Bounded, close-anchored research studies over a checked Filang plan.
 //! This path shares the native geometry and packed mask representations.
+mod candles;
 mod compute;
 mod plan;
 mod predicate;
@@ -71,8 +72,8 @@ fn evaluate(text: &str, tape: &Tape, calendar: &Calendar) -> Result<String> {
     let mut eval = Eval::new(tape, calendar);
     let series = eval.series(&plan.nodes)?;
     let mut out = String::new();
-    write!(out, "{{\"engine\":\"Filang {} · study v1\",\"work\":{{\"candidates\":{},\"nodes\":{},\"rollingWindows\":{},\"geometryWindows\":{}}},\"results\":[",
-        env!("CARGO_PKG_VERSION"), plan.queries.len(), plan.nodes.len(), eval.rolling_windows, eval.geometry_windows)
+    write!(out, "{{\"engine\":\"Filang {} · study v1\",\"work\":{{\"candidates\":{},\"nodes\":{},\"rollingWindows\":{},\"geometryWindows\":{},\"medianWindows\":{}}},\"results\":[",
+        env!("CARGO_PKG_VERSION"), plan.queries.len(), plan.nodes.len(), eval.rolling_windows, eval.geometry_windows, eval.median_windows())
         .expect("format string");
     let mut cells_left = OUTPUT_CELLS;
     for (i, query) in plan.queries.iter().enumerate() {
@@ -168,7 +169,17 @@ fn write_result(
                 .expect("format string"),
             }
         }
-        out.push_str("]}");
+        out.push(']');
+        if let Some((breach, level)) = series[query.find].reclaim(i, series)? {
+            write!(
+                out,
+                ",\"reclaim\":{{\"breach\":{},\"reclaim\":{},\"level\":{level}}}",
+                tape.close(breach),
+                tape.close(i)
+            )
+            .expect("format string");
+        }
+        out.push('}');
     }
     out.push_str("]}");
     Ok(())

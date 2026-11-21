@@ -3,7 +3,7 @@ import { analyze } from './check.js';
 import { runAnalysis, U } from './engine.js';
 import { printQuestion, parseExpression, lineCol } from './lang.js';
 import { g1FromRecording, parseG1 } from './g1.js';
-import { decodeDrawing } from '../composer/drawing.js';
+import { decodeDrawing, pinnedExpression } from '../composer/drawing.js';
 import { loadInstalled, installSaved, renderExtensions } from './study-extensions.js';
 import { setupPractice } from './study-practice.js';
 import { EXAMPLES } from './examples.js';
@@ -16,6 +16,7 @@ import { readLibrary, saveToLibrary, makeStudy, checkStudy, studyLink, studyFrom
 
 const el = (id) => document.getElementById(id);
 const HAMMER = 'on BTCUSDT 15m\nfind hammer\nmeasure close_return(after: 1h)';
+const RECLAIM = 'on BTCUSDT 15m\nfind breach_reclaim(prior_low(over: 4h))\nmeasure close_return(after: [1h, 4h])';
 const transfer = EXAMPLES.find((e) => e.id === 'transfer').text;
 const state = {
   env: null,
@@ -78,6 +79,11 @@ function showInstalled() {
     if (dirty || !state.analysis) throw Error('Run the query before inserting a definition.');
     const q = structuredClone(state.analysis.ast);
     const position = current().cand.plan.wheres.findIndex((w) => w.def?.id === def.id && w.def?.composed);
+    if (def.kind === 'event') {
+      replaceDetector(q, def.name + '()');
+      if (!runText(printQuestion(q))) throw Error('The event could not run.');
+      return;
+    }
     if (position >= 0 && q.wheres[position].k === 'call') q.wheres[position].name = def.name;
     else q.wheres.push(parseExpression(def.name + '()').ast);
     if (!runText(printQuestion(q))) throw Error('Review the parameter diagnostics in the formal query.');
@@ -183,6 +189,7 @@ function runText(text, { saved = null, startFresh = false, source = null, live =
       ? 'hammer'
       : a.canonical === analyze(transfer, env.env).canonical
         ? 'breakout'
+        : a.canonical === analyze(RECLAIM, env.env).canonical ? 'reclaim'
         : a.canonical === analyze(FRIDAY, env.env).canonical
           ? 'friday'
           : 'custom';
@@ -349,6 +356,7 @@ async function checkNative() {
         return (
           x.t === row.t &&
           (x.group ?? null) === (row.group?.key ?? null) &&
+          same(x.reclaim ?? null, r.event.series.evidence?.(row.i) ?? null) &&
           x.out.length === row.out.length &&
           x.out.every((cell, k) => {
             const target = row.out[k];
@@ -493,6 +501,20 @@ function openLibrary() {
     showDialog(h('p', null, e.message));
   }
 }
+function replaceDetector(q,text) {
+  const parsed = parseExpression(text);
+  if (!parsed.ast) throw Error(parsed.error.message);
+  q.find = parsed.ast;
+  const retained = new Set();
+  function collect(n) {
+    if (!n || typeof n !== 'object') return;
+    if (n.k === 'id') retained.add(n.name);
+    Object.values(n).forEach(collect);
+  }
+  [q.find, ...q.wheres, q.group, ...q.measures].forEach(collect);
+  q.lets = q.lets.filter(b => retained.has(b.name));
+}
+
 function readLocation() {
   try {
     const saved = studyFromLink();
@@ -519,22 +541,15 @@ function readLocation() {
             drawing: params.get('drawing'),
             anchor: params.has('anchor') ? Number(params.get('anchor')) : null,
           });
+      const pinQuery = params.has('pin-relations')
+        ? pinnedExpression(decodeDrawing(source.drawing,source.g1)) : null;
+      if (params.has('pin-relations') && !pinQuery) throw Error('The drawing has no active pins.');
       const prior = params.get('question');
       const a = analyze(prior || (pattern ? HAMMER : FRIDAY), state.env.env);
       if (!a.ok) throw Error('The originating query could not be resolved.');
       const q = structuredClone(a.ast);
-      q.find = parseExpression(
-        pattern ? JSON.stringify(pattern.canonicalName) : 'exact_g1(' + JSON.stringify(source.g1) + ')',
-      ).ast;
-      const retained = new Set();
-      // A binding used only by the previous detector no longer belongs to this query.
-      function collect(n) {
-        if (!n || typeof n !== 'object') return;
-        if (n.k === 'id') retained.add(n.name);
-        Object.values(n).forEach(collect);
-      }
-      [q.find, ...q.wheres, q.group, ...q.measures].forEach(collect);
-      q.lets = q.lets.filter((b) => retained.has(b.name));
+      replaceDetector(q, pattern ? JSON.stringify(pattern.canonicalName) :
+        pinQuery || 'exact_g1(' + JSON.stringify(source.g1) + ')');
       const handoffURL = location.href;
       if (!runText(printQuestion(q), { source, startFresh: true }))
         throw Error('The imported pattern could not run.');
@@ -542,7 +557,9 @@ function readLocation() {
       notice(
         pattern
           ? pattern.title + ' imported from Composer.'
-          : 'Composer drawing imported. This study uses exact G1 twins.',
+          : pinQuery
+            ? 'Composer pins imported on fixed consecutive candles.'
+            : 'Composer drawing imported. This study uses exact G1 twins.',
       );
       return;
     }
@@ -601,7 +618,7 @@ async function start() {
       else runText(HAMMER, { startFresh: true, source: seed() }) && builder.newQuestion(newQuestion);
     };
     el('examples').onchange = (e) =>
-      runText({ breakout: transfer, friday: FRIDAY, hammer: HAMMER }[e.target.value], {
+      runText({ breakout: transfer, friday: FRIDAY, hammer: HAMMER, reclaim: RECLAIM }[e.target.value], {
         startFresh: true,
         source: seed(),
       });

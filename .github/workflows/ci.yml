@@ -52,3 +52,4 @@ jobs:
           "$RUNNER_TEMP/filang-study-python/bin/python" study/prepare_recording.py --parquet "$RUNNER_TEMP/filang-study.parquet" --encoder "$RUNNER_TEMP/filang-composer-bars.py"
           npm --prefix study run verify
           node study/verify/native.mjs
+          node study/verify/candle-native.mjs

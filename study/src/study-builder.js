@@ -1,3 +1,4 @@
+import { priceControl } from './price-control.js';
 import { h, mount, nextId } from './ui/dom.js';
 import { parseExpression, printExpr, printQuestion } from './lang.js';
 import { analyze } from './check.js';
@@ -369,11 +370,16 @@ export function setupBuilder(host, { state, edit, openDialog, closeDialog, getCo
     const feedback = h('p', { class: 'picker-error', role: 'alert' });
     const inputs = fields.map((field) => {
       const id = nextId('arg');
-      const input = field.choices
+      if (['Price','Level'].includes(field.param?.type)) {
+        return { field, ...priceControl(id, field) };
+      }
+      const valueLabels = ENUMS[field.param?.type?.slice(4)]?.labels;
+      const choices = field.choices || (valueLabels && Object.hasOwn(valueLabels, field.value) ? Object.keys(valueLabels) : null);
+      const input = choices
         ? h(
             'select',
             { id },
-            field.choices.map((value) => h('option', { value, selected: value === field.value }, value)),
+            choices.map((value) => h('option', { value, selected: value === field.value }, valueLabels?.[value] || value)),
           )
         : h('input', {
             id,
@@ -382,7 +388,7 @@ export function setupBuilder(host, { state, edit, openDialog, closeDialog, getCo
             spellcheck: 'false',
             autocomplete: 'off',
           });
-      const fieldLabel = field.name.replaceAll('_', ' ');
+      const fieldLabel = field.param?.caption || field.name.replaceAll('_', ' ');
       let suggestions = field.values || [];
       if (field.param) {
         const base =
@@ -421,13 +427,14 @@ export function setupBuilder(host, { state, edit, openDialog, closeDialog, getCo
         field,
         input,
         share,
+        focus: () => input.focus(),
         el: h(
           'div',
           { class: 'param-field' },
           h('label', { for: id }, fieldLabel),
           input,
           field.doc && h('small', null, field.doc),
-          samples.length ? h('details', null, h('summary', null, 'Choose a value'), list) : null,
+          samples.length && !choices ? h('details', null, h('summary', null, 'Choose a value'), list) : null,
           share && h('details', null, h('summary', null, 'Share as a named parameter'), share),
         ),
       };
@@ -467,7 +474,7 @@ export function setupBuilder(host, { state, edit, openDialog, closeDialog, getCo
       h('button', { class: 'primary', type: 'submit' }, 'Apply changes'),
     );
     show(trigger, h('h2', null, binding ? 'Edit ' + node.name : 'Adjust ' + label(node, reg)), form);
-    inputs[0]?.input.focus();
+    inputs[0]?.focus();
   }
   function render() {
     const q = state.analysis.ast;

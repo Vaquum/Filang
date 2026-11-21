@@ -153,6 +153,13 @@ function bindingValues(tokens, text) {
 
 function scalarOptions(param, def, env, bindings, listMode, used = new Set(), typed = '') {
   if (!param) return [];
+  if (['Level','Price','Event'].includes(param.type)) {
+    if (listMode) return [];
+    if (param.type === 'Event') return exprOptions('find',env).filter(x => x.def?.name !== def.name);
+    return env.registry.implemented()
+      .filter(d => d.result === 'Level' || param.type === 'Price' && d.result === 'Price')
+      .map(d => choice(d.name,d.example,'value',d.title,{aliases:[d.title]}));
+  }
   const check = new Checker(env, () => {});
   const resolved = { calendar: { name: env.calendars.keys().next().value } };
   const accepts = n => {
@@ -171,11 +178,11 @@ function scalarOptions(param, def, env, bindings, listMode, used = new Set(), ty
   const presets = {
     Duration: ['15m', '30m', '1h', '2h', '4h', '6h', '12h', '18h', '24h', '48h', '72h', '7d'],
     Ratio: ['1%', '2%', '2.5%', '3%', '5%', '25%', '35%', '45%', '50%', '75%', '100%'],
-    Number: ['1', '2', '3'],
+    Number: ['0', '1', '2', '3'],
     Calendar: [...env.calendars.keys()],
     G1: env.selectedG1 ? [JSON.stringify(env.selectedG1)] : [],
   };
-  for (const value of presets[param.type] || []) values.add(value);
+  for (const value of env.registry.enumOf(param.type)?.values || presets[param.type] || []) values.add(value);
   // Presets demonstrate units; any literal allowed by the datatype and domain
   // can complete the slot, including a trader's own duration or G1 drawing.
   if (typed) {

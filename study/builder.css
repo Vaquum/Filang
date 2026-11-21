@@ -352,3 +352,7 @@
     scroll-margin-top: 12px;
   }
 }
+.price-fields { display:flex; align-items:end; gap:8px; }
+.price-fields[hidden] { display:none; }
+.price-fields > * { flex:1; min-width:0; }
+.reclaim-trace { font-size: 13px; color: var(--quiet); padding: 0 18px; }
