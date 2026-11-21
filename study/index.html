@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#152c26" />
+    <title>Pattern study · Filang</title>
+    <link rel="stylesheet" href="./study.css" />
+    <link rel="stylesheet" href="./builder.css" />
+  </head>
+  <body>
+    <a class="skip" href="#question-title">Skip to question</a>
+    <header class="topbar">
+      <div class="nav-inner">
+        <a class="brand" href="./" aria-label="Filang home"
+          ><span class="brandmark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Filang</a
+        >
+        <nav aria-label="Workspace">
+          <a href="./" aria-current="page">Study</a><a class="composer-link" href="./composer/">Composer</a
+          ><a href="language.html">Language guide</a>
+        </nav>
+        <button class="saved-nav" id="show-library">Saved questions <span id="saved-count">0</span></button>
+      </div>
+    </header>
+    <main>
+      <div class="heading">
+        <div><h1>Pattern study</h1></div>
+        <div class="heading-actions">
+          <button id="new-question" disabled>New question</button>
+          <button id="practice" disabled>Practice</button
+          ><label class="example-select"
+            ><span class="visually-hidden">Load a study</span
+            ><select id="examples">
+              <option value="hammer">Hammer study</option>
+              <option value="reclaim">Prior low reclaim</option>
+              <option value="friday">Friday close study</option>
+              <option value="breakout">Channel breakout study</option>
+              <option value="custom" hidden>Custom study</option>
+            </select></label
+          ><button id="save-open" class="primary" disabled>Save question</button>
+        </div>
+      </div>
+      <div id="message" role="status" hidden></div>
+      <div class="workspace">
+        <section class="card question" aria-labelledby="question-title">
+          <div class="section-head"><h2 id="question-title" tabindex="-1">Query builder</h2><button id="jump-results" class="mobile-jump" hidden></button></div>
+          <div id="builder"></div>
+          <details class="definitions" id="shortcuts" hidden>
+            <summary>Study shortcuts</summary>
+            <div id="question-controls" class="controls"></div>
+          </details>
+          <details class="formal">
+            <summary>Formal query</summary>
+            <label for="query" class="visually-hidden">Formal query</label
+            ><textarea id="query" spellcheck="false" autocapitalize="off" rows="5"></textarea>
+            <div id="formal-menu"></div>
+            <div class="code-actions">
+              <span id="query-state" role="status">Loading recording…</span
+              ><span><button id="revert-edit" type="button" hidden>Revert edit</button> <button id="run" disabled>Run query</button></span>
+            </div>
+            <div id="errors" role="alert"></div>
+          </details>
+          <details class="definitions">
+            <summary>Definitions &amp; inputs</summary>
+            <div id="definitions"></div>
+          </details>
+          <details class="definitions">
+            <summary>Agent definitions</summary>
+            <div id="installations"></div>
+          </details>
+        </section>
+        <div class="results">
+          <section class="card cases" aria-labelledby="cases-title">
+            <div class="section-head">
+              <h2 id="cases-title" tabindex="-1">Historical cases</h2>
+              <button id="jump-builder" class="mobile-jump">Edit query ↑</button>
+              <span id="native" role="status"></span>
+            </div>
+            <div id="candidates"></div>
+            <div id="cohort-summary" aria-live="polite"></div>
+            <div id="changes"></div>
+            <div id="population-nav"></div>
+            <div id="group-results"></div>
+            <div id="case-table" class="table-scroll"></div>
+            <div id="pager"></div>
+            <div id="population-notes"></div>
+          </section>
+          <section class="card chart" aria-labelledby="chart-title">
+            <div class="section-head">
+              <h2 id="chart-title">Candle inspection</h2>
+              <span class="submark">15 MIN · UTC</span>
+            </div>
+            <div id="chart-heading"></div>
+            <canvas id="chart" role="img" aria-label="Recorded candlesticks"></canvas>
+            <div id="bar-prices"></div>
+            <div id="why"></div>
+          </section>
+        </div>
+      </div>
+      <footer><span>Binance spot · Jan–May 2025</span></footer>
+    </main>
+    <dialog id="dialog">
+      <form method="dialog"><button aria-label="Close dialog" class="close">×</button></form>
+      <div id="dialog-body"></div>
+    </dialog>
+    <script type="module" src="./src/study.js"></script>
+  </body>
+</html>

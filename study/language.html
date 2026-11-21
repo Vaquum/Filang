@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Filang study language</title>
+  <meta name="description" content="Learn the Filang study language by predicting and checking a local edit on real recorded BTCUSDT 15m bars.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#results">Skip to results</a>
+  <header class="top">
+    <div class="brand">
+      <a href="./" class="return-study">← Pattern study</a><h1>Language guide</h1>
+      <p class="tag">Observed-return study on recorded bars</p>
+    </div>
+    <div id="badges" class="badges" aria-label="Inputs">Loading the recording…</div>
+  </header>
+
+  <div id="load-error" class="load-error" role="alert" hidden>
+    <h2>The page could not load its input files</h2>
+    <p>Serve this folder over localhost and open it from there. ES modules and <code>fetch</code> do not work from <code>file://</code>.</p>
+    <pre class="code-block">cargo build --release --locked --offline
+node study/serve.mjs</pre>
+    <p class="why"></p>
+  </div>
+
+  <main class="layout">
+    <section class="pane editor-pane" aria-labelledby="q-h">
+      <section id="lesson" class="lesson" aria-label="Guide"></section>
+
+      <div class="pane-head">
+        <h2 id="q-h">Question</h2>
+        <label class="inline">Examples <select id="example-select"></select></label>
+      </div>
+      <p id="example-note" class="example-note small"></p>
+
+      <div class="tabs" role="tablist" aria-label="Editor">
+        <button type="button" role="tab" id="tab-text" aria-selected="true" aria-controls="panel-text" tabindex="0">Text</button>
+        <button type="button" role="tab" id="tab-guided" aria-selected="false" aria-controls="panel-guided" tabindex="-1">Guided</button>
+      </div>
+
+      <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+        <div class="code-wrap">
+          <pre id="overlay" class="code-overlay" aria-hidden="true"></pre>
+          <textarea id="query" class="code-input" spellcheck="false" autocapitalize="off" autocomplete="off" rows="9"
+            aria-label="Question text" aria-describedby="diag"></textarea>
+        </div>
+        <div id="suggest" class="suggest" aria-label="Suggestions"></div>
+      </div>
+      <div id="panel-guided" role="tabpanel" aria-labelledby="tab-guided" hidden>
+        <p class="small muted">Same parsed structure as the text. Controls come from the definitions’ signatures, and each edit rewrites the canonical text shown in the Text tab.</p>
+        <div id="guided" class="guided"></div>
+      </div>
+
+      <div class="run-row">
+        <button type="button" id="run" class="primary">Run</button>
+        <span class="kbd small muted">Ctrl/⌘ + Enter</span>
+        <span id="runstate" class="small"></span>
+      </div>
+      <div id="diag" class="diagnostics" aria-live="polite"></div>
+      <div id="live" class="sr" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="pane results-pane" id="results" aria-labelledby="r-h" tabindex="-1">
+      <h2 id="r-h">Results</h2>
+      <div id="candidates"></div>
+      <div class="cards">
+        <section id="compare" class="card" aria-labelledby="cmp-h"></section>
+        <section id="summary" class="card" aria-label="Candidate counts"></section>
+      </div>
+      <div id="outcomes" class="card"></div>
+      <div class="card chart-card">
+        <div class="chart-head">
+          <h3>Recorded bars</h3>
+          <label class="inline small">Context
+            <select id="chart-mode">
+              <option value="near">around the anchor</option>
+              <option value="full">full condition windows</option>
+            </select>
+          </label>
+        </div>
+        <canvas id="timeline" class="timeline" role="img" aria-label="Recording timeline"></canvas>
+        <canvas id="chart" class="chart" role="img" aria-label="Candlestick chart"></canvas>
+        <p id="chart-caption" class="small muted"></p>
+        <div id="detail" class="detail"></div>
+      </div>
+      <div id="rows" class="card"></div>
+      <details id="resolution" class="card"></details>
+    </section>
+  </main>
+
+  <section class="reference" aria-label="Reference">
+    <details class="card"><summary>Language spec (generated from this build)</summary><div id="spec-body"></div></details>
+    <details class="card"><summary>Definitions registry and the extension artifact</summary><div id="defs-body"></div></details>
+    <details class="card"><summary>Inputs, provenance and recording assumptions</summary><div id="prov-body"></div></details>
+  </section>
+
+  <dialog id="def-dialog" aria-labelledby="def-title">
+    <div class="dlg-head">
+      <h2 id="def-title">Definition</h2>
+      <button type="button" class="close g-btn" aria-label="Close">Close</button>
+    </div>
+    <div id="def-body"></div>
+  </dialog>
+
+  <script>
+    if (location.protocol === 'file:') document.getElementById('load-error').hidden = false;
+  </script>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
