@@ -1,4 +1,5 @@
 use super::{
+    candles::{prior_medians, reclaims},
     plan::Node,
     tape::{Calendar, Tape, DAYS, TRENDS},
 };
@@ -20,12 +21,14 @@ const BUDGET: usize = 64 * 1024 * 1024;
 pub(super) enum Series {
     Bool(Mask),
     Category(Vec<u8>),
+    Prices(Vec<i64>),
+    Reclaim(Mask, Vec<u32>, usize),
 }
 
 impl Series {
     pub fn mask(&self) -> Result<&Mask> {
         match self {
-            Self::Bool(m) => Ok(m),
+            Self::Bool(m) | Self::Reclaim(m, _, _) => Ok(m),
             _ => Err("plan expected Boolean series".into()),
         }
     }
@@ -37,13 +40,32 @@ impl Series {
         }
     }
 
+    fn prices(&self) -> Result<&[i64]> {
+        match self {
+            Self::Prices(xs) => Ok(xs),
+            _ => Err("plan expected a price series".into()),
+        }
+    }
+
+    pub fn reclaim(&self, slot: usize, series: &[Series]) -> Result<Option<(usize, i64)>> {
+        if let Self::Reclaim(_, witnesses, reference) = self {
+            let breach = witnesses[slot];
+            if breach != u32::MAX {
+                let j = breach as usize;
+                return Ok(Some((j, series[*reference].prices()?[j])));
+            }
+        }
+        Ok(None)
+    }
+
     pub fn group(&self, slot: usize) -> &'static str {
         match self {
-            Self::Bool(mask) => match mask.at(slot) {
+            Self::Bool(mask) | Self::Reclaim(mask, _, _) => match mask.at(slot) {
                 (true, true) => "true",
                 (false, true) => "false",
                 (_, false) => "unknown",
             },
+            Self::Prices(_) => "unknown",
             Self::Category(s) => match s[slot] {
                 x @ 0..=5 => DAYS[x as usize],
                 x @ 6..=8 => TRENDS[(x - 6) as usize],
@@ -78,6 +100,7 @@ pub(super) struct Eval<'a> {
     calendar: &'a Calendar,
     windows: HashMap<usize, Rc<Vec<Envelope>>>,
     keys: HashMap<(usize, bool), Rc<Vec<Key>>>,
+    medians: HashMap<usize, Rc<Vec<i64>>>,
     used: usize,
     pub rolling_windows: usize,
     pub geometry_windows: usize,
@@ -90,10 +113,15 @@ impl<'a> Eval<'a> {
             calendar,
             windows: HashMap::new(),
             keys: HashMap::new(),
+            medians: HashMap::new(),
             used: 0,
             rolling_windows: 0,
             geometry_windows: 0,
         }
+    }
+
+    pub fn median_windows(&self) -> usize {
+        self.medians.len()
     }
 
     fn charge(&mut self, bytes: usize) -> Result<()> {
@@ -110,6 +138,8 @@ impl<'a> Eval<'a> {
         for node in nodes {
             self.charge(match node {
                 Node::Weekday | Node::Trend(_) | Node::Category(_) => n,
+                Node::Price(..) | Node::Prior(..) => n * std::mem::size_of::<i64>(),
+                Node::Reclaim(..) => n * std::mem::size_of::<u32>() + ((n + 63) / 64) * 16,
                 _ => Mask::empty(0).payload() + ((n + 63) / 64) * 16,
             })?;
             out.push(self.eval(node, &out)?);
@@ -136,6 +166,91 @@ impl<'a> Eval<'a> {
                 self.mask(|i| rule.eval(tape.bars[i]?, i.checked_sub(1).and_then(|j| tape.bars[j])))
             }
             Node::Geometry(pattern) => self.geometry(pattern)?,
+            Node::Price(field, lag) => Series::Prices(
+                (0..n)
+                    .map(|i| {
+                        i.checked_sub(*lag)
+                            .and_then(|j| tape.bars[j])
+                            .map_or(0, |b| field.value(b))
+                    })
+                    .collect(),
+            ),
+            Node::Prior(window, high) => {
+                let extremes = self.envelope(*window)?;
+                Series::Prices(
+                    (0..n)
+                        .map(|i| {
+                            if i < *window || !tape.complete(i - window, i) {
+                                return 0;
+                            }
+                            if let Some((low, hi)) = extremes[i - 1] {
+                                if *high {
+                                    hi
+                                } else {
+                                    low
+                                }
+                            } else {
+                                0
+                            }
+                        })
+                        .collect(),
+                )
+            }
+            Node::Relate(left, cmp, right) => {
+                let (a, b) = (series[*left].prices()?, series[*right].prices()?);
+                self.mask(|i| {
+                    if a[i] == 0 || b[i] == 0 {
+                        return None;
+                    }
+                    // Exact prices are integers within the binary64 exact range.
+                    Some(cmp.test(a[i] as f64, b[i] as f64))
+                })
+            }
+            Node::Near(reference, point, ratio) => {
+                let (a, b) = (series[*reference].prices()?, series[*point].prices()?);
+                self.mask(|i| {
+                    if a[i] == 0 || b[i] == 0 {
+                        return None;
+                    }
+                    Some(!ratio.compare((b[i] - a[i]).abs(), a[i]).is_gt())
+                })
+            }
+            Node::Share(part, lag, min, max) => self.mask(|i| {
+                let b = tape.bars[i.checked_sub(*lag)?]?;
+                let span = b.h - b.l;
+                if span == 0 {
+                    return None;
+                }
+                let share = part.value(b);
+                Some(!min.compare(share, span).is_lt() && !max.compare(share, span).is_gt())
+            }),
+            Node::Multiple(window, min, max) => {
+                let med = match self.medians.get(window) {
+                    Some(xs) => Rc::clone(xs),
+                    None => {
+                        self.charge(n * std::mem::size_of::<i64>())?;
+                        store(&mut self.medians, *window, prior_medians(tape, *window))
+                    }
+                };
+                self.mask(|i| {
+                    let b = tape.bars[i]?;
+                    let value = 2 * (b.h - b.l);
+                    if med[i] == 0 {
+                        return None;
+                    }
+                    Some(
+                        !min.compare(value, med[i]).is_lt()
+                            && max
+                                .as_ref()
+                                .map_or(true, |r| !r.compare(value, med[i]).is_gt()),
+                    )
+                })
+            }
+            Node::Reclaim(reference, min, max, high) => {
+                let (mask, breaches) =
+                    reclaims(tape, series[*reference].prices()?, *min, *max, *high);
+                Series::Reclaim(mask, breaches, *reference)
+            }
             Node::Wick(body, wick) => self.mask(|i| {
                 let b = tape.bars[i]?;
                 let span = b.h - b.l;

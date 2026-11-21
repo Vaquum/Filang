@@ -5,6 +5,7 @@ import { leRatTimes, geRatTimes, centsText, ratToPercentText } from './num.js';
 import { isoUTC, isoUTCFull, hmUTC, dateUTC, sha256Hex } from './data.js';
 import { elapsedText, msToText } from './lang.js';
 import { g1FromRecording, matchesG1 } from './g1.js';
+import { candleSeries } from './candle-series.js';
 import { CANDLE_PATTERNS, ENUMS, ENGINE } from './registry.js';
 import { isBoolType, isCatType } from './check.js';
 
@@ -241,6 +242,7 @@ export function eventSeries(ctx, p) {
     }
     return { vals, why };
   }
+  if (p.name === 'breach_reclaim' || p.name === 'candle_relation') return candleSeries(ctx, p);
   if (p.op === 'def' && p.def.patternId) return candlePatternSeries(ctx, p);
   if (p.op === 'def' && p.name === 'exact_g1') return exactGeometrySeries(ctx, p);
   if (p.op === 'def' && p.name === 'wick_rejection') return wickSeries(ctx, p);
@@ -361,6 +363,10 @@ export function compileBool(ctx, p) {
       if (p.name === 'held') return { ...base, at: heldAt(ctx, p) };
       if (p.name === 'session_tail') return { ...base, at: sessionTailAt(ctx, p) };
       if (p.name === 'range_contained') return { ...base, at: rangeContainedAt(ctx, p) };
+      if (['candle_share', 'range_multiple', 'near_level'].includes(p.name)) {
+        const s = candleSeries(ctx, p);
+        return { ...base, valueAt: i => s.vals[i], at: i => ({v:s.vals[i], why:s.why(i)}) };
+      }
     }
     throw new Error(`no condition implementation for ${p.name}`);
   }

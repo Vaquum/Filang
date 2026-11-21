@@ -49,6 +49,14 @@ impl Decimal {
 
 impl Ratio {
     pub fn parse(text: &str) -> Result<Self> {
+        let ratio = Self::magnitude(text)?;
+        if ratio.compare(1, 1) == Ordering::Less {
+            return Err("expected a ratio between zero and one".into());
+        }
+        Ok(ratio)
+    }
+
+    pub fn magnitude(text: &str) -> Result<Self> {
         let (num, den) = text
             .split_once('/')
             .ok_or("expected numerator/denominator")?;
@@ -56,8 +64,8 @@ impl Ratio {
             num: Decimal::parse(num)?,
             den: Decimal::parse(den)?,
         };
-        if ratio.den.digits.is_empty() || ratio.compare(1, 1) == Ordering::Less {
-            return Err("expected a ratio between zero and one".into());
+        if ratio.den.digits.is_empty() {
+            return Err("expected a nonzero denominator".into());
         }
         Ok(ratio)
     }
@@ -83,7 +91,7 @@ impl Ratio {
 type Words<'a> = std::str::SplitWhitespace<'a>;
 
 #[derive(Clone, Copy)]
-enum Field {
+pub(super) enum Field {
     Open,
     High,
     Low,
@@ -98,14 +106,14 @@ enum Field {
 }
 
 impl Field {
-    fn parse(s: &str) -> Result<Self> {
+    pub fn parse(s: &str) -> Result<Self> {
         Ok(match s {
             "open" => Self::Open,
             "high" => Self::High,
             "low" => Self::Low,
             "close" => Self::Close,
-            "bodyLow" => Self::BodyLow,
-            "bodyHigh" => Self::BodyHigh,
+            "bodyLow" | "body_low" => Self::BodyLow,
+            "bodyHigh" | "body_high" => Self::BodyHigh,
             "body" => Self::Body,
             "range" => Self::Range,
             "lower" => Self::Lower,
@@ -115,7 +123,7 @@ impl Field {
         })
     }
 
-    fn value(self, b: Bar) -> i64 {
+    pub fn value(self, b: Bar) -> i64 {
         match self {
             Self::Open => b.o,
             Self::High => b.h,

@@ -294,7 +294,7 @@ export class Checker {
         if (p.required) {
           this.err('signature', `missing required argument ${p.name}: ${typeText(p)} for ${def.name}`, node, `${p.doc}${def.example ? `; e.g. ${def.example}` : ''}`);
           ok = false;
-        } else {
+        } else if (p.default !== undefined) {
           const lit = parseLiteral(p.default).node;
           args[p.name] = this.scalar({ ...lit, start: node.start, end: node.end }, p, def, args);
           argSource[p.name] = 'default';
@@ -312,6 +312,12 @@ export class Checker {
 
   finishDef(def, args, argSource, node, named, byName) {
     if (Object.values(args).some((v) => v === null)) return null;
+    if (def.orderedBounds) {
+      const [min, max] = def.orderedBounds;
+      if (args[min] && args[max] && ratCmp(args[min].rat, args[max].rat) > 0) {
+        return this.err('domain', `${min} must be at most ${max}`, node);
+      }
+    }
     const plan = {
       op: 'def', name: def.name, version: def.version, kind: def.kind, type: def.result, def,
       args, argSource, named, identity: identityOf(def.id || def.name, def.version, args),
@@ -339,6 +345,12 @@ export class Checker {
   }
 
   arg(valueNode, param, def, resolved) {
+    if (param.type === 'Price' || param.type === 'Level') {
+      const p = this.expr(valueNode);
+      if (!p) return null;
+      if (p.type === 'Level' || (param.type === 'Price' && p.type === 'Price')) return p;
+      return this.err('type', `${def.name} ${param.name} needs ${param.type === 'Level' ? 'a prior high or low' : 'a candle price or prior level'}`, valueNode);
+    }
     if (param.type === 'State') {
       const p = this.expr(valueNode);
       if (!p) return null;
@@ -376,6 +388,11 @@ export class Checker {
     const where = `${def.name} ${param.name}:`;
     const span = { start: node.start, end: node.end };
     const dom = param.domain || {};
+    if (isCatType(param.type)) {
+      if (node.k !== 'id') return this.err('type', `${where} choose a ${enumOfType(param.type).title}`, node);
+      const val = this.enumValue(node, {type:param.type});
+      return val ? {...val, identity: val.value} : null;
+    }
     switch (param.type) {
       case 'G1': {
         if (node.k !== 'str') return this.err('type', `${where} expects a quoted G1 code`, node);
@@ -426,7 +443,11 @@ export class Checker {
       }
       case 'Number': {
         if (node.k !== 'num') return this.err('type', `${where} expects a plain number; got ${litDesc(node)}`, node);
-        return { t: 'Number', rat: ratFromText(node.text), text: node.text, ...span };
+        const rat = ratFromText(node.text);
+        if (dom.wholeMax !== undefined && (rat.den !== 1n || rat.num > BigInt(dom.wholeMax))) {
+          return this.err('domain', `${where} choose a whole number from 0 to ${dom.wholeMax}`, node);
+        }
+        return { t: 'Number', rat, text: node.text, ...span };
       }
       case 'Calendar': {
         if (node.k !== 'id') return this.err('type', `${where} expects a calendar name such as nyse_regular; got ${litDesc(node)}`, node);

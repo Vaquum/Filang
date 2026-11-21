@@ -13,6 +13,9 @@ function specification(x) {
   return [compare.get(x[0]), operand(x[1]), operand(x[2])];
 }
 const ratio = ({rat}) => rat.num + '/' + rat.den;
+const priceRelation = {
+  above:'gt', at_or_above:'ge', below:'lt', at_or_below:'le', equal:'eq', unequal:'ne',
+};
 
 export class QueryError extends Error {
   constructor(kind, message, diagnostics = []) {
@@ -78,6 +81,14 @@ export function compile(bundle, { query, source, calendar, extensions = [], cand
       case 'quiet_range': return intern(['range', a.window.ms, ratio(a.width_max)]);
       case 'range_contained': return intern(['range', a.over.ms, ratio(a.width_max)]);
       case 'held': return intern(['held', emit(a.state), a.for.ms]);
+      case 'price': return intern(['price', a.point.value, a.bars_ago.rat.num]);
+      case 'prior_low': return intern(['prior-low', a.over.ms]);
+      case 'prior_high': return intern(['prior-high', a.over.ms]);
+      case 'breach_reclaim': return intern(['reclaim',emit(a.reference),a.within_min.rat.num,a.within_max.rat.num]);
+      case 'candle_relation': return intern(['relate',emit(a.left),priceRelation[a.is.value],emit(a.right)]);
+      case 'near_level': return intern(['near',emit(a.reference),emit(a.point),ratio(a.within)]);
+      case 'candle_share': return intern(['share',a.part.value,a.bars_ago.rat.num,ratio(a.min),ratio(a.max)]);
+      case 'range_multiple': return intern(['multiple',a.over.ms,ratio(a.min),a.max ? ratio(a.max) : '-']);
       case 'weekday': return intern(['weekday']);
       case 'session_tail': return intern(['tail', a.last.ms]);
       case 'completed_trend': return intern(['trend', a.frame.ms]);

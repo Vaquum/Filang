@@ -11,7 +11,10 @@ export const ENGINE = Object.freeze({
   semantics: 'strong-kleene-v1; anchor = bar close; only true passes a filter',
 });
 
+import { CANDLE_DEFINITIONS, CANDLE_ENUMS } from './candle-definitions.js';
+
 export const ENUMS = Object.freeze({
+  ...CANDLE_ENUMS,
   SessionDay: {
     name: 'SessionDay',
     title: 'session day',
@@ -239,13 +242,7 @@ export const FUNCTIONS = [
     note: 'A rule may add a relative-volume threshold with another sweep. Planned design example; this prototype stays an observed-return study.',
     requires: ['bars.volume'],
   },
-  {
-    name: 'breach_reclaim', version: 0, kind: 'event', status: 'planned',
-    title: 'Breach and reclaim (planned)',
-    signature: 'breach_reclaim(reference, within_min: Number, within_max: Number)',
-    note: 'Freezes the reference (e.g. prior_utc_day_low()) at the breach, waits for the first strict reclaim within an inclusive bar range (a named min/max pair is preferred to a vector such as within: [1, 3]) and identifies both events. A gap can make the pairing unknown; first passage distinguishes unordered touches inside one OHLC bar.',
-    requires: ['bars.ohlc'],
-  },
+  ...CANDLE_DEFINITIONS,
   {
     name: 'prior_utc_day_low', version: 0, kind: 'reference', status: 'planned',
     title: 'Prior UTC day low (planned)',
