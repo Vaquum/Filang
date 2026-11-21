@@ -70,6 +70,8 @@ export function closePopover() { if (open) { open.close(); open = null; } }
 /**
  * Options for one slot. countFor(value) returns the matches that value would leave, or null.
  * A sweepable slot can hold several values at once: each becomes its own candidate run.
+ * onChange(value, closing) is told when the choice also closes the popover: a caller that redraws the anchor
+ * must then put the focus back on the redrawn slot itself, since the anchor it replaced can no longer take it.
  */
 export function slotPopover(anchor, { slot, value, onChange, countFor, allowCompare = false, multi = false, title = null }) {
   closePopover();
@@ -89,7 +91,7 @@ export function slotPopover(anchor, { slot, value, onChange, countFor, allowComp
       const ordered = slot.options.filter((o) => selected.has(o)).concat([...selected].filter((o) => !slot.options.includes(o)));
       onChange(multi || ordered.length > 1 ? ordered : ordered[0]);
       render();
-    } else { onChange(v); close(); }
+    } else { onChange(v, true); close(); }
   };
   function render() {
     const q = (search?.value || '').trim().toLowerCase();
@@ -155,7 +157,7 @@ export function phrase(clause, { onChange, countFor, allowCompare = false, capit
       : slotLabel(slot, value);
     const btn = h('button', { type: 'button', class: 'slot', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'data-slot': slot.key,
       title: slot.kind === 'pattern' ? 'Choose a candle' : 'Click to choose. Up and Down step the value.',
-      onclick: () => slotPopover(btn, { slot, value, allowCompare, countFor: countFor ? (v) => countFor(slot.key, v) : null, onChange: (v) => onChange(slot.key, v) }),
+      onclick: () => slotPopover(btn, { slot, value, allowCompare, countFor: countFor ? (v) => countFor(slot.key, v) : null, onChange: (v, closing) => onChange(slot.key, v, closing) }),
       onkeydown: (e) => {
         if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !Array.isArray(value)) {
           e.preventDefault();

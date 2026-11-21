@@ -44,7 +44,8 @@ function update(fn, keep) { fn(state.model); state.focus = keep || null; render(
 const target = (m, path) => (path[0] === 'f' ? m.find.items[+path.slice(1)] : m.wheres[+path.slice(1)]);
 const slotEdit = (path) => ({
   allowCompare: true, capital: true,
-  onChange: (key, value, stepped) => update((m) => { target(m, path).args[key] = value; if (Array.isArray(value)) state.rows = 'compare'; }, stepped ? { clause: path, slot: key } : null),
+  // A stepped value, or one chosen in a popover that then closes, keeps the keyboard on the redrawn slot.
+  onChange: (key, value, refocus) => update((m) => { target(m, path).args[key] = value; if (Array.isArray(value)) state.rows = 'compare'; }, refocus ? { clause: path, slot: key } : null),
   countFor: (key, value) => { const c = clone(state.model); const t = target(c, path); t.args[key] = value; t.off = false; return count(bodyText(c)); },
 });
 
@@ -75,15 +76,25 @@ function buildLanes(res, r, text, H) {
   const add = (lane) => { lane.slots = lane.rows.map((row) => row.i); lane.agg = aggregate(lane.key || key(lane.id), lane.slots, state.lead, H, state.unit); lanes.push(lane); return lane; };
   add({ id: 'find', kind: 'find', rows: r.rows, r, title: 'The pattern' });
   if (state.rows === 'ledger') {
+    // Each pattern's compared values are its own runs. The query's axes are in source order and the patterns open it,
+    // so pattern idx owns the next run of axes; pick its run with the values of the selected candidate.
+    let axis = 0; // -1 once a pattern does not check on its own: the axes after it can no longer be placed
     if (m.find.items.length > 1) m.find.items.forEach((c, idx) => {
       const body = `find ${clauseText(c)}${m.horizons.length ? `\nmeasure close_return(after: [${m.horizons.join(', ')}])` : ''}`;
       const alt = run(`${HEAD}\n${body}`);
-      if (alt.ok) add({ id: 'f' + idx, kind: 'alt', idx, c, rows: alt.results[0].rows, r: alt.results[0], key: body + '|alt', title: cap(phraseText(c)) });
+      if (!alt.ok) { axis = -1; return; }
+      let ai = 0;
+      if (axis >= 0) {
+        const n = alt.analysis.axes.length; const want = r.cand.assignment.slice(axis, axis + n).map((a) => a.valueIndex); axis += n;
+        ai = Math.max(0, alt.results.findIndex((x) => x.cand.assignment.every((a, j) => a.valueIndex === want[j])));
+      }
+      add({ id: 'f' + idx, kind: 'alt', idx, c, rows: alt.results[ai].rows, r: alt.results[ai], key: `${body}|alt#${ai}`, title: cap(phraseText(c)) });
     });
     m.wheres.forEach((c, i) => {
       const k = active.findIndex((x) => x.i === i);
       if (k < 0) { lanes.push({ id: 'w' + i, kind: 'off', wi: i, c, rows: [], slots: [] }); return; }
-      add({ id: 'w' + i, kind: 'where', k, wi: i, c, r, rows: r.rows.filter((row) => row.failAt === -1 || row.failAt > k), removed: r.rows.filter((row) => row.failAt === k), title: `Line ${pad(i + 2)}` });
+      // The text names the applied lines in order, so the k-th applied line is what fixes this population, not its index among muted ones.
+      add({ id: 'w' + i, key: key('k' + k), kind: 'where', k, wi: i, c, r, rows: r.rows.filter((row) => row.failAt === -1 || row.failAt > k), removed: r.rows.filter((row) => row.failAt === k), title: `Line ${pad(i + 2)}` });
     });
   } else {
     if (active.length) add({ id: 'answer', kind: 'answer', rows: r.matches, r, title: 'The answer' });
@@ -96,7 +107,8 @@ const answerId = (lanes) => { const real = lanes.filter((l) => ['where', 'answer
 
 function render() {
   const m = state.model;
-  m.split = state.rows === 'split' ? make(state.splitBy) : null;
+  // A split read from the query keeps its own arguments, such as a 1d trend frame.
+  if (state.rows !== 'split') m.split = null; else if (m.split?.type !== state.splitBy) m.split = make(state.splitBy);
   const text = toText(m);
   const res = run(text);
   const status = $('#status');
@@ -128,12 +140,13 @@ function renderBars() {
   const sweeps = res.results.length > 1;
   const first = m.find.items[0]; const pid = first.type === 'pattern' ? first.args.p.replaceAll('_', '-') : null;
   const anchor = state.slot !== null ? R.closeTime(state.slot) : answer.rows[0]?.t;
+  const frame = m.split?.type === 'trend' ? m.split.args.frame : '4h';
   mount($('#encbar'),
     enc('Question', PRESETS.find((p) => p.id === state.preset)?.title || 'Custom', (b) => menu(b, { title: 'Starting questions', value: state.preset, options: PRESETS.map((p) => ({ value: p.id, label: p.title })), onChange: (id) => open(PRESETS.find((p) => p.id === id)) })),
-    enc('Rows', { ledger: 'Ledger', split: state.splitBy === 'trend' ? 'Split by 4h trend' : 'Split by session day', compare: 'Compared runs', cases: 'Cases' }[state.rows], (b) => menu(b, {
+    enc('Rows', { ledger: 'Ledger', split: state.splitBy === 'trend' ? `Split by ${frame} trend` : 'Split by session day', compare: 'Compared runs', cases: 'Cases' }[state.rows], (b) => menu(b, {
       title: 'Rows', hint: 'What each row under the pattern holds.', value: state.rows === 'split' ? 'split:' + state.splitBy : state.rows,
       options: [{ value: 'ledger', label: 'Ledger', detail: 'One row per condition, drawn from the closes it leaves' },
-        { value: 'split:trend', label: 'Split by 4h trend', detail: 'The answer divided by the last completed 4h bar' },
+        { value: 'split:trend', label: `Split by ${frame} trend`, detail: `The answer divided by the last completed ${frame} bar` },
         { value: 'split:weekday', label: 'Split by session day', detail: 'The answer divided by New York session day' },
         { value: 'compare', label: 'Compared runs', detail: sweeps ? 'One row per compared value' : 'Alt-click a second value in a condition first', disabled: !sweeps },
         { value: 'cases', label: 'Cases', detail: 'The recorded closes of the answer, one per row' }],
@@ -196,7 +209,8 @@ function laneTrack(lane, shown) {
   const sub = (dim, value) => h('small', null, dim ? h('span', { class: 'dim' }, dim + ' ') : null, value);
   if (lane.kind === 'case') return [h('div', null, h('b', null, price(R.C[lane.row.i])), sub(null, 'close, USDT')),
     ...shown.map((k) => { const o = lane.row.out[k]; return h('div', null, h('b', { class: o.value < 0 ? 'neg' : '' }, o.status === 'observed' ? pct(o.value) : '—'), sub(null, o.status === 'observed' ? 'return' : o.status)); })];
-  const n = lane.rows.length; const base = r.counts.T || 1;
+  // A compared run keeps a share of its own detections, which differ between runs when a pattern value is compared.
+  const n = lane.rows.length; const base = (lane.kind === 'run' ? lane.r : r).counts.T || 1;
   const centred = (frac) => { const d = (Math.max(-0.2, Math.min(0.2, frac - 0.5)) / 0.2) * 50; return h('div', { class: 'meter mid' }, h('i', { class: d < 0 ? 'below' : '', style: d >= 0 ? `left:50%;width:${d}%` : `left:${50 + d}%;width:${-d}%` })); };
   return [h('div', null, h('b', null, int(n)), sub(null, lane.kind === 'find' ? 'found' : lane.kind === 'alt' ? 'alone' : share(n, base) + ' kept'),
     h('div', { class: 'meter' }, h('i', { style: `width:${Math.min(100, (n / base) * 100)}%` }))),
@@ -501,7 +515,7 @@ function renderDrawer() {
   // The query editor must survive a redraw: rebuilding the drawer would detach the textarea being typed in,
   // drop its focus after every valid keystroke, and send the next keys to the global shortcuts.
   if (ui.drawer === 'query' && el.dataset.tab === 'query' && el.contains(formal.el)) return;
-  el.dataset.tab = ui.drawer;
+  const was = el.dataset.tab; el.dataset.tab = ui.drawer;
   const { sel, res } = ctx; const R = rec(); const body = h('div', { class: 'body' });
   const head = (title, text, ...seg) => h('header', null, label(title, 'title'), note(text), h('span', { class: 'seg' }, seg), quiet('Close', () => togglePanel(ui.drawer)));
   if (ui.drawer === 'cases') {
@@ -515,12 +529,15 @@ function renderDrawer() {
     casesTable(body, lane, rows, removed);
   } else if (ui.drawer === 'tape') {
     const lane = sel.kind === 'case' ? ctx.answer : sel; const i = state.slot ?? lane.slots[0] ?? 0; const from = Math.max(0, i - 70); const to = Math.min(R.n - 1, i + 50);
-    const over = h('div'); const chart = h('div');
-    mount(el, head('Tape', `${lane.title} · ${int(lane.slots.length)} closes marked · click a candle to inspect that close`), body);
-    mount(body, h('div', { class: 'tape' }, over, chart));
+    // The overview holds the pointer while it is dragged, and each seek redraws the bench: an open tape keeps its
+    // hosts and only its header is replaced, so the captured element stays in the page for the rest of the drag.
+    const header = head('Tape', `${lane.title} · ${int(lane.slots.length)} closes marked · click a candle to inspect that close`);
+    let tape = was === 'tape' ? el.querySelector(':scope > .body > .tape') : null;
+    if (tape) el.firstElementChild.replaceWith(header); else { tape = h('div', { class: 'tape' }, h('div'), h('div')); mount(el, header, body); mount(body, tape); }
+    const [over, chart] = tape.children;
     const ev = ctx.answer.r.event.series.evidence?.(i);
     tapeOverview(over, { rec: R, marks: lane.slots, window: [from, to], selected: i, height: 58, onSeek: (slot) => { state.slot = slot; render(); } });
-    candleChart(chart, { rec: R, from, to, anchor: i, marks: new Set(lane.slots), label: state.slot === null ? 'FIRST CLOSE' : 'INSPECTED', height: Math.max(120, body.clientHeight - 80),
+    candleChart(chart, { rec: R, from, to, anchor: i, marks: new Set(lane.slots), label: state.slot === null ? 'FIRST CLOSE' : 'INSPECTED', height: Math.max(120, tape.parentElement.clientHeight - 80),
       levels: ev ? [{ price: ev.level, label: 'FROZEN LEVEL', from: R.slotClosingAt(ev.breach) ?? i }] : [], onPick: (slot) => { state.slot = slot; if (!ui.right) ui.right = true; render(); } });
   } else if (ui.drawer === 'query') {
     const copy = h('button', { type: 'button', onclick: async () => { try { await navigator.clipboard.writeText(ctx.text); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select the text to copy'; } setTimeout(() => { copy.textContent = 'Copy'; }, 1400); } }, 'Copy');
@@ -566,7 +583,7 @@ function suggestions(q) {
   const has = (hay) => { const toks = hay.toLowerCase().split(/[^a-z0-9%.]+/); return words.every((w) => (/^[a-z0-9%.]+$/.test(w) ? toks.some((t) => t.startsWith(w)) : hay.includes(w))); };
   if (durTok && has('measure return after horizon')) out.push({ tag: 'Measure', label: `the return after ${durTok}`, apply: (x) => { if (!x.horizons.includes(durTok)) x.horizons.push(durTok); } });
   const wantsSplit = words.some((w) => 'split'.startsWith(w) || 'group'.startsWith(w));
-  if (wantsSplit && has('split by group 4h trend')) out.push({ tag: 'Rows', label: 'split the answer by 4h trend', mode: () => { state.rows = 'split'; state.splitBy = 'trend'; } });
+  if (wantsSplit && has('split by group 4h trend')) out.push({ tag: 'Rows', label: 'split the answer by 4h trend', mode: () => { state.rows = 'split'; state.splitBy = 'trend'; state.model.split = make('trend'); } });
   if (wantsSplit && has('split by group session day weekday')) out.push({ tag: 'Rows', label: 'split the answer by session day', mode: () => { state.rows = 'split'; state.splitBy = 'weekday'; } });
   const present = new Set([...m.find.items, ...m.wheres].map(clauseText));
   for (const base of tokens.length ? pool() : OFFERS) {
