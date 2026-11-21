@@ -1,0 +1,373 @@
+use super::{
+    plan::Node,
+    tape::{Calendar, Tape, DAYS, TRENDS},
+};
+use crate::{
+    geometry::{
+        GeometryEncoder, GeometryKey, GeometryMode, GeometryPattern, GEOMETRY_KEY_MAX_BARS,
+    },
+    rules::Mask,
+    Result,
+};
+use std::{
+    collections::{HashMap, VecDeque},
+    hash::Hash,
+    rc::Rc,
+};
+
+const BUDGET: usize = 64 * 1024 * 1024;
+
+pub(super) enum Series {
+    Bool(Mask),
+    Category(Vec<u8>),
+}
+
+impl Series {
+    pub fn mask(&self) -> Result<&Mask> {
+        match self {
+            Self::Bool(m) => Ok(m),
+            _ => Err("plan expected Boolean series".into()),
+        }
+    }
+
+    fn category(&self) -> Result<&[u8]> {
+        match self {
+            Self::Category(s) => Ok(s),
+            _ => Err("plan expected categorical series".into()),
+        }
+    }
+
+    pub fn group(&self, slot: usize) -> &'static str {
+        match self {
+            Self::Bool(mask) => match mask.at(slot) {
+                (true, true) => "true",
+                (false, true) => "false",
+                (_, false) => "unknown",
+            },
+            Self::Category(s) => match s[slot] {
+                x @ 0..=5 => DAYS[x as usize],
+                x @ 6..=8 => TRENDS[(x - 6) as usize],
+                _ => "unknown",
+            },
+        }
+    }
+}
+
+/// Strong Kleene over packed truth and validity. Research masks keep their
+/// conservative validity contract. A bit outside validity is always zero.
+fn join(out: &mut Mask, rhs: &Mask, and: bool) {
+    for i in 0..out.bits.len() {
+        let (a, b) = (out.bits[i], rhs.bits[i]);
+        let af = out.valid[i] & !a;
+        let bf = rhs.valid[i] & !b;
+        let (yes, no) = if and {
+            (a & b, af | bf)
+        } else {
+            (a | b, af & bf)
+        };
+        out.bits[i] = yes;
+        out.valid[i] = yes | no;
+    }
+}
+
+type Envelope = Option<(i64, i64)>;
+type Key = Option<GeometryKey>;
+
+pub(super) struct Eval<'a> {
+    pub tape: &'a Tape,
+    calendar: &'a Calendar,
+    windows: HashMap<usize, Rc<Vec<Envelope>>>,
+    keys: HashMap<(usize, bool), Rc<Vec<Key>>>,
+    used: usize,
+    pub rolling_windows: usize,
+    pub geometry_windows: usize,
+}
+
+impl<'a> Eval<'a> {
+    pub fn new(tape: &'a Tape, calendar: &'a Calendar) -> Self {
+        Self {
+            tape,
+            calendar,
+            windows: HashMap::new(),
+            keys: HashMap::new(),
+            used: 0,
+            rolling_windows: 0,
+            geometry_windows: 0,
+        }
+    }
+
+    fn charge(&mut self, bytes: usize) -> Result<()> {
+        self.used += bytes;
+        if self.used > BUDGET {
+            return Err("study series exceed 64 MiB; narrow the input or batch".into());
+        }
+        Ok(())
+    }
+
+    pub fn series(&mut self, nodes: &[Node]) -> Result<Vec<Series>> {
+        let mut out = Vec::with_capacity(nodes.len());
+        let n = self.tape.bars.len();
+        for node in nodes {
+            self.charge(match node {
+                Node::Weekday | Node::Trend(_) | Node::Category(_) => n,
+                _ => Mask::empty(0).payload() + ((n + 63) / 64) * 16,
+            })?;
+            out.push(self.eval(node, &out)?);
+        }
+        Ok(out)
+    }
+
+    fn mask(&self, mut rule: impl FnMut(usize) -> Option<bool>) -> Series {
+        let n = self.tape.bars.len();
+        let mut m = Mask::empty(n);
+        for i in 0..n {
+            if let Some(result) = rule(i) {
+                m.set(i, result, true);
+            }
+        }
+        Series::Bool(m)
+    }
+
+    fn eval(&mut self, node: &Node, series: &[Series]) -> Result<Series> {
+        let tape = self.tape;
+        let n = tape.bars.len();
+        Ok(match node {
+            Node::Pattern(rule) => {
+                self.mask(|i| rule.eval(tape.bars[i]?, i.checked_sub(1).and_then(|j| tape.bars[j])))
+            }
+            Node::Geometry(pattern) => self.geometry(pattern)?,
+            Node::Wick(body, wick) => self.mask(|i| {
+                let b = tape.bars[i]?;
+                let span = b.h - b.l;
+                Some(
+                    span > 0
+                        && !body.compare(b.body(), span).is_gt()
+                        && !wick.compare(b.o.min(b.c) - b.l, span).is_lt(),
+                )
+            }),
+            Node::Breakout(w) => {
+                let extrema = self.envelope(*w)?;
+                self.mask(|i| {
+                    let close = tape.bars[i]?.c;
+                    let (_, high) = extrema[i.checked_sub(1)?]?;
+                    if close <= high {
+                        Some(false)
+                    } else if i >= *w && tape.complete(i - *w, i) {
+                        Some(true)
+                    } else {
+                        None
+                    }
+                })
+            }
+            Node::Range(w, ratio) => {
+                let extrema = self.envelope(*w)?;
+                self.mask(|i| {
+                    let close = tape.bars[i]?.c;
+                    let (low, high) = extrema[i]?;
+                    if ratio.compare(high - low, close).is_gt() {
+                        Some(false)
+                    } else if i + 1 >= *w && tape.complete(i + 1 - *w, i + 1) {
+                        Some(true)
+                    } else {
+                        None
+                    }
+                })
+            }
+            Node::Held(child, steps) => {
+                let m = series[*child].mask()?;
+                let (mut last_false, mut last_unknown) = (0, 0);
+                self.mask(|i| {
+                    let (value, valid) = m.at(i);
+                    if !valid {
+                        last_unknown = i + 1;
+                    } else if !value {
+                        last_false = i + 1;
+                    }
+                    let first = (i + 2).saturating_sub(*steps);
+                    if last_false >= first.max(1) {
+                        Some(false)
+                    } else if first == 0 || last_unknown >= first {
+                        None
+                    } else {
+                        Some(true)
+                    }
+                })
+            }
+            Node::Weekday => Series::Category(
+                (0..n)
+                    .map(|i| self.calendar.weekday(tape.close(i)).unwrap_or(255))
+                    .collect(),
+            ),
+            Node::Tail(d) => self.mask(|i| self.calendar.tail(tape.close(i), *d)),
+            Node::Trend(frame) => Series::Category(
+                (0..n)
+                    .map(|i| trend(tape, i, *frame).unwrap_or(255))
+                    .collect(),
+            ),
+            Node::Category(v) => Series::Category(vec![*v; n]),
+            Node::Equal(a, b, eq) => {
+                let a = series[*a].category()?;
+                let b = series[*b].category()?;
+                self.mask(|i| (a[i] != 255 && b[i] != 255).then(|| (a[i] == b[i]) == *eq))
+            }
+            Node::Not(id) => Series::Bool(series[*id].mask()?.not()),
+            Node::Logic(items, and) => {
+                let mut out = series[items[0]].mask()?.clone();
+                for &ref_id in &items[1..] {
+                    join(&mut out, series[ref_id].mask()?, *and);
+                }
+                Series::Bool(out)
+            }
+        })
+    }
+
+    fn envelope(&mut self, window: usize) -> Result<Rc<Vec<Envelope>>> {
+        if let Some(cached) = self.windows.get(&window) {
+            return Ok(Rc::clone(cached));
+        }
+        self.charge(self.tape.bars.len() * std::mem::size_of::<Envelope>())?;
+        let (mut high, mut low) = (VecDeque::new(), VecDeque::new());
+        let out = self
+            .tape
+            .bars
+            .iter()
+            .enumerate()
+            .map(|(i, b)| {
+                let start = (i + 1).saturating_sub(window);
+                push_extreme(&mut low, i, start, b.map(|b| b.l), true);
+                push_extreme(&mut high, i, start, b.map(|b| b.h), false);
+                Some((low.front()?.1, high.front()?.1))
+            })
+            .collect();
+        self.rolling_windows += 1;
+        Ok(store(&mut self.windows, window, out))
+    }
+
+    fn geometry(&mut self, pattern: &GeometryPattern) -> Result<Series> {
+        let w = pattern.len();
+        let tape = self.tape;
+        if w > tape.bars.len() {
+            return Ok(Series::Bool(Mask::empty(tape.bars.len())));
+        }
+        let oriented = pattern.mode() == GeometryMode::Oriented;
+        if w <= GEOMETRY_KEY_MAX_BARS {
+            let coordinate = (w, oriented);
+            let keys = match self.keys.get(&coordinate) {
+                Some(keys) => Rc::clone(keys),
+                None => {
+                    self.charge(tape.bars.len() * std::mem::size_of::<Key>())?;
+                    let mut enc = GeometryEncoder::new(w, pattern.mode())?;
+                    let mut rows = vec![[0.0; 4]; w];
+                    let mut keys = vec![None; tape.bars.len()];
+                    for (end, slot) in keys.iter_mut().enumerate().skip(w - 1) {
+                        if load(tape, end + 1, &mut rows) {
+                            *slot = Some(enc.encode_key_ohlc(&rows)?);
+                        }
+                    }
+                    self.geometry_windows += 1;
+                    store(&mut self.keys, coordinate, keys)
+                }
+            };
+            let wanted = GeometryKey::from_pattern(pattern)?;
+            Ok(self.mask(|i| keys[i].map(|k| k == wanted)))
+        } else {
+            let mut m = Mask::empty(tape.bars.len());
+            let mut rows = vec![[0.0; 4]; w];
+            let mut enc = GeometryEncoder::new(w, pattern.mode())?;
+            for i in w - 1..tape.bars.len() {
+                if load(tape, i + 1, &mut rows) {
+                    m.set(i, enc.encode_ohlc(&rows)? == pattern, true);
+                }
+            }
+            self.geometry_windows += 1;
+            Ok(Series::Bool(m))
+        }
+    }
+}
+
+fn store<K: Hash + Eq, T>(map: &mut HashMap<K, Rc<Vec<T>>>, key: K, data: Vec<T>) -> Rc<Vec<T>> {
+    let data = Rc::new(data);
+    map.insert(key, Rc::clone(&data));
+    data
+}
+
+fn push_extreme(q: &mut VecDeque<(usize, i64)>, i: usize, start: usize, v: Option<i64>, min: bool) {
+    if q.front().map_or(false, |x| x.0 < start) {
+        q.pop_front();
+    }
+    if let Some(v) = v {
+        while q
+            .back()
+            .map_or(false, |x| if min { x.1 >= v } else { x.1 <= v })
+        {
+            q.pop_back();
+        }
+        q.push_back((i, v));
+    }
+}
+
+fn load(tape: &Tape, end: usize, rows: &mut [[f64; 4]]) -> bool {
+    let start = end - rows.len();
+    if !tape.complete(start, end) {
+        return false;
+    }
+    for (i, bar) in tape.bars[start..end].iter().enumerate() {
+        rows[i] = bar.expect("complete window").prices();
+    }
+    true
+}
+
+fn trend(tape: &Tape, slot: usize, frame: i64) -> Option<u8> {
+    let t = tape.close(slot);
+    let end = t / frame * frame;
+    let start = end - frame;
+    if start < tape.start {
+        return None;
+    }
+    let a = ((start - tape.start) / tape.interval) as usize;
+    let b = ((end - tape.start) / tape.interval) as usize;
+    if !tape.complete(a, b) {
+        return None;
+    }
+    match tape.bars[b - 1]?.c.cmp(&tape.bars[a]?.o) {
+        std::cmp::Ordering::Greater => Some(6),
+        std::cmp::Ordering::Less => Some(7),
+        std::cmp::Ordering::Equal => Some(8),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn study_logic_preserves_decisive_values_with_unknowns() {
+        let truths = [None, Some(false), Some(true)];
+        for a in truths {
+            for b in truths {
+                let mut left = Mask::empty(1);
+                let mut right = Mask::empty(1);
+                if let Some(a) = a {
+                    left.set(0, a, true);
+                }
+                if let Some(b) = b {
+                    right.set(0, b, true);
+                }
+                for and in [true, false] {
+                    let pick = if and { false } else { true };
+                    let expected = if a == Some(pick) || b == Some(pick) {
+                        Some(pick)
+                    } else if a.is_none() || b.is_none() {
+                        None
+                    } else {
+                        Some(!pick)
+                    };
+                    let mut out = left.clone();
+                    join(&mut out, &right, and);
+                    let (value, known) = out.at(0);
+                    assert_eq!(known.then_some(value), expected);
+                }
+            }
+        }
+    }
+}
