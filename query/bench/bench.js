@@ -7,8 +7,10 @@ import { candleChart, candleAnatomy, distPlot, rateRail, tapeOverview } from '/s
 import { aggregate, caseColumns, domainOf, drawLane, drawAxis, drawColumnTrack, drawGlyph, geom, barsOf, offsetLabel, unitText } from './lanes.js';
 
 // The other two aspects of the tool. They are separate apps today; these links carry the pattern across.
-const COMPOSER = 'http://127.0.0.1:8764/composer/';
-const CUBE = 'http://localhost:8791/';
+// On a vaquum.fi host they are the deployed sites behind the same Portal login; elsewhere, the local servers.
+const DEPLOYED = location.hostname.endsWith('.vaquum.fi');
+const COMPOSER = DEPLOYED ? 'https://composer.vaquum.fi/' : 'http://127.0.0.1:8764/composer/';
+const CUBE = DEPLOYED ? 'https://cube.vaquum.fi/' : 'http://localhost:8791/';
 
 const saved = (() => { try { return JSON.parse(localStorage.getItem('filang.bench') || '{}'); } catch { return {}; } })();
 const ui = { left: saved.left ?? false, right: saved.right ?? window.innerWidth >= 1000, drawer: saved.drawer ?? null };
@@ -146,7 +148,8 @@ function renderBars() {
     (() => { const b = h('button', { class: 'enc', type: 'button', onclick: () => slotPopover(b, { multi: true, title: 'Measured horizons', slot: { key: 'after', kind: 'enum', options: HORIZONS, sweep: true }, value: m.horizons, onChange: (v) => update((x) => { x.horizons = v; }) }) },
       label('Measure'), h('span', { class: 'val' }, m.horizons.join(', ') || 'None'), h('i', null, '▼')); return b; })(),
     enc('Lead-in', state.lead + ' bars', (b) => menu(b, { title: 'Lead-in', hint: 'Bars shown before the deciding close.', value: state.lead, options: [4, 8, 16, 32].map((v) => ({ value: v, label: v + ' bars' })), onChange: (v) => { state.lead = v; render(); } })));
-  $('#to-composer').href = `${COMPOSER}${pid ? `?pattern=${pid}${anchor ? `&anchor=${anchor}` : ''}` : ''}`; $('#to-composer').title = 'Open this pattern in Composer';
+  // The recorded-candle anchor belongs to the local Composer edition only.
+  $('#to-composer').href = `${COMPOSER}${pid ? `?pattern=${pid}${anchor && !DEPLOYED ? `&anchor=${anchor}` : ''}` : ''}`; $('#to-composer').title = 'Open this pattern in Composer';
   $('#to-cube').href = CUBE; $('#to-cube').title = 'Open the Cube explorer';
 }
 

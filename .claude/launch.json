@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "ux-directions",
+      "name": "query",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["ux-directions/serve.mjs", "8790"],
+      "runtimeArgs": ["query/serve.mjs", "8790"],
       "port": 8790
     },
     {

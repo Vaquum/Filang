@@ -1,0 +1,95 @@
+name: Deploy Query
+# Puts the query bench on the Origo host, where the host's Caddy (deployed from Vaquum/Portal) serves it as
+# query.vaquum.fi behind the Portal login. The pattern is Composer's: sync the sources, build on the host, start.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'query/**'
+      - 'study/src/**'
+      - 'study/composer/patterns.js'
+      - 'study/extensions/**'
+      - 'study/data-provenance.json'
+      - 'study/nyse-sessions.json'
+      - 'study/recording-lock.json'
+      - 'study/prepare_recording.py'
+      - '.github/workflows/deploy-query.yml'
+  workflow_dispatch:
+# Never cancel a deploy half way: a newer push waits, and the last commit pushed is deployed next.
+concurrency:
+  group: deploy-query
+permissions:
+  contents: read
+jobs:
+  deploy:
+    name: Sync to the Origo host and start
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # The host and its deploy key: the organisation's TDW secrets once they are shared with this repository,
+    # or else this repository's DEPLOY_SSH_KEY with its DEPLOY_HOST and DEPLOY_USER variables.
+    env:
+      DEPLOY_HOST: ${{ secrets.TDW_IP || vars.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.TDW_USER || vars.DEPLOY_USER }}
+      DEPLOY_DIR: ${{ vars.QUERY_DEPLOY_DIR || '/opt/query' }}
+      DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: The bench and its server parse
+        run: |
+          set -euo pipefail
+          for file in query/serve.mjs query/bench/*.js query/shared/*.js; do node --check "$file"; done
+      - name: Validate deploy configuration
+        run: |
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_DIR"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+      - name: Configure SSH with the host key pinned
+        env:
+          DEPLOY_KEY: ${{ secrets.TDW_KEY || secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "::error::No deploy key: share the organisation's TDW secrets with this repository, or set its DEPLOY_SSH_KEY."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # the host must present the key pinned in DEPLOY_KNOWN_HOSTS, whatever address names it
+          pinned=$(printf '%s\n' "$DEPLOY_KNOWN_HOSTS" | awk '{print $2" "$3}')
+          scanned=$(ssh-keyscan -t ed25519 "$DEPLOY_HOST" 2>/dev/null | awk '{print $2" "$3}')
+          test -n "$scanned"
+          test "$scanned" = "$pinned"
+          printf '%s %s\n' "$DEPLOY_HOST" "$pinned" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Sync what the image is built from
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2029
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_DIR'"
+          rsync -az --delete --relative \
+            query study/src study/composer/patterns.js study/extensions \
+            study/data-provenance.json study/nyse-sessions.json study/recording-lock.json study/prepare_recording.py \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/"
+      - name: Build and start
+        run: |
+          # DEPLOY_DIR is expanded here, on purpose, and sent quoted. The build recreates the pinned recording
+          # from its public sources and fails if a single byte differs from the published digests.
+          # shellcheck disable=SC2029
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_DIR/query' && docker compose up -d --build --remove-orphans && docker compose ps"
+      - name: Check that Query answers
+        run: |
+          probe() { ssh "$DEPLOY_USER@$DEPLOY_HOST" "curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:8491/healthz || printf 000"; }
+          code=000
+          for _ in $(seq 1 18); do
+            code=$(probe || printf 000)
+            test "$code" = "200" && break
+            sleep 5
+          done
+          test "$code" = "200"
+          # shellcheck disable=SC2029
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_DIR/query' && docker compose ps --format '{{.Name}} {{.Status}}'"
