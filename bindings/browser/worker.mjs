@@ -2,8 +2,9 @@ import {FilangEngine} from "./index.mjs";
 
 const engine = FilangEngine.create();
 const methods = new Set([
-  "version", "inspect", "domain", "load", "loadCsv", "prepare", "release",
-  "at", "draw", "counts", "positions",
+  "version", "memoryBytes", "inspect", "distance", "domain", "load", "loadCsv", "prepare", "release",
+  "drawingProtocol", "decodeDrawing", "encodeDrawing",
+  "at", "draw", "drawCounts", "counts", "positions", "classify", "catalogue", "setCalendar", "installDefinition", "check", "study",
 ]);
 
 self.addEventListener("message", async ({data: {id, method, args = []}}) => {

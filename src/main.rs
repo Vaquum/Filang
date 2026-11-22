@@ -1,6 +1,6 @@
 use filang::{backtest::Costs, config::Config, data, report, search, Result};
 use std::{collections::HashMap, env, fs, path::Path};
-const HELP:&str="Filang 0.10.0 (research prototype)\n\n  filang study --bars CSV --calendar TSV --interval-ms N\n  filang engine --operation inspect|domain|counts|positions|at|draw\n\n  filang geometry-key-export --data CSV --interval-seconds N --history-start DATE --end DATE --out DIR [--bars 10 --resume true]\n  filang geometry-direction-sweep --data CSV --interval-seconds N --history-start DATE --validation-start DATE --test-start DATE --end DATE --out DIR [--bars 2,3,4,5,6,7,8,9,10 --modes oriented,unoriented --dimensions volume,delta --workers N]\n  filang geometry-example --out FILE [--profile smoke|trillion --dimensions volume,delta]\n  filang geometry-inspect --config FILE\n  filang geometry-prepare --config FILE --out DIR\n  filang geometry-sweep --config FILE --out DIR [--workers N --resume true]\n  filang geometry-evaluate --data CSV --selection best-geometry.tsv --start DATE --end DATE --out DIR\n  filang geometry-count [--bars N --mode oriented|unoriented --dimensions volume,delta]\n\n  filang dense-example --out FILE --coefficients 3|11|41\n  filang dense-inspect --config FILE\n  filang dense-prepare --config FILE --gate FILE --out DIR\n  filang dense-sweep --config FILE --gate FILE --out DIR [--resume true --max-tasks N]\n  filang micro-inspect --config FILE\n  filang cohort-parity --data CSV --out DIR\n  filang micro-sweep --config FILE --gate FILE --out DIR [--plan regions|expanded]\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
+const HELP:&str="Filang 0.10.0 (research prototype)\n\n  filang study --bars CSV --calendar TSV --interval-ms N\n  filang engine --operation inspect|domain|counts|positions|at|draw|check|study\n\n  filang geometry-key-export --data CSV --interval-seconds N --history-start DATE --end DATE --out DIR [--bars 10 --resume true]\n  filang geometry-direction-sweep --data CSV --interval-seconds N --history-start DATE --validation-start DATE --test-start DATE --end DATE --out DIR [--bars 2,3,4,5,6,7,8,9,10 --modes oriented,unoriented --dimensions volume,delta --workers N]\n  filang geometry-example --out FILE [--profile smoke|trillion --dimensions volume,delta]\n  filang geometry-inspect --config FILE\n  filang geometry-prepare --config FILE --out DIR\n  filang geometry-sweep --config FILE --out DIR [--workers N --resume true]\n  filang geometry-evaluate --data CSV --selection best-geometry.tsv --start DATE --end DATE --out DIR\n  filang geometry-count [--bars N --mode oriented|unoriented --dimensions volume,delta]\n\n  filang dense-example --out FILE --coefficients 3|11|41\n  filang dense-inspect --config FILE\n  filang dense-prepare --config FILE --gate FILE --out DIR\n  filang dense-sweep --config FILE --gate FILE --out DIR [--resume true --max-tasks N]\n  filang micro-inspect --config FILE\n  filang cohort-parity --data CSV --out DIR\n  filang micro-sweep --config FILE --gate FILE --out DIR [--plan regions|expanded]\n  filang search --config FILE\n  filang inspect --config FILE\n  filang evaluate --data CSV --selection frozen.tsv --out DIR [--fee-bps N --slip-bps N]\n  filang walk-search --config FILE\n  filang walk-inspect --config FILE\n  filang walk-evaluate --data CSV --selection walk.tsv --out DIR [--scenario stress]\n  filang anchor-parity --data CSV --out DIR [--mode direct|shared|family]\n  filang anchor-sweep --data CSV --gate FILE --radius N --thresholds N --out DIR\n  filang program-sweep --data CSV --source periods|open|expressions --start DATE --end DATE --out DIR [source parameters]
   filang strategy-example --out DIR [--grid-count N --neighbors true --qualifiers true --slots 2]\n  filang strategy-inspect --config FILE\n  filang strategy-sweep --config FILE [--out DIR --plan expanded|cells|cofactor --gate FILE]\n  filang demo --out DIR\n\nCore is dependency-free. HF preparation is an optional Python adapter.\n";
 fn arguments() -> Result<(String, HashMap<String, String>)> {
     let mut it = env::args().skip(1);
@@ -369,11 +369,30 @@ fn engine_cli(mut flags: HashMap<String, String>) -> Result<String> {
 
     let operation = take(&mut flags, "--operation")?;
     let mut session = Session::default();
-    if matches!(operation.as_str(), "counts" | "positions" | "at") {
+    if matches!(
+        operation.as_str(),
+        "counts" | "positions" | "classify" | "at" | "check" | "study"
+    ) {
         let bars = take(&mut flags, "--bars")?;
         let interval = take(&mut flags, "--interval-ms")?;
+        let instrument = flags
+            .remove("--instrument")
+            .unwrap_or_else(|| "BTCUSDT".into());
         let csv = fs::read_to_string(bars).map_err(|e| e.to_string())?;
-        session.call(format!("load-csv\n{interval}\n{csv}").as_bytes())?;
+        session.call(format!("load-csv\n{interval}\t{instrument}\n{csv}").as_bytes())?;
+        if let Some(path) = flags.remove("--calendar") {
+            let tsv = if path == "pinned" {
+                String::new()
+            } else {
+                fs::read_to_string(path).map_err(|e| e.to_string())?
+            };
+            session.call(format!("calendar\n{tsv}").as_bytes())?;
+        }
+        if let Some(path) = flags.remove("--definition") {
+            let definition = fs::read_to_string(path).map_err(|e| e.to_string())?;
+            let sha = take(&mut flags, "--definition-sha256")?;
+            session.call(format!("install-definition\n{sha}\n{definition}").as_bytes())?;
+        }
     }
     let mode = flags.remove("--mode").unwrap_or_else(|| "oriented".into());
     let reading = flags
@@ -381,8 +400,13 @@ fn engine_cli(mut flags: HashMap<String, String>) -> Result<String> {
         .unwrap_or_else(|| "recorded".into());
     let axes = flags.remove("--dimensions").unwrap_or_default();
     let payload = match operation.as_str() {
-        "version" => String::new(),
+        "version" | "catalogue" | "drawing-protocol" => String::new(),
         "inspect" => take(&mut flags, "--pattern")?,
+        "distance" => {
+            let left = take(&mut flags, "--pattern")?;
+            let right = take(&mut flags, "--other")?;
+            format!("{left}\t{right}")
+        }
         "domain" => {
             let width = take(&mut flags, "--width")?;
             format!("{width}\t{mode}\t{axes}")
@@ -391,7 +415,7 @@ fn engine_cli(mut flags: HashMap<String, String>) -> Result<String> {
             let pattern = take(&mut flags, "--pattern")?;
             format!("{reading}\t{pattern}")
         }
-        "positions" => {
+        "positions" | "classify" => {
             let pattern = take(&mut flags, "--pattern")?;
             let start = flags.remove("--start").unwrap_or_else(|| "0".into());
             let limit = flags.remove("--limit").unwrap_or_else(|| "100".into());
@@ -401,6 +425,22 @@ fn engine_cli(mut flags: HashMap<String, String>) -> Result<String> {
             let end = take(&mut flags, "--end-slot")?;
             let width = take(&mut flags, "--width")?;
             format!("{end}\t{width}\t{mode}\t{reading}\t{axes}")
+        }
+        "study" | "check" => {
+            let path = take(&mut flags, "--query")?;
+            let query = fs::read_to_string(path).map_err(|e| e.to_string())?;
+            if operation == "study" {
+                let candidate = flags.remove("--candidate").unwrap_or_else(|| "-".into());
+                format!("{candidate}\n{query}")
+            } else {
+                query
+            }
+        }
+        "read-drawing" => {
+            let path = take(&mut flags, "--input")?;
+            let packet = fs::read_to_string(path).map_err(|e| e.to_string())?;
+            let expected = flags.remove("--pattern").unwrap_or_default();
+            format!("{expected}\n{packet}")
         }
         "draw" => {
             let path = take(&mut flags, "--input")?;

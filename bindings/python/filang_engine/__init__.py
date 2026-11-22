@@ -76,8 +76,14 @@ class Engine:
     def version(self):
         return self._call("version")
 
+    def catalogue(self):
+        return self._call("catalogue")
+
     def inspect(self, code):
         return self._call("inspect", code)
+
+    def distance(self, left, right):
+        return self._call("distance", _fields(left, right))
 
     def domain(self, width, *, oriented=True, dimensions=()):
         return self._call("domain", _fields(width, _mode(oriented), ",".join(dimensions)))
@@ -98,8 +104,23 @@ class Engine:
                 raise FilangError(f"invalid Filang bar at slot {slot}")
         return self._call("load", data)
 
-    def load_csv(self, csv, interval_ms):
-        return self._call("load-csv", f"{interval_ms}\n{csv}")
+    def load_csv(self, csv, interval_ms, *, instrument="BTCUSDT"):
+        return self._call("load-csv", f"{_fields(interval_ms, instrument)}\n{csv}")
+
+    def set_calendar(self, tsv="", *, table=None):
+        if table is None:
+            return self._call("calendar", tsv)
+        return self._call("calendar-named", f"{table}\n{tsv}")
+
+    def install_definition(self, text, sha256):
+        return self._call("install-definition", f"{sha256}\n{text}")
+
+    def check(self, query):
+        return self._call("check", query)
+
+    def study(self, query, *, candidate=None):
+        index = "-" if candidate is None else str(candidate)
+        return self._call("study", f"{index}\n{query}")
 
     def prepare(self, width, *, oriented=True, reading="recorded", dimensions=()):
         return self._call(
@@ -115,16 +136,41 @@ class Engine:
         )
 
     def draw(self, bars, *, oriented=True, reading="recorded", axes=None):
+        return self._drawing("draw", bars, oriented, reading, axes)
+
+    def draw_counts(self, bars, *, oriented=True, reading="recorded", axes=None):
+        return self._drawing("draw-counts", bars, oriented, reading, axes)
+
+    def _drawing(self, operation, bars, oriented, reading, axes):
         rows = [_fields(_mode(oriented), reading, len(bars))]
         rows.extend(_fields(*row) for row in bars)
         rows.extend(_fields(axis, *marks) for axis, marks in (axes or {}).items())
-        return self._call("draw", "\n".join(rows))
+        return self._call(operation, "\n".join(rows))
+
+    def drawing_protocol(self):
+        return self._call("drawing-protocol")
+
+    def decode_drawing(self, packet, expected_code=""):
+        return self._call("read-drawing", f"{expected_code}\n{packet}")
+
+    def encode_drawing(self, packet):
+        protocol = self.drawing_protocol()
+        key = "dimensioned" if packet.get("dimensions") else "plain"
+        marked = {**packet, "version": protocol["version"], "revision": protocol[key]}
+        if key == "plain":
+            marked.pop("dimensions", None)
+        text = json.dumps(marked, ensure_ascii=False, separators=(",", ":"))
+        self.decode_drawing(text)
+        return text
 
     def counts(self, code, *, reading="recorded"):
         return self._call("counts", _fields(reading, code))
 
     def positions(self, code, *, reading="recorded", start=0, limit=100):
         return self._call("positions", _fields(reading, start, limit, code))
+
+    def classify(self, code, *, reading="recorded", start=0, limit=4096):
+        return self._call("classify", _fields(reading, start, limit, code))
 
     def _call(self, operation, payload=b""):
         with self._lock:

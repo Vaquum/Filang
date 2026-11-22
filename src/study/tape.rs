@@ -144,6 +144,10 @@ impl Tape {
         })
     }
 
+    pub(super) fn has_counters(&self) -> bool {
+        self.counters.is_some()
+    }
+
     /// One value per slot on a dimension, NaN where the bar or the value is
     /// absent. `None` when the recording carries no counters.
     pub fn dimension(&self, dimension: Dimension) -> Option<Vec<f64>> {
@@ -197,7 +201,18 @@ pub(super) struct Calendar {
 
 impl Calendar {
     pub fn read(path: impl AsRef<Path>) -> Result<Self> {
-        let text = fs::read_to_string(path).map_err(|err| err.to_string())?;
+        Self::parse(&fs::read_to_string(path).map_err(|err| err.to_string())?)
+    }
+
+    pub(super) fn empty() -> Self {
+        Self {
+            start: 0,
+            end: 0,
+            sessions: Vec::new(),
+        }
+    }
+
+    pub(super) fn parse(text: &str) -> Result<Self> {
         let mut lines = text.lines();
         let mut header = lines.next().ok_or("empty calendar")?.split_whitespace();
         let start = number(header.next(), "calendar coverage start")?;

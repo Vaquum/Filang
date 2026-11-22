@@ -46,7 +46,7 @@ def browser(out, target_dir, toolchain):
     wasm = cargo_build(target_dir, toolchain=toolchain, target="wasm32-unknown-unknown")
     browser_dir = out / "browser"
     browser_dir.mkdir(exist_ok=True)
-    for name in ("index.mjs", "worker.mjs"):
+    for name in ("index.mjs", "worker.mjs", "worker-client.mjs"):
         shutil.copyfile(BINDINGS / "browser" / name, browser_dir / name)
     shutil.copyfile(wasm / "filang_engine_binding.wasm", browser_dir / "filang_engine.wasm")
     print(browser_dir)

@@ -2,7 +2,11 @@ use super::{
     predicate::{CandleRule, Field, Ratio},
     tape::{number, DAYS, TRENDS},
 };
-use crate::{geometry::GeometryPattern, rules::Cmp, Result};
+use crate::{
+    geometry::{Dimension, GeometryPattern},
+    rules::Cmp,
+    Result,
+};
 use std::collections::HashSet;
 
 pub(super) const MAX_BATCH: usize = 64;
@@ -25,6 +29,11 @@ pub(super) enum Node {
     Logic(Vec<usize>, bool),
     Price(Field, usize),
     Prior(usize, bool),
+    Axis(Dimension, usize),
+    AxisPrior(Dimension, usize, bool),
+    AxisZero,
+    AxisRelate(usize, Cmp, usize),
+    AxisMultiple(Dimension, usize, f64, Option<f64>),
     Relate(usize, Cmp, usize),
     Near(usize, usize, Ratio),
     Share(Field, usize, Ratio, Ratio),
@@ -41,6 +50,7 @@ enum Type {
     Price,
     PriorLow,
     PriorHigh,
+    Axis(Dimension),
 }
 
 pub(super) struct Query {
@@ -78,6 +88,30 @@ fn price_ref(value: Option<&str>, types: &[Type]) -> Result<usize> {
     } else {
         Err("expected an endpoint price or prior level".into())
     }
+}
+
+fn axis(words: &mut std::str::SplitWhitespace<'_>) -> Result<Dimension> {
+    words
+        .next()
+        .ok_or_else(|| "missing dimension".to_owned())?
+        .parse()
+}
+
+fn axis_ratio(text: &str) -> Result<f64> {
+    let (num, den) = text
+        .split_once('/')
+        .ok_or("expected numerator and denominator")?;
+    let num = num
+        .parse::<f64>()
+        .ok()
+        .filter(|n| *n >= 0.0)
+        .ok_or("invalid numerator")?;
+    let den = den
+        .parse::<f64>()
+        .ok()
+        .filter(|d| *d > 0.0)
+        .ok_or("invalid denominator")?;
+    Ok(num / den)
 }
 
 fn offset(value: Option<&str>) -> Result<usize> {
@@ -149,6 +183,48 @@ impl Plan {
                         Type::PriorLow
                     };
                     Node::Prior(steps(number(words.next(), "prior window")?, frame)?, high)
+                }
+                "axis" => {
+                    let axis = axis(&mut words)?;
+                    kind = Type::Axis(axis);
+                    Node::Axis(axis, offset(words.next())?)
+                }
+                "axis-zero" => {
+                    let axis = axis(&mut words)?;
+                    if !axis.has_reference() {
+                        return Err("zero reference requires delta or imbalance".into());
+                    }
+                    kind = Type::Axis(axis);
+                    Node::AxisZero
+                }
+                "axis-prior-low" | "axis-prior-high" => {
+                    let axis = axis(&mut words)?;
+                    kind = Type::Axis(axis);
+                    let window = steps(number(words.next(), "axis prior window")?, frame)?;
+                    Node::AxisPrior(axis, window, op == "axis-prior-high")
+                }
+                "axis-relate" => {
+                    let left = reference(words.next(), &types, None)?;
+                    if !matches!(types[left], Type::Axis(_)) {
+                        return Err("axis relation needs a dimension".into());
+                    }
+                    let comparison = Cmp::parse(words.next().ok_or("missing axis comparison")?)?;
+                    let right = reference(words.next(), &types, Some(types[left]))?;
+                    Node::AxisRelate(left, comparison, right)
+                }
+                "axis-multiple" => {
+                    let axis = axis(&mut words)?;
+                    if axis.has_reference() {
+                        return Err("signed dimensions have no median multiple".into());
+                    }
+                    let window = steps(number(words.next(), "axis median window")?, frame)?;
+                    let min = axis_ratio(words.next().ok_or("missing minimum multiple")?)?;
+                    let max = match words.next() {
+                        Some("-") => None,
+                        Some(text) => Some(axis_ratio(text)?),
+                        None => return Err("missing maximum multiple or dash".into()),
+                    };
+                    Node::AxisMultiple(axis, window, min, max)
                 }
                 "relate" => Node::Relate(
                     price_ref(words.next(), &types)?,

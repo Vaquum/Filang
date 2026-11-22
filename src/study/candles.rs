@@ -3,22 +3,37 @@ use crate::rules::Mask;
 
 /// Twice the median avoids tick rounding for even windows.
 pub(super) fn prior_medians(tape: &Tape, window: usize) -> Vec<i64> {
-    let mut sorted = Vec::with_capacity(window);
+    median_sums(
+        tape.bars.len(),
+        window,
+        |i| tape.bars[i].map(|b| b.h - b.l),
+        0,
+    )
+}
+
+pub(super) fn median_sums<T: Copy + PartialOrd + std::ops::Add<Output = T>>(
+    slots: usize,
+    window: usize,
+    span: impl Fn(usize) -> Option<T>,
+    missing: T,
+) -> Vec<T> {
+    let mut sorted: Vec<T> = Vec::with_capacity(window);
     let mut run = 0;
-    let span = |i: usize| tape.bars[i].map(|b| b.h - b.l);
-    (0..tape.bars.len())
+    (0..slots)
         .map(|i| {
             let median = if run >= window {
                 sorted[(window - 1) / 2] + sorted[window / 2]
             } else {
-                0
+                missing
             };
             match span(i) {
                 Some(x) => {
                     if run >= window {
                         let leaving = span(i - window).expect("complete median window");
                         let index = sorted
-                            .binary_search(&leaving)
+                            .binary_search_by(|x| {
+                                x.partial_cmp(&leaving).expect("valid ordered value")
+                            })
                             .expect("median window member");
                         sorted.remove(index);
                     }

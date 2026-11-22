@@ -1,8 +1,9 @@
 //! Versioned in-process interface for the browser, Python and CLI adapters.
 
 use crate::{
+    engine_drawing,
     geometry::{
-        explore::{self, Bar, PreparedGeometry, Reading, Recording, MAX_SLOTS},
+        explore::{self, Bar, DeclaredDomain, PreparedGeometry, Reading, Recording, MAX_SLOTS},
         Counters, Dimension, DimensionSet, GeometryDimensionKey, GeometryMode, GeometryPattern,
         GEOMETRY_KEY_MAX_BARS,
     },
@@ -18,7 +19,9 @@ const BAR_SIZE: usize = 57;
 #[derive(Default)]
 pub struct Session {
     recording: Option<Recording>,
+    study: Option<study::Study>,
     prepared: HashMap<usize, PreparedGeometry>,
+    domains: HashMap<(usize, GeometryMode), DeclaredDomain>,
 }
 
 impl Session {
@@ -39,7 +42,14 @@ impl Session {
                 let (interval, csv) = utf8(payload)?
                     .split_once('\n')
                     .ok_or("expected interval in milliseconds followed by CSV")?;
-                return self.set_recording(study::geometry_recording_csv(csv, number(interval)?)?);
+                let (interval, instrument) =
+                    interval.split_once('\t').unwrap_or((interval, "BTCUSDT"));
+                let study = study::Study::new(csv, number(interval)?, instrument)?;
+                let slots = study.slots();
+                self.prepared.clear();
+                self.recording = None;
+                self.study = Some(study);
+                return Ok(format!("{{\"slots\":{slots}}}"));
             }
             _ => {}
         }
@@ -49,18 +59,93 @@ impl Session {
                 "{{\"abi\":{ABI_VERSION},\"version\":\"{}\"}}",
                 env!("CARGO_PKG_VERSION")
             )),
+            b"catalogue" if text.is_empty() => Ok(study::Study::catalogue().into()),
+            b"calendar" => {
+                let study = self
+                    .study
+                    .as_mut()
+                    .ok_or("load a study recording from CSV first")?;
+                if text.is_empty() {
+                    study.set_pinned_calendar()?;
+                } else {
+                    study.set_calendar(text)?;
+                }
+                Ok("null".into())
+            }
+            b"calendar-named" => {
+                let (table, tsv) = text
+                    .split_once('\n')
+                    .ok_or("missing named calendar table")?;
+                self.study
+                    .as_mut()
+                    .ok_or("load a study recording from CSV first")?
+                    .set_calendar_named(table, tsv)?;
+                Ok("null".into())
+            }
+            b"install-definition" => {
+                let (sha, definition) =
+                    text.split_once('\n').ok_or("missing definition SHA-256")?;
+                self.study
+                    .as_mut()
+                    .ok_or("load a study recording from CSV first")?
+                    .install_definition(definition, sha)?;
+                Ok("null".into())
+            }
+            b"check" => {
+                let candidates = self.study()?.check(text)?;
+                Ok(format!("{{\"candidates\":{candidates}}}"))
+            }
+            b"study" => {
+                let (candidate, query) = text.split_once('\n').ok_or("missing study text")?;
+                let candidate = if candidate == "-" {
+                    None
+                } else {
+                    Some(number(candidate)?)
+                };
+                self.study()?.query(query, candidate)
+            }
             b"inspect" => inspect(&text.parse()?),
+            b"distance" => {
+                let [left, right] = fields(text)?;
+                let half_flips = explore::distance(&left.parse()?, &right.parse()?)?;
+                Ok(format!("{{\"half_flips\":{half_flips}}}"))
+            }
             b"domain" => {
                 let [width, mode, dimensions] = fields(text)?;
                 let width = number(width)?;
                 let dimensions = DimensionSet::parse(dimensions)?;
-                let count = explore::declared_count(width, GeometryMode::parse(mode)?, dimensions)?;
+                let mode = GeometryMode::parse(mode)?;
+                use std::collections::hash_map::Entry;
+                let domain = match self.domains.entry((width, mode)) {
+                    Entry::Occupied(entry) => entry.into_mut(),
+                    Entry::Vacant(entry) => entry.insert(DeclaredDomain::new(width, mode)?),
+                };
+                let count = domain.count(dimensions);
                 Ok(format!(
                     "{{\"declared\":\"{count}\",\"includes_unrealizable\":{}}}",
                     dimensions.includes_patterns_that_cannot_occur(width),
                 ))
             }
-            b"draw" => inspect(&draw(text)?),
+            b"drawing-protocol" if text.is_empty() => Ok(engine_drawing::protocol()),
+            b"read-drawing" => {
+                let (expected, packet) = text.split_once('\n').ok_or("missing drawing packet")?;
+                let expected = (!expected.is_empty()).then_some(expected);
+                let (shape, pins) = engine_drawing::read(packet, expected)?;
+                let shape = inspect(&shape)?;
+                let pinned = pins
+                    .as_ref()
+                    .map_or_else(|| "null".into(), |s| study::quote(s));
+                Ok(format!(
+                    "{{\"shape\":{shape},\"packet\":{packet},\"pinned_expression\":{pinned}}}"
+                ))
+            }
+            b"draw" => inspect(&draw(text)?.0),
+            b"draw-counts" => {
+                let (pattern, reading) = draw(text)?;
+                let counts = self.count(&pattern, reading)?;
+                let shape = inspect(&pattern)?;
+                Ok(format!("{{\"shape\":{shape},\"counts\":{counts}}}"))
+            }
             b"at" => {
                 let [end, width, mode, reading, dimensions] = fields(text)?;
                 let result = self.recording()?.pattern_at(
@@ -84,13 +169,7 @@ impl Session {
             b"counts" => {
                 let [reading, code] = fields(text)?;
                 let pattern: GeometryPattern = code.parse()?;
-                let result = self
-                    .window(pattern.len())?
-                    .counts(&pattern, Reading::parse(reading)?)?;
-                Ok(format!(
-                    "{{\"matched\":{},\"false_count\":{},\"unknown\":{}}}",
-                    result.matched, result.false_count, result.unknown
-                ))
+                self.count(&pattern, Reading::parse(reading)?)
             }
             b"positions" => {
                 let [reading, start, limit, code] = fields(text)?;
@@ -107,6 +186,33 @@ impl Session {
                 )?;
                 Ok(format!("{positions:?}"))
             }
+            b"classify" => {
+                let [reading, start, limit, code] = fields(text)?;
+                let limit = number(limit)?;
+                if limit > MAX_PAGE {
+                    return Err(format!("geometry page exceeds {MAX_PAGE} positions"));
+                }
+                let pattern: GeometryPattern = code.parse()?;
+                let values = self.window(pattern.len())?.classify(
+                    &pattern,
+                    Reading::parse(reading)?,
+                    number(start)?,
+                    limit,
+                )?;
+                let mut out = String::from("[");
+                for (i, value) in values.into_iter().enumerate() {
+                    if i != 0 {
+                        out.push(',');
+                    }
+                    out.push_str(match value {
+                        Some(true) => "true",
+                        Some(false) => "false",
+                        None => "null",
+                    });
+                }
+                out.push(']');
+                Ok(out)
+            }
             b"release" => {
                 self.prepared.remove(&number(text)?);
                 Ok("null".into())
@@ -115,21 +221,40 @@ impl Session {
         }
     }
 
+    fn count(&mut self, pattern: &GeometryPattern, reading: Reading) -> Result<String> {
+        let result = self.window(pattern.len())?.counts(pattern, reading)?;
+        Ok(format!(
+            "{{\"matched\":{},\"false_count\":{},\"unknown\":{}}}",
+            result.matched, result.false_count, result.unknown
+        ))
+    }
+
     fn set_recording(&mut self, recording: Recording) -> Result<String> {
         let length = recording.len();
         self.recording = Some(recording);
+        self.study = None;
         self.prepared.clear();
         Ok(format!("{{\"slots\":{length}}}"))
     }
 
-    fn recording(&self) -> Result<&Recording> {
-        self.recording
+    fn study(&self) -> Result<&study::Study> {
+        self.study
             .as_ref()
-            .ok_or_else(|| "load a recording first".into())
+            .ok_or_else(|| "load a study recording from CSV first".into())
+    }
+
+    fn recording(&mut self) -> Result<&Recording> {
+        if self.recording.is_none() {
+            self.recording = Some(self.study()?.geometry_recording()?);
+        }
+        Ok(self.recording.as_ref().expect("loaded recording"))
     }
 
     fn window(&mut self, width: usize) -> Result<&mut PreparedGeometry> {
-        let recording = self.recording.as_ref().ok_or("load a recording first")?;
+        if self.recording.is_none() {
+            self.recording()?;
+        }
+        let recording = self.recording.as_ref().expect("loaded recording");
         use std::collections::hash_map::Entry;
         Ok(match self.prepared.entry(width) {
             Entry::Occupied(entry) => entry.into_mut(),
@@ -194,7 +319,7 @@ fn inspect(pattern: &GeometryPattern) -> Result<String> {
     ))
 }
 
-fn draw(text: &str) -> Result<GeometryPattern> {
+fn draw(text: &str) -> Result<(GeometryPattern, Reading)> {
     let mut lines = text.split('\n');
     let [mode, reading, n] = fields(lines.next().ok_or("missing drawing header")?)?;
     let n = number(n)?;
@@ -223,12 +348,9 @@ fn draw(text: &str) -> Result<GeometryPattern> {
         .iter()
         .map(|(axis, marks)| (*axis, marks.as_slice()))
         .collect();
-    explore::encode_drawing(
-        &rows,
-        GeometryMode::parse(mode)?,
-        Reading::parse(reading)?,
-        &axes,
-    )
+    let reading = Reading::parse(reading)?;
+    let pattern = explore::encode_drawing(&rows, GeometryMode::parse(mode)?, reading, &axes)?;
+    Ok((pattern, reading))
 }
 
 fn utf8(input: &[u8]) -> Result<&str> {

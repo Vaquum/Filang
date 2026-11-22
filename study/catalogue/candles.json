@@ -1,0 +1,1072 @@
+{
+  "schema": "filang-candles-v1",
+  "patterns": [
+    {
+      "id": "marubozu",
+      "name": "Marubozu",
+      "ja": "丸坊主",
+      "bars": 1,
+      "rule": "Nonzero body with neither an upper nor a lower wick.",
+      "spec": {
+        "all": [
+          [
+            ">",
+            "body",
+            0
+          ],
+          [
+            "==",
+            "lower",
+            0
+          ],
+          [
+            "==",
+            "upper",
+            0
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [
+        "寄引坊主"
+      ],
+      "oriented": false,
+      "function": "marubozu",
+      "labels": [
+        "Marubozu",
+        "丸坊主",
+        "寄引坊主"
+      ],
+      "instruction": "pattern 1 all:3 gt body 0 eq lower 0 eq upper 0"
+    },
+    {
+      "id": "doji",
+      "name": "Doji",
+      "ja": "十字線",
+      "bars": 1,
+      "rule": "Open equals close, with a wick strictly above and below. Composer names the one-sided and four-price cases separately.",
+      "spec": {
+        "all": [
+          [
+            "==",
+            "body",
+            0
+          ],
+          [
+            ">",
+            "lower",
+            0
+          ],
+          [
+            ">",
+            "upper",
+            0
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": false,
+      "function": "doji",
+      "labels": [
+        "Doji",
+        "十字線"
+      ],
+      "instruction": "pattern 1 all:3 eq body 0 gt lower 0 gt upper 0"
+    },
+    {
+      "id": "dragonfly-doji",
+      "name": "Dragonfly doji",
+      "ja": "トンボ",
+      "bars": 1,
+      "rule": "Open, high and close are equal. The low is strictly lower.",
+      "spec": {
+        "all": [
+          [
+            "==",
+            "body",
+            0
+          ],
+          [
+            ">",
+            "lower",
+            0
+          ],
+          [
+            "==",
+            "upper",
+            0
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [
+        "トンボ線",
+        "Tonbo"
+      ],
+      "oriented": false,
+      "function": "dragonfly_doji",
+      "labels": [
+        "Dragonfly doji",
+        "トンボ",
+        "トンボ線",
+        "Tonbo"
+      ],
+      "instruction": "pattern 1 all:3 eq body 0 gt lower 0 eq upper 0"
+    },
+    {
+      "id": "gravestone-doji",
+      "name": "Gravestone doji",
+      "ja": "塔婆",
+      "bars": 1,
+      "rule": "Open, low and close are equal. The high is strictly higher.",
+      "spec": {
+        "all": [
+          [
+            "==",
+            "body",
+            0
+          ],
+          [
+            "==",
+            "lower",
+            0
+          ],
+          [
+            ">",
+            "upper",
+            0
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [
+        "塔婆線"
+      ],
+      "oriented": false,
+      "function": "gravestone_doji",
+      "labels": [
+        "Gravestone doji",
+        "塔婆",
+        "塔婆線"
+      ],
+      "instruction": "pattern 1 all:3 eq body 0 eq lower 0 gt upper 0"
+    },
+    {
+      "id": "opening-marubozu",
+      "name": "Opening marubozu",
+      "ja": "寄付坊主",
+      "bars": 1,
+      "rule": "The opening end has no wick and the closing end has a wick. Either body direction qualifies.",
+      "spec": {
+        "any": [
+          {
+            "all": [
+              [
+                "==",
+                "dir",
+                1
+              ],
+              [
+                "==",
+                "lower",
+                0
+              ],
+              [
+                ">",
+                "upper",
+                0
+              ]
+            ]
+          },
+          {
+            "all": [
+              [
+                "==",
+                "dir",
+                -1
+              ],
+              [
+                "==",
+                "upper",
+                0
+              ],
+              [
+                ">",
+                "lower",
+                0
+              ]
+            ]
+          }
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": true,
+      "function": "opening_marubozu",
+      "labels": [
+        "Opening marubozu",
+        "寄付坊主"
+      ],
+      "instruction": "pattern 1 any:2 all:3 eq dir 1 eq lower 0 gt upper 0 all:3 eq dir -1 eq upper 0 gt lower 0"
+    },
+    {
+      "id": "closing-marubozu",
+      "name": "Closing marubozu",
+      "ja": "大引坊主",
+      "bars": 1,
+      "rule": "The closing end has no wick and the opening end has a wick. Either body direction qualifies.",
+      "spec": {
+        "any": [
+          {
+            "all": [
+              [
+                "==",
+                "dir",
+                1
+              ],
+              [
+                "==",
+                "upper",
+                0
+              ],
+              [
+                ">",
+                "lower",
+                0
+              ]
+            ]
+          },
+          {
+            "all": [
+              [
+                "==",
+                "dir",
+                -1
+              ],
+              [
+                "==",
+                "lower",
+                0
+              ],
+              [
+                ">",
+                "upper",
+                0
+              ]
+            ]
+          }
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": true,
+      "function": "closing_marubozu",
+      "labels": [
+        "Closing marubozu",
+        "大引坊主"
+      ],
+      "instruction": "pattern 1 any:2 all:3 eq dir 1 eq upper 0 gt lower 0 all:3 eq dir -1 eq lower 0 gt upper 0"
+    },
+    {
+      "id": "engulfing",
+      "name": "Engulfing",
+      "ja": "包み線",
+      "bars": 2,
+      "rule": "Opposite-colored nonzero bodies. The second body covers the first, extending strictly beyond at least one end.",
+      "spec": {
+        "all": [
+          {
+            "all": [
+              [
+                "!=",
+                "dir",
+                0
+              ],
+              [
+                "!=",
+                "prev.dir",
+                0
+              ],
+              [
+                "!=",
+                "dir",
+                "prev.dir"
+              ]
+            ]
+          },
+          {
+            "all": [
+              [
+                "<=",
+                "bodyLow",
+                "prev.bodyLow"
+              ],
+              [
+                ">=",
+                "bodyHigh",
+                "prev.bodyHigh"
+              ],
+              {
+                "any": [
+                  [
+                    "<",
+                    "bodyLow",
+                    "prev.bodyLow"
+                  ],
+                  [
+                    ">",
+                    "bodyHigh",
+                    "prev.bodyHigh"
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [
+        "抱き線",
+        "Tsutsumi",
+        "Tsutsumi-sen",
+        "Tsutsumi sen"
+      ],
+      "oriented": true,
+      "group": true,
+      "function": "engulfing",
+      "labels": [
+        "Engulfing",
+        "包み線",
+        "抱き線",
+        "Tsutsumi",
+        "Tsutsumi-sen",
+        "Tsutsumi sen"
+      ],
+      "instruction": "pattern 2 all:2 all:3 ne dir 0 ne prev.dir 0 ne dir prev.dir all:3 le bodyLow prev.bodyLow ge bodyHigh prev.bodyHigh any:2 lt bodyLow prev.bodyLow gt bodyHigh prev.bodyHigh"
+    },
+    {
+      "id": "bullish-engulfing",
+      "name": "Bullish engulfing",
+      "ja": "陽の包み線",
+      "bars": 2,
+      "rule": "A rising body covers a falling body, extending strictly beyond at least one end.",
+      "spec": {
+        "all": [
+          {
+            "all": [
+              {
+                "all": [
+                  [
+                    "!=",
+                    "dir",
+                    0
+                  ],
+                  [
+                    "!=",
+                    "prev.dir",
+                    0
+                  ],
+                  [
+                    "!=",
+                    "dir",
+                    "prev.dir"
+                  ]
+                ]
+              },
+              {
+                "all": [
+                  [
+                    "<=",
+                    "bodyLow",
+                    "prev.bodyLow"
+                  ],
+                  [
+                    ">=",
+                    "bodyHigh",
+                    "prev.bodyHigh"
+                  ],
+                  {
+                    "any": [
+                      [
+                        "<",
+                        "bodyLow",
+                        "prev.bodyLow"
+                      ],
+                      [
+                        ">",
+                        "bodyHigh",
+                        "prev.bodyHigh"
+                      ]
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          [
+            "==",
+            "dir",
+            1
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": true,
+      "function": "bullish_engulfing",
+      "labels": [
+        "Bullish engulfing",
+        "陽の包み線"
+      ],
+      "instruction": "pattern 2 all:2 all:2 all:3 ne dir 0 ne prev.dir 0 ne dir prev.dir all:3 le bodyLow prev.bodyLow ge bodyHigh prev.bodyHigh any:2 lt bodyLow prev.bodyLow gt bodyHigh prev.bodyHigh eq dir 1"
+    },
+    {
+      "id": "bearish-engulfing",
+      "name": "Bearish engulfing",
+      "ja": "陰の包み線",
+      "bars": 2,
+      "rule": "A falling body covers a rising body, extending strictly beyond at least one end.",
+      "spec": {
+        "all": [
+          {
+            "all": [
+              {
+                "all": [
+                  [
+                    "!=",
+                    "dir",
+                    0
+                  ],
+                  [
+                    "!=",
+                    "prev.dir",
+                    0
+                  ],
+                  [
+                    "!=",
+                    "dir",
+                    "prev.dir"
+                  ]
+                ]
+              },
+              {
+                "all": [
+                  [
+                    "<=",
+                    "bodyLow",
+                    "prev.bodyLow"
+                  ],
+                  [
+                    ">=",
+                    "bodyHigh",
+                    "prev.bodyHigh"
+                  ],
+                  {
+                    "any": [
+                      [
+                        "<",
+                        "bodyLow",
+                        "prev.bodyLow"
+                      ],
+                      [
+                        ">",
+                        "bodyHigh",
+                        "prev.bodyHigh"
+                      ]
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          [
+            "==",
+            "dir",
+            -1
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": true,
+      "function": "bearish_engulfing",
+      "labels": [
+        "Bearish engulfing",
+        "陰の包み線"
+      ],
+      "instruction": "pattern 2 all:2 all:2 all:3 ne dir 0 ne prev.dir 0 ne dir prev.dir all:3 le bodyLow prev.bodyLow ge bodyHigh prev.bodyHigh any:2 lt bodyLow prev.bodyLow gt bodyHigh prev.bodyHigh eq dir -1"
+    },
+    {
+      "id": "harami",
+      "name": "Harami",
+      "ja": "はらみ線",
+      "bars": 2,
+      "rule": "The second nonzero body lies strictly inside the first body. Body colors and wicks are unrestricted.",
+      "spec": {
+        "all": [
+          {
+            "all": [
+              [
+                ">",
+                "bodyLow",
+                "prev.bodyLow"
+              ],
+              [
+                "<",
+                "bodyHigh",
+                "prev.bodyHigh"
+              ]
+            ]
+          },
+          [
+            ">",
+            "body",
+            0
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": false,
+      "function": "harami",
+      "labels": [
+        "Harami",
+        "はらみ線"
+      ],
+      "instruction": "pattern 2 all:2 all:2 gt bodyLow prev.bodyLow lt bodyHigh prev.bodyHigh gt body 0"
+    },
+    {
+      "id": "harami-cross",
+      "name": "Harami cross",
+      "ja": "はらみ寄せ線",
+      "bars": 2,
+      "rule": "The second open equals its close strictly inside the first body. Wicks are unrestricted.",
+      "spec": {
+        "all": [
+          {
+            "all": [
+              [
+                ">",
+                "bodyLow",
+                "prev.bodyLow"
+              ],
+              [
+                "<",
+                "bodyHigh",
+                "prev.bodyHigh"
+              ]
+            ]
+          },
+          [
+            "==",
+            "body",
+            0
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": false,
+      "function": "harami_cross",
+      "labels": [
+        "Harami cross",
+        "はらみ寄せ線"
+      ],
+      "instruction": "pattern 2 all:2 all:2 gt bodyLow prev.bodyLow lt bodyHigh prev.bodyHigh eq body 0"
+    },
+    {
+      "id": "window",
+      "name": "Window",
+      "ja": "窓",
+      "bars": 2,
+      "rule": "The two complete high–low ranges are strictly separated by a gap in either direction.",
+      "spec": {
+        "any": [
+          [
+            ">",
+            "low",
+            "prev.high"
+          ],
+          [
+            "<",
+            "high",
+            "prev.low"
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": false,
+      "group": true,
+      "function": "window",
+      "labels": [
+        "Window",
+        "窓"
+      ],
+      "instruction": "pattern 2 any:2 gt low prev.high lt high prev.low"
+    },
+    {
+      "id": "rising-window",
+      "name": "Rising window",
+      "ja": "上窓",
+      "bars": 2,
+      "rule": "The second low is strictly above the first high.",
+      "spec": [
+        ">",
+        "low",
+        "prev.high"
+      ],
+      "version": 1,
+      "kind": "order",
+      "aliases": [
+        "Gap up",
+        "Window up",
+        "窓開け上昇"
+      ],
+      "oriented": false,
+      "function": "rising_window",
+      "labels": [
+        "Rising window",
+        "上窓",
+        "Gap up",
+        "Window up",
+        "窓開け上昇"
+      ],
+      "instruction": "pattern 2 gt low prev.high"
+    },
+    {
+      "id": "falling-window",
+      "name": "Falling window",
+      "ja": "下窓",
+      "bars": 2,
+      "rule": "The second high is strictly below the first low.",
+      "spec": [
+        "<",
+        "high",
+        "prev.low"
+      ],
+      "version": 1,
+      "kind": "order",
+      "aliases": [
+        "Gap down",
+        "Window down",
+        "窓開け下落"
+      ],
+      "oriented": false,
+      "function": "falling_window",
+      "labels": [
+        "Falling window",
+        "下窓",
+        "Gap down",
+        "Window down",
+        "窓開け下落"
+      ],
+      "instruction": "pattern 2 lt high prev.low"
+    },
+    {
+      "id": "tweezer-top",
+      "name": "Tweezer top",
+      "ja": "毛抜き天井",
+      "bars": 2,
+      "rule": "The highs of the two bars are exactly equal.",
+      "spec": [
+        "==",
+        "high",
+        "prev.high"
+      ],
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": false,
+      "function": "tweezer_top",
+      "labels": [
+        "Tweezer top",
+        "毛抜き天井"
+      ],
+      "instruction": "pattern 2 eq high prev.high"
+    },
+    {
+      "id": "tweezer-bottom",
+      "name": "Tweezer bottom",
+      "ja": "毛抜き底",
+      "bars": 2,
+      "rule": "The lows of the two bars are exactly equal.",
+      "spec": [
+        "==",
+        "low",
+        "prev.low"
+      ],
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": false,
+      "function": "tweezer_bottom",
+      "labels": [
+        "Tweezer bottom",
+        "毛抜き底"
+      ],
+      "instruction": "pattern 2 eq low prev.low"
+    },
+    {
+      "id": "meeting-lines",
+      "name": "Meeting lines",
+      "ja": "出会い線",
+      "bars": 2,
+      "rule": "Opposite-colored nonzero bodies close at the same price.",
+      "spec": {
+        "all": [
+          {
+            "all": [
+              [
+                "!=",
+                "dir",
+                0
+              ],
+              [
+                "!=",
+                "prev.dir",
+                0
+              ],
+              [
+                "!=",
+                "dir",
+                "prev.dir"
+              ]
+            ]
+          },
+          [
+            "==",
+            "close",
+            "prev.close"
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": true,
+      "function": "meeting_lines",
+      "labels": [
+        "Meeting lines",
+        "出会い線"
+      ],
+      "instruction": "pattern 2 all:2 all:3 ne dir 0 ne prev.dir 0 ne dir prev.dir eq close prev.close"
+    },
+    {
+      "id": "separating-lines",
+      "name": "Separating lines",
+      "ja": "行き違い線",
+      "bars": 2,
+      "rule": "Opposite-colored nonzero bodies open at the same price.",
+      "spec": {
+        "all": [
+          {
+            "all": [
+              [
+                "!=",
+                "dir",
+                0
+              ],
+              [
+                "!=",
+                "prev.dir",
+                0
+              ],
+              [
+                "!=",
+                "dir",
+                "prev.dir"
+              ]
+            ]
+          },
+          [
+            "==",
+            "open",
+            "prev.open"
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": true,
+      "function": "separating_lines",
+      "labels": [
+        "Separating lines",
+        "行き違い線"
+      ],
+      "instruction": "pattern 2 all:2 all:3 ne dir 0 ne prev.dir 0 ne dir prev.dir eq open prev.open"
+    },
+    {
+      "id": "hammer",
+      "name": "Hammer",
+      "ja": "ハンマー",
+      "bars": 1,
+      "rule": "Shape only. The body is nonzero, the lower wick is at least twice the body, and the upper wick is at most half the body. Prior decline and reversal confirmation are outside this rule.",
+      "spec": {
+        "all": [
+          [
+            ">",
+            "body",
+            0
+          ],
+          [
+            ">=",
+            "lower",
+            [
+              "*",
+              2,
+              "body"
+            ]
+          ],
+          [
+            "<=",
+            [
+              "*",
+              2,
+              "upper"
+            ],
+            "body"
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "ratio",
+      "aliases": [
+        "カラカサ",
+        "Karakasa",
+        "Hammer shape"
+      ],
+      "oriented": false,
+      "function": "hammer",
+      "labels": [
+        "Hammer",
+        "ハンマー",
+        "カラカサ",
+        "Karakasa",
+        "Hammer shape"
+      ],
+      "instruction": "pattern 1 all:3 gt body 0 ge lower 2*body le 2*upper body"
+    },
+    {
+      "id": "inverted-hammer",
+      "name": "Inverted hammer",
+      "ja": "逆ハンマー",
+      "bars": 1,
+      "rule": "Shape only. The body is nonzero, the upper wick is at least twice the body, and the lower wick is at most half the body. Prior decline and reversal confirmation are outside this rule.",
+      "spec": {
+        "all": [
+          [
+            ">",
+            "body",
+            0
+          ],
+          [
+            ">=",
+            "upper",
+            [
+              "*",
+              2,
+              "body"
+            ]
+          ],
+          [
+            "<=",
+            [
+              "*",
+              2,
+              "lower"
+            ],
+            "body"
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "ratio",
+      "aliases": [
+        "トンカチ",
+        "Tonkachi",
+        "Inverted hammer shape"
+      ],
+      "oriented": false,
+      "function": "inverted_hammer",
+      "labels": [
+        "Inverted hammer",
+        "逆ハンマー",
+        "トンカチ",
+        "Tonkachi",
+        "Inverted hammer shape"
+      ],
+      "instruction": "pattern 1 all:3 gt body 0 ge upper 2*body le 2*lower body"
+    },
+    {
+      "id": "spinning-top",
+      "name": "Spinning top",
+      "ja": "コマ",
+      "bars": 1,
+      "rule": "Both wicks are strictly longer than the nonzero body. Either body direction qualifies.",
+      "spec": {
+        "all": [
+          [
+            ">",
+            "body",
+            0
+          ],
+          [
+            ">",
+            "lower",
+            "body"
+          ],
+          [
+            ">",
+            "upper",
+            "body"
+          ]
+        ]
+      },
+      "version": 1,
+      "kind": "ratio",
+      "aliases": [
+        "Koma"
+      ],
+      "oriented": false,
+      "function": "spinning_top",
+      "labels": [
+        "Spinning top",
+        "コマ",
+        "Koma"
+      ],
+      "instruction": "pattern 1 all:3 gt body 0 gt lower body gt upper body"
+    },
+    {
+      "id": "inside-bar",
+      "name": "Inside bar",
+      "ja": "インサイドバー",
+      "bars": 2,
+      "rule": "The second complete range lies inside the first. One equal endpoint is allowed, but identical ranges are excluded.",
+      "spec": {
+        "all": [
+          [
+            ">=",
+            "low",
+            "prev.low"
+          ],
+          [
+            "<=",
+            "high",
+            "prev.high"
+          ],
+          {
+            "any": [
+              [
+                ">",
+                "low",
+                "prev.low"
+              ],
+              [
+                "<",
+                "high",
+                "prev.high"
+              ]
+            ]
+          }
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": false,
+      "function": "inside_bar",
+      "labels": [
+        "Inside bar",
+        "インサイドバー"
+      ],
+      "instruction": "pattern 2 all:3 ge low prev.low le high prev.high any:2 gt low prev.low lt high prev.high"
+    },
+    {
+      "id": "outside-bar",
+      "name": "Outside bar",
+      "ja": "アウトサイドバー",
+      "bars": 2,
+      "rule": "The second complete range contains the first. One equal endpoint is allowed, but identical ranges are excluded.",
+      "spec": {
+        "all": [
+          [
+            "<=",
+            "low",
+            "prev.low"
+          ],
+          [
+            ">=",
+            "high",
+            "prev.high"
+          ],
+          {
+            "any": [
+              [
+                "<",
+                "low",
+                "prev.low"
+              ],
+              [
+                ">",
+                "high",
+                "prev.high"
+              ]
+            ]
+          }
+        ]
+      },
+      "version": 1,
+      "kind": "order",
+      "aliases": [],
+      "oriented": false,
+      "function": "outside_bar",
+      "labels": [
+        "Outside bar",
+        "アウトサイドバー"
+      ],
+      "instruction": "pattern 2 all:3 le low prev.low ge high prev.high any:2 lt low prev.low gt high prev.high"
+    },
+    {
+      "id": "four-price-doji",
+      "name": "Four-price doji",
+      "ja": "四値同時線",
+      "bars": 1,
+      "rule": "Open, high, low and close are all equal.",
+      "spec": [
+        "==",
+        "range",
+        0
+      ],
+      "version": 1,
+      "kind": "order",
+      "aliases": [
+        "一本線",
+        "Four price doji"
+      ],
+      "oriented": false,
+      "function": "four_price_doji",
+      "labels": [
+        "Four-price doji",
+        "四値同時線",
+        "一本線",
+        "Four price doji"
+      ],
+      "instruction": "pattern 1 eq range 0"
+    }
+  ]
+}

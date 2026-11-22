@@ -2,9 +2,9 @@
 //! and axis keys independently, so toggling axes never builds their product.
 
 use super::{
-    decimal_price_domain, dimensions::AxisEncoder, Counters, DecimalNatural, Dimension,
-    DimensionPart, DimensionSet, GeometryEncoder, GeometryKey, GeometryMode, GeometryPattern,
-    GEOMETRY_KEY_MAX_BARS,
+    decimal_price_domain, dimensions::AxisEncoder, BodyDirection, Counters, DecimalNatural,
+    Dimension, DimensionPart, DimensionSet, GeometryEncoder, GeometryKey, GeometryMode,
+    GeometryPattern, GEOMETRY_KEY_MAX_BARS,
 };
 use crate::Result;
 use std::{collections::HashMap, hash::Hash, sync::Arc};
@@ -78,29 +78,58 @@ pub fn declared_count(
     mode: GeometryMode,
     dimensions: DimensionSet,
 ) -> Result<String> {
-    check_width(width)?;
-    let mut count = decimal_price_domain(width, mode)?;
-    if !dimensions.is_empty() {
-        let mut levels = vec![DecimalNatural::from_usize(1)];
-        let mut bell = [DecimalNatural::default(), DecimalNatural::default()];
-        for points in 1..=width + 1 {
-            let mut next = vec![DecimalNatural::default(); points + 1];
-            for k in 1..=points {
-                next[k].add_multiple(&levels[k - 1], k as u32);
-                if let Some(same) = levels.get(k) {
-                    next[k].add_multiple(same, k as u32);
-                }
-                if points >= width {
-                    bell[points - width].add_multiple(&next[k], 1);
-                }
-            }
-            levels = next;
-        }
-        for axis in dimensions.iter() {
-            count = count.multiply(&bell[usize::from(axis.has_reference())]);
-        }
+    DeclaredDomain::new(width, mode).map(|mut basis| basis.count(dimensions))
+}
+
+pub(crate) struct DeclaredDomain {
+    width: usize,
+    price: DecimalNatural,
+    axis_orders: Option<[DecimalNatural; 2]>,
+}
+
+impl DeclaredDomain {
+    pub fn new(width: usize, mode: GeometryMode) -> Result<Self> {
+        check_width(width)?;
+        Ok(Self {
+            width,
+            price: decimal_price_domain(width, mode)?,
+            axis_orders: None,
+        })
     }
-    Ok(count.to_string())
+
+    pub fn count(&mut self, dimensions: DimensionSet) -> String {
+        if dimensions.is_empty() {
+            return self.price.to_string();
+        }
+        let width = self.width;
+        let orders = self
+            .axis_orders
+            .get_or_insert_with(|| axis_cardinalities(width));
+        let mut count = self.price.clone();
+        for axis in dimensions.iter() {
+            count = count.multiply(&orders[usize::from(axis.has_reference())]);
+        }
+        count.to_string()
+    }
+}
+
+fn axis_cardinalities(width: usize) -> [DecimalNatural; 2] {
+    let mut levels = vec![DecimalNatural::from_usize(1)];
+    let mut bell = [DecimalNatural::default(), DecimalNatural::default()];
+    for points in 1..=width + 1 {
+        let mut next = vec![DecimalNatural::default(); points + 1];
+        for k in 1..=points {
+            next[k].add_multiple(&levels[k - 1], k as u32);
+            if let Some(same) = levels.get(k) {
+                next[k].add_multiple(same, k as u32);
+            }
+            if points >= width {
+                bell[points - width].add_multiple(&next[k], 1);
+            }
+        }
+        levels = next;
+    }
+    bell
 }
 
 impl Recording {
@@ -299,7 +328,7 @@ impl PreparedGeometry {
                 *entry = Some(index_axis(&self.recording, self.width, axis));
             }
         }
-        if !self.valid_counts.contains_key(&dimensions) {
+        if let Entry::Vacant(entry) = self.valid_counts.entry(dimensions) {
             let price = &self.prices[&(mode, reading)];
             let selected: Vec<_> = dimensions
                 .iter()
@@ -320,7 +349,7 @@ impl PreparedGeometry {
                     })
                     .sum()
             };
-            self.valid_counts.insert(dimensions, valid);
+            entry.insert(valid);
         }
         Ok(())
     }
@@ -354,10 +383,44 @@ impl PreparedGeometry {
     ) -> Result<Vec<u32>> {
         self.prepare_pattern(pattern, reading)?;
         let mut lists = self.lists(pattern, reading)?;
-        for slots in &mut lists.slots[..lists.len] {
-            *slots = &slots[slots.partition_point(|slot| (*slot as usize) < start_slot)..];
-        }
+        lists.restrict(start_slot, self.recording.len());
         Ok(lists.matches().take(limit).collect())
+    }
+
+    /// Classify a page on the recording grid in chronological order.
+    pub fn classify(
+        &mut self,
+        pattern: &GeometryPattern,
+        reading: Reading,
+        start: usize,
+        limit: usize,
+    ) -> Result<Vec<Option<bool>>> {
+        self.prepare_pattern(pattern, reading)?;
+        let end = self.recording.len().min(start.saturating_add(limit));
+        let price = &self.prices[&(pattern.mode(), reading)];
+        let axes: Vec<_> = pattern
+            .dimensions()
+            .iter()
+            .map(|part| {
+                self.axes[part.dimension() as usize]
+                    .as_ref()
+                    .unwrap()
+                    .validity()
+            })
+            .collect();
+        let is_set = |words: &[u64], slot: usize| words[slot / 64] & (1 << (slot % 64)) != 0;
+        let mut result: Vec<_> = (start..end)
+            .map(|slot| {
+                (is_set(price.validity(), slot) && axes.iter().all(|axis| is_set(axis, slot)))
+                    .then_some(false)
+            })
+            .collect();
+        let mut lists = self.lists(pattern, reading)?;
+        lists.restrict(start, end);
+        for slot in lists.matches() {
+            result[slot as usize - start] = Some(true);
+        }
+        Ok(result)
     }
 
     fn prepare_pattern(&mut self, pattern: &GeometryPattern, reading: Reading) -> Result<()> {
@@ -394,6 +457,14 @@ struct MatchLists<'a> {
 }
 
 impl MatchLists<'_> {
+    fn restrict(&mut self, start: usize, end: usize) {
+        for slots in &mut self.slots[..self.len] {
+            let from = slots.partition_point(|&slot| (slot as usize) < start);
+            let to = slots.partition_point(|&slot| (slot as usize) < end);
+            *slots = if from < to { &slots[from..to] } else { &[] };
+        }
+    }
+
     fn matches(&self) -> impl Iterator<Item = u32> + '_ {
         let mut lists = self.slots;
         lists[..self.len].sort_unstable_by_key(|list| list.len());
@@ -413,31 +484,85 @@ fn index_prices(
 ) -> Result<PriceKeys> {
     let mut rows = vec![[0.0; 4]; width];
     let mut encoder = GeometryEncoder::new(width, mode)?;
-    let scan = |rows: &mut [[f64; 4]],
-                visit: &mut dyn FnMut(usize, &[[f64; 4]]) -> Result<()>|
-     -> Result<()> {
-        for (start, bars) in recording.0.windows(width).enumerate() {
-            if load(bars, rows, reading) {
-                visit(start + width - 1, rows)?;
-            }
-        }
-        Ok(())
-    };
     if width <= GEOMETRY_KEY_MAX_BARS {
         let mut postings = Postings::new(recording.len());
-        scan(&mut rows, &mut |end, rows| {
+        scan_prices(recording, &mut rows, reading, |end, rows| {
             postings.insert(encoder.encode_key_ohlc(rows)?, end);
             Ok(())
         })?;
         Ok(Keys::Compact(postings))
     } else {
         let mut postings = Postings::new(recording.len());
-        scan(&mut rows, &mut |end, rows| {
+        scan_prices(recording, &mut rows, reading, |end, rows| {
             postings.insert(encoder.encode_ohlc(rows)?.clone(), end);
             Ok(())
         })?;
         Ok(Keys::Wide(postings))
     }
+}
+
+fn scan_prices(
+    recording: &Recording,
+    rows: &mut [[f64; 4]],
+    reading: Reading,
+    mut visit: impl FnMut(usize, &[[f64; 4]]) -> Result<()>,
+) -> Result<()> {
+    let width = rows.len();
+    for (start, bars) in recording.0.windows(width).enumerate() {
+        if load(bars, rows, reading) {
+            visit(start + width - 1, rows)?;
+        }
+    }
+    Ok(())
+}
+
+/// Comparison distance in half-flips. A tie changing to a strict order
+/// costs one and reversal costs two. Orientation uses the same scale.
+pub fn distance(left: &GeometryPattern, right: &GeometryPattern) -> Result<usize> {
+    if left.len() != right.len()
+        || left.mode() != right.mode()
+        || left.dimension_set() != right.dimension_set()
+    {
+        return Err("distance needs a common width, orientation and dimension set".into());
+    }
+    let price_left: Vec<_> = left.ranks().iter().flatten().copied().collect();
+    let price_right: Vec<_> = right.ranks().iter().flatten().copied().collect();
+    let mut total = order_distance(&price_left, &price_right);
+    if let (Some(a), Some(b)) = (left.directions(), right.directions()) {
+        let code = |direction| match direction {
+            BodyDirection::Down => -1i8,
+            BodyDirection::Flat => 0,
+            BodyDirection::Up => 1,
+        };
+        total += a
+            .iter()
+            .zip(b)
+            .map(|(&a, &b)| usize::from((code(a) - code(b)).unsigned_abs()))
+            .sum::<usize>();
+    }
+    for (a, b) in left.dimensions().iter().zip(right.dimensions()) {
+        let levels = |part: &DimensionPart| {
+            part.ranks()
+                .iter()
+                .copied()
+                .chain(part.reference())
+                .collect::<Vec<_>>()
+        };
+        total += order_distance(&levels(a), &levels(b));
+    }
+    Ok(total)
+}
+
+fn order_distance(left: &[usize], right: &[usize]) -> usize {
+    let mut total = 0;
+    for j in 1..left.len() {
+        for i in 0..j {
+            let a = left[i].cmp(&left[j]) as i8;
+            let b = right[i].cmp(&right[j]) as i8;
+            total += usize::from((a - b).unsigned_abs());
+        }
+    }
+    total
 }
 
 fn index_axis(recording: &Recording, width: usize, axis: Dimension) -> AxisKeys {

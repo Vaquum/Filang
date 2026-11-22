@@ -34,8 +34,11 @@ export class FilangEngine {
     this.#handle = 0;
   }
 
+  memoryBytes() { return this.#wasm.memory.buffer.byteLength; }
   version() { return this.#call("version"); }
+  catalogue() { return this.#call("catalogue"); }
   inspect(code) { return this.#call("inspect", code); }
+  distance(left, right) { return this.#call("distance", fields(left, right)); }
 
   domain(width, {oriented = true, dimensions = []} = {}) {
     return this.#call("domain", fields(width, mode(oriented), names(dimensions)));
@@ -58,7 +61,23 @@ export class FilangEngine {
     return this.#call("load", new Uint8Array(data.buffer));
   }
 
-  loadCsv(csv, intervalMs) { return this.#call("load-csv", `${intervalMs}\n${csv}`); }
+  loadCsv(csv, intervalMs, {instrument = "BTCUSDT"} = {}) {
+    return this.#call("load-csv", `${fields(intervalMs, instrument)}\n${csv}`);
+  }
+
+  setCalendar(tsv = "", {table} = {}) {
+    return table === undefined ? this.#call("calendar", tsv)
+      : this.#call("calendar-named", `${table}\n${tsv}`);
+  }
+
+  installDefinition(text, sha256) {
+    return this.#call("install-definition", `${sha256}\n${text}`);
+  }
+  check(query) { return this.#call("check", query); }
+
+  study(query, {candidate = null} = {}) {
+    return this.#call("study", `${candidate ?? "-"}\n${query}`);
+  }
 
   prepare(width, {oriented = true, reading = "recorded", dimensions = []} = {}) {
     return this.#call("prepare", fields(width, mode(oriented), reading, names(dimensions)));
@@ -70,17 +89,40 @@ export class FilangEngine {
     return this.#call("at", fields(end, width, mode(oriented), reading, names(dimensions)));
   }
 
-  draw(bars, {oriented = true, reading = "recorded", axes = {}} = {}) {
+  draw(bars, options) { return this.#drawing("draw", bars, options); }
+  drawCounts(bars, options) { return this.#drawing("draw-counts", bars, options); }
+
+  #drawing(operation, bars, {oriented = true, reading = "recorded", axes = {}} = {}) {
     const rows = [fields(mode(oriented), reading, bars.length)];
     for (const bar of bars) rows.push(fields(...bar));
     for (const [axis, marks] of Object.entries(axes)) rows.push(fields(axis, ...marks));
-    return this.#call("draw", rows.join("\n"));
+    return this.#call(operation, rows.join("\n"));
+  }
+
+  drawingProtocol() { return this.#call("drawing-protocol"); }
+
+  decodeDrawing(packet, expectedCode = "") {
+    return this.#call("read-drawing", `${expectedCode}\n${packet}`);
+  }
+
+  encodeDrawing(packet) {
+    const protocol = this.drawingProtocol();
+    const revision = packet.dimensions?.length ? protocol.dimensioned : protocol.plain;
+    const marked = {...packet, version: protocol.version, revision};
+    if (revision === protocol.plain) delete marked.dimensions;
+    const text = JSON.stringify(marked);
+    this.decodeDrawing(text);
+    return text;
   }
 
   counts(code, {reading = "recorded"} = {}) { return this.#call("counts", fields(reading, code)); }
 
   positions(code, {reading = "recorded", start = 0, limit = 100} = {}) {
     return this.#call("positions", fields(reading, start, limit, code));
+  }
+
+  classify(code, {reading = "recorded", start = 0, limit = 4096} = {}) {
+    return this.#call("classify", fields(reading, start, limit, code));
   }
 
   #call(operation, payload = "") {

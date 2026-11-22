@@ -1,5 +1,5 @@
 use super::{
-    candles::{prior_medians, reclaims},
+    candles::{median_sums, prior_medians, reclaims},
     plan::Node,
     tape::{Calendar, Tape, DAYS, TRENDS},
 };
@@ -23,6 +23,7 @@ pub(super) enum Series {
     Bool(Mask),
     Category(Vec<u8>),
     Prices(Vec<i64>),
+    Axis(Vec<f64>),
     Reclaim(Mask, Vec<u32>, usize),
 }
 
@@ -48,6 +49,13 @@ impl Series {
         }
     }
 
+    fn axis(&self) -> Result<&[f64]> {
+        match self {
+            Self::Axis(values) => Ok(values),
+            _ => Err("plan expected dimension values".into()),
+        }
+    }
+
     pub fn reclaim(&self, slot: usize, series: &[Series]) -> Result<Option<(usize, i64)>> {
         if let Self::Reclaim(_, witnesses, reference) = self {
             let breach = witnesses[slot];
@@ -66,7 +74,7 @@ impl Series {
                 (false, true) => "false",
                 (_, false) => "unknown",
             },
-            Self::Prices(_) => "unknown",
+            Self::Prices(_) | Self::Axis(_) => "unknown",
             Self::Category(s) => match s[slot] {
                 x @ 0..=5 => DAYS[x as usize],
                 x @ 6..=8 => TRENDS[(x - 6) as usize],
@@ -105,6 +113,7 @@ pub(super) struct Eval<'a> {
     // one value per slot on a dimension, NaN where the bar or the value is absent
     dimensions: HashMap<Dimension, Rc<Vec<f64>>>,
     medians: HashMap<usize, Rc<Vec<i64>>>,
+    axis_medians: HashMap<(Dimension, usize), Rc<Vec<f64>>>,
     used: usize,
     pub rolling_windows: usize,
     pub geometry_windows: usize,
@@ -119,6 +128,7 @@ impl<'a> Eval<'a> {
             keys: HashMap::new(),
             dimensions: HashMap::new(),
             medians: HashMap::new(),
+            axis_medians: HashMap::new(),
             used: 0,
             rolling_windows: 0,
             geometry_windows: 0,
@@ -126,7 +136,7 @@ impl<'a> Eval<'a> {
     }
 
     pub fn median_windows(&self) -> usize {
-        self.medians.len()
+        self.medians.len() + self.axis_medians.len()
     }
 
     fn charge(&mut self, bytes: usize) -> Result<()> {
@@ -144,6 +154,9 @@ impl<'a> Eval<'a> {
             self.charge(match node {
                 Node::Weekday | Node::Trend(_) | Node::Category(_) => n,
                 Node::Price(..) | Node::Prior(..) => n * std::mem::size_of::<i64>(),
+                Node::Axis(..) | Node::AxisPrior(..) | Node::AxisZero => {
+                    n * std::mem::size_of::<f64>()
+                }
                 Node::Reclaim(..) => n * std::mem::size_of::<u32>() + ((n + 63) / 64) * 16,
                 _ => Mask::empty(0).payload() + ((n + 63) / 64) * 16,
             })?;
@@ -200,6 +213,46 @@ impl<'a> Eval<'a> {
                         })
                         .collect(),
                 )
+            }
+            Node::Axis(dimension, lag) => {
+                let values = self.dimension(*dimension)?;
+                let positions = (0..n).map(|i| {
+                    i.checked_sub(*lag)
+                        .map_or(f64::NAN, |source| values[source])
+                });
+                Series::Axis(positions.collect())
+            }
+            Node::AxisPrior(dimension, window, high) => {
+                let values = self.dimension(*dimension)?;
+                Series::Axis(prior_axis(&values, *window, *high))
+            }
+            Node::AxisZero => Series::Axis(vec![0.0; n]),
+            Node::AxisRelate(left, cmp, right) => {
+                let (a, b) = (series[*left].axis()?, series[*right].axis()?);
+                self.mask(|i| {
+                    tape.bars[i]?;
+                    (a[i].is_finite() && b[i].is_finite()).then(|| cmp.test(a[i], b[i]))
+                })
+            }
+            Node::AxisMultiple(dimension, window, min, max) => {
+                let values = self.dimension(*dimension)?;
+                let key = (*dimension, *window);
+                let med = match self.axis_medians.get(&key) {
+                    Some(values) => Rc::clone(values),
+                    None => {
+                        self.charge(n * std::mem::size_of::<f64>())?;
+                        let span = |i: usize| (!values[i].is_nan()).then_some(values[i]);
+                        let med = median_sums(n, *window, span, f64::NAN);
+                        store(&mut self.axis_medians, key, med)
+                    }
+                };
+                self.mask(|i| {
+                    if med[i].is_nan() || med[i] <= 0.0 || values[i].is_nan() {
+                        return None;
+                    }
+                    let twice = 2.0 * values[i];
+                    Some(twice >= min * med[i] && max.map_or(true, |max| twice <= max * med[i]))
+                })
             }
             Node::Relate(left, cmp, right) => {
                 let (a, b) = (series[*left].prices()?, series[*right].prices()?);
@@ -373,6 +426,18 @@ impl<'a> Eval<'a> {
         Ok(store(&mut self.windows, window, out))
     }
 
+    fn dimension(&mut self, dimension: Dimension) -> Result<Rc<Vec<f64>>> {
+        if let Some(values) = self.dimensions.get(&dimension) {
+            return Ok(Rc::clone(values));
+        }
+        let values = self
+            .tape
+            .dimension(dimension)
+            .ok_or("this recording carries no counters, so a dimension cannot be read")?;
+        self.charge(self.tape.bars.len() * std::mem::size_of::<f64>())?;
+        Ok(store(&mut self.dimensions, dimension, values))
+    }
+
     /// A code with dimensions on. Its price part is read as a code with none
     /// on is read, sharing that preparation. Then, on every complete window:
     /// a candle with no value on one of the code's dimensions makes the
@@ -384,20 +449,9 @@ impl<'a> Eval<'a> {
         pattern: &GeometryPattern,
         chained: bool,
     ) -> Result<Series> {
-        let tape = self.tape;
-        let n = tape.bars.len();
         let mut series = Vec::with_capacity(pattern.dimensions().len());
         for part in pattern.dimensions() {
-            let values = match self.dimensions.get(&part.dimension()) {
-                Some(values) => Rc::clone(values),
-                None => {
-                    let values = tape.dimension(part.dimension()).ok_or(
-                        "this recording carries no counters, so a code with a dimension on cannot be read",
-                    )?;
-                    self.charge(n * std::mem::size_of::<f64>())?;
-                    store(&mut self.dimensions, part.dimension(), values)
-                }
-            };
+            let values = self.dimension(part.dimension())?;
             series.push(values);
         }
         let price = match self.geometry(&pattern.price(), chained)? {
@@ -482,7 +536,38 @@ fn store<K: Hash + Eq, T>(map: &mut HashMap<K, Rc<Vec<T>>>, key: K, data: Vec<T>
     data
 }
 
-fn push_extreme(q: &mut VecDeque<(usize, i64)>, i: usize, start: usize, v: Option<i64>, min: bool) {
+fn prior_axis(values: &[f64], width: usize, high: bool) -> Vec<f64> {
+    let mut queue = VecDeque::new();
+    let mut run = 0;
+    values
+        .iter()
+        .enumerate()
+        .map(|(i, &value)| {
+            let result = if run >= width {
+                queue.front().map_or(f64::NAN, |(_, value)| *value)
+            } else {
+                f64::NAN
+            };
+            if value.is_nan() {
+                queue.clear();
+                run = 0;
+            } else {
+                run += 1;
+                let next_start = (i + 1).saturating_sub(width);
+                push_extreme(&mut queue, i, next_start, Some(value), !high);
+            }
+            result
+        })
+        .collect()
+}
+
+fn push_extreme<T: Copy + PartialOrd>(
+    q: &mut VecDeque<(usize, T)>,
+    i: usize,
+    start: usize,
+    v: Option<T>,
+    min: bool,
+) {
     if q.front().map_or(false, |x| x.0 < start) {
         q.pop_front();
     }

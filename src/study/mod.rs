@@ -1,9 +1,12 @@
 //! Bounded, close-anchored research studies over a checked Filang plan.
 //! This path shares the native geometry and packed mask representations.
 mod candles;
+mod compiler;
 mod compute;
+mod extension;
 mod plan;
 mod predicate;
+mod syntax;
 mod tape;
 
 use self::{
@@ -46,11 +49,102 @@ pub fn serve(bars: impl AsRef<Path>, calendar: impl AsRef<Path>, interval_ms: i6
     }
 }
 
-pub(crate) fn geometry_recording_csv(
-    csv: &str,
-    interval: i64,
-) -> Result<crate::geometry::explore::Recording> {
-    Tape::parse(csv, interval)?.geometry_recording()
+/// An in-memory study, independent of the legacy process protocol.
+pub struct Study {
+    tape: Tape,
+    calendar: Option<(String, Calendar)>,
+    instrument: String,
+    registry: compiler::Registry,
+}
+
+impl Study {
+    pub fn new(csv: &str, interval: i64, instrument: &str) -> Result<Self> {
+        if instrument.is_empty()
+            || !instrument
+                .bytes()
+                .all(|x| x.is_ascii_alphanumeric() || x == b'_')
+        {
+            return Err("invalid recording instrument".into());
+        }
+        Ok(Self {
+            tape: Tape::parse(csv, interval)?,
+            calendar: None,
+            instrument: instrument.to_owned(),
+            registry: compiler::Registry::new()?,
+        })
+    }
+
+    pub fn set_calendar(&mut self, tsv: &str) -> Result<()> {
+        self.set_calendar_named(extension::PINNED_CALENDAR, tsv)
+    }
+
+    pub fn set_pinned_calendar(&mut self) -> Result<()> {
+        self.set_calendar(include_str!("../../study/catalogue/nyse.tsv"))
+    }
+
+    pub fn set_calendar_named(&mut self, table: &str, tsv: &str) -> Result<()> {
+        if table.is_empty() || table.chars().any(|ch| ch.is_whitespace() || ch == '/') {
+            return Err("invalid calendar table id".into());
+        }
+        self.calendar = Some((table.to_owned(), Calendar::parse(tsv)?));
+        Ok(())
+    }
+
+    pub fn install_definition(&mut self, text: &str, sha256: &str) -> Result<()> {
+        if crate::hash::sha256(text.as_bytes()) != sha256 {
+            return Err("definition bytes do not match the pinned SHA-256".into());
+        }
+        let environment = compiler::Environment {
+            instrument: &self.instrument,
+            interval: self.tape.interval,
+            counters: self.tape.has_counters(),
+            calendar: self.calendar.as_ref().map(|(table, _)| table.as_str()),
+        };
+        self.registry.install(text, environment)
+    }
+
+    pub fn slots(&self) -> usize {
+        self.tape.bars.len()
+    }
+
+    pub fn geometry_recording(&self) -> Result<crate::geometry::explore::Recording> {
+        self.tape.geometry_recording()
+    }
+
+    pub fn catalogue() -> &'static str {
+        compiler::Registry::catalogue()
+    }
+
+    fn compile(&self, text: &str, candidate: Option<usize>) -> Result<Plan> {
+        compiler::compile(
+            text,
+            compiler::Environment {
+                instrument: &self.instrument,
+                interval: self.tape.interval,
+                counters: self.tape.has_counters(),
+                calendar: self.calendar.as_ref().map(|(table, _)| table.as_str()),
+            },
+            &self.registry,
+            candidate,
+        )
+    }
+
+    pub fn check(&self, text: &str) -> Result<usize> {
+        Ok(self.compile(text, None)?.queries.len())
+    }
+
+    /// Evaluate checked Filang text and return the existing study result shape.
+    pub fn query(&self, text: &str, candidate: Option<usize>) -> Result<String> {
+        let plan = self.compile(text, candidate)?;
+        let empty = Calendar::empty();
+        evaluate_plan(
+            plan,
+            &self.tape,
+            self.calendar
+                .as_ref()
+                .map_or(&empty, |(_, calendar)| calendar),
+        )
+    }
 }
 
 fn io_error(e: io::Error) -> String {
@@ -74,8 +168,11 @@ pub(crate) fn quote(text: &str) -> String {
 }
 
 fn evaluate(text: &str, tape: &Tape, calendar: &Calendar) -> Result<String> {
+    evaluate_plan(Plan::parse(text, tape.interval)?, tape, calendar)
+}
+
+fn evaluate_plan(plan: Plan, tape: &Tape, calendar: &Calendar) -> Result<String> {
     use std::fmt::Write;
-    let plan = Plan::parse(text, tape.interval)?;
     let mut eval = Eval::new(tape, calendar);
     let series = eval.series(&plan.nodes)?;
     let mut out = String::new();
