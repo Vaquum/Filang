@@ -38,16 +38,19 @@ export const KIND_TYPE = Object.freeze({
 
 const D = (minMs, maxMs, extra) => ({ minMs, maxMs, ...extra });
 
+const DIMENSION_RULE = 'For each dimension the code switches on (volume, trades, delta, size, imbalance), the bars\' values stand in the code\'s order, ties included; delta and imbalance are also ranked against zero. A bar without that value leaves the window unknown.';
+
 export const FUNCTIONS = [
   {
     name: 'exact_g1', version: 1, kind: 'event', result: 'Event', status: 'implemented',
     title: 'Exact G1 twins',
     summary: 'The contiguous bars have the same global price ordering and ties as the selected Composer drawing.',
     positional: 'pattern',
-    params: [{ name: 'pattern', type: 'G1', required: true, doc: 'canonical Filang g1:o: or g1:u: code, oldest candle first' }],
+    params: [{ name: 'pattern', type: 'G1', required: true, doc: 'canonical Filang g1:o: or g1:u: code, oldest candle first, with any dimension parts it switches on' }],
     requires: ['bars.ohlc'],
     formula: ['Rank all low, body low, body high and high endpoints across the window together.',
-      'Every corresponding rank matches, including ties. In oriented mode every body direction also matches.'],
+      'Every corresponding rank matches, including ties. In oriented mode every body direction also matches.',
+      DIMENSION_RULE],
     anchor: 'close of the final bar in the contiguous window',
     availability: 'all source candles must have closed by the anchor',
     missing: 'an incomplete window is unknown',
@@ -59,13 +62,14 @@ export const FUNCTIONS = [
     title: 'Chained G1 twins',
     summary: 'The contiguous bars, read as a chain, have the same global price ordering and ties as the selected Composer drawing.',
     positional: 'pattern',
-    params: [{ name: 'pattern', type: 'G1', required: true, doc: 'canonical Filang g1:o: or g1:u: code, oldest candle first' }],
+    params: [{ name: 'pattern', type: 'G1', required: true, doc: 'canonical Filang g1:o: or g1:u: code, oldest candle first, with any dimension parts it switches on' }],
     requires: ['bars.ohlc'],
     formula: ['Read the first bar of the window as recorded.',
       'Read every later bar as opening at the close of the recorded bar just before it; its low and high widen to include that open, and its direction follows from that open.',
       'Rank all low, body low, body high and high endpoints across the window together.',
       'Every corresponding rank matches, including ties. In oriented mode every body direction also matches.',
-      'A one-bar window has no later bar, so it reads exactly as exact_g1 reads it.'],
+      'A one-bar window has no later bar, so it reads exactly as exact_g1 reads it.',
+      DIMENSION_RULE],
     anchor: 'close of the final bar in the contiguous window',
     availability: 'all source candles must have closed by the anchor',
     missing: 'an incomplete window is unknown',
@@ -328,6 +332,7 @@ export const RECORDING_CAPABILITIES = ['bars.ohlc', 'bars.volume', 'calendar'];
 export const CAPABILITY_TEXT = {
   'bars.ohlc': '15m OHLC bars',
   'bars.volume': '15m bar volume',
+  'bars.counters': 'USDT traded, taker-buy USDT and trade count for each bar',
   calendar: 'pinned session calendar',
   'trades.ordered': 'ordered individual trades',
   'trades.aggressor': 'trade aggressor side',
@@ -365,7 +370,8 @@ export class Registry {
     for (const def of candleFunctions.values()) if (this.get(def.name) !== def) defs.push(def);
     return filter ? defs.filter(filter) : defs;
   }
-  implemented() { return this.list((f) => f.status !== 'planned'); }
+  /** What this recording can run: not planned, and nothing it requires is missing. Menus and completions offer these. */
+  implemented() { return this.list((f) => f.status !== 'planned' && (!this.caps || (f.requires || []).every((c) => this.caps.has(c)))); }
   addFunction(def) { this.functions.set(def.name, def); }
 }
 

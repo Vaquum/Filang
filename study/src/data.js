@@ -83,15 +83,37 @@ export class Recording {
   get firstClose() { return this.t0 + this.barMs; }
   get lastClose() { return this.t0 + this.n * this.barMs; }
   has(i) { return i >= 0 && i < this.n && this.present[i] === 1; }
-  ohlcText(i) { return this.raw[i] ? { open: this.raw[i][0], high: this.raw[i][1], low: this.raw[i][2], close: this.raw[i][3], volume: this.raw[i][4] } : null; }
+  ohlcText(i) {
+    const f = this.raw[i];
+    if (!f) return null;
+    const prices = { open: f[0], high: f[1], low: f[2], close: f[3] };
+    return this.VOL ? { ...prices, base_volume: f[4], volume: f[5], taker_buy_volume: f[6], trade_count: f[7] } : { ...prices, volume: f[4] };
+  }
   price(c) { return centsText(c); }
+
+  /**
+   * One value per slot on a g1 dimension, NaN where the candle or the value is absent; null when the recording
+   * carries no counters. Each value is the float its formula gives, evaluated exactly as written here
+   * (docs/G1_DIMENSIONS.md): order and equality between candles are those of these floats.
+   */
+  dimension(name) {
+    if (!this.VOL) return null;
+    if (!this.dims) this.dims = new Map();
+    if (this.dims.has(name)) return this.dims.get(name);
+    const formula = DIMENSION_VALUE[name];
+    if (!formula) throw new DataError(`unknown dimension "${name}"`);
+    const values = new Float64Array(this.n).fill(NaN);
+    for (let i = 0; i < this.n; i++) if (this.present[i]) values[i] = formula(this.VOL[i], this.TBV[i], this.CNT[i]);
+    this.dims.set(name, values);
+    return values;
+  }
 
   /** Test fixture only: a copy in which the given slots are absent (source data untouched). */
   withoutSlots(slots, label) {
     const present = this.present.slice();
     const raw = this.raw.slice();
     for (const s of slots) { present[s] = 0; raw[s] = null; }
-    return new Recording({ ...this, present, raw, presentCount: present.reduce((a, b) => a + b, 0), fixture: label || 'slots removed in memory' });
+    return new Recording({ ...this, present, raw, dims: null, presentCount: present.reduce((a, b) => a + b, 0), fixture: label || 'slots removed in memory' });
   }
 
   /** Test fixture only: a copy that ends after slot i (used to prove no post-anchor data is read). */
@@ -100,11 +122,24 @@ export class Recording {
     return new Recording({
       ...this, n,
       O: this.O.slice(0, n), H: this.H.slice(0, n), L: this.L.slice(0, n), C: this.C.slice(0, n),
+      ...(this.VOL ? { VOL: this.VOL.slice(0, n), TBV: this.TBV.slice(0, n), CNT: this.CNT.slice(0, n) } : {}), dims: null,
       present: this.present.slice(0, n), raw: this.raw.slice(0, n),
       presentCount: this.present.slice(0, n).reduce((a, b) => a + b, 0), fixture: `truncated after slot ${i}`,
     });
   }
 }
+
+// A candle's value on each dimension, from its counters: USDT traded, taker-buy USDT and trades (Cube's formulas).
+const DIMENSION_VALUE = {
+  volume: (vol) => vol,
+  trades: (vol, tbvol, cnt) => cnt,
+  delta: (vol, tbvol) => 2 * tbvol - vol,
+  size: (vol, tbvol, cnt) => (cnt > 0 ? vol / cnt : NaN),
+  imbalance: (vol, tbvol) => (vol > 0 ? (2 * tbvol - vol) / vol : NaN),
+};
+
+/** The nine-column recording: prices, then the cube's counters under the cube's names. `volume` is USDT. */
+export const COUNTER_COLUMNS = Object.freeze(['open_ms', 'open', 'high', 'low', 'close', 'base_volume', 'volume', 'taker_buy_volume', 'trade_count']);
 
 function instrumentFrom(provenance) {
   const parts = String(provenance.instrument || '').split(/\s+/);
@@ -132,10 +167,12 @@ export function parseRecording(text, provenance, digest) {
   if (rows !== provenance.row_count) throw new DataError(`CSV has ${rows} rows; provenance row_count is ${provenance.row_count}`);
   const times = new Array(rows);
   const vals = new Array(rows);
+  const counters = header === COUNTER_COLUMNS.join(',');
+  const width = counters ? 9 : 6;
   let badOhlc = 0;
   for (let r = 0; r < rows; r++) {
     const f = lines[r + 1].split(',');
-    if (f.length !== 6) throw new DataError(`line ${r + 2}: expected 6 fields, got ${f.length}`);
+    if (f.length !== width) throw new DataError(`line ${r + 2}: expected ${width} fields, got ${f.length}`);
     if (!/^\d+$/.test(f[0])) throw new DataError(`line ${r + 2}: open_ms "${f[0]}" is not an integer`);
     const t = Number(f[0]);
     const o = parseCents(f[1]);
@@ -149,6 +186,15 @@ export function parseRecording(text, provenance, digest) {
     if (h < Math.max(o, c) || l > Math.min(o, c)) badOhlc++;
     times[r] = t;
     vals[r] = [o, h, l, c, f.slice(1)];
+    if (counters) {
+      // An amount may be written with an exponent: that is how the shortest text of a very small float reads.
+      for (const k of [6, 7]) if (!/^\d+(\.\d+)?(e[+-]?\d+)?$/.test(f[k])) throw new DataError(`line ${r + 2}: ${COUNTER_COLUMNS[k]} "${f[k]}" is not a nonnegative number`);
+      if (!/^\d+$/.test(f[8])) throw new DataError(`line ${r + 2}: trade_count "${f[8]}" is not a whole number`);
+      const vol = Number(f[6]), tbvol = Number(f[7]), cnt = Number(f[8]);
+      if (!Number.isFinite(vol) || !Number.isFinite(tbvol) || !Number.isSafeInteger(cnt)) throw new DataError(`line ${r + 2}: a counter is too large to hold exactly`);
+      if (tbvol > vol) throw new DataError(`line ${r + 2}: taker_buy_volume ${f[7]} exceeds volume ${f[6]}`);
+      vals[r].push(vol, tbvol, cnt);
+    }
   }
   const t0 = times[0];
   if (t0 % barMs !== 0) throw new DataError('first bar is not aligned to the UTC bar grid');
@@ -163,16 +209,20 @@ export function parseRecording(text, provenance, digest) {
   const C = new Float64Array(n);
   const present = new Uint8Array(n);
   const raw = new Array(n).fill(null);
+  const VOL = counters ? new Float64Array(n).fill(NaN) : null;
+  const TBV = counters ? new Float64Array(n).fill(NaN) : null;
+  const CNT = counters ? new Float64Array(n).fill(NaN) : null;
   for (let r = 0; r < rows; r++) {
     const i = (times[r] - t0) / barMs;
     const [o, h, l, c, rawf] = vals[r];
     O[i] = o; H[i] = h; L[i] = l; C[i] = c; present[i] = 1; raw[i] = rawf;
+    if (counters) { VOL[i] = vals[r][5]; TBV[i] = vals[r][6]; CNT[i] = vals[r][7]; }
   }
   const { symbol, venue } = instrumentFrom(provenance);
   const minutes = barMs / 60000;
   return new Recording({
     instrument: symbol, venue, barMs, barText: minutes % 60 === 0 ? `${minutes / 60}h` : `${minutes}m`,
-    t0, n, O, H, L, C, present, raw, presentCount: rows, badOhlc, issues,
+    t0, n, O, H, L, C, VOL, TBV, CNT, dims: null, present, raw, presentCount: rows, badOhlc, issues,
     digest, digestShort: digest ? digest.slice(0, 12) : 'unverified', provenance,
   });
 }

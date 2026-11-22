@@ -1,5 +1,6 @@
 import { isoUTC } from './data.js';
-import { geRatTimes, leRatTimes } from './num.js';
+import { geRatTimes, leRatTimes, ratToNumber } from './num.js';
+import { axisOf } from './candle-definitions.js';
 
 const T = 1, F = 0, U = -1;
 const toTruth = (value) => value ? T : F;
@@ -41,8 +42,60 @@ function levels(ctx, n) {
   });
 }
 
+// The lowest and highest value of a dimension over the n candles before each one. A missing candle, or one without
+// the value, empties the window, as a missing candle does for prices.
+function dimensionLevels(ctx, n, name) {
+  return ctx.cached('prior-levels:' + name + ':' + n, () => {
+    const r = ctx.rec, x = r.dimension(name), low = new Float64Array(r.n).fill(NaN), high = new Float64Array(r.n).fill(NaN);
+    const lows = [], highs = [];
+    let l = 0, h = 0, run = 0;
+    for (let i = 0; i < r.n; i++) {
+      if (run >= n) {
+        while (lows[l] < i - n) l++;
+        while (highs[h] < i - n) h++;
+        low[i] = x[lows[l]];
+        high[i] = x[highs[h]];
+      }
+      if (Number.isNaN(x[i])) { run = 0; lows.length = 0; highs.length = 0; l = 0; h = 0; continue; }
+      run++;
+      while (lows.length > l && x[lows.at(-1)] >= x[i]) lows.pop();
+      while (highs.length > h && x[highs.at(-1)] <= x[i]) highs.pop();
+      lows.push(i);
+      highs.push(i);
+    }
+    return { low, high };
+  });
+}
+
+// The two middle values of a dimension over the n candles before each one, added. NaN where the window is incomplete.
+function dimensionMedians(ctx, n, name) {
+  return ctx.cached('prior-medians:' + name + ':' + n, () => {
+    const r = ctx.rec, x = r.dimension(name), values = new Float64Array(r.n).fill(NaN), sorted = [];
+    let run = 0;
+    for (let i = 0; i < r.n; i++) {
+      if (run >= n) values[i] = sorted[(n - 1) >> 1] + sorted[n >> 1];
+      if (Number.isNaN(x[i])) { run = 0; sorted.length = 0; continue; }
+      if (run >= n) sorted.splice(lowerBound(sorted, x[i - n]), 1);
+      sorted.splice(lowerBound(sorted, x[i]), 0, x[i]);
+      run++;
+    }
+    return values;
+  });
+}
+
 function prices(ctx, p) {
-  if (p.type === 'Level') return levels(ctx, p.args.over.ms / ctx.rec.barMs)[p.name === 'prior_low' ? 'low' : 'high'];
+  if (p.type === 'Zero') return ctx.cached('study-zero', () => new Float64Array(ctx.rec.n));
+  if (p.type === 'Level') {
+    const n = p.args.over.ms / ctx.rec.barMs, side = p.name === 'prior_low' ? 'low' : 'high';
+    return p.args.of ? dimensionLevels(ctx, n, p.args.of.value)[side] : levels(ctx, n)[side];
+  }
+  if (p.type === 'Reading') {
+    return ctx.cached('study-reading:' + p.identity, () => {
+      const r = ctx.rec, x = r.dimension(p.def.dimension), lag = whole(p.args.bars_ago), values = new Float64Array(r.n).fill(NaN);
+      for (let i = lag; i < r.n; i++) values[i] = x[i - lag];
+      return values;
+    });
+  }
   return ctx.cached('study-price:' + p.identity, () => {
     const r = ctx.rec, lag = whole(p.args.bars_ago), values = new Float64Array(r.n).fill(NaN);
     for (let i = lag; i < r.n; i++) if (r.has(i - lag)) values[i] = endpoint(r, i - lag, p.args.point.value);
@@ -145,15 +198,18 @@ export function candleSeries(ctx, plan) {
         const near = plan.name === 'near_level';
         const left = prices(ctx, near ? a.point : a.left);
         const right = prices(ctx, near ? a.reference : a.right);
+        const onPrices = near || (axisOf(a.left) === 'price' && axisOf(a.right) === 'price');
+        const show = (value) => onPrices ? r.price(value) : String(value);
+        const said = (p, value) => p.type === 'Zero' ? 'zero' : `${p.label} ${show(value)}`;
         return valueSeries(r, i => {
           if (!Number.isFinite(left[i]) || !Number.isFinite(right[i])) return U;
           return toTruth(near ? leRatTimes(Math.abs(left[i]-right[i]), a.within.rat, right[i])
             : relation(left[i], a.is.value, right[i]));
         }, (i, v) => {
-          if (v === U) return 'One or both price operands are unavailable.';
+          if (v === U) return onPrices ? 'One or both price operands are unavailable.' : 'One or both operands are unavailable.';
           return near
             ? `${r.price(left[i])} is ${(100*Math.abs(left[i]-right[i])/right[i]).toFixed(3)}% from ${r.price(right[i])}. Limit ${a.within.text}.`
-            : `${a.left.label} ${r.price(left[i])} and ${a.right.label} ${r.price(right[i])}. The test was ${a.is.label.toLowerCase()}.`;
+            : `${said(a.left, left[i])} and ${said(a.right, right[i])}. The test was ${a.is.label.toLowerCase()}.`;
         });
       }
       case 'candle_share': {
@@ -177,6 +233,16 @@ export function candleSeries(ctx, plan) {
           return toTruth(within(2n*BigInt(r.H[i]-r.L[i]), med[i], a.min.rat, a.max?.rat));
         }, (i, v) => v === U ? 'The previous window is incomplete or its median range is zero.'
           : `This range was ${(2*(r.H[i]-r.L[i])/Number(med[i])).toFixed(3)} × the preceding ${a.over.text} median.`);
+      }
+      case 'dimension_multiple': {
+        const name = a.dimension.value, x = r.dimension(name), med = dimensionMedians(ctx, a.over.ms / r.barMs, name);
+        const min = ratToNumber(a.min.rat), max = a.max ? ratToNumber(a.max.rat) : null;
+        return valueSeries(r, i => {
+          if (!(med[i] > 0) || Number.isNaN(x[i])) return U;
+          const twice = 2 * x[i];
+          return toTruth(twice >= min * med[i] && (max === null || twice <= max * med[i]));
+        }, (i, v) => v === U ? 'The previous window is incomplete, a candle has no such value, or the median is zero.'
+          : `This ${name} was ${(2*x[i]/med[i]).toFixed(3)} × the preceding ${a.over.text} median.`);
       }
       default: throw Error('No candle series for ' + plan.name);
     }

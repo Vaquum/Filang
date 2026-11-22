@@ -29,6 +29,7 @@ export function buildEnvironment({ csvBytes, provenanceBytes, sessionsBytes, ext
   const cal = new SessionCalendar(JSON.parse(dec.decode(sessionsBytes)), sessionsDigest);
   const calendars = new Map([[CALENDAR_BINDINGS[0].name, cal]]);
   const registry = new Registry();
+  registry.caps = new Set(rec.VOL ? [...RECORDING_CAPABILITIES, 'bars.counters'] : RECORDING_CAPABILITIES);
   const env = {
     registry,
     calendars,
@@ -38,7 +39,7 @@ export function buildEnvironment({ csvBytes, provenanceBytes, sessionsBytes, ext
       barMs: rec.barMs,
       barText: rec.barText,
       rangeText: `${dateUTC(rec.t0)} → ${dateUTC(rec.lastClose - 1)} UTC`,
-      caps: new Set(RECORDING_CAPABILITIES),
+      caps: registry.caps,
     },
   };
   const ctx = new EvalContext(rec, calendars);
@@ -61,6 +62,7 @@ export function installExtension(bundle, { file, bytes }) {
     const staging = new Registry();
     staging.functions = new Map(bundle.registry.functions);
     staging.named = new Map(bundle.registry.named);
+    staging.caps = bundle.registry.caps;
     const env = { ...bundle.env, registry: staging };
     const registered = registerExtension(staging, artifact, env);
     if (!registered.ok) return fail(registered.errors);

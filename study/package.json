@@ -5,7 +5,7 @@
   "description": "The Filang trader query workspace",
   "type": "module",
   "scripts": {
-    "verify": "node verify/verify.js && node verify/ui-smoke.js && node verify/geometry-study.js && node verify/composer.js && node verify/study-extensions.js && node verify/practice.js && node composer/sync-patterns.mjs && node verify/pattern-language.js && node verify/query-completions.mjs",
+    "verify": "node verify/verify.js && node verify/ui-smoke.js && node verify/geometry-study.js && node verify/composer.js && node verify/study-extensions.js && node verify/practice.js && node composer/sync-patterns.mjs && node verify/pattern-language.js && node verify/query-completions.mjs && node verify/dimensions.mjs",
     "start": "node serve.mjs"
   }
 }

@@ -4,7 +4,7 @@
 import { leRatTimes, geRatTimes, centsText, ratToPercentText } from './num.js';
 import { isoUTC, isoUTCFull, hmUTC, dateUTC, sha256Hex } from './data.js';
 import { elapsedText, msToText } from './lang.js';
-import { chainedG1FromRecording, g1FromRecording, matchesChainedG1, matchesG1 } from './g1.js';
+import { chainedG1FromRecording, dimensionsFit, g1FromRecording, matchesChainedG1, matchesG1 } from './g1.js';
 import { candleSeries } from './candle-series.js';
 import { CANDLE_PATTERNS, ENUMS, ENGINE } from './registry.js';
 import { isBoolType, isCatType } from './check.js';
@@ -97,14 +97,31 @@ function exactGeometrySeries(ctx, p, chained = false) {
     const vals = new Int8Array(rec.n);
     const rankPrices = new Float64Array(pattern.rankCount);
     const fits = chained ? matchesChainedG1 : matchesG1;
+    // A code with no dimension switched on takes the loop it always took. With dimensions on, a window missing
+    // one of their values is unknown whatever its prices say.
+    const names = pattern.dims.map((d) => d.name);
+    const scratch = pattern.dims.map((d) => new Float64Array(d.rankCount));
     let consecutive = 0;
-    for (let i = 0; i < rec.n; i++) {
-      consecutive = rec.present[i] ? consecutive + 1 : 0;
-      vals[i] = consecutive < length ? U : fits(rec, i - length + 1, pattern, rankPrices) ? T : F;
+    if (!names.length) {
+      for (let i = 0; i < rec.n; i++) {
+        consecutive = rec.present[i] ? consecutive + 1 : 0;
+        vals[i] = consecutive < length ? U : fits(rec, i - length + 1, pattern, rankPrices) ? T : F;
+      }
+    } else {
+      for (let i = 0; i < rec.n; i++) {
+        consecutive = rec.present[i] ? consecutive + 1 : 0;
+        if (consecutive < length) { vals[i] = U; continue; }
+        const held = dimensionsFit(rec, i - length + 1, pattern, scratch);
+        vals[i] = held < 0 ? U : held && fits(rec, i - length + 1, pattern, rankPrices) ? T : F;
+      }
     }
     const why = (i) => {
+      // the bars are all there, so what is missing is a value one of the dimensions needs
+      if (vals[i] === U && names.length && (chained ? chainedG1FromRecording : g1FromRecording)(rec, i, length, pattern.oriented) !== null) {
+        return `a bar in the window has no value for ${names.join(' or ')}`;
+      }
       if (vals[i] === U) return `${chained ? 'chained' : 'exact'} twins require ${length} consecutive recorded bars through this close`;
-      const observed = (chained ? chainedG1FromRecording : g1FromRecording)(rec, i, length, pattern.oriented);
+      const observed = (chained ? chainedG1FromRecording : g1FromRecording)(rec, i, length, pattern.oriented, names);
       return `${observed}${chained ? ' (later opens read as the previous close)' : ''} ${vals[i] === T ? 'matches' : 'differs from'} ${text}`;
     };
     return { vals, why, windowBars: length };
@@ -387,7 +404,7 @@ export function compileBool(ctx, p) {
       if (p.name === 'held') return { ...base, at: heldAt(ctx, p) };
       if (p.name === 'session_tail') return { ...base, at: sessionTailAt(ctx, p) };
       if (p.name === 'range_contained') return { ...base, at: rangeContainedAt(ctx, p) };
-      if (['candle_share', 'range_multiple', 'near_level'].includes(p.name)) {
+      if (['candle_share', 'range_multiple', 'near_level', 'dimension_multiple'].includes(p.name)) {
         const s = candleSeries(ctx, p);
         return { ...base, valueAt: i => s.vals[i], at: i => ({v:s.vals[i], why:s.why(i)}) };
       }

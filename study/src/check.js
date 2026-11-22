@@ -318,6 +318,8 @@ export class Checker {
         return this.err('domain', `${min} must be at most ${max}`, node);
       }
     }
+    const problem = def.validate ? def.validate(args, this.env) : null;
+    if (problem) return this.err(problem.kind, problem.message, node);
     const plan = {
       op: 'def', name: def.name, version: def.version, kind: def.kind, type: def.result, def,
       args, argSource, named, identity: identityOf(def.id || def.name, def.version, args),
@@ -347,10 +349,15 @@ export class Checker {
   arg(valueNode, param, def, resolved) {
     if (param.type === 'Event') return this.slot(valueNode, 'find');
     if (param.type === 'Price' || param.type === 'Level') {
+      // A definition that takes readings also takes the literal 0: the reference point of delta and imbalance.
+      if (def.readings && valueNode.k === 'num' && ratFromText(valueNode.text, false).num === 0n) {
+        return { t: 'Zero', type: 'Zero', identity: 'zero', label: '0', text: '0', start: valueNode.start, end: valueNode.end };
+      }
       const p = this.expr(valueNode);
       if (!p) return null;
       if (p.type === 'Level' || (param.type === 'Price' && p.type === 'Price')) return p;
-      return this.err('type', `${def.name} ${param.name} needs ${param.type === 'Level' ? 'a prior high or low' : 'a candle price or prior level'}`, valueNode);
+      if (def.readings && param.type === 'Price' && p.type === 'Reading') return p;
+      return this.err('type', `${def.name} ${param.name} needs ${param.type === 'Level' ? 'a prior high or low' : def.readings ? 'a candle price, a prior level or a reading of a dimension' : 'a candle price or prior level'}`, valueNode);
     }
     if (param.type === 'State') {
       const p = this.expr(valueNode);
@@ -398,7 +405,11 @@ export class Checker {
       case 'G1': {
         if (node.k !== 'str') return this.err('type', `${where} expects a quoted G1 code`, node);
         try {
-          return { t: 'G1', text: node.value, pattern: parseG1(node.value), ...span };
+          const pattern = parseG1(node.value);
+          if (pattern.dims.length && !this.env.recording.caps.has('bars.counters')) {
+            return this.err('capability', `${def.name}: this code switches on ${pattern.dims.map((d) => d.name).join(', ')}, which needs ${CAPABILITY_TEXT['bars.counters']}; this recording does not provide them`, node);
+          }
+          return { t: 'G1', text: node.value, pattern, ...span };
         } catch (err) {
           return this.err('domain', err.message, node);
         }
