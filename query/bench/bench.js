@@ -9,7 +9,7 @@ import { aggregate, caseColumns, domainOf, drawLane, drawAxis, drawColumnTrack, 
 // The other two aspects of the tool. They are separate apps today; these links carry the pattern across.
 // On a vaquum.fi host they are the deployed sites behind the same Portal login; elsewhere, the local servers.
 const DEPLOYED = location.hostname.endsWith('.vaquum.fi');
-const COMPOSER = DEPLOYED ? 'https://composer.vaquum.fi/' : 'http://127.0.0.1:8764/composer/';
+const COMPOSER = DEPLOYED ? 'https://composer.vaquum.fi/bench/' : 'http://localhost:8794/bench/';
 const CUBE = DEPLOYED ? 'https://cube.vaquum.fi/' : 'http://localhost:8791/';
 
 const saved = (() => { try { return JSON.parse(localStorage.getItem('filang.bench') || '{}'); } catch { return {}; } })();
@@ -139,7 +139,6 @@ function renderBars() {
   const enc = (name, value, open) => { const b = h('button', { class: 'enc', type: 'button', 'data-menu': '1', onclick: () => open(b) }, label(name), h('span', { class: 'val' }, value), h('i', null, '▼')); return b; };
   const sweeps = res.results.length > 1;
   const first = m.find.items[0]; const pid = first.type === 'pattern' ? first.args.p.replaceAll('_', '-') : null;
-  const anchor = state.slot !== null ? R.closeTime(state.slot) : answer.rows[0]?.t;
   const frame = m.split?.type === 'trend' ? m.split.args.frame : '4h';
   mount($('#encbar'),
     enc('Question', PRESETS.find((p) => p.id === state.preset)?.title || 'Custom', (b) => menu(b, { title: 'Starting questions', value: state.preset, options: PRESETS.map((p) => ({ value: p.id, label: p.title })), onChange: (id) => open(PRESETS.find((p) => p.id === id)) })),
@@ -161,8 +160,8 @@ function renderBars() {
     (() => { const b = h('button', { class: 'enc', type: 'button', onclick: () => slotPopover(b, { multi: true, title: 'Measured horizons', slot: { key: 'after', kind: 'enum', options: HORIZONS, sweep: true }, value: m.horizons, onChange: (v) => update((x) => { x.horizons = v; }) }) },
       label('Measure'), h('span', { class: 'val' }, m.horizons.join(', ') || 'None'), h('i', null, '▼')); return b; })(),
     enc('Lead-in', state.lead + ' bars', (b) => menu(b, { title: 'Lead-in', hint: 'Bars shown before the deciding close.', value: state.lead, options: [4, 8, 16, 32].map((v) => ({ value: v, label: v + ' bars' })), onChange: (v) => { state.lead = v; render(); } })));
-  // The recorded-candle anchor belongs to the local Composer edition only.
-  $('#to-composer').href = `${COMPOSER}${pid ? `?pattern=${pid}${anchor && !DEPLOYED ? `&anchor=${anchor}` : ''}` : ''}`; $('#to-composer').title = 'Open this pattern in Composer';
+  // The Composer bench opens on the named pattern the question is about, when it is about one.
+  $('#to-composer').href = `${COMPOSER}${pid ? `?pattern=${pid}` : ''}`; $('#to-composer').title = 'Open this pattern in Composer';
   $('#to-cube').href = CUBE; $('#to-cube').title = 'Open the Cube explorer';
 }
 
