@@ -79,6 +79,13 @@ const text = JSON.stringify({...artifact, version: 3});
 const sha = createHash("sha256").update(text).digest("hex");
 assert.throws(() => engine.installDefinition(text, "changed"), /SHA-256/);
 engine.installDefinition(text, sha);
+engine.installDefinition(text, sha);
+const badArtifact = JSON.stringify({...artifact, version: 4, conformance: [
+  {...artifact.conformance[0], expect: artifact.conformance[0].expect === "true" ? "false" : "true"},
+]});
+const badSha = createHash("sha256").update(badArtifact).digest("hex");
+assert.throws(() => engine.installDefinition(badArtifact, badSha), /conformance failed/);
+assert.throws(() => engine.check(find + '"Wick rejection" where quiet_friday_close_v4()'), /unavailable/);
 const source = find + '"Wick rejection" where quiet_friday_close_v2(last:1h)';
 assert.deepEqual(engine.study(source).results, engine.study(source.replace("_v2", "_v3")).results);
 assert.throws(() => engine.check(find + "value_area_reclaim()"), /unavailable/);

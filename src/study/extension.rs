@@ -18,6 +18,14 @@ pub(super) struct Definition {
     pub body: Expr,
     pub params: Vec<Param>,
     pub pins: HashSet<String>,
+    pub digest: String,
+    pub cases: Vec<Case>,
+}
+
+pub(super) struct Case {
+    pub anchor: String,
+    pub arguments: String,
+    pub expected: Option<bool>,
 }
 
 pub(super) struct Param {
@@ -109,12 +117,48 @@ impl Definition {
                 }
             }
         }
+        let mut cases = Vec::new();
+        if let Some(values) = json.object()?.get("conformance") {
+            for value in values.array()? {
+                if cases.len() >= 64 {
+                    return Err("definition exceeds 64 conformance cases".into());
+                }
+                let mut arguments = Vec::new();
+                if let Some(args) = value.object()?.get("args") {
+                    for (key, literal) in args.object()? {
+                        let literal = match literal {
+                            Value::Text(text) | Value::Number(text) => text,
+                            _ => return Err("conformance arguments must be literal values".into()),
+                        };
+                        if !identifier(key)
+                            || !matches!(syntax::expression(literal)?, Expr::Scalar(_))
+                        {
+                            return Err("invalid conformance argument".into());
+                        }
+                        arguments.push(format!("{key}: {literal}"));
+                    }
+                }
+                let expected = match value.field("expect")?.text()? {
+                    "true" => Some(true),
+                    "false" => Some(false),
+                    "unknown" => None,
+                    _ => return Err("invalid conformance expectation".into()),
+                };
+                cases.push(Case {
+                    anchor: value.field("anchor")?.text()?.into(),
+                    arguments: arguments.join(", "),
+                    expected,
+                });
+            }
+        }
         Ok(Self {
             id: id.to_owned(),
             version,
             event,
             params,
             pins,
+            digest: crate::hash::sha256(text.as_bytes()),
+            cases,
             body: syntax::expression(json.field("body")?.text()?)?,
         })
     }

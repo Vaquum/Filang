@@ -47,7 +47,7 @@ are zero-based. Omit the index to run all candidates. `check(query)` validates
 the same text and returns its candidate count. `setCalendar()` loads the
 bundled NYSE table. Pass TSV and `{table: id}` for a different pinned table.
 `installDefinition(text, sha256)` checks the bytes, dependency pins and
-definition before adding it to the recording's registry. `catalogue()`
+recorded conformance cases before adding the definition to the recording's registry. `catalogue()`
 returns the generated named candle definitions.
 
 `release(width)` releases that width's preparation. `close()` terminates
@@ -85,6 +85,8 @@ compact key words and exact cardinalities use decimal strings to preserve
 their full integer precision across bindings.
 
 ## Command line
+
+Keep `filang` and `filang-engine` in the same directory.
 
 ```sh
 target/release/filang engine --operation domain --width 24 \

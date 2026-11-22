@@ -18,7 +18,7 @@ RSS_SCALE = 1 if sys.platform == "darwin" else 1024
 def measure(command):
     with tempfile.TemporaryFile() as out:
         start = time.monotonic_ns()
-        with subprocess.Popen(command, stdout=out) as child:
+        with subprocess.Popen(command, stdout=out, close_fds=False) as child:
             _, status, ru = os.wait4(child.pid, 0)
             elapsed = (time.monotonic_ns() - start) / 1e6
             child.returncode = os.waitstatus_to_exitcode(status)
@@ -35,6 +35,7 @@ def study(binary, recording, calendar, wires):
         [binary, "study", "--bars", recording, "--calendar", calendar, "--interval-ms", "900000"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
+        close_fds=False,
     ) as child:
         assert json.loads(child.stdout.readline()) == {"ready": "filang-study-v1"}
         ready = time.monotonic_ns()
@@ -63,8 +64,16 @@ def geometry(binary, config, output):
         [binary, "geometry-sweep", "--config", config, "--out", output,
          "--workers", "1", "--resume", "true", "--capture", "true"])
     best = (output / "best-geometry.tsv").read_bytes()
+    artifacts = sorted(output.glob("tasks/*.boxes")) + sorted(output.glob("banks/patterns-*.tsv"))
+    if not artifacts:
+        raise ValueError("geometry verification artifacts missing")
+    evidence = sha256()
+    for file in artifacts:
+        evidence.update(file.name.encode() + b"\0")
+        evidence.update(file.read_bytes())
     return dict(prepare_ms=prepared, sweep_ms=swept, prepare_rss=resident_prepared,
-                sweep_rss=resident_swept, best_sha256=sha256(best).hexdigest())
+                sweep_rss=resident_swept, best_sha256=sha256(best).hexdigest(),
+                coverage_sha256=evidence.hexdigest())
 
 
 def compile_key_probe(toolchain, release, out):
@@ -133,8 +142,11 @@ def main():
                 samples["study"][side].append(study(binary, args.study_csv, calendar, wires))
     parity = {}
     for kind, pair in samples.items():
-        field = "result_sha256" if kind == "study" else "best_sha256" if kind == "geometry" else "key_digest"
-        parity[kind] = len({row[field] for trials in pair.values() for row in trials}) == 1
+        fields = ("result_sha256",) if kind == "study" else (
+            ("best_sha256", "coverage_sha256") if kind == "geometry" else ("key_digest",)
+        )
+        parity[kind] = all(len({row[field] for trials in pair.values() for row in trials}) == 1
+                           for field in fields)
     criteria = {
         kind: gates(pair, ("cold_ms", "warm_ms", "peak_rss") if kind == "study"
                     else ("prepare_ms", "sweep_ms", "prepare_rss", "sweep_rss") if kind == "geometry"

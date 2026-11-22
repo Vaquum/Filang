@@ -85,6 +85,8 @@ impl Tape {
             _ => return Err("expected the study recording CSV header".into()),
         };
         let mut bars = Vec::new();
+        let mut absent = vec![0];
+        let mut gaps = 0;
         let mut start = 0;
         for (row, line) in lines.enumerate() {
             let mut cells = line.split(',');
@@ -121,8 +123,13 @@ impl Tape {
                     "reordered or duplicate bar, or study grid exceeds 1,000,000 slots".into(),
                 );
             }
+            for _ in bars.len()..slot {
+                gaps += 1;
+                absent.push(gaps);
+            }
             bars.resize(slot, None);
             bars.push(Some(Bar { o, h, l, c }));
+            absent.push(gaps);
             if let Some(counters) = &mut counters {
                 counters.resize(slot, None);
                 counters.push(bar_counters);
@@ -130,10 +137,6 @@ impl Tape {
         }
         if bars.is_empty() {
             return Err("study recording is empty".into());
-        }
-        let mut absent = vec![0];
-        for bar in &bars {
-            absent.push(absent[absent.len() - 1] + usize::from(bar.is_none()));
         }
         Ok(Self {
             start,

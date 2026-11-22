@@ -4,6 +4,7 @@ version = "0.10.0"
 edition = "2021"
 rust-version = "1.63"
 publish = false
+default-run = "filang"
 description = "Parametric financial feature programs and bounded shared-DAG discovery"
 
 [lib]
@@ -12,6 +13,10 @@ path = "src/lib.rs"
 [[bin]]
 name = "filang"
 path = "src/main.rs"
+
+[[bin]]
+name = "filang-engine"
+path = "src/engine_main.rs"
 
 [profile.release]
 lto = true

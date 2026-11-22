@@ -1,5 +1,5 @@
 use super::{
-    extension::{Definition, Param, ParamKind, BUNDLED},
+    extension::{Case, Definition, Param, ParamKind, BUNDLED},
     plan::{Plan, MAX_BATCH},
     syntax::{self, Argument, Comparison, Expr, Literal, Question},
     tape::{DAYS, TRENDS},
@@ -96,17 +96,20 @@ impl Registry {
         Ok(registry)
     }
 
-    pub fn install(&mut self, text: &str, env: Environment<'_>) -> Result<()> {
+    pub fn install(&mut self, text: &str, env: Environment<'_>) -> Result<Option<String>> {
         let definition = Definition::parse(text)?;
         let alias = definition.alias();
-        if FUNCTIONS.contains(&definition.id.as_str())
-            || self.functions.contains(&definition.id)
-            || self.extensions.contains_key(&alias)
-        {
+        if let Some(existing) = self.extensions.get(&alias) {
+            if existing.digest == definition.digest {
+                return Ok(None);
+            }
             return Err(format!(
-                "{} is already registered or reserved",
+                "{} is already registered with different content",
                 definition.key()
             ));
+        }
+        if FUNCTIONS.contains(&definition.id.as_str()) || self.functions.contains(&definition.id) {
+            return Err(format!("{} is reserved", definition.key()));
         }
         for param in &definition.params {
             if param.name == "nyse_regular" || category(&param.name).is_some() {
@@ -140,8 +143,24 @@ impl Registry {
         let mut compiler = Compiler::new(env, self, &probe);
         let checked = compiler.expand(&definition, &[])?;
         compiler.finish(vec![format!("{} - -", checked.id)])?;
-        self.extensions.insert(alias, definition);
-        Ok(())
+        self.extensions.insert(alias.clone(), definition);
+        Ok(Some(alias))
+    }
+
+    pub fn cases(&self, alias: &str) -> &[Case] {
+        &self.extensions[alias].cases
+    }
+
+    pub fn remove(&mut self, alias: &str) {
+        self.extensions.remove(alias);
+    }
+
+    pub fn compile_case(&self, expression: &str, env: Environment<'_>) -> Result<Plan> {
+        let question = syntax::question("on BTCUSDT 15m find wick_rejection()")?;
+        let expr = syntax::expression(expression)?;
+        let mut compiler = Compiler::new(env, self, &question);
+        let id = compiler.boolean(&expr, false)?;
+        compiler.finish(vec![format!("{id} - -")])
     }
 
     fn available_builtin(&self, name: &str) -> bool {

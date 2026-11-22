@@ -100,7 +100,55 @@ impl Study {
             counters: self.tape.has_counters(),
             calendar: self.calendar.as_ref().map(|(table, _)| table.as_str()),
         };
-        self.registry.install(text, environment)
+        if let Some(alias) = self.registry.install(text, environment)? {
+            let result = self.validate_definition(&alias);
+            if result.is_err() {
+                self.registry.remove(&alias);
+            }
+            result?;
+        }
+        Ok(())
+    }
+
+    fn validate_definition(&self, alias: &str) -> Result<()> {
+        let empty_calendar = Calendar::empty();
+        let calendar = self
+            .calendar
+            .as_ref()
+            .map_or(&empty_calendar, |(_, calendar)| calendar);
+        for case in self.registry.cases(alias) {
+            let timestamp = utc_millis(&case.anchor)?;
+            let relative = timestamp - self.tape.start;
+            if relative <= 0 || relative % self.tape.interval != 0 {
+                return Err(format!(
+                    "conformance anchor {} is off the recording grid",
+                    case.anchor
+                ));
+            }
+            let slot = usize::try_from(relative / self.tape.interval - 1)
+                .ok()
+                .filter(|&slot| slot < self.slots())
+                .ok_or_else(|| {
+                    format!(
+                        "conformance anchor {} is outside the recording",
+                        case.anchor
+                    )
+                })?;
+            let plan = self
+                .registry
+                .compile_case(&format!("{alias}({})", case.arguments), self.environment())?;
+            let mut evaluator = Eval::new(&self.tape, calendar);
+            let series = evaluator.series(&plan.nodes)?;
+            let (truth, known) = series[plan.queries[0].find].mask()?.at(slot);
+            let observed = known.then_some(truth);
+            if observed != case.expected {
+                return Err(format!(
+                    "definition conformance failed at {}: expected {:?}, got {:?}",
+                    case.anchor, case.expected, observed
+                ));
+            }
+        }
+        Ok(())
     }
 
     pub fn slots(&self) -> usize {
@@ -115,18 +163,17 @@ impl Study {
         compiler::Registry::catalogue()
     }
 
+    fn environment(&self) -> compiler::Environment<'_> {
+        compiler::Environment {
+            instrument: &self.instrument,
+            interval: self.tape.interval,
+            counters: self.tape.has_counters(),
+            calendar: self.calendar.as_ref().map(|(table, _)| table.as_str()),
+        }
+    }
+
     fn compile(&self, text: &str, candidate: Option<usize>) -> Result<Plan> {
-        compiler::compile(
-            text,
-            compiler::Environment {
-                instrument: &self.instrument,
-                interval: self.tape.interval,
-                counters: self.tape.has_counters(),
-                calendar: self.calendar.as_ref().map(|(table, _)| table.as_str()),
-            },
-            &self.registry,
-            candidate,
-        )
+        compiler::compile(text, self.environment(), &self.registry, candidate)
     }
 
     pub fn check(&self, text: &str) -> Result<usize> {
@@ -145,6 +192,41 @@ impl Study {
                 .map_or(&empty, |(_, calendar)| calendar),
         )
     }
+}
+
+fn utc_millis(text: &str) -> Result<i64> {
+    let invalid = || format!("invalid UTC conformance anchor {text}");
+    let (day, clock) = text
+        .strip_suffix('Z')
+        .and_then(|iso| iso.split_once('T'))
+        .ok_or_else(invalid)?;
+    let mut clock = clock.split(':');
+    let read = |cell: Option<&str>, limit: i64| -> Result<i64> {
+        cell.filter(|cell| cell.len() == 2 && cell.bytes().all(|b| b.is_ascii_digit()))
+            .and_then(|cell| cell.parse().ok())
+            .filter(|&n| n < limit)
+            .ok_or_else(invalid)
+    };
+    let hour = read(clock.next(), 24)?;
+    let minute = read(clock.next(), 60)?;
+    let seconds = clock.next().ok_or_else(invalid)?;
+    if clock.next().is_some() {
+        return Err(invalid());
+    }
+    let (seconds, fraction) = seconds.split_once('.').unwrap_or((seconds, ""));
+    if fraction.len() > 3 || !fraction.bytes().all(|b| b.is_ascii_digit()) {
+        return Err(invalid());
+    }
+    let fraction = fraction
+        .bytes()
+        .zip([100, 10, 1])
+        .map(|(b, scale)| i64::from(b - b'0') * scale)
+        .sum::<i64>();
+    Ok(crate::data::date(day)? * 1000
+        + hour * 3_600_000
+        + minute * 60_000
+        + read(Some(seconds), 60)? * 1000
+        + fraction)
 }
 
 fn io_error(e: io::Error) -> String {
