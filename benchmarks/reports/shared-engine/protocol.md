@@ -43,3 +43,23 @@ overhead. Report cold load and newly prepared width/axis latency separately
 and report resident memory. The decision criterion is parity and warm p95
 at or below 16.7 ms on the real recording. A synthetic run cannot establish
 the real-recording criterion.
+
+## A3. Interactive exploration on retained spot klines
+
+**Hypothesis.** The engine returns exact matches on 66,000 original 15-minute
+BTCUSDT klines with all five counter-derived axes enabled. Warm edits on a
+prepared recording complete by the next browser frame at p95 (16.7 ms).
+This is a separate performance attempt because the live Cube bridge requires
+authenticated export and the retained Limen counters have different precision.
+
+**Method.** Use the last 66,000 rows of the retained 15m kline parquet through
+2026-11-21. Record the parquet and normalized CSV SHA-256. Exercise widths
+2, 4, 12 and 24, alternating recorded and chained reads, price-only edits,
+and changes to axis selections. Run 300 sequential edits per page across
+five fresh Chromium processes. Time edit dispatch, WASM worker response
+and the first animation frame after updating the visible count. Check
+sampled indexed answers against a direct comparison oracle on the same
+rows, including unobserved keys. Report cold setup separately, p50/p95/p99
+and maximum, and the worker's final WASM linear-memory size. The performance
+criterion is p95 at or below 16.7 ms with exact parity. This gives no
+verdict on the real-Cube criterion in A2.
