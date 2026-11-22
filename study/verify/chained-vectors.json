@@ -1,0 +1,56 @@
+{
+  "about": "Windows of recorded bars with the g1 code each has when it is read as a chain. Shared by Vaquum/Composer (the matcher) and Vaquum/Filang (chained_g1): both must read every window here to the same code.",
+  "rule": "The first bar of a window is read as recorded. Every later bar opens at the close of the recorded bar just before it; its low is the lower of its recorded low and that open, its high the higher of its recorded high and that open; it is up when it closes above that open, down when below, and a doji (z) when equal. The code ranks every endpoint of the window, low, body low, body high and high of each bar, with equal prices sharing a rank, and adds each bar's direction.",
+  "units": "Each bar is [open, high, low, close] as recorded, in integer cents. `before`, where given, is the recorded bar just before the window and is not part of it.",
+  "vectors": [
+    {
+      "name": "one bar: read as recorded",
+      "bars": [[1000000, 1050000, 990000, 1040000]],
+      "chained": "g1:o:0,1,2,3,u",
+      "as_recorded": "g1:o:0,1,2,3,u"
+    },
+    {
+      "name": "the second bar opens exactly at the first one's close: both readings agree",
+      "bars": [[1000000, 1050000, 990000, 1040000], [1040000, 1060000, 1020000, 1030000]],
+      "chained": "g1:o:0,1,4,5,u;2,3,4,6,d",
+      "as_recorded": "g1:o:0,1,4,5,u;2,3,4,6,d"
+    },
+    {
+      "name": "the second bar opens one cent above the first one's close: the joint still ties",
+      "bars": [[1000000, 1050000, 990000, 1040000], [1040001, 1060000, 1020000, 1030000]],
+      "chained": "g1:o:0,1,4,5,u;2,3,4,6,d",
+      "as_recorded": "g1:o:0,1,4,6,u;2,3,5,7,d"
+    },
+    {
+      "name": "the previous close is above the second bar's recorded high: the high widens to it",
+      "bars": [[1000000, 1010000, 995000, 1008000], [1007000, 1007500, 1002000, 1003000]],
+      "chained": "g1:o:0,1,4,5,u;2,3,4,4,d",
+      "as_recorded": "g1:o:0,1,6,7,u;2,3,4,5,d"
+    },
+    {
+      "name": "the previous close is below the second bar's recorded low: the low widens to it",
+      "bars": [[1010000, 1015000, 1000000, 1002000], [1003000, 1009000, 1002500, 1008000]],
+      "chained": "g1:o:0,1,4,5,d;1,1,2,3,u",
+      "as_recorded": "g1:o:0,1,6,7,d;2,3,4,5,u"
+    },
+    {
+      "name": "the second bar closes at the first one's close: a doji in the chain, a down bar as recorded",
+      "bars": [[1000000, 1010000, 995000, 1005000], [1005100, 1007000, 1004000, 1005000]],
+      "chained": "g1:o:0,1,3,5,u;2,3,3,4,z",
+      "as_recorded": "g1:o:0,1,3,6,u;2,3,4,5,d"
+    },
+    {
+      "name": "the first bar keeps its recorded open, whatever the bar before it closed at",
+      "before": [990000, 1007000, 989000, 1006000],
+      "bars": [[1000000, 1010000, 998000, 1005000], [1005200, 1012000, 1004000, 1011000]],
+      "chained": "g1:o:0,1,3,4,u;2,3,5,6,u",
+      "as_recorded": "g1:o:0,1,3,5,u;2,4,6,7,u"
+    },
+    {
+      "name": "three bars: each later bar opens at the close just before it",
+      "bars": [[1000000, 1010000, 995000, 1008000], [1008100, 1015000, 1006000, 1012000], [1011900, 1013000, 1000000, 1001000]],
+      "chained": "g1:o:0,1,4,5,u;3,4,6,8,u;1,2,6,7,d",
+      "as_recorded": "g1:o:0,1,4,6,u;3,5,8,10,u;1,2,7,9,d"
+    }
+  ]
+}

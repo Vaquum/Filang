@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { loadEnvironment } from './node-env.js';
+import { Recording } from '../src/data.js';
 import { analyze, registerExtension } from '../src/check.js';
 import { runAnalysis, EvalContext, U } from '../src/engine.js';
 import { chainedG1FromRecording, g1FromRecording, parseG1 } from '../src/g1.js';
@@ -110,6 +112,26 @@ const tied = 'g1:o:0,1,3,4,u;2,3,5,6,u';
 assert.equal(slots(asRecorded(tied)).length, 772);
 assert.equal(slots(chained(tied)).length, 1463);
 assert.equal(run(chained(tied)).manifest.pins.definitions.includes('chained_g1@1'), true);
+// ---- the shared windows. chained-vectors.json is shared with Vaquum/Composer (checks/chained-vectors.json there) and
+// must stay byte-identical in both: Composer's matcher and this engine read every window in it to the same code. A
+// change to the reading changes the file in both repositories together.
+const shared = JSON.parse(readFileSync(new URL('./chained-vectors.json', import.meta.url), 'utf8'));
+assert.ok(shared.vectors.length >= 6);
+for (const v of shared.vectors) {
+  // bars are [open, high, low, close] in cents; `before` is the recorded bar just before the window, not part of it
+  const bars = [...(v.before ? [v.before] : []), ...v.bars], n = bars.length, end = n - 1, width = v.bars.length;
+  const column = (k) => Float64Array.from(bars, (b) => b[k]);
+  const fixture = new Recording({ ...e.rec, n, O: column(0), H: column(1), L: column(2), C: column(3), present: new Uint8Array(n).fill(1),
+    raw: bars.map((b) => [...b.map((x) => (x / 100).toFixed(2)), '1']), presentCount: n, fixture: 'shared chained window: ' + v.name });
+  assert.equal(chainedG1FromRecording(fixture, end, width), v.chained, v.name);
+  assert.equal(g1FromRecording(fixture, end, width), v.as_recorded, v.name);
+  assert.equal(chainCode(fixture, end, width, true), v.chained, v.name);
+  // and the evaluator finds the window under each reading's own code, at its last close
+  const ctx = new EvalContext(fixture, e.calendars);
+  assert.ok(slots(chained(v.chained), ctx).includes(end), v.name);
+  assert.ok(slots(asRecorded(v.as_recorded), ctx).includes(end), v.name);
+  if (v.chained !== v.as_recorded) assert.ok(!slots(asRecorded(v.chained), ctx).includes(end), v.name);
+}
 assert.equal(analyze('on BTCUSDT 15m find chained_g1("g1:o:0,1,2,2,z")', e.env).ok, false);
 for (const malformed of ['g1:u:', 'g1:o:0,1,2,2,z','g1:u:0,1,3,3','g1:o:0,1,1,2,u','g1:u:0,00,1,2','g1:u:0,2,1,2','g1:o:0,1,2,2,u;','g1:u:0,1,1,2,z']) {
   assert.throws(() => parseG1(malformed));
@@ -131,4 +153,4 @@ const corrupted = { ...art, version: 3, conformance: [{ anchor: '2025-03-28T19:3
 const refused = installExtension(e, { file: 'agent-v3', bytes: new TextEncoder().encode(JSON.stringify(corrupted)) });
 assert.equal(refused.ok,false);
 assert.ok(!e.registry.get('quiet_friday_close_v3'));
-console.log('Passed exact and chained G1, query-only runs, both extension versions, conformance, gap handling and recorded comparison populations.');
+console.log('Passed exact and chained G1, the windows shared with Composer, query-only runs, both extension versions, conformance, gap handling and recorded comparison populations.');

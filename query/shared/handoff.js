@@ -43,10 +43,11 @@ export function packetFromG1(code) {
 }
 
 /**
- * The n recorded candles ending at slot i as a drawing with nothing held, in USDT. A drawn bar opens at the previous
- * close. A recorded bar usually opens a cent or so away from it, so each later open is joined to the close before
- * it, as Composer joins a recorded window it draws, and its shadows reach at least its body. Returns { packet,
- * joined, far }: how many opens moved, and the largest move in USDT. Or { why } when a candle is missing.
+ * The n recorded candles ending at slot i as a drawing with nothing held, in USDT. A drawing is a chain, and the
+ * window is read as one, exactly as chained_g1 reads it: the first bar as recorded, each later bar opening at the
+ * close before it, with its low and high reaching that open. So the drawing's g1 is the window's chained code, and
+ * the window is a match of the shape drawn from it. Returns { packet, joined, far }: how many recorded opens differ
+ * from the close before them, and the largest such difference in USDT. Or { why } when a candle is missing.
  */
 export function casePacket(rec, i, n) {
   const start = i - n + 1;
@@ -97,12 +98,14 @@ export function relationsOf(packet) {
  */
 export function attach(model, packet) {
   const g1 = drawingG1(packet); const items = model.find.items;
-  for (const held of [false, true]) {
+  // the three ways a drawing is asked: as a chain, with its opens as recorded, and as the relations held on it
+  for (const form of [{ held: false, recorded: false }, { held: false, recorded: true }, { held: true, recorded: false }]) {
+    const { held } = form;
     if (held && !pinnedExpression(packet)) continue;
-    const plain = make('drawing', { g1, packet, held }); const text = clauseText(plain);
+    const plain = make('drawing', { g1, packet, ...form }); const text = clauseText(plain);
     let done = false;
     items.forEach((c, i) => {
-      const cand = c.not ? Object.assign(make('drawing', { g1, packet, held }), { not: true }) : plain;
+      const cand = c.not ? Object.assign(make('drawing', { g1, packet, ...form }), { not: true }) : plain;
       if (clauseText(cand) === clauseText(c)) { items[i] = cand; done = true; }
     });
     if (done || !held || model.find.join !== 'and') continue;

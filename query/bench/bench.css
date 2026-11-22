@@ -136,7 +136,7 @@ body.bench {
 .lane-head .shape { flex: none; display: inline-flex; align-self: center; }
 .lane-head .shape .glyph { display: block; }
 .lane-head .drawn { display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; min-width: 0; }
-.lane-head .drawn .form-one { color: var(--t2); margin-left: -8px; }
+.lane-head .join.form button.faint:not([aria-pressed="true"]) { color: var(--t3); }
 .lane-head .join.form { margin-left: 0; }
 .lane-head .join.form button { text-transform: none; letter-spacing: .02em; font-size: 11px; }
 .lane-head .shape-line .g1, .lane-head .shape-line .from { flex-basis: 100%; min-width: 0; font: 400 11px/1.4 var(--mono); color: var(--t3); letter-spacing: 0;
