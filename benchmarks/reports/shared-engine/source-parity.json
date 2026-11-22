@@ -1,0 +1,13 @@
+{
+  "sources_sha256": [
+    "21df2ed15f787479b3e871be0048b5721cd18e7e085881e4175975c8d056889a",
+    "b706a6d42c9845524e1355aacc133894aea18825fbaaba974b5a1d0b1aee2d2f"
+  ],
+  "width": 4,
+  "reading": "chained",
+  "dimensions": [],
+  "equal": 14493,
+  "both_unknown": 0,
+  "different": 0,
+  "examples": []
+}
