@@ -131,6 +131,21 @@ body.bench {
 .lane.compact .lane-head .text { font-size: 13.5px; }
 .lane.compact.pinned .lane-head .text { font-size: 15px; }
 .join { display: inline-flex; margin-left: 2px; }
+/* a shape drawn in Composer, as a row label: its glyph at true proportions, what is asked of it, its g1 */
+.lane-head .text.shape-line { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 3px; }
+.lane-head .shape { flex: none; display: inline-flex; align-self: center; }
+.lane-head .shape .glyph { display: block; }
+.lane-head .drawn { display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; min-width: 0; }
+.lane-head .drawn .form-one { color: var(--t2); margin-left: -8px; }
+.lane-head .join.form { margin-left: 0; }
+.lane-head .join.form button { text-transform: none; letter-spacing: .02em; font-size: 11px; }
+.lane-head .shape-line .g1, .lane-head .shape-line .from { flex-basis: 100%; min-width: 0; font: 400 11px/1.4 var(--mono); color: var(--t3); letter-spacing: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lane-head .shape-line .from { white-space: normal; text-wrap: balance; }
+.lane.compact .lane-head .shape-line .from { display: none; }
+.bench a.quiet, .bench a.link { text-decoration: none; cursor: pointer; }
+.bench .out.off { cursor: default; color: var(--t3); }
+.side .carry { padding-top: 8px; }
 .join button { padding: 1px 6px; color: var(--t3); font: 500 10.5px/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; transition: color var(--t-short) var(--ease), background-color var(--t-short) var(--ease); }
 .join button[aria-pressed='true'] { color: var(--t1); background: var(--wash-2); }
 .lane-svg { min-width: 0; position: relative; }

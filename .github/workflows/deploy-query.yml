@@ -8,6 +8,7 @@ on:
       - 'query/**'
       - 'study/src/**'
       - 'study/composer/patterns.js'
+      - 'study/composer/drawing.js'
       - 'study/extensions/**'
       - 'study/data-provenance.json'
       - 'study/nyse-sessions.json'
@@ -94,7 +95,7 @@ jobs:
           # shellcheck disable=SC2029
           ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_DIR'"
           rsync -az --delete --relative \
-            query study/src study/composer/patterns.js study/extensions \
+            query study/src study/composer/patterns.js study/composer/drawing.js study/extensions \
             study/data-provenance.json study/nyse-sessions.json study/recording-lock.json study/prepare_recording.py \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/"
       - name: Build and start

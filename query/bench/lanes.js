@@ -214,3 +214,16 @@ export function drawGlyph(host, agg, pbars, w = 30, height = 26) {
     svg.append(s('g', { class: (c.c >= c.o ? 'b-up' : 'b-down') + ' b-in' }, s('line', { x1: cx, x2: cx, y1: y(c.h), y2: y(c.l) }), s('rect', { x: cx - bw / 2, y: top, width: bw, height: Math.max(1, bot - top) })));
   });
 }
+
+/** A drawn shape at its true proportions: the bars as drawn, [low, body bottom, body top, high] with a direction. */
+export function drawShape(host, bars, height = 26) {
+  const step = bars.length > 6 ? 6 : 9; const w = Math.max(24, step * (bars.length + 1));
+  const svg = s('svg', { class: 'glyph', viewBox: `0 0 ${w} ${height}`, width: w, height });
+  host.replaceChildren(svg);
+  const lo = Math.min(...bars.map((b) => b.v[0])); const hi = Math.max(...bars.map((b) => b.v[3])); const span = hi - lo || 1;
+  const y = (v) => 2 + (1 - (v - lo) / span) * (height - 4); const bw = Math.min(6, step * 0.6);
+  bars.forEach((b, idx) => {
+    const cx = step * (idx + 1); const top = y(b.v[2]); const bot = y(b.v[1]);
+    svg.append(s('g', { class: (b.d === 'u' ? 'b-up' : 'b-down') + ' b-in' }, s('line', { x1: cx, x2: cx, y1: y(b.v[3]), y2: y(b.v[0]) }), s('rect', { x: cx - bw / 2, y: top, width: bw, height: Math.max(1, bot - top) })));
+  });
+}

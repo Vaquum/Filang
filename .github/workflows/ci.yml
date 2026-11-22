@@ -53,3 +53,4 @@ jobs:
           npm --prefix study run verify
           node study/verify/native.mjs
           node study/verify/candle-native.mjs
+          node query/verify/handoff.mjs

@@ -2,6 +2,7 @@
 // All three directions edit this one model and print the same query.
 import { parse, printExpr } from '/study/src/lang.js';
 import { CANDLE_PATTERNS } from '/study/src/registry.js';
+import { pinnedExpression } from '/study/composer/drawing.js';
 
 export const PATTERNS = CANDLE_PATTERNS.patterns.map((p) => ({
   id: p.id.replaceAll('-', '_'), name: p.name, ja: p.ja, bars: p.bars, rule: p.rule, aliases: p.aliases || [],
@@ -130,6 +131,14 @@ export const CLAUSES = {
     text: (a) => `held(quiet_range(width_max: ${a.width}), for: ${a.for})`,
     keywords: 'quiet range consolidation compression tight calm held',
   },
+  // A shape drawn in Composer. It holds the engine's drawing packet when one came with it, or the g1 alone, and is
+  // asked one of the two ways the study page asks a drawing: the exact shape, or the relations held on fixed candles.
+  drawing: {
+    role: 'event', group: 'Shape', title: 'Drawn shape', def: 'exact_g1',
+    slots: [], defaults: { g1: '', packet: null, held: false }, phrase: [],
+    text: (a) => (a.held && a.packet && pinnedExpression(a.packet)) || `exact_g1(${JSON.stringify(a.g1)})`,
+    keywords: '',
+  },
   raw: {
     role: 'cond', group: 'Formal', title: 'Formal expression', def: null,
     slots: [], defaults: { text: '' }, phrase: ['$text'],
@@ -144,6 +153,11 @@ export const HORIZONS = ['15m', '30m', '1h', '2h', '4h', '8h', '24h'];
 
 export const make = (type, args = {}) => ({ type, args: { ...CLAUSES[type].defaults, ...args } });
 export const clone = (m) => JSON.parse(JSON.stringify(m));
+/** Bars in a drawn shape: the packet's, or the g1's own count. */
+export const drawingBars = (c) => (c.args.packet ? c.args.packet.bars.length : c.args.g1.slice(5).split(';').length);
+/** Whether a drawn shape is asked as its held relations, which needs a packet that holds some. */
+export const drawingHeld = (c) => !!(c.args.held && c.args.packet && pinnedExpression(c.args.packet));
+const drawingPhrase = (c) => { const n = drawingBars(c); return `${drawingHeld(c) ? 'relations held on ' : ''}a drawn shape of ${n} ${n === 1 ? 'bar' : 'bars'}`; };
 const lit = (v) => (Array.isArray(v) ? (v.length > 1 ? `{${v.join(' | ')}}` : v[0]) : v);
 const wrap = (t) => (/ (or|and) /.test(t) ? `(${t})` : t);
 
@@ -151,6 +165,7 @@ export function clauseText(c) {
   const def = CLAUSES[c.type];
   const args = Object.fromEntries(Object.entries(c.args).map(([k, v]) => [k, lit(v)]));
   if (c.type === 'raw') return c.not ? `not (${args.text})` : args.text;
+  if (c.type === 'drawing') return c.not ? `not (${def.text(c.args)})` : def.text(c.args);
   if (def.role === 'cat') return def.text(args, c.not);
   const t = def.text(args);
   return c.not ? `not ${t}` : t;
@@ -180,6 +195,7 @@ export function slotLabel(slot, v) {
 export function phraseParts(c) {
   const def = CLAUSES[c.type];
   if (c.type === 'raw') return [(c.not ? 'not ' : '') + c.args.text];
+  if (c.type === 'drawing') return [(c.not ? 'not ' : '') + drawingPhrase(c)];
   const tpl = c.not && def.notPhrase ? def.notPhrase : def.phrase;
   const parts = c.not && !def.notPhrase ? ['it is not the case that '] : [];
   for (const p of tpl) {
@@ -259,6 +275,10 @@ function fromExpr(node, lets) {
       const p = prior(arg(node, 'reference', 0)); const pt = arg(node, 'point', 1);
       if (!p || pt?.k !== 'call' || pt.name !== 'price' || (val(arg(pt, 'point', 0)) ?? 'close') !== 'close' || arg(pt, 'bars_ago')) return raw();
       return ok('near', { within: val(arg(node, 'within')) ?? '0.25%', ...p });
+    }
+    case 'exact_g1': {
+      const code = node.args.length === 1 ? node.args[0].value : null;
+      return code?.k === 'str' && /^g1:[ou]:/.test(code.value) ? { type: 'drawing', args: { g1: code.value, packet: null, held: false } } : raw();
     }
     case 'session_tail': return ok('tail', { last: val(arg(node, 'last')) });
     case 'held': {
