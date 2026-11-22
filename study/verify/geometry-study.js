@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { loadEnvironment } from './node-env.js';
 import { analyze, registerExtension } from '../src/check.js';
 import { runAnalysis, EvalContext, U } from '../src/engine.js';
-import { g1FromRecording, parseG1 } from '../src/g1.js';
+import { chainedG1FromRecording, g1FromRecording, parseG1 } from '../src/g1.js';
 import { runConformance } from '../src/conformance.js';
 import { Registry } from '../src/registry.js';
 import { installExtension } from '../src/boot.js';
@@ -58,6 +58,59 @@ for (const oriented of [true,false]) {
   assert.ok(changed.populations.unknownDetector.rows.some(r=>r.i===anchor));
   assert.ok(!changed.populations.nonmatching.rows.some(r=>r.i===anchor));
 }
+// ---- chained_g1: the window read as a chain. The first bar is as recorded; every later bar opens at the close of the
+// recorded bar just before it, and its low and high widen to include that open. Written here from the recorded
+// columns alone, so the engine is held to a second, separate statement of the reading.
+function chainCode(rec, end, bars, oriented) {
+  const start = end - bars + 1; if (start < 0) return null;
+  const rows = [], dirs = [];
+  for (let i = start; i <= end; i++) {
+    if (!rec.present[i]) return null;
+    const first = i === start, o = first ? rec.O[i] : rec.C[i - 1], c = rec.C[i];
+    rows.push([first ? rec.L[i] : Math.min(rec.L[i], o), Math.min(o, c), Math.max(o, c), first ? rec.H[i] : Math.max(rec.H[i], o)]);
+    dirs.push(c > o ? 'u' : c < o ? 'd' : 'z');
+  }
+  const rank = new Map([...new Set(rows.flat())].sort((a, b) => a - b).map((v, k) => [v, k]));
+  return 'g1:' + (oriented ? 'o:' : 'u:') + rows.map((r, j) => r.map((v) => rank.get(v)).concat(oriented ? [dirs[j]] : []).join(',')).join(';');
+}
+const slots = (find, ctx) => run(find, '', ctx).results[0].matches.map((r) => r.i);
+const chained = (g) => 'chained_g1(' + JSON.stringify(g) + ')', asRecorded = (g) => 'exact_g1(' + JSON.stringify(g) + ')';
+// a one-bar shape has no later bar: the two readings agree on every one-bar code the recording holds
+const oneBar = new Set();
+for (let i = 0; i < e.rec.n; i++) { const g = g1FromRecording(e.rec, i); if (g) { oneBar.add(g); assert.equal(chainedG1FromRecording(e.rec, i), g); } }
+assert.equal(oneBar.size, 9);
+for (const g of oneBar) assert.deepEqual(slots(chained(g)), slots(asRecorded(g)), g);
+assert.equal(slots(chained(code)).length, 324);
+for (const oriented of [true, false]) {
+  const pair = chainedG1FromRecording(e.rec, anchor, 2, oriented);
+  assert.equal(pair, chainCode(e.rec, anchor, 2, oriented));
+  const result = run(chained(pair)).results[0], found = result.matches.map((r) => r.i);
+  const independent = [];
+  for (let i = 1; i < e.rec.n; i++) if (chainCode(e.rec, i, 2, oriented) === pair) independent.push(i);
+  assert.deepEqual(found, independent);
+  assert.ok(found.includes(anchor));
+  // With directions kept, the code says which body edge is each open, so a window that matches as recorded has its
+  // later open on the previous close already and matches chained too. Without directions that does not follow: a
+  // recorded window can make the same tie between other body edges, and read as a chain it is a different shape.
+  const kept = new Set(found), recorded = slots(asRecorded(pair));
+  if (oriented) for (const i of recorded) assert.ok(kept.has(i), `slot ${i} matches as recorded but not chained`);
+  else assert.ok(recorded.some((i) => !kept.has(i)), 'this unoriented pair has a recorded match the chain reads differently');
+  assert.deepEqual(result.populations.unknownDetector.rows.map((r) => r.i), [0]);
+  // an absent bar makes the window unknown, never false
+  const gap = e.rec.withoutSlots([anchor - 1], 'test: remove recorded bar');
+  const changed = run(chained(pair), '', new EvalContext(gap, e.calendars)).results[0];
+  assert.equal(changed.event.series.vals[anchor], U);
+  assert.equal(chainedG1FromRecording(gap, anchor, 2, oriented), null);
+  assert.ok(changed.populations.unknownDetector.rows.some((r) => r.i === anchor));
+}
+// three bars, every window: the engine's code is the separate statement's code
+for (let i = 0; i < e.rec.n; i += 7) assert.equal(chainedG1FromRecording(e.rec, i, 3), chainCode(e.rec, i, 3, true));
+// the shape the reading was first counted on: its later open ties the previous close, which half the record misses by a cent
+const tied = 'g1:o:0,1,3,4,u;2,3,5,6,u';
+assert.equal(slots(asRecorded(tied)).length, 772);
+assert.equal(slots(chained(tied)).length, 1463);
+assert.equal(run(chained(tied)).manifest.pins.definitions.includes('chained_g1@1'), true);
+assert.equal(analyze('on BTCUSDT 15m find chained_g1("g1:o:0,1,2,2,z")', e.env).ok, false);
 for (const malformed of ['g1:u:', 'g1:o:0,1,2,2,z','g1:u:0,1,3,3','g1:o:0,1,1,2,u','g1:u:0,00,1,2','g1:u:0,2,1,2','g1:o:0,1,2,2,u;','g1:u:0,1,1,2,z']) {
   assert.throws(() => parseG1(malformed));
   assert.equal(analyze('on BTCUSDT 15m find exact_g1(' + JSON.stringify(malformed) + ')',e.env).ok,false);
@@ -78,4 +131,4 @@ const corrupted = { ...art, version: 3, conformance: [{ anchor: '2025-03-28T19:3
 const refused = installExtension(e, { file: 'agent-v3', bytes: new TextEncoder().encode(JSON.stringify(corrupted)) });
 assert.equal(refused.ok,false);
 assert.ok(!e.registry.get('quiet_friday_close_v3'));
-console.log('Passed exact G1, query-only runs, both extension versions, conformance, gap handling and recorded comparison populations.');
+console.log('Passed exact and chained G1, query-only runs, both extension versions, conformance, gap handling and recorded comparison populations.');

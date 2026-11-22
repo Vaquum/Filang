@@ -76,6 +76,7 @@ export function compile(bundle, { query, source, calendar, extensions = [], cand
     if (node.def.patternId) return intern(['pattern', node.def.patternBars, ...specification(node.def.patternSpec)]);
     switch (node.name) {
       case 'exact_g1': return intern(['g1', a.pattern.text]);
+      case 'chained_g1': return intern(['g1c', a.pattern.text]);
       case 'wick_rejection': return intern(['wick', ratio(a.body_max), ratio(a.wick_min)]);
       case 'channel_breakout': return intern(['breakout', a.over.ms]);
       case 'quiet_range': return intern(['range', a.window.ms, ratio(a.width_max)]);
