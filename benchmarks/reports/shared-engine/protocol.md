@@ -104,3 +104,16 @@ Run measured child processes with spawn file actions so the measured
 executable begins with fresh process memory. Retain A4's full samples.
 Compare the same stage boundaries and byte digests, including the scored
 region and catalogue files.
+
+## A7. Reduce native preparation's retained input and keys
+
+**Hypothesis.** Stream the market CSV through one reusable line buffer and
+retain compact bank keys while grouping observed positions. This brings
+geometry preparation peak RSS within the A6 baseline without regressing
+any price-only latency or changing any result.
+
+**Method.** Build both sides in release and repeat A6's interleaved
+fresh-process workload. Compare full native study replies, compact key
+digests, observed catalogues, captured score regions and frozen winners.
+Require parity and the same paired p75 gates for every measured latency and
+resident-memory metric.
