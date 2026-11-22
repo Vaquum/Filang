@@ -2,7 +2,7 @@
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
 import { load, run, count, rec, env, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
 import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText, drawingBars, drawingHeld } from '/shared/vocab.js';
-import { readLink, packetFromG1, casePacket, composerLink, relationsOf, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
+import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
 import { candleChart, candleAnatomy, distPlot, rateRail, tapeOverview } from '/shared/chart.js';
 import { aggregate, caseColumns, domainOf, drawLane, drawAxis, drawColumnTrack, drawGlyph, drawShape, geom, barsOf, offsetLabel, unitText } from './lanes.js';
@@ -64,17 +64,6 @@ function packetOf(c) {
   if (c.args.packet) return c.args.packet;
   if (!rebuilt.has(c.args.g1)) rebuilt.set(c.args.g1, packetFromG1(c.args.g1));
   return rebuilt.get(c.args.g1);
-}
-/** Put a packet back on the find it belongs to: a question read from text knows the expression, not the drawing. */
-function attach(model, packet) {
-  const g1 = drawingG1(packet);
-  model.find.items.forEach((c, i) => {
-    for (const held of [false, true]) {
-      if (held && !pinnedExpression(packet)) continue;
-      const cand = make('drawing', { g1, packet, held }); if (c.not) cand.not = true;
-      if (clauseText(cand) === clauseText(c)) { model.find.items[i] = cand; return; }
-    }
-  });
 }
 /** A drawn shape as a row label: its glyph at true proportions, what is asked of it, and its g1. */
 function drawnParts(c) {

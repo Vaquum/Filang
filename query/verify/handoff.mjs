@@ -16,7 +16,7 @@ register('data:text/javascript,' + encodeURIComponent(`
   }`), import.meta.url);
 
 const { make, clone, toText, fromText, clauseText, phraseText, drawingBars, drawingHeld } = await import('/shared/vocab.js');
-const { readLink, packetFromG1, casePacket, composerLink, relationsOf, decodeDrawing, drawingG1, pinnedExpression } = await import('/shared/handoff.js');
+const { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } = await import('/shared/handoff.js');
 const { encodeDrawing, COMPOSER_REVISION } = await import('/study/composer/drawing.js');
 const { loadEnvironment } = await import('/study/verify/node-env.js');
 const { analyze } = await import('/study/src/check.js');
@@ -106,5 +106,21 @@ assert.ok(whole >= 200 && moved >= 200, `${whole} whole, ${moved} joined`);
 assert.ok(casePacket(rec, 0, 2).why);
 const gap = Array.from(rec.present).findIndex((x, k) => k > 5 && !x);
 if (gap > 5) assert.equal(casePacket(rec, gap + 1 < rec.n ? gap + 1 : gap, 3).why, 'a candle is missing from the recording');
+
+// ---- a one-bar drawing with several relations held prints a bare conjunction, which text gives back as several
+// find items: the packet must still find its place again, or a reload would lose the drawing
+{
+  const p = packet([{ v: [15, 50, 85, 90], d: 'u' }], [{ a: { bar: 0, part: 'H' }, b: { bar: 0, part: 'T' } }, { bar: 0, color: true }]);
+  const q = question({ g1: drawingG1(p), packet: p, held: true }); const text = toText(q);
+  const back = fromText(text).model;
+  assert.ok(back.find.items.length > 1, 'text splits the conjunction into several items');
+  attach(back, p);
+  assert.equal(back.find.items.length, 1); assert.equal(back.find.items[0].type, 'drawing'); assert.equal(drawingHeld(back.find.items[0]), true);
+  assert.equal(toText(back), text);
+  // and with a condition beside it, only the drawing's own relations are gathered
+  const more = fromText(text.replace(/\)\)\n/, ') and candle_relation(price(low, bars_ago: 0), is: below, right: price(low, bars_ago: 1)))\n')).model;
+  const before = more.find.items.length; attach(more, p);
+  assert.equal(more.find.items.length, before - 1); assert.equal(more.find.items.filter((c) => c.type === 'drawing').length, 1);
+}
 
 console.log(`Hand-off: 324 and 4,828 as the study page counts them, text round-trips, ${sent} recorded windows drawn (${whole} as recorded, ${moved} with an open joined to the previous close).`);

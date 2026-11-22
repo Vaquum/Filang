@@ -4,6 +4,7 @@
 // bench counts on its own history, so a count never crosses.
 import { decodeDrawing, drawingG1, pinnedExpression, COMPOSER_REVISION } from '/study/composer/drawing.js';
 import { parseG1 } from '/study/src/g1.js';
+import { make, clauseText } from '/shared/vocab.js';
 
 export { decodeDrawing, drawingG1, pinnedExpression };
 
@@ -87,4 +88,30 @@ export function relationsOf(packet) {
     }
   }
   return [...out.values()];
+}
+
+/**
+ * Put a packet back on the find it belongs to: a question read from text knows the expression, not the drawing.
+ * Usually the drawing is one item of the find. The relations held on a one-bar drawing are a bare conjunction,
+ * though, which text gives back as several items joined by "and": those are gathered into the one drawn shape again.
+ */
+export function attach(model, packet) {
+  const g1 = drawingG1(packet); const items = model.find.items;
+  for (const held of [false, true]) {
+    if (held && !pinnedExpression(packet)) continue;
+    const plain = make('drawing', { g1, packet, held }); const text = clauseText(plain);
+    let done = false;
+    items.forEach((c, i) => {
+      const cand = c.not ? Object.assign(make('drawing', { g1, packet, held }), { not: true }) : plain;
+      if (clauseText(cand) === clauseText(c)) { items[i] = cand; done = true; }
+    });
+    if (done || !held || model.find.join !== 'and') continue;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const run = items.slice(i, j + 1);
+        if (run.some((c) => c.not) || run.map(clauseText).join(' and ') !== text) continue;
+        items.splice(i, run.length, plain); return;
+      }
+    }
+  }
 }
