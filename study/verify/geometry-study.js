@@ -104,7 +104,7 @@ for (const oriented of [true, false]) {
   assert.ok(changed.populations.unknownDetector.rows.some((r) => r.i === anchor));
 }
 // three bars, every window: the engine's code is the separate statement's code
-for (let i = 0; i < e.rec.n; i += 7) assert.equal(chainedG1FromRecording(e.rec, i, 3), chainCode(e.rec, i, 3, true));
+for (let i = 0; i < e.rec.n; i++) assert.equal(chainedG1FromRecording(e.rec, i, 3), chainCode(e.rec, i, 3, true));
 // the shape the reading was first counted on: its later open ties the previous close, which half the record misses by a cent
 const tied = 'g1:o:0,1,3,4,u;2,3,5,6,u';
 assert.equal(slots(asRecorded(tied)).length, 772);
