@@ -1,7 +1,7 @@
 // Filang query bench. One locked canvas shows the pattern; the question is written in its row labels.
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
 import { load, run, count, rec, env, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
-import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText, drawingBars, drawingHeld } from '/shared/vocab.js';
+import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText, drawingBars, drawingHeld, drawingRecorded } from '/shared/vocab.js';
 import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
 import { candleChart, candleAnatomy, distPlot, rateRail, tapeOverview } from '/shared/chart.js';
@@ -69,10 +69,27 @@ function packetOf(c) {
 function drawnParts(c) {
   const p = packetOf(c); const n = drawingBars(c); const rel = c.args.packet ? relationsOf(c.args.packet) : []; const glyph = h('span', { class: 'shape' });
   if (p) drawShape(glyph, p.bars);
-  const form = (held, text, title) => h('button', { type: 'button', 'aria-pressed': String(drawingHeld(c) === held), title, onclick: (e) => { e.stopPropagation(); update(() => { c.args.held = held; }); } }, text);
-  return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} drawn shape · ${n} ${n === 1 ? 'bar' : 'bars'}`,
-    rel.length ? h('span', { class: 'join form' }, form(false, 'exact shape', 'Every endpoint in the same order, with the same ties and directions'), form(true, `${rel.length} held`, cap(rel.join(' · ')) + '. Only which side each level lies on is kept.'))
-      : h('span', { class: 'form-one' }, ' · exact shape')),
+  // Three ways to ask a drawing. The shape is the default and carries no qualifier: a drawn shape is a chain, and
+  // the recording is read as one. Its opens as recorded is the older, stricter reading; one bar has no later open,
+  // so there the two agree and only one is offered.
+  const now = drawingHeld(c) ? 'held' : drawingRecorded(c) ? 'recorded' : 'shape';
+  const form = (key, text, title, cls) => h('button', { type: 'button', class: cls || null, 'data-form': key, 'aria-pressed': String(now === key), title,
+    onclick: (e) => {
+      e.stopPropagation(); const at = e.currentTarget.closest('[data-clause]')?.dataset.clause;
+      update(() => { c.args.held = key === 'held'; c.args.recorded = key === 'recorded'; });
+      // the row is redrawn by the change: the option that was chosen keeps the focus, so the keys stay on the switch
+      if (at) $(`[data-clause="${at}"] .join.form button[data-form="${key}"]`)?.focus();
+    } }, text);
+  const forms = [form('shape', 'shape', n === 1 ? 'Every endpoint in the same order, with the same ties and directions'
+    : 'Every endpoint in the same order, with the same ties and directions, the candles read as the chain they are drawn as: each later one opens at the close before it')];
+  if (rel.length) forms.push(form('held', `${rel.length} held`, cap(rel.join(' · ')) + '. Only which side each level lies on is kept.'));
+  // A code that can be drawn ties each later open to the close before it. Only then are the two readings two
+  // readings of one shape, and only then is the switch offered. A typed code whose later open lies away from that
+  // close is no chain: it is shown with the reading it was typed with, and says so.
+  if (n > 1 && p) forms.push(form('recorded', 'as recorded', 'The same shape with each later open as the recording has it, not as the close before it. The shape ties each later open to that close, so read this way it matches only where the recorded open equals it to the cent, about half of adjacent candles.', 'faint'));
+  const loose = n > 1 && !p ? h('span', { class: 'from', title: drawingRecorded(c) ? 'This code has a later bar opening away from the close before it, or keeps no directions, so it cannot be drawn as a chain. It is counted with opens as recorded.' : 'This code cannot be drawn as a chain, and it is asked as one: a window read as a chain always opens each later bar at the close before it, so nothing can match.' }, drawingRecorded(c) ? 'opens as recorded · not a chain' : 'read as a chain · not a chain') : null;
+  return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} ${p ? 'drawn shape' : 'g1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
+    p && forms.length > 1 ? h('span', { class: 'join form' }, forms) : null), loose,
   h('code', { class: 'g1' }, c.args.g1),
   c.args.packet ? h('span', { class: 'from', title: OWN_COUNT }, 'From Composer · counted on this recording') : null];
 }
@@ -81,10 +98,9 @@ const findParts = (c, path) => (c.type === 'drawing' ? drawnParts(c) : phrase(c,
 /** The recorded candles ending at one close, as a link that draws them in Composer; a reason when they are not a drawing. */
 function candlesLink(i, cls = 'quiet') {
   const m = state.model; const n = Math.max(2, Math.min(20, findBarsKnown(m) ? findBars(m) : 3)); const res = casePacket(rec(), i, n);
-  // a recorded bar seldom opens exactly on the previous close; a drawn one always does, so the link says what moved
-  const joined = res.joined ? ` ${res.joined === 1 ? 'One open is' : res.joined + ' opens are'} joined to the previous close, as Composer draws: the largest move is ${res.far.toFixed(2)} USDT.` : '';
+  // the candles are sent as the chain they are read as, so what Composer draws is the shape this close matches
   return res.packet ? h('a', { class: cls + ' out', href: composerLink(COMPOSER, res.packet), target: '_blank', rel: 'noopener', onclick: (e) => e.stopPropagation(),
-    title: `The ${n} recorded candles ending at this close, drawn with nothing held.${joined} Composer counts them on its own history.` }, `Draw these ${n} candles in Composer ↗`)
+    title: `The ${n} recorded candles ending at this close, drawn as a chain: each later bar opens at the previous close. Nothing is held. Composer counts them on its own history.` }, `Draw these ${n} candles in Composer ↗`)
     : h('span', { class: cls + ' out off', title: `The ${n} candles ending at this close are not a drawing: ${res.why}.` }, `Not drawable in Composer: ${res.why}`);
 }
 
@@ -436,9 +452,12 @@ function factsAt(i) {
 function definitionOf(c) {
   if (c.type === 'drawing') {
     const n = drawingBars(c); const rel = c.args.packet ? relationsOf(c.args.packet) : []; const held = drawingHeld(c);
-    return { title: `Drawn shape · ${n} ${n === 1 ? 'bar' : 'bars'}`,
+    const same = `every endpoint in the drawn order, with the same ties${c.args.g1[3] === 'o' ? ' and the same directions' : ''}`;
+    return { title: `${packetOf(c) ? 'Drawn shape' : 'G1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
       summary: held ? `${rel.length === 1 ? 'One relation' : rel.length + ' relations'} held on ${n} fixed candles ending at the close. Only which side each level lies on is kept, not the drawn distance.`
-        : `The last ${n === 1 ? 'candle has' : n + ' candles have'} every endpoint in the drawn order, with the same ties${c.args.g1[3] === 'o' ? ' and the same directions' : ''}.`,
+        : n === 1 ? `The last candle has ${same}.`
+          : drawingRecorded(c) ? `The last ${n} candles, with their opens as recorded, have ${same}. ${packetOf(c) ? 'This shape ties each later open to the close before it, so the recorded open must equal that close to the cent.' : 'In this code a later open lies away from the close before it, or no directions are kept, so it is not a chain and cannot be drawn as one.'}`
+            : `The last ${n} candles, read as a chain, have ${same}: the first as recorded, each later one opening at the close before it.${packetOf(c) ? '' : ' This code is not a chain, so no window read this way can match it.'}`,
       formula: [...(held ? rel.map(cap) : [c.args.g1]), ...(c.args.packet ? ['Composer’s skeleton, stretch, next-bar term, timeframes and picks are not part of this question.', OWN_COUNT] : [])] };
   }
   if (c.type === 'pattern') { const p = PATTERNS.find((x) => x.id === c.args.p); return { title: `${p.name} · ${p.ja}`, summary: p.rule, formula: [] }; }

@@ -132,11 +132,13 @@ export const CLAUSES = {
     keywords: 'quiet range consolidation compression tight calm held',
   },
   // A shape drawn in Composer. It holds the engine's drawing packet when one came with it, or the g1 alone, and is
-  // asked one of the two ways the study page asks a drawing: the exact shape, or the relations held on fixed candles.
+  // asked one of three ways. The shape: a drawn shape is a chain, every later bar opening where the previous one
+  // closed, so the recording is read the same way (chained_g1). The shape as recorded: later opens as the recording
+  // has them (exact_g1), which is what an older link or a typed exact_g1 means. Or the relations held on fixed candles.
   drawing: {
-    role: 'event', group: 'Shape', title: 'Drawn shape', def: 'exact_g1',
-    slots: [], defaults: { g1: '', packet: null, held: false }, phrase: [],
-    text: (a) => (a.held && a.packet && pinnedExpression(a.packet)) || `exact_g1(${JSON.stringify(a.g1)})`,
+    role: 'event', group: 'Shape', title: 'Drawn shape', def: 'chained_g1',
+    slots: [], defaults: { g1: '', packet: null, held: false, recorded: false }, phrase: [],
+    text: (a) => (a.held && a.packet && pinnedExpression(a.packet)) || `${a.recorded ? 'exact_g1' : 'chained_g1'}(${JSON.stringify(a.g1)})`,
     keywords: '',
   },
   raw: {
@@ -157,7 +159,9 @@ export const clone = (m) => JSON.parse(JSON.stringify(m));
 export const drawingBars = (c) => (c.args.packet ? c.args.packet.bars.length : c.args.g1.slice(5).split(';').length);
 /** Whether a drawn shape is asked as its held relations, which needs a packet that holds some. */
 export const drawingHeld = (c) => !!(c.args.held && c.args.packet && pinnedExpression(c.args.packet));
-const drawingPhrase = (c) => { const n = drawingBars(c); return `${drawingHeld(c) ? 'relations held on ' : ''}a drawn shape of ${n} ${n === 1 ? 'bar' : 'bars'}`; };
+/** Whether a drawn shape is asked with its opens as recorded. A one-bar shape has no later open, so the two readings agree. */
+export const drawingRecorded = (c) => !drawingHeld(c) && !!c.args.recorded && drawingBars(c) > 1;
+const drawingPhrase = (c) => { const n = drawingBars(c); return `${drawingHeld(c) ? 'relations held on ' : ''}a drawn shape of ${n} ${n === 1 ? 'bar' : 'bars'}${drawingRecorded(c) ? ', opens as recorded' : ''}`; };
 const lit = (v) => (Array.isArray(v) ? (v.length > 1 ? `{${v.join(' | ')}}` : v[0]) : v);
 const wrap = (t) => (/ (or|and) /.test(t) ? `(${t})` : t);
 
@@ -276,9 +280,10 @@ function fromExpr(node, lets) {
       if (!p || pt?.k !== 'call' || pt.name !== 'price' || (val(arg(pt, 'point', 0)) ?? 'close') !== 'close' || arg(pt, 'bars_ago')) return raw();
       return ok('near', { within: val(arg(node, 'within')) ?? '0.25%', ...p });
     }
-    case 'exact_g1': {
+    case 'chained_g1': case 'exact_g1': {
+      // either reading of a g1 is a drawn shape: the chain, or the same shape with its opens as recorded
       const code = node.args.length === 1 ? node.args[0].value : null;
-      return code?.k === 'str' && /^g1:[ou]:/.test(code.value) ? { type: 'drawing', args: { g1: code.value, packet: null, held: false } } : raw();
+      return code?.k === 'str' && /^g1:[ou]:/.test(code.value) ? { type: 'drawing', args: { g1: code.value, packet: null, held: false, recorded: node.name === 'exact_g1' } } : raw();
     }
     case 'session_tail': return ok('tail', { last: val(arg(node, 'last')) });
     case 'held': {
