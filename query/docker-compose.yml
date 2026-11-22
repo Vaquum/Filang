@@ -1,6 +1,8 @@
 # Query on the Origo host: host network, serving on 127.0.0.1:8493 only, for the host's Caddy (deployed from
 # Vaquum/Portal) to put query.vaquum.fi in front of it behind the Portal login. It has no login of its own and
 # keeps no state: the recording is built into the image and every query runs in the reader's browser.
+# Its bars come from the market-state cube through Cube's bridge on this host's loopback (Vaquum/Cube serves it
+# on 127.0.0.1:8487), read only. If the bridge does not answer, the bench shows the built-in recording and says so.
 # The port is 8493, not 8491: on this host 8491 is Cube's field-data service.
 name: query
 services:
@@ -13,6 +15,7 @@ services:
     environment:
       HOST: 127.0.0.1
       PORT: "8493"
+      CUBE_URL: http://127.0.0.1:8487
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]

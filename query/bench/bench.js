@@ -1,6 +1,6 @@
 // Filang query bench. One locked canvas shows the pattern; the question is written in its row labels.
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
-import { load, run, count, rec, env, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
+import { load, loaded, sources, PINNED, run, count, rec, env, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
 import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText, drawingBars, drawingHeld, drawingRecorded } from '/shared/vocab.js';
 import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
@@ -14,11 +14,14 @@ const COMPOSER = DEPLOYED ? 'https://composer.vaquum.fi/bench/' : 'http://localh
 const CUBE = DEPLOYED ? 'https://cube.vaquum.fi/' : 'http://localhost:8791/';
 
 const saved = (() => { try { return JSON.parse(localStorage.getItem('filang.bench') || '{}'); } catch { return {}; } })();
-const ui = { left: saved.left ?? false, right: saved.right ?? window.innerWidth >= 1000, drawer: saved.drawer ?? null };
+const ui = { left: saved.left ?? false, right: saved.right ?? window.innerWidth >= 1000, drawer: saved.drawer ?? null, window: saved.window ?? null };
 const persist = () => { try { localStorage.setItem('filang.bench', JSON.stringify(ui)); } catch { /* storage is optional */ } };
 const state = { model: null, preset: PRESETS[0].id, candidate: 0, rows: 'ledger', splitBy: 'trend', cells: 'candle', unit: 'pct', track: 'up', lead: 8,
   lane: null, slot: null, side: 'kept', page: 0, sort: 'date', focus: null, catalog: '', catSort: 'family',
-  caseSort: { key: 't', dir: 1 }, casePage: 0, caseKey: '', caseFollow: false, notice: '' };
+  caseSort: { key: 't', dir: 1 }, casePage: 0, caseKey: '', caseFollow: false, notice: '',
+  // What the server can read (the cube's windows, or the pinned recording only) and whether a window is being fetched.
+  // `asked` is a window the cube could not give when the page opened: the address keeps asking for it.
+  source: { cube: false, default: PINNED, windows: [] }, loading: false, asked: null };
 let ctx = null;
 const pad = (n) => String(n).padStart(2, '0');
 const cap = (t) => t[0].toUpperCase() + t.slice(1);
@@ -53,8 +56,8 @@ const slotEdit = (path) => ({
 // ---------------------------------------------------------------- shapes carried to and from Composer
 
 // A drawn shape arrives from the Composer bench as the engine's drawing packet and leaves the same way. Only the shape
-// and what is held on it cross: Composer searches 15m to 4h bars from 2020 to now, this bench its pinned recording.
-const OWN_COUNT = 'Composer searches 15m to 4h bars from 2020 to now. This bench counts its own pinned 15m recording, so the two counts differ by design.';
+// and what is held on it cross: Composer searches 15m to 4h bars from 2020 to now, this bench the window it has open.
+const OWN_COUNT = 'Composer searches 15m to 4h bars from 2020 to now. This bench counts the 15m bars of the window named at the foot of the page, so the two counts differ by design.';
 /** Bars of the pattern in `find`, and whether the question says how many there are. */
 const findBars = (m) => Math.max(1, ...m.find.items.map((c) => (c.type === 'pattern' ? PATTERNS.find((p) => p.id === c.args.p)?.bars || 1 : c.type === 'drawing' ? drawingBars(c) : 1)));
 const findBarsKnown = (m) => m.find.items.some((c) => c.type === 'pattern' || c.type === 'drawing');
@@ -91,7 +94,7 @@ function drawnParts(c) {
   return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} ${p ? 'drawn shape' : 'g1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
     p && forms.length > 1 ? h('span', { class: 'join form' }, forms) : null), loose,
   h('code', { class: 'g1' }, c.args.g1),
-  c.args.packet ? h('span', { class: 'from', title: OWN_COUNT }, 'From Composer · counted on this recording') : null];
+  c.args.packet ? h('span', { class: 'from', title: OWN_COUNT }, 'From Composer · counted on this window') : null];
 }
 /** The row label of a find clause: a drawn shape reads as a shape, everything else as its phrase. */
 const findParts = (c, path) => (c.type === 'drawing' ? drawnParts(c) : phrase(c, slotEdit(path)));
@@ -178,7 +181,7 @@ function render() {
   // A drawn shape that came as a packet stays in the address beside the text, so a reload or a shared link still knows
   // the drawing; it goes when the find is no longer that drawing. What a link carried in the query string is spent.
   const dr = m.find.items.find((c) => c.type === 'drawing' && c.args.packet)?.args.packet;
-  try { history.replaceState(null, '', location.pathname + '#q=' + encodeURIComponent(text) + (dr ? '&dr=' + encodeURIComponent(JSON.stringify(dr)) : '')); } catch { /* the address is optional */ }
+  try { history.replaceState(null, '', location.pathname + '#q=' + encodeURIComponent(text) + (dr ? '&dr=' + encodeURIComponent(JSON.stringify(dr)) : '') + (state.source.cube ? '&w=' + encodeURIComponent(state.asked || loaded()) : '')); } catch { /* the address is optional */ }
   if (document.activeElement !== formal.el.querySelector('textarea')) formal.set(text); else formal.message('');
   $('#left').hidden = !ui.left; $('#right').hidden = !ui.right; $('#drawer').hidden = !ui.drawer;
   status.className = ''; status.textContent = state.notice || `${res.ms.toFixed(0)} ms · sha256 ${env().digest.slice(0, 10)} ${env().digestVerified ? 'verified' : 'unverified'}`;
@@ -190,7 +193,11 @@ function render() {
 
 function renderBars() {
   const { res, r, answer } = ctx; const m = state.model; const R = rec(); const n = answer.rows.length;
-  $('#chip').textContent = `${R.instrument} ${R.barText} · ${R.venue || 'Binance spot'} · ${env().env.recording.rangeText} · ${int(R.presentCount)} closes`;
+  const prov = env().provenance; const fromCube = prov.source === 'cube';
+  // Bars after the cube's canonical mark can still change: Cube shows them too, and says how far the mark has come.
+  $('#chip').textContent = `${R.instrument} ${R.barText} · ${R.venue || 'Binance spot'} · ${env().env.recording.rangeText} · ${int(R.presentCount)} ${R.presentCount === 1 ? 'close' : 'closes'} · `
+    + (fromCube ? `cube, through ${isoUTC(Date.parse(prov.through)).slice(0, 16)} UTC${prov.provisional_rows ? ` · last ${int(prov.provisional_rows)} provisional` : ''}` : 'pinned recording');
+  $('#chip').title = fromCube ? `Read from the market-state cube through Cube's bridge${prov.canonical_through ? `. Canonical through ${isoUTC(Date.parse(prov.canonical_through)).slice(0, 16)} UTC; later bars are provisional` : ''}.` : 'The pinned BTCUSDT 15m recording built into this server.';
   mount($('#readout'), h('b', null, int(n)), note(n === 1 ? 'close in the answer' : 'closes in the answer'), r.columns.length ? h('span', { class: 'sep' }) : null,
     r.columns.slice(0, 3).map((c, k) => h('span', { class: 'sub' }, h('b', { class: 'fig' }, summarize(answer.rows, k).up), ` up after ${c.text}`)));
   for (const b of document.querySelectorAll('.toggles button')) { const p = b.dataset.panel; b.setAttribute('aria-pressed', String(p === 'left' ? ui.left : p === 'right' ? ui.right : ui.drawer === p)); }
@@ -198,7 +205,10 @@ function renderBars() {
   const sweeps = res.results.length > 1;
   const first = m.find.items[0]; const pid = first.type === 'pattern' ? first.args.p.replaceAll('_', '-') : null;
   const frame = m.split?.type === 'trend' ? m.split.args.frame : '4h';
+  const windowName = fromCube ? prov.window_name : 'Pinned recording';
   mount($('#encbar'),
+    state.source.cube ? enc('Window', state.loading ? 'Loading…' : windowName, (b) => menu(b, { title: 'Window', hint: 'The bars the question is asked of: Cube’s time windows, read from the cube. A window ends at the latest complete bar.', value: loaded(),
+      options: [...state.source.windows.map((w) => ({ value: w.key, label: w.name })), { value: PINNED, label: 'Pinned recording', detail: 'Jan to May 2025, the bars the verification suite counts' }], onChange: openWindow })) : null,
     enc('Question', PRESETS.find((p) => p.id === state.preset)?.title || 'Custom', (b) => menu(b, { title: 'Starting questions', value: state.preset, options: PRESETS.map((p) => ({ value: p.id, label: p.title })), onChange: (id) => open(PRESETS.find((p) => p.id === id)) })),
     enc('Rows', { ledger: 'Ledger', split: state.splitBy === 'trend' ? `Split by ${frame} trend` : 'Split by session day', compare: 'Compared runs', cases: 'Cases' }[state.rows], (b) => menu(b, {
       title: 'Rows', hint: 'What each row under the pattern holds.', value: state.rows === 'split' ? 'split:' + state.splitBy : state.rows,
@@ -744,10 +754,32 @@ function asked() {
   return { model: given, preset };
 }
 const fail = (what) => (e) => { console.error(e); $('#status').textContent = `${what}: ${e.message}`; $('#status').className = 'err'; };
-load().then(() => {
+/** Ask the same question of another window. The question stays; what was selected on the old bars does not. */
+async function openWindow(key) {
+  if (key === loaded() || state.loading) return;
+  state.loading = true; $('#status').className = ''; $('#status').textContent = 'Reading the window…'; renderBars();
+  try {
+    await load(key);
+    ui.window = key; persist(); state.asked = null;
+    Object.assign(state, { candidate: 0, lane: null, slot: null, page: 0, casePage: 0, caseKey: '', notice: '' });
+  } catch (e) { state.notice = `That window could not be read: ${e.message}`; }
+  state.loading = false; render();
+}
+/** The bars to open on: the window in the address, else the one last used, else the server's default. Failing that, the pinned recording. */
+async function firstLoad() {
+  state.source = await sources();
+  const known = (key) => key === PINNED || state.source.windows.some((w) => w.key === key) || /^since:\d{4}-\d{2}-\d{2}$/.test(key || '');
+  const want = state.source.cube ? [new URLSearchParams(location.hash.slice(1)).get('w'), ui.window, state.source.default].find(known) : PINNED;
+  try { await load(want); } catch (e) {
+    if (want === PINNED) throw e;
+    await load(PINNED); state.asked = want;
+    state.notice = `The cube could not be read (${e.message}); showing the pinned recording`;
+  }
+}
+firstLoad().then(() => {
   try {
     const a = asked();
     if (a) openModel(a.model, a.preset); else openModel(fromText(PRESETS[0].text).model, PRESETS[0].id);
   } catch (e) { fail('The bench could not be drawn')(e); }
-}, fail('The recording could not be loaded'));
+}, fail('The bars could not be loaded'));
 let timer; window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(() => state.model && render(), 120); });

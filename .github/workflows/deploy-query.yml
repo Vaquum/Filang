@@ -42,7 +42,7 @@ jobs:
       - name: The bench and its server parse
         run: |
           set -euo pipefail
-          for file in query/serve.mjs query/bench/*.js query/shared/*.js; do node --check "$file"; done
+          for file in query/serve.mjs query/cube.mjs query/bench/*.js query/shared/*.js; do node --check "$file"; done
       - name: Validate deploy configuration
         run: |
           test -n "$DEPLOY_HOST"
@@ -137,3 +137,15 @@ jobs:
           done
           echo "::error::Query did not come up as itself on port $QUERY_PORT."
           exit 1
+      - name: Say whether the cube's bars are reaching it
+        run: |
+          set -euo pipefail
+          # The bench stands without the cube: it shows its built-in recording and says so. So this does not fail
+          # the deploy; it says which of the two the site is serving, where a reader of this log can see it.
+          # shellcheck disable=SC2029
+          answer=$(ssh "$DEPLOY_USER@$DEPLOY_HOST" "curl -s --max-time 120 'http://127.0.0.1:$QUERY_PORT/bars?w=24h' | head -c 2000" || true)
+          if printf '%s' "$answer" | grep -q '"source":"cube"'; then
+            echo "cube bars: $(printf '%s' "$answer" | grep -o '"row_count":[0-9]*') $(printf '%s' "$answer" | grep -o '"through":"[^"]*"') $(printf '%s' "$answer" | grep -o '"canonical_through":[^,]*')"
+          else
+            echo "::warning::Query is up but is not getting bars from the cube: $(printf '%s' "$answer" | head -c 300)"
+          fi

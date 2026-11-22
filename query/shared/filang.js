@@ -11,26 +11,55 @@ export { T, F, U, isoUTC, dateUTC, hmUTC, CANDLE_PATTERNS };
 export const HEAD = 'on BTCUSDT 15m';
 // The language requires an event in `find`. This relation holds on every recorded candle.
 export const ANY_CLOSE = 'candle_relation(price(high), is: at_or_above, right: price(low))';
+/** The pinned recording, as a window key. Every other key is one of Cube's time windows. */
+export const PINNED = 'pinned';
 
 let bundle = null;
+let held = null;
 const cache = new Map();
 
-export async function load() {
-  if (bundle) return bundle;
-  const bytes = async (name) => {
-    const r = await fetch('/study/' + name, { cache: 'no-cache' });
-    if (!r.ok) throw Error(`${name}: ${r.status}`);
-    return new Uint8Array(await r.arrayBuffer());
-  };
-  const names = [DATA_FILES.bars, DATA_FILES.provenance, DATA_FILES.sessions, ...EXTENSION_FILES];
-  const [csvBytes, provenanceBytes, sessionsBytes, ...ext] = await Promise.all(names.map(bytes));
-  bundle = buildEnvironment({
-    csvBytes, provenanceBytes, sessionsBytes,
-    extensions: EXTENSION_FILES.map((file, i) => ({ file, bytes: ext[i] })),
-  });
+const bytes = async (name) => {
+  const r = await fetch('/study/' + name, { cache: 'no-cache' });
+  if (!r.ok) throw Error(`${name}: ${r.status}`);
+  return new Uint8Array(await r.arrayBuffer());
+};
+
+/** What this server can read: { cube, default, windows: [{ key, name }] }. Without a cube, the pinned recording only. */
+export async function sources() {
+  try {
+    const r = await fetch('/bars/windows', { cache: 'no-store' });
+    if (r.ok) return await r.json();
+  } catch { /* an older server, or none: the pinned recording */ }
+  return { cube: false, default: PINNED, windows: [] };
+}
+
+/**
+ * Load the bars the bench reads: the pinned recording, or one of Cube's windows from the cube itself.
+ * The extensions carry cases recorded on the pinned recording, so they are installed with it alone.
+ */
+export async function load(window = PINNED) {
+  if (bundle && held === window) return bundle;
+  let next;
+  if (window === PINNED) {
+    const names = [DATA_FILES.bars, DATA_FILES.provenance, DATA_FILES.sessions, ...EXTENSION_FILES];
+    const [csvBytes, provenanceBytes, sessionsBytes, ...ext] = await Promise.all(names.map(bytes));
+    next = buildEnvironment({
+      csvBytes, provenanceBytes, sessionsBytes,
+      extensions: EXTENSION_FILES.map((file, i) => ({ file, bytes: ext[i] })),
+    });
+  } else {
+    const [answer, sessionsBytes] = await Promise.all([fetch('/bars?w=' + encodeURIComponent(window), { cache: 'no-store' }), bytes(DATA_FILES.sessions)]);
+    const body = await answer.json().catch(() => null);
+    if (!answer.ok || !body?.csv) throw Error(body?.error || `bars: ${answer.status}`);
+    const enc = new TextEncoder();
+    next = buildEnvironment({ csvBytes: enc.encode(body.csv), provenanceBytes: enc.encode(JSON.stringify(body.provenance)), sessionsBytes });
+  }
+  bundle = next; held = window; cache.clear();
   return bundle;
 }
 
+/** The window the loaded bars cover. */
+export const loaded = () => held;
 export const env = () => bundle;
 export const rec = () => bundle.rec;
 
