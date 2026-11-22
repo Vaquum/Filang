@@ -6,6 +6,7 @@
 !query/shared
 !study/src
 !study/composer/patterns.js
+!study/composer/drawing.js
 !study/extensions
 !study/data-provenance.json
 !study/nyse-sessions.json

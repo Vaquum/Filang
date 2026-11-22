@@ -17,6 +17,8 @@ FROM node:22-slim
 WORKDIR /app
 COPY study/src study/src
 COPY study/composer/patterns.js study/composer/patterns.js
+# The drawing packet a shape is carried in to and from the Composer bench.
+COPY study/composer/drawing.js study/composer/drawing.js
 COPY study/extensions study/extensions
 COPY study/data-provenance.json study/nyse-sessions.json study/
 COPY query/index.html query/serve.mjs query/

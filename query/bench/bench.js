@@ -1,10 +1,11 @@
 // Filang query bench. One locked canvas shows the pattern; the question is written in its row labels.
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
 import { load, run, count, rec, env, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
-import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText } from '/shared/vocab.js';
+import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText, drawingBars, drawingHeld } from '/shared/vocab.js';
+import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
 import { candleChart, candleAnatomy, distPlot, rateRail, tapeOverview } from '/shared/chart.js';
-import { aggregate, caseColumns, domainOf, drawLane, drawAxis, drawColumnTrack, drawGlyph, geom, barsOf, offsetLabel, unitText } from './lanes.js';
+import { aggregate, caseColumns, domainOf, drawLane, drawAxis, drawColumnTrack, drawGlyph, drawShape, geom, barsOf, offsetLabel, unitText } from './lanes.js';
 
 // The other two aspects of the tool. They are separate apps today; these links carry the pattern across.
 // On a vaquum.fi host they are the deployed sites behind the same Portal login; elsewhere, the local servers.
@@ -17,7 +18,7 @@ const ui = { left: saved.left ?? false, right: saved.right ?? window.innerWidth 
 const persist = () => { try { localStorage.setItem('filang.bench', JSON.stringify(ui)); } catch { /* storage is optional */ } };
 const state = { model: null, preset: PRESETS[0].id, candidate: 0, rows: 'ledger', splitBy: 'trend', cells: 'candle', unit: 'pct', track: 'up', lead: 8,
   lane: null, slot: null, side: 'kept', page: 0, sort: 'date', focus: null, catalog: '', catSort: 'family',
-  caseSort: { key: 't', dir: 1 }, casePage: 0, caseKey: '', caseFollow: false };
+  caseSort: { key: 't', dir: 1 }, casePage: 0, caseKey: '', caseFollow: false, notice: '' };
 let ctx = null;
 const pad = (n) => String(n).padStart(2, '0');
 const cap = (t) => t[0].toUpperCase() + t.slice(1);
@@ -40,7 +41,7 @@ function summarize(rows, k) {
   const ups = v.filter((x) => x > 0).length;
   return { n, k: ups, up: share(ups, n), frac: ups / n, median: n % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2, mean: v.reduce((a, b) => a + b, 0) / n, values: v };
 }
-function update(fn, keep) { fn(state.model); state.focus = keep || null; render(); }
+function update(fn, keep) { fn(state.model); state.focus = keep || null; state.notice = ''; render(); }
 const target = (m, path) => (path[0] === 'f' ? m.find.items[+path.slice(1)] : m.wheres[+path.slice(1)]);
 const slotEdit = (path) => ({
   allowCompare: true, capital: true,
@@ -48,6 +49,44 @@ const slotEdit = (path) => ({
   onChange: (key, value, refocus) => update((m) => { target(m, path).args[key] = value; if (Array.isArray(value)) state.rows = 'compare'; }, refocus ? { clause: path, slot: key } : null),
   countFor: (key, value) => { const c = clone(state.model); const t = target(c, path); t.args[key] = value; t.off = false; return count(bodyText(c)); },
 });
+
+// ---------------------------------------------------------------- shapes carried to and from Composer
+
+// A drawn shape arrives from the Composer bench as the engine's drawing packet and leaves the same way. Only the shape
+// and what is held on it cross: Composer searches 15m to 4h bars from 2020 to now, this bench its pinned recording.
+const OWN_COUNT = 'Composer searches 15m to 4h bars from 2020 to now. This bench counts its own pinned 15m recording, so the two counts differ by design.';
+/** Bars of the pattern in `find`, and whether the question says how many there are. */
+const findBars = (m) => Math.max(1, ...m.find.items.map((c) => (c.type === 'pattern' ? PATTERNS.find((p) => p.id === c.args.p)?.bars || 1 : c.type === 'drawing' ? drawingBars(c) : 1)));
+const findBarsKnown = (m) => m.find.items.some((c) => c.type === 'pattern' || c.type === 'drawing');
+const rebuilt = new Map();
+/** The drawing a drawn shape stands for: the packet it came with, or one rebuilt from its g1 at even rank spacing. */
+function packetOf(c) {
+  if (c.args.packet) return c.args.packet;
+  if (!rebuilt.has(c.args.g1)) rebuilt.set(c.args.g1, packetFromG1(c.args.g1));
+  return rebuilt.get(c.args.g1);
+}
+/** A drawn shape as a row label: its glyph at true proportions, what is asked of it, and its g1. */
+function drawnParts(c) {
+  const p = packetOf(c); const n = drawingBars(c); const rel = c.args.packet ? relationsOf(c.args.packet) : []; const glyph = h('span', { class: 'shape' });
+  if (p) drawShape(glyph, p.bars);
+  const form = (held, text, title) => h('button', { type: 'button', 'aria-pressed': String(drawingHeld(c) === held), title, onclick: (e) => { e.stopPropagation(); update(() => { c.args.held = held; }); } }, text);
+  return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} drawn shape · ${n} ${n === 1 ? 'bar' : 'bars'}`,
+    rel.length ? h('span', { class: 'join form' }, form(false, 'exact shape', 'Every endpoint in the same order, with the same ties and directions'), form(true, `${rel.length} held`, cap(rel.join(' · ')) + '. Only which side each level lies on is kept.'))
+      : h('span', { class: 'form-one' }, ' · exact shape')),
+  h('code', { class: 'g1' }, c.args.g1),
+  c.args.packet ? h('span', { class: 'from', title: OWN_COUNT }, 'From Composer · counted on this recording') : null];
+}
+/** The row label of a find clause: a drawn shape reads as a shape, everything else as its phrase. */
+const findParts = (c, path) => (c.type === 'drawing' ? drawnParts(c) : phrase(c, slotEdit(path)));
+/** The recorded candles ending at one close, as a link that draws them in Composer; a reason when they are not a drawing. */
+function candlesLink(i, cls = 'quiet') {
+  const m = state.model; const n = Math.max(2, Math.min(20, findBarsKnown(m) ? findBars(m) : 3)); const res = casePacket(rec(), i, n);
+  // a recorded bar seldom opens exactly on the previous close; a drawn one always does, so the link says what moved
+  const joined = res.joined ? ` ${res.joined === 1 ? 'One open is' : res.joined + ' opens are'} joined to the previous close, as Composer draws: the largest move is ${res.far.toFixed(2)} USDT.` : '';
+  return res.packet ? h('a', { class: cls + ' out', href: composerLink(COMPOSER, res.packet), target: '_blank', rel: 'noopener', onclick: (e) => e.stopPropagation(),
+    title: `The ${n} recorded candles ending at this close, drawn with nothing held.${joined} Composer counts them on its own history.` }, `Draw these ${n} candles in Composer ↗`)
+    : h('span', { class: cls + ' out off', title: `The ${n} candles ending at this close are not a drawing: ${res.why}.` }, `Not drawable in Composer: ${res.why}`);
+}
 
 // ---------------------------------------------------------------- menus
 
@@ -117,13 +156,16 @@ function render() {
   state.candidate = Math.min(state.candidate, res.results.length - 1);
   const r = res.results[state.candidate];
   const hk = m.horizons.map(barsOf); const H = Math.min(96, Math.max(16, ...hk));
-  const pbars = Math.min(state.lead + 1, Math.max(1, ...m.find.items.map((c) => (c.type === 'pattern' ? PATTERNS.find((p) => p.id === c.args.p)?.bars || 1 : 1))));
+  const pbars = Math.min(state.lead + 1, findBars(m));
   const lanes = buildLanes(res, r, text, H);
   ctx = { res, r, text, H, hk, pbars, lanes, answer: lanes.find((l) => l.id === answerId(lanes)), caseLanes: [] };
-  try { history.replaceState(null, '', '#q=' + encodeURIComponent(text)); } catch { /* the address is optional */ }
+  // A drawn shape that came as a packet stays in the address beside the text, so a reload or a shared link still knows
+  // the drawing; it goes when the find is no longer that drawing. What a link carried in the query string is spent.
+  const dr = m.find.items.find((c) => c.type === 'drawing' && c.args.packet)?.args.packet;
+  try { history.replaceState(null, '', location.pathname + '#q=' + encodeURIComponent(text) + (dr ? '&dr=' + encodeURIComponent(JSON.stringify(dr)) : '')); } catch { /* the address is optional */ }
   if (document.activeElement !== formal.el.querySelector('textarea')) formal.set(text); else formal.message('');
   $('#left').hidden = !ui.left; $('#right').hidden = !ui.right; $('#drawer').hidden = !ui.drawer;
-  status.className = ''; status.textContent = `${res.ms.toFixed(0)} ms · sha256 ${env().digest.slice(0, 10)} ${env().digestVerified ? 'verified' : 'unverified'}`;
+  status.className = ''; status.textContent = state.notice || `${res.ms.toFixed(0)} ms · sha256 ${env().digest.slice(0, 10)} ${env().digestVerified ? 'verified' : 'unverified'}`;
   renderBars(); renderCanvas(); renderLeft(); renderRight(); renderDrawer();
   refocusSlot($('#lanes'), state.focus); state.focus = null;
 }
@@ -160,8 +202,11 @@ function renderBars() {
     (() => { const b = h('button', { class: 'enc', type: 'button', onclick: () => slotPopover(b, { multi: true, title: 'Measured horizons', slot: { key: 'after', kind: 'enum', options: HORIZONS, sweep: true }, value: m.horizons, onChange: (v) => update((x) => { x.horizons = v; }) }) },
       label('Measure'), h('span', { class: 'val' }, m.horizons.join(', ') || 'None'), h('i', null, '▼')); return b; })(),
     enc('Lead-in', state.lead + ' bars', (b) => menu(b, { title: 'Lead-in', hint: 'Bars shown before the deciding close.', value: state.lead, options: [4, 8, 16, 32].map((v) => ({ value: v, label: v + ' bars' })), onChange: (v) => { state.lead = v; render(); } })));
-  // The Composer bench opens on the named pattern the question is about, when it is about one.
-  $('#to-composer').href = `${COMPOSER}${pid ? `?pattern=${pid}` : ''}`; $('#to-composer').title = 'Open this pattern in Composer';
+  // The Composer bench opens on what the question is about: its named pattern, else the shape it draws.
+  // Composer draws two bars or more, so a one-bar shape is not carried.
+  const drawn = pid ? null : m.find.items.find((c) => c.type === 'drawing'); const out = drawn ? packetOf(drawn) : null; const carry = out && out.bars.length >= 2;
+  $('#to-composer').href = pid ? `${COMPOSER}?pattern=${pid}` : carry ? composerLink(COMPOSER, out) : COMPOSER;
+  $('#to-composer').title = pid ? 'Open this pattern in Composer' : carry ? `Draw this shape in Composer${drawn.args.packet ? '' : ', at even spacing: a g1 keeps order, not distances'}` : drawn ? 'Composer draws two bars or more and joins each open to the previous close: this shape is not carried' : 'Open the Composer bench';
   $('#to-cube').href = CUBE; $('#to-cube').title = 'Open the Cube explorer';
 }
 
@@ -180,12 +225,12 @@ function laneHead(lane) {
     const multi = m.find.items.length > 1;
     return head('01', multi && state.rows === 'ledger' ? 'Find, combined' : 'Find',
       multi && state.rows === 'ledger' ? h('div', { class: 'text' }, m.find.join === 'or' ? 'Any of the patterns below' : 'All of the patterns below, on one close')
-        : m.find.items.map((c, idx) => h('div', { class: 'text', 'data-clause': 'f' + idx }, idx ? label(m.find.join, 'or') : null, phrase(c, slotEdit('f' + idx)))),
+        : m.find.items.map((c, idx) => h('div', { class: 'text' + (c.type === 'drawing' ? ' shape-line' : ''), 'data-clause': 'f' + idx }, idx ? label(m.find.join, 'or') : null, findParts(c, 'f' + idx))),
       `${share(r.counts.T, R.presentCount, 1)} of the tape${r.counts.U ? ` · ${int(r.counts.U)} unknown` : ''}`,
       [quiet('Change pattern', () => togglePanel('left', true), 'Open the pattern catalogue')],
       multi ? h('span', { class: 'join' }, ['or', 'and'].map((j) => h('button', { type: 'button', 'aria-pressed': String(m.find.join === j), onclick: () => update((x) => { x.find.join = j; }) }, j))) : null);
   }
-  if (lane.kind === 'alt') return head(null, m.find.join, h('div', { class: 'text', 'data-clause': 'f' + lane.idx }, phrase(lane.c, slotEdit('f' + lane.idx))), 'on its own',
+  if (lane.kind === 'alt') return head(null, m.find.join, h('div', { class: 'text' + (lane.c.type === 'drawing' ? ' shape-line' : ''), 'data-clause': 'f' + lane.idx }, findParts(lane.c, 'f' + lane.idx)), 'on its own',
     [quiet('Remove', () => update((x) => { x.find.items.splice(lane.idx, 1); }), 'Remove this pattern')]);
   if (lane.kind === 'where') {
     const entering = lane.k === 0 ? r.counts.T : r.survivors[lane.k - 1]; const nu = lane.removed.filter((row) => row.results[lane.k].v !== F).length;
@@ -198,7 +243,7 @@ function laneHead(lane) {
   if (lane.kind === 'answer') return head(null, 'Answer, every condition', m.wheres.map((c, i) => (c.off ? null : h('div', { class: 'text small', 'data-clause': 'w' + i }, phrase(c, slotEdit('w' + i))))));
   if (lane.kind === 'group') return head(null, 'Split', h('div', { class: 'text' }, cap(lane.label)));
   if (lane.kind === 'run') return head(null, 'Run', h('div', { class: 'text fig' }, lane.label));
-  return head(null, 'Case', h('div', { class: 'text fig' }, isoUTC(lane.row.t)), nyText(lane.row.t));
+  return head(null, 'Case', h('div', { class: 'text fig' }, isoUTC(lane.row.t)), nyText(lane.row.t), [candlesLink(lane.row.i)]);
 }
 
 // The row track: one cell per measure, each a figure, a caption and a thin meter. Thin samples are dimmed.
@@ -389,6 +434,13 @@ function factsAt(i) {
 }
 
 function definitionOf(c) {
+  if (c.type === 'drawing') {
+    const n = drawingBars(c); const rel = c.args.packet ? relationsOf(c.args.packet) : []; const held = drawingHeld(c);
+    return { title: `Drawn shape · ${n} ${n === 1 ? 'bar' : 'bars'}`,
+      summary: held ? `${rel.length === 1 ? 'One relation' : rel.length + ' relations'} held on ${n} fixed candles ending at the close. Only which side each level lies on is kept, not the drawn distance.`
+        : `The last ${n === 1 ? 'candle has' : n + ' candles have'} every endpoint in the drawn order, with the same ties${c.args.g1[3] === 'o' ? ' and the same directions' : ''}.`,
+      formula: [...(held ? rel.map(cap) : [c.args.g1]), ...(c.args.packet ? ['Composer’s skeleton, stretch, next-bar term, timeframes and picks are not part of this question.', OWN_COUNT] : [])] };
+  }
   if (c.type === 'pattern') { const p = PATTERNS.find((x) => x.id === c.args.p); return { title: `${p.name} · ${p.ja}`, summary: p.rule, formula: [] }; }
   const d = CLAUSES[c.type].def && env().registry.get(CLAUSES[c.type].def);
   return d ? { title: d.title, summary: d.summary, formula: (d.formula || []).filter((f) => f !== d.summary) } : null;
@@ -427,7 +479,8 @@ function renderRight() {
         h('span', { class: 'nav' }, nav('←', -1, 'Previous close in this row ( , )'), nav('→', 1, 'Next close in this row ( . )'),
           quiet('Back to the row', () => { state.slot = null; if (state.lane?.startsWith('case:')) state.lane = null; render(); }, 'Esc'))),
       h('section', { class: 'block' }, h('div', { class: 'close-sub' }, note(`New York: ${nyText(R.closeTime(i))}`),
-        note(at >= 0 ? `${int(at + 1)} of ${int(rows.length)}${state.side === 'removed' && ctx.sel.removed ? ' removed' : ''}` : 'not in this row', 'fig')), drawing),
+        note(at >= 0 ? `${int(at + 1)} of ${int(rows.length)}${state.side === 'removed' && ctx.sel.removed ? ' removed' : ''}` : 'not in this row', 'fig')), drawing,
+        h('div', { class: 'carry' }, candlesLink(i, 'link'))),
       h('section', { class: 'block' }, h('div', { class: 'sec' }, label('Why this close')),
         row ? h('ul', { class: 'why' },
           h('li', null, mark(row.detector), h('span', null, cap(ar.event.label || ar.event.text)), h('small', null, ar.event.series.why(i))),
@@ -469,9 +522,10 @@ function renderRight() {
 const formal = plate({ label: 'Filang', onEdit: (text) => {
   const f = fromText(text);
   if (!f.model) return formal.message(f.error.message);
+  for (const c of state.model.find.items) if (c.type === 'drawing' && c.args.packet) attach(f.model, c.args.packet);
   const check = run(toText(f.model));
   if (!check.ok) return formal.message(check.errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')).join(' · '));
-  state.model = f.model; state.preset = null; state.lane = null; state.slot = null;
+  state.model = f.model; state.preset = null; state.lane = null; state.slot = null; state.notice = '';
   if (f.model.split) { state.rows = 'split'; state.splitBy = f.model.split.type === 'weekday' ? 'weekday' : 'trend'; } else if (state.rows === 'split') state.rows = 'ledger';
   render();
 } });
@@ -649,17 +703,32 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-function open(p) {
-  Object.assign(state, { model: fromText(p.text).model, preset: p.id, candidate: 0, lane: null, slot: null, page: 0, side: 'kept' });
+function openModel(model, preset) {
+  Object.assign(state, { model, preset, candidate: 0, lane: null, slot: null, page: 0, side: 'kept' });
   state.rows = state.model.split ? 'split' : 'ledger';
   if (state.model.split) state.splitBy = state.model.split.type === 'weekday' ? 'weekday' : 'trend';
   render();
 }
+const open = (p) => { state.notice = ''; openModel(fromText(p.text).model, p.id); };
+/** The question a link asks: a drawing carried from Composer, else the text in the address, else none. */
+function asked() {
+  const link = readLink(location.search);
+  if (link && !link.error) {
+    const model = { find: { join: 'or', items: [make('drawing', { g1: link.g1, packet: link.packet, held: link.held })] }, wheres: [], split: null, horizons: ['1h', '4h'] };
+    if (run(toText(model)).ok) return { model, preset: null };
+  }
+  if (link) state.notice = `The drawing in the link could not be read${link.error ? `: ${link.error.replace(/\.$/, '')}` : ''}`;
+  const hash = new URLSearchParams(location.hash.slice(1)); const q = hash.get('q'); const given = q ? fromText(q).model : null;
+  if (!given || !run(toText(given)).ok) return null;
+  const preset = PRESETS.find((p) => toText(fromText(p.text).model) === toText(given))?.id ?? null;
+  if (hash.get('dr')) try { attach(given, decodeDrawing(hash.get('dr'))); } catch { /* the text still asks the question; only the drawing is lost */ }
+  return { model: given, preset };
+}
 const fail = (what) => (e) => { console.error(e); $('#status').textContent = `${what}: ${e.message}`; $('#status').className = 'err'; };
 load().then(() => {
   try {
-    const q = new URLSearchParams(location.hash.slice(1)).get('q'); const given = q ? fromText(q).model : null;
-    if (given && run(toText(given)).ok) open({ id: PRESETS.find((p) => toText(fromText(p.text).model) === toText(given))?.id ?? null, text: toText(given) }); else open(PRESETS[0]);
+    const a = asked();
+    if (a) openModel(a.model, a.preset); else openModel(fromText(PRESETS[0].text).model, PRESETS[0].id);
   } catch (e) { fail('The bench could not be drawn')(e); }
 }, fail('The recording could not be loaded'));
 let timer; window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(() => state.model && render(), 120); });
