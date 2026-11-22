@@ -63,3 +63,16 @@ rows, including unobserved keys. Report cold setup separately, p50/p95/p99
 and maximum, and the worker's final WASM linear-memory size. The performance
 criterion is p95 at or below 16.7 ms with exact parity. This gives no
 verdict on the real-Cube criterion in A2.
+
+## A4. Restore the native price-only budget
+
+**Hypothesis.** Parsing recording fields in place, hashing each source once
+and merging the sorted endpoints for one- and two-bar windows restore the
+price-only runtime and resident-memory budget. Removing index tie-breaking
+from the general encoder preserves each tie class and its exact output.
+
+**Method.** Repeat the same paired native control from A1 with the updated
+code on the same host and Rust version. Retain the A1 measurements. Compare
+canonical compact-key digests, every worker response and the scored geometry
+winner. Record the actual workload and host load. The decision criterion is
+parity and each candidate median at or below its paired base p75.

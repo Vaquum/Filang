@@ -70,7 +70,7 @@ def geometry(binary, config, output):
 def compile_key_probe(toolchain, release, out):
     lib = release / "libfilang.rlib"
     subprocess.run(
-        ["rustc", "+" + toolchain, "--edition", "2021", "-O", "--extern", f"filang={lib}",
+        ["rustc", "+" + toolchain, "--edition", "2021", "-O", "-C", "panic=abort", "-C", "lto=fat", "--extern", f"filang={lib}",
          "-L", f"dependency={release / 'deps'}", ROOT / "bench_price_keys.rs", "-o", out],
         check=True,
     )
