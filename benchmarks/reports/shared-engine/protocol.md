@@ -90,3 +90,17 @@ control. For A5 insert a deterministic 0–15 ms delay before each input
 dispatch, outside the timing boundary. Run five fresh profiles with 300
 edits each. Require full count parity in the sampled oracles, the memory
 reduction against A3 and p95 at or below 16.7 ms. Retain both workloads.
+
+## A6. Isolate the legacy native workloads from binding startup
+
+**Hypothesis.** Linking the engine command separately keeps the study
+compiler and binding runtime out of existing native commands. Loading
+the recording's validity prefix in the row loop reduces cold study work.
+Together these changes meet the existing price-only timing and RSS gates
+with identical outputs.
+
+**Method.** Repeat A4's source, work, repetitions and acceptance thresholds.
+Run measured child processes with spawn file actions so the measured
+executable begins with fresh process memory. Retain A4's full samples.
+Compare the same stage boundaries and byte digests, including the scored
+region and catalogue files.
