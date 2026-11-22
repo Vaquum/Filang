@@ -83,9 +83,13 @@ function drawnParts(c) {
   const forms = [form('shape', 'shape', n === 1 ? 'Every endpoint in the same order, with the same ties and directions'
     : 'Every endpoint in the same order, with the same ties and directions, the candles read as the chain they are drawn as: each later one opens at the close before it')];
   if (rel.length) forms.push(form('held', `${rel.length} held`, cap(rel.join(' · ')) + '. Only which side each level lies on is kept.'));
-  if (n > 1) forms.push(form('recorded', 'as recorded', 'The same shape with each later open as the recording has it, not as the close before it. It matches only where every later open equals that close to the cent, about half of adjacent candles.', 'faint'));
-  return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} drawn shape · ${n} ${n === 1 ? 'bar' : 'bars'}`,
-    forms.length > 1 ? h('span', { class: 'join form' }, forms) : null),
+  // A code that can be drawn ties each later open to the close before it. Only then are the two readings two
+  // readings of one shape, and only then is the switch offered. A typed code whose later open lies away from that
+  // close is no chain: it is shown with the reading it was typed with, and says so.
+  if (n > 1 && p) forms.push(form('recorded', 'as recorded', 'The same shape with each later open as the recording has it, not as the close before it. The shape ties each later open to that close, so read this way it matches only where the recorded open equals it to the cent, about half of adjacent candles.', 'faint'));
+  const loose = n > 1 && !p ? h('span', { class: 'from', title: drawingRecorded(c) ? 'This code has a later bar opening away from the close before it, or keeps no directions, so it cannot be drawn as a chain. It is counted with opens as recorded.' : 'This code cannot be drawn as a chain, and it is asked as one: a window read as a chain always opens each later bar at the close before it, so nothing can match.' }, drawingRecorded(c) ? 'opens as recorded · not a chain' : 'read as a chain · not a chain') : null;
+  return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} ${p ? 'drawn shape' : 'g1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
+    p && forms.length > 1 ? h('span', { class: 'join form' }, forms) : null), loose,
   h('code', { class: 'g1' }, c.args.g1),
   c.args.packet ? h('span', { class: 'from', title: OWN_COUNT }, 'From Composer · counted on this recording') : null];
 }
@@ -449,11 +453,11 @@ function definitionOf(c) {
   if (c.type === 'drawing') {
     const n = drawingBars(c); const rel = c.args.packet ? relationsOf(c.args.packet) : []; const held = drawingHeld(c);
     const same = `every endpoint in the drawn order, with the same ties${c.args.g1[3] === 'o' ? ' and the same directions' : ''}`;
-    return { title: `Drawn shape · ${n} ${n === 1 ? 'bar' : 'bars'}`,
+    return { title: `${packetOf(c) ? 'Drawn shape' : 'G1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
       summary: held ? `${rel.length === 1 ? 'One relation' : rel.length + ' relations'} held on ${n} fixed candles ending at the close. Only which side each level lies on is kept, not the drawn distance.`
         : n === 1 ? `The last candle has ${same}.`
-          : drawingRecorded(c) ? `The last ${n} candles, with their opens as recorded, have ${same}. Each later open must equal the close before it to the cent.`
-            : `The last ${n} candles, read as a chain, have ${same}: the first as recorded, each later one opening at the close before it.`,
+          : drawingRecorded(c) ? `The last ${n} candles, with their opens as recorded, have ${same}. ${packetOf(c) ? 'This shape ties each later open to the close before it, so the recorded open must equal that close to the cent.' : 'In this code a later open lies away from the close before it, or no directions are kept, so it is not a chain and cannot be drawn as one.'}`
+            : `The last ${n} candles, read as a chain, have ${same}: the first as recorded, each later one opening at the close before it.${packetOf(c) ? '' : ' This code is not a chain, so no window read this way can match it.'}`,
       formula: [...(held ? rel.map(cap) : [c.args.g1]), ...(c.args.packet ? ['Composer’s skeleton, stretch, next-bar term, timeframes and picks are not part of this question.', OWN_COUNT] : [])] };
   }
   if (c.type === 'pattern') { const p = PATTERNS.find((x) => x.id === c.args.p); return { title: `${p.name} · ${p.ja}`, summary: p.rule, formula: [] }; }
