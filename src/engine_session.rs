@@ -1,0 +1,252 @@
+//! Versioned in-process interface for the browser, Python and CLI adapters.
+
+use crate::{
+    geometry::{
+        explore::{self, Bar, PreparedGeometry, Reading, Recording, MAX_SLOTS},
+        Counters, Dimension, DimensionSet, GeometryDimensionKey, GeometryMode, GeometryPattern,
+        GEOMETRY_KEY_MAX_BARS,
+    },
+    study, Result,
+};
+use std::{collections::HashMap, str};
+
+pub const ABI_VERSION: u32 = 1;
+pub const MAX_PAYLOAD: usize = 256 * 1024 * 1024;
+const MAX_PAGE: usize = 4096;
+const BAR_SIZE: usize = 57;
+
+#[derive(Default)]
+pub struct Session {
+    recording: Option<Recording>,
+    prepared: HashMap<usize, PreparedGeometry>,
+}
+
+impl Session {
+    /// An ASCII operation and LF, followed by that operation's payload.
+    /// Responses are UTF-8 JSON. Errors are reported out of band by the binding.
+    pub fn call(&mut self, request: &[u8]) -> Result<String> {
+        if request.len() > MAX_PAYLOAD {
+            return Err("Filang engine request exceeds 256 MiB".into());
+        }
+        let delimiter = request.iter().position(|&b| b == b'\n');
+        let (operation, payload) = match delimiter {
+            Some(i) => (&request[..i], &request[i + 1..]),
+            None => (request, &[][..]),
+        };
+        match operation {
+            b"load" => return self.set_recording(decode_bars(payload)?),
+            b"load-csv" => {
+                let (interval, csv) = utf8(payload)?
+                    .split_once('\n')
+                    .ok_or("expected interval in milliseconds followed by CSV")?;
+                return self.set_recording(study::geometry_recording_csv(csv, number(interval)?)?);
+            }
+            _ => {}
+        }
+        let text = utf8(payload)?;
+        match operation {
+            b"version" if text.is_empty() => Ok(format!(
+                "{{\"abi\":{ABI_VERSION},\"version\":\"{}\"}}",
+                env!("CARGO_PKG_VERSION")
+            )),
+            b"inspect" => inspect(&text.parse()?),
+            b"domain" => {
+                let [width, mode, dimensions] = fields(text)?;
+                let width = number(width)?;
+                let dimensions = DimensionSet::parse(dimensions)?;
+                let count = explore::declared_count(width, GeometryMode::parse(mode)?, dimensions)?;
+                Ok(format!(
+                    "{{\"declared\":\"{count}\",\"includes_unrealizable\":{}}}",
+                    dimensions.includes_patterns_that_cannot_occur(width),
+                ))
+            }
+            b"draw" => inspect(&draw(text)?),
+            b"at" => {
+                let [end, width, mode, reading, dimensions] = fields(text)?;
+                let result = self.recording()?.pattern_at(
+                    number(end)?,
+                    number(width)?,
+                    GeometryMode::parse(mode)?,
+                    Reading::parse(reading)?,
+                    DimensionSet::parse(dimensions)?,
+                )?;
+                result.as_ref().map_or_else(|| Ok("null".into()), inspect)
+            }
+            b"prepare" => {
+                let [width, mode, reading, dimensions] = fields(text)?;
+                self.window(number(width)?)?.prepare(
+                    GeometryMode::parse(mode)?,
+                    Reading::parse(reading)?,
+                    DimensionSet::parse(dimensions)?,
+                )?;
+                Ok("null".into())
+            }
+            b"counts" => {
+                let [reading, code] = fields(text)?;
+                let pattern: GeometryPattern = code.parse()?;
+                let result = self
+                    .window(pattern.len())?
+                    .counts(&pattern, Reading::parse(reading)?)?;
+                Ok(format!(
+                    "{{\"matched\":{},\"false_count\":{},\"unknown\":{}}}",
+                    result.matched, result.false_count, result.unknown
+                ))
+            }
+            b"positions" => {
+                let [reading, start, limit, code] = fields(text)?;
+                let limit = number(limit)?;
+                if limit > MAX_PAGE {
+                    return Err(format!("geometry page exceeds {MAX_PAGE} positions"));
+                }
+                let pattern: GeometryPattern = code.parse()?;
+                let positions = self.window(pattern.len())?.positions(
+                    &pattern,
+                    Reading::parse(reading)?,
+                    number(start)?,
+                    limit,
+                )?;
+                Ok(format!("{positions:?}"))
+            }
+            b"release" => {
+                self.prepared.remove(&number(text)?);
+                Ok("null".into())
+            }
+            _ => Err("unknown Filang engine operation".into()),
+        }
+    }
+
+    fn set_recording(&mut self, recording: Recording) -> Result<String> {
+        let length = recording.len();
+        self.recording = Some(recording);
+        self.prepared.clear();
+        Ok(format!("{{\"slots\":{length}}}"))
+    }
+
+    fn recording(&self) -> Result<&Recording> {
+        self.recording
+            .as_ref()
+            .ok_or_else(|| "load a recording first".into())
+    }
+
+    fn window(&mut self, width: usize) -> Result<&mut PreparedGeometry> {
+        let recording = self.recording.as_ref().ok_or("load a recording first")?;
+        use std::collections::hash_map::Entry;
+        Ok(match self.prepared.entry(width) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => entry.insert(recording.prepare(width)?),
+        })
+    }
+}
+
+fn decode_bars(data: &[u8]) -> Result<Recording> {
+    if data.len() % BAR_SIZE != 0 || data.len() / BAR_SIZE > MAX_SLOTS {
+        return Err("invalid binary recording length".into());
+    }
+    let mut bars = Vec::with_capacity(data.len() / BAR_SIZE);
+    for (slot, row) in data.chunks_exact(BAR_SIZE).enumerate() {
+        let bar = (|| {
+            if row[0] == 0 {
+                return Ok(None);
+            }
+            if row[0] > 2 {
+                return Err("invalid bar flag".to_string());
+            }
+            let read = |i: usize| {
+                let bytes = &row[1 + 8 * i..1 + 8 * (i + 1)];
+                f64::from_le_bytes(bytes.try_into().unwrap())
+            };
+            let ohlc = [read(0), read(1), read(2), read(3)];
+            let counters = if row[0] == 2 {
+                Some(Counters::new(read(4), read(5), read(6))?)
+            } else {
+                None
+            };
+            Ok(Some(Bar::new(ohlc, counters)?))
+        })()
+        .map_err(|error| format!("slot {slot}: {error}"))?;
+        bars.push(bar);
+    }
+    Recording::new(bars)
+}
+
+fn inspect(pattern: &GeometryPattern) -> Result<String> {
+    let words = if pattern.len() <= GEOMETRY_KEY_MAX_BARS {
+        let key = GeometryDimensionKey::from_pattern(pattern)?;
+        let price = key.price().words();
+        let mut words = String::new();
+        for word in price.iter().chain(key.dimension_words()) {
+            use std::fmt::Write;
+            if !words.is_empty() {
+                words.push(',');
+            }
+            write!(words, "\"{word}\"").expect("write to String");
+        }
+        format!("[{words}]")
+    } else {
+        "null".into()
+    };
+    Ok(format!(
+        "{{\"code\":{},\"width\":{},\"oriented\":{},\"dimensions\":{},\"words\":{words}}}",
+        study::quote(&pattern.to_string()),
+        pattern.len(),
+        pattern.mode() == GeometryMode::Oriented,
+        pattern.dimension_set().json(),
+    ))
+}
+
+fn draw(text: &str) -> Result<GeometryPattern> {
+    let mut lines = text.split('\n');
+    let [mode, reading, n] = fields(lines.next().ok_or("missing drawing header")?)?;
+    let n = number(n)?;
+    if !(1..=explore::MAX_WIDTH).contains(&n) {
+        return Err(format!(
+            "drawing width must be in 1..={}",
+            explore::MAX_WIDTH
+        ));
+    }
+    let mut rows = Vec::with_capacity(n);
+    for _ in 0..n {
+        let [open, high, low, close] = fields(lines.next().ok_or("missing drawing bar")?)?;
+        rows.push([number(open)?, number(high)?, number(low)?, number(close)?]);
+    }
+    let mut axes = Vec::new();
+    for line in lines {
+        let (axis, values) = line.split_once('\t').ok_or("missing drawing axis values")?;
+        let axis: Dimension = axis.parse()?;
+        let values = values
+            .split('\t')
+            .map(number)
+            .collect::<Result<Vec<f64>>>()?;
+        axes.push((axis, values));
+    }
+    let axes: Vec<_> = axes
+        .iter()
+        .map(|(axis, marks)| (*axis, marks.as_slice()))
+        .collect();
+    explore::encode_drawing(
+        &rows,
+        GeometryMode::parse(mode)?,
+        Reading::parse(reading)?,
+        &axes,
+    )
+}
+
+fn utf8(input: &[u8]) -> Result<&str> {
+    str::from_utf8(input).map_err(|_| "expected UTF-8 input".into())
+}
+
+fn fields<const N: usize>(text: &str) -> Result<[&str; N]> {
+    let mut parts = text.split('\t');
+    let mut values = [""; N];
+    for value in &mut values {
+        *value = parts.next().ok_or("missing engine argument")?;
+    }
+    if parts.next().is_some() {
+        return Err("unexpected engine argument".into());
+    }
+    Ok(values)
+}
+
+fn number<T: str::FromStr>(text: &str) -> Result<T> {
+    text.parse().map_err(|_| format!("invalid number {text:?}"))
+}

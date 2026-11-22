@@ -5,7 +5,8 @@ use super::{
 };
 use crate::{
     geometry::{
-        GeometryEncoder, GeometryKey, GeometryMode, GeometryPattern, GEOMETRY_KEY_MAX_BARS,
+        explore::Reading, Dimension, GeometryEncoder, GeometryKey, GeometryMode, GeometryPattern,
+        GEOMETRY_KEY_MAX_BARS,
     },
     rules::Mask,
     Result,
@@ -101,6 +102,8 @@ pub(super) struct Eval<'a> {
     windows: HashMap<usize, Rc<Vec<Envelope>>>,
     // by window length, orientation and reading (as recorded or chained): the two readings never share keys
     keys: HashMap<(usize, bool, bool), Rc<Vec<Key>>>,
+    // one value per slot on a dimension, NaN where the bar or the value is absent
+    dimensions: HashMap<Dimension, Rc<Vec<f64>>>,
     medians: HashMap<usize, Rc<Vec<i64>>>,
     used: usize,
     pub rolling_windows: usize,
@@ -114,6 +117,7 @@ impl<'a> Eval<'a> {
             calendar,
             windows: HashMap::new(),
             keys: HashMap::new(),
+            dimensions: HashMap::new(),
             medians: HashMap::new(),
             used: 0,
             rolling_windows: 0,
@@ -369,7 +373,68 @@ impl<'a> Eval<'a> {
         Ok(store(&mut self.windows, window, out))
     }
 
+    /// A code with dimensions on. Its price part is read as a code with none
+    /// on is read, sharing that preparation. Then, on every complete window:
+    /// a candle with no value on one of the code's dimensions makes the
+    /// window unknown whatever its prices say; otherwise the window matches
+    /// when its prices match and its values stand in each part's order.
+    /// Reading the window as a chain changes price points only.
+    fn geometry_with_dimensions(
+        &mut self,
+        pattern: &GeometryPattern,
+        chained: bool,
+    ) -> Result<Series> {
+        let tape = self.tape;
+        let n = tape.bars.len();
+        let mut series = Vec::with_capacity(pattern.dimensions().len());
+        for part in pattern.dimensions() {
+            let values = match self.dimensions.get(&part.dimension()) {
+                Some(values) => Rc::clone(values),
+                None => {
+                    let values = tape.dimension(part.dimension()).ok_or(
+                        "this recording carries no counters, so a code with a dimension on cannot be read",
+                    )?;
+                    self.charge(n * std::mem::size_of::<f64>())?;
+                    store(&mut self.dimensions, part.dimension(), values)
+                }
+            };
+            series.push(values);
+        }
+        let price = match self.geometry(&pattern.price(), chained)? {
+            Series::Bool(mask) => mask,
+            _ => return Err("plan expected Boolean series".into()),
+        };
+        let w = pattern.len();
+        let mut levels = Vec::new();
+        Ok(self.mask(|i| {
+            let (matched, known) = price.at(i);
+            if !known {
+                return None;
+            }
+            let window = i + 1 - w..i + 1;
+            if series
+                .iter()
+                .any(|values| values[window.clone()].iter().any(|x| x.is_nan()))
+            {
+                return None;
+            }
+            Some(
+                matched
+                    && pattern
+                        .dimensions()
+                        .iter()
+                        .zip(&series)
+                        .all(|(part, values)| {
+                            part.matches_values(&values[window.clone()], &mut levels)
+                        }),
+            )
+        }))
+    }
+
     fn geometry(&mut self, pattern: &GeometryPattern, chained: bool) -> Result<Series> {
+        if pattern.has_dimensions() {
+            return self.geometry_with_dimensions(pattern, chained);
+        }
         let w = pattern.len();
         let tape = self.tape;
         if w > tape.bars.len() {
@@ -440,17 +505,16 @@ fn load(tape: &Tape, end: usize, rows: &mut [[f64; 4]], chained: bool) -> bool {
     if !tape.complete(start, end) {
         return false;
     }
+    let reading = if chained {
+        Reading::Chained
+    } else {
+        Reading::Recorded
+    };
     let mut previous = None;
-    for (i, bar) in tape.bars[start..end].iter().enumerate() {
+    for (row, bar) in rows.iter_mut().zip(&tape.bars[start..end]) {
         let bar = bar.expect("complete window");
-        rows[i] = match previous.filter(|_| chained) {
-            Some(open) => {
-                let (o, h, l) = (open, bar.h.max(open), bar.l.min(open));
-                [o as f64, h as f64, l as f64, bar.c as f64]
-            }
-            None => bar.prices(),
-        };
-        previous = Some(bar.c);
+        *row = reading.candle(bar.prices(), previous);
+        previous = Some(bar.c as f64);
     }
     true
 }

@@ -1,7 +1,7 @@
 //! Strict CLI adapter for the grouped complete-geometry direction sweep.
 use crate::{
     direction::{self, Config},
-    geometry::GeometryMode,
+    geometry::{DimensionSet, GeometryMode},
     Result,
 };
 use std::{collections::HashMap, str::FromStr};
@@ -35,6 +35,11 @@ pub fn cli(mut flags: HashMap<String, String>) -> Result<String> {
         .split(',')
         .map(GeometryMode::parse)
         .collect::<Result<Vec<_>>>()?;
+    // Absent or empty means no dimension is on, which is 0.9 geometry.
+    let dimensions = match flags.remove("--dimensions") {
+        Some(text) => DimensionSet::parse(&text)?,
+        None => DimensionSet::NONE,
+    };
     let config = Config {
         data: take(&mut flags, "--data")?,
         out: take(&mut flags, "--out")?,
@@ -45,6 +50,7 @@ pub fn cli(mut flags: HashMap<String, String>) -> Result<String> {
         end: take(&mut flags, "--end")?,
         bars,
         modes,
+        dimensions,
         workers: value(&mut flags, "--workers", &default_workers)?,
         memory_mib: value(&mut flags, "--memory-mib", "2048")?,
         max_rows: value(&mut flags, "--max-rows", "2000000")?,

@@ -1,4 +1,7 @@
-use crate::Result;
+use crate::{
+    geometry::{Counters, Dimension, COUNTER_COLUMNS},
+    Result,
+};
 use std::{fs, path::Path};
 
 const MAX_PRICE: i64 = 9_007_199_254_740_991;
@@ -26,6 +29,9 @@ pub(super) struct Tape {
     pub start: i64,
     pub interval: i64,
     pub bars: Vec<Option<Bar>>,
+    // One per slot when the recording is the nine-column form; a slot with
+    // no bar has none. A six-column recording carries no counters at all.
+    counters: Option<Vec<Option<Counters>>>,
     absent: Vec<usize>,
 }
 
@@ -68,14 +74,16 @@ impl Tape {
         )
     }
 
-    fn parse(csv: &str, interval: i64) -> Result<Self> {
+    pub(super) fn parse(csv: &str, interval: i64) -> Result<Self> {
         if !(60_000..=86_400_000).contains(&interval) {
             return Err("unsupported study interval".into());
         }
         let mut lines = csv.lines();
-        if lines.next() != Some("open_ms,open,high,low,close,volume") {
-            return Err("expected the study recording CSV header".into());
-        }
+        let mut counters = match lines.next() {
+            Some("open_ms,open,high,low,close,volume") => None,
+            Some(COUNTER_COLUMNS) => Some(Vec::new()),
+            _ => return Err("expected the study recording CSV header".into()),
+        };
         let mut bars = Vec::new();
         let mut start = 0;
         for (row, line) in lines.enumerate() {
@@ -86,6 +94,19 @@ impl Tape {
             let l = price(cells.next())?;
             let c = price(cells.next())?;
             let volume: f64 = number(cells.next(), "volume")?;
+            // The nine-column form: USDT traded, taker-buy USDT, trade count.
+            let bar_counters = if counters.is_some() {
+                let mut text = [""; 3];
+                for slot in &mut text {
+                    *slot = cells.next().ok_or("missing counter")?;
+                }
+                Some(
+                    Counters::parse(text[0], text[1], text[2])
+                        .map_err(|e| format!("recording row {}: {e}", row + 2))?,
+                )
+            } else {
+                None
+            };
             let valid_timestamp = (0..=MAX_PRICE - interval).contains(&t) && t % interval == 0;
             let valid_bar = l <= o.min(c) && o.max(c) <= h && volume.is_finite() && volume >= 0.0;
             if !(valid_timestamp && valid_bar && cells.next().is_none()) {
@@ -102,6 +123,10 @@ impl Tape {
             }
             bars.resize(slot, None);
             bars.push(Some(Bar { o, h, l, c }));
+            if let Some(counters) = &mut counters {
+                counters.resize(slot, None);
+                counters.push(bar_counters);
+            }
         }
         if bars.is_empty() {
             return Err("study recording is empty".into());
@@ -114,8 +139,38 @@ impl Tape {
             start,
             interval,
             bars,
+            counters,
             absent,
         })
+    }
+
+    /// One value per slot on a dimension, NaN where the bar or the value is
+    /// absent. `None` when the recording carries no counters.
+    pub fn dimension(&self, dimension: Dimension) -> Option<Vec<f64>> {
+        let counters = self.counters.as_ref()?;
+        Some(
+            counters
+                .iter()
+                .map(|bar| bar.and_then(|c| dimension.value(c)).unwrap_or(f64::NAN))
+                .collect(),
+        )
+    }
+
+    pub(super) fn geometry_recording(&self) -> Result<crate::geometry::explore::Recording> {
+        use crate::geometry::explore::{Bar as GeometryBar, Recording};
+        let bars = self
+            .bars
+            .iter()
+            .enumerate()
+            .map(|(slot, bar)| {
+                bar.map(|bar| {
+                    let counters = self.counters.as_ref().and_then(|rows| rows[slot]);
+                    GeometryBar::new(bar.prices(), counters)
+                })
+                .transpose()
+            })
+            .collect::<Result<_>>()?;
+        Recording::new(bars)
     }
 
     pub fn close(&self, slot: usize) -> i64 {

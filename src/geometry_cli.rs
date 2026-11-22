@@ -3,7 +3,9 @@ use crate::{
     backtest::{Costs, Market, Rule},
     data::{self, Data},
     geometry::{
-        count_domain, count_domain_decimal, GeometryEncoder, GeometryMode, GeometryPattern,
+        count_delta_imbalance_occurring_decimal, count_domain_decimal,
+        count_domain_decimal_with_dimensions, Counters, Dimension, DimensionSet,
+        GeometryDimensionEncoder, GeometryEncoder, GeometryMode, GeometryPattern,
     },
     geometry_run::{self, Config},
     hash::sha256,
@@ -85,12 +87,42 @@ pub fn cli(command: &str, mut flags: HashMap<String, String>) -> Result<String> 
         "geometry-count" => {
             let bars: usize = option(&mut flags, "--bars", "2")?;
             let mode: GeometryMode = option(&mut flags, "--mode", "oriented")?;
+            let dimensions: DimensionSet = match flags.remove("--dimensions") {
+                Some(text) => DimensionSet::parse(&text)?,
+                None => DimensionSet::NONE,
+            };
             finish(&flags)?;
-            Ok(format!(
-                "{{\"version\":1,\"bars\":{bars},\"mode\":{},\"complete_patterns\":{}}}",
+            if dimensions.is_empty() {
+                // With no dimension on this is the 0.9 report, byte for byte.
+                return Ok(format!(
+                    "{{\"version\":1,\"bars\":{bars},\"mode\":{},\"complete_patterns\":{}}}",
+                    quote(&mode.to_string()),
+                    quote(&count_domain_decimal(bars, mode)?)
+                ));
+            }
+            // The declared count: the price count times one factor for each
+            // dimension. A set that holds a dependent core declares patterns
+            // no recording can produce, and the report says so.
+            let mut text = format!(
+                "{{\"version\":1,\"bars\":{bars},\"mode\":{},\"dimensions\":{},\"complete_patterns\":{},\"count_includes_patterns_that_cannot_occur\":{}",
                 quote(&mode.to_string()),
-                quote(&count_domain_decimal(bars, mode)?)
-            ))
+                dimensions.json(),
+                quote(&count_domain_decimal_with_dimensions(bars, mode, dimensions)?),
+                dimensions.includes_patterns_that_cannot_occur(bars)
+            );
+            let pair = DimensionSet::NONE
+                .with(Dimension::Delta)
+                .with(Dimension::Imbalance);
+            if dimensions == pair {
+                write!(
+                    text,
+                    ",\"patterns_that_can_occur\":{}",
+                    quote(&count_delta_imbalance_occurring_decimal(bars, mode)?)
+                )
+                .map_err(|e| e.to_string())?;
+            }
+            text.push('}');
+            Ok(text)
         }
         _ => Err("unknown geometry command".into()),
     }
@@ -122,9 +154,20 @@ fn example(flags: &mut HashMap<String, String>) -> Result<String> {
     let rules = flags
         .remove("--rules")
         .unwrap_or_else(|| "(and s0 s1);(or s0 s1);(and s0 (not s1))".into());
+    // Written only when a dimension is switched on, in canonical order, so an
+    // example with none is the file this command has always written.
+    let dimensions = match flags.remove("--dimensions") {
+        Some(text) => DimensionSet::parse(&text)?,
+        None => DimensionSet::NONE,
+    };
+    let dimensions = if dimensions.is_empty() {
+        String::new()
+    } else {
+        format!("dimensions={dimensions}\n")
+    };
     finish(flags)?;
     let text = format!(
-        "# Complete global bar geometry; counts denote logical programs, not independent backtests.\nversion=1\ndata={data}\ninterval_seconds={interval}\nstart={start}\nend={end}\nmode={mode}\nwindows={windows}\nqualifiers={qualifiers}\nrules={rules}\nallow_same_bank=false\nnumeric_mib=64\nbank_mib=128\ntree_mib=256\nprepare_mib=128\ntask_states=128\nmax_task_nodes=100000000\nfee_bps=10\nslip_bps=10\n"
+        "# Complete global bar geometry; counts denote logical programs, not independent backtests.\nversion=1\ndata={data}\ninterval_seconds={interval}\nstart={start}\nend={end}\nmode={mode}\n{dimensions}windows={windows}\nqualifiers={qualifiers}\nrules={rules}\nallow_same_bank=false\nnumeric_mib=64\nbank_mib=128\ntree_mib=256\nprepare_mib=128\ntask_states=128\nmax_task_nodes=100000000\nfee_bps=10\nslip_bps=10\n"
     );
     let config = Config::parse(&text)?;
     let mut file = fs::OpenOptions::new()
@@ -143,8 +186,8 @@ fn example(flags: &mut HashMap<String, String>) -> Result<String> {
 
 pub fn inspect(config: &Config) -> Result<String> {
     let mut windows = Vec::new();
-    for lags in &config.windows {
-        let patterns = count_domain(lags.len(), config.mode)?;
+    for (bank, lags) in config.windows.iter().enumerate() {
+        let patterns = config.pattern_count(bank)?;
         let conditions = patterns
             .checked_mul(config.qualifiers.len() as u128)
             .ok_or("geometry condition count overflow")?;
@@ -159,8 +202,18 @@ pub fn inspect(config: &Config) -> Result<String> {
             quote(&conditions.to_string())
         ));
     }
+    // A plan with no dimension declared reads exactly as it always did.
+    let dimensions = if config.dimensions.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "\"dimensions\":{},\"count_includes_patterns_that_cannot_occur\":{},",
+            config.dimensions.json(),
+            config.includes_patterns_that_cannot_occur()
+        )
+    };
     Ok(format!(
-        "{{\"version\":1,\"status\":\"PLAN_ONLY\",\"source\":\"geometry\",\"mode\":{},\"windows\":[{}],\"qualifiers\":{},\"templates\":{},\"allow_same_bank\":{},\"requested_strategy_addresses\":{},\"physical_work\":\"data_dependent_not_yet_executed\"}}",
+        "{{\"version\":1,\"status\":\"PLAN_ONLY\",\"source\":\"geometry\",\"mode\":{},{dimensions}\"windows\":[{}],\"qualifiers\":{},\"templates\":{},\"allow_same_bank\":{},\"requested_strategy_addresses\":{},\"physical_work\":\"data_dependent_not_yet_executed\"}}",
         quote(&config.mode.to_string()),
         windows.join(","),
         config.qualifiers.len(),
@@ -222,12 +275,41 @@ fn selection(text: &str) -> Result<Vec<Selected>> {
     Ok(selected)
 }
 
-fn selected_mask(data: &Data, selected: &Selected) -> Result<Mask> {
+fn selected_mask(data: &Data, counters: Option<&[Counters]>, selected: &Selected) -> Result<Mask> {
     let len = data.len().checked_sub(2).ok_or("geometry replay history")?;
     let mut mask = Mask::empty(len);
-    let mut encoder = GeometryEncoder::new(selected.lags.len(), selected.pattern.mode())?;
     let mut rows = vec![[0.; 4]; selected.lags.len()];
     let lag = *selected.lags.last().ok_or("empty geometry window")?;
+    if selected.pattern.has_dimensions() {
+        // A selection with a dimension on is refused on a recording without
+        // counters. A window with no value on that dimension stays invalid.
+        let counters = counters.ok_or(
+            "geometry replay: the selection has a dimension on and this recording carries no counters",
+        )?;
+        let mut encoder = GeometryDimensionEncoder::new(
+            selected.lags.len(),
+            selected.pattern.mode(),
+            selected.pattern.dimension_set(),
+        )?;
+        let mut window = vec![counters[0]; selected.lags.len()];
+        for t in lag..len {
+            for ((row, slot), &offset) in rows.iter_mut().zip(&mut window).zip(&selected.lags) {
+                let at = t - offset;
+                *row = [
+                    data.columns[0][at],
+                    data.columns[1][at],
+                    data.columns[2][at],
+                    data.columns[3][at],
+                ];
+                *slot = counters[at];
+            }
+            if let Some(observed) = encoder.encode_ohlc(&rows, &window)? {
+                mask.set(t, observed == &selected.pattern, true);
+            }
+        }
+        return geometry_run::qualify(&mask, selected.qualifier);
+    }
+    let mut encoder = GeometryEncoder::new(selected.lags.len(), selected.pattern.mode())?;
     for t in lag..len {
         for (row, &offset) in rows.iter_mut().zip(&selected.lags) {
             let at = t - offset;
@@ -268,7 +350,7 @@ fn evaluate(flags: &mut HashMap<String, String>) -> Result<String> {
     let selected = selection(&selected_text)?;
     let program = Program::parse(rule_text.trim(), 2)?;
     crate::dense_tree::Table::from_program(&program)?;
-    let data = Data::read(&data_path, interval)?;
+    let (data, counters) = Data::read_with_counters(&data_path, interval)?;
     if start >= end
         || data.timestamps[0] > start
         || data.timestamps.last().unwrap().checked_add(interval) != Some(end)
@@ -282,7 +364,7 @@ fn evaluate(flags: &mut HashMap<String, String>) -> Result<String> {
     let market = Market::new(&data, start_index, data.len(), costs)?;
     let masks = selected
         .iter()
-        .map(|v| selected_mask(&data, v))
+        .map(|v| selected_mask(&data, counters.as_deref(), v))
         .collect::<Result<Vec<_>>>()?;
     let decisions = program.evaluate(&masks.iter().collect::<Vec<_>>(), backend)?;
     let mut signal = vec![0.; decisions.len];

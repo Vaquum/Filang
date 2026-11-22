@@ -46,11 +46,18 @@ pub fn serve(bars: impl AsRef<Path>, calendar: impl AsRef<Path>, interval_ms: i6
     }
 }
 
+pub(crate) fn geometry_recording_csv(
+    csv: &str,
+    interval: i64,
+) -> Result<crate::geometry::explore::Recording> {
+    Tape::parse(csv, interval)?.geometry_recording()
+}
+
 fn io_error(e: io::Error) -> String {
     e.to_string()
 }
 
-fn quote(text: &str) -> String {
+pub(crate) fn quote(text: &str) -> String {
     use std::fmt::Write;
     let mut value = String::with_capacity(text.len() + 2);
     value.push('"');
@@ -183,4 +190,142 @@ fn write_result(
     }
     out.push_str("]}");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::geometry::COUNTER_COLUMNS;
+    use std::fmt::Write as _;
+
+    const BAR: i64 = 900_000;
+
+    fn calendar() -> Calendar {
+        let path = std::env::temp_dir().join(format!(
+            "filang-study-calendar-{}-{:?}.tsv",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        std::fs::write(&path, "0\t86400000\n").unwrap();
+        let calendar = Calendar::read(&path).unwrap();
+        std::fs::remove_file(path).unwrap();
+        calendar
+    }
+
+    /// Six slots: two up bars, a flat bar without trades, a missing bar and
+    /// two more up bars. Counters are USDT traded, taker-buy USDT, trades.
+    fn recording(counters: bool) -> String {
+        let bars = [
+            (0, "100.00,105.00,99.00,104.00", "1000,600,10"),
+            (1, "104.00,110.00,103.00,109.00", "2000,1200,40"),
+            (2, "109.00,109.00,109.00,109.00", "0,0,0"),
+            (4, "109.00,112.00,108.00,111.00", "5e2,100,5"),
+            (5, "111.00,115.00,110.00,114.00", "700,500,7"),
+        ];
+        let mut csv = if counters {
+            format!("{COUNTER_COLUMNS}\n")
+        } else {
+            "open_ms,open,high,low,close,volume\n".to_owned()
+        };
+        for (slot, prices, counts) in bars {
+            write!(csv, "{},{prices},1.5", slot * BAR).unwrap();
+            if counters {
+                write!(csv, ",{counts}").unwrap();
+            }
+            csv.push('\n');
+        }
+        csv
+    }
+
+    /// The closes at which the code matches, and those at which it is unknown.
+    fn read(tape: &Tape, node: &str) -> Result<(Vec<i64>, Vec<i64>)> {
+        let plan = format!("filang-study-v1\t1\t{node}\t0 - -");
+        let answer = evaluate(&plan, tape, &calendar())?;
+        let list = |key: &str| -> Vec<i64> {
+            let marker = format!("\"{key}\":[");
+            let at = answer.find(&marker).unwrap() + marker.len();
+            let end = at + answer[at..].find(']').unwrap();
+            answer[at..end]
+                .split(',')
+                .filter(|item| !item.is_empty())
+                .map(|item| item.trim().parse().unwrap())
+                .collect()
+        };
+        Ok((list("anchors"), list("event")))
+    }
+
+    #[test]
+    fn dimension_codes_are_three_valued_and_need_counters() {
+        let tape = Tape::parse(&recording(true), BAR).unwrap();
+        let close = |slots: &[i64]| slots.iter().map(|s| (s + 1) * BAR).collect::<Vec<_>>();
+        // One up candle with net buying: the flat bar and the net seller are
+        // known not to match, and no present bar is unknown.
+        assert_eq!(
+            read(&tape, "g1 g1:o:0,1,2,3,u|delta:1/0").unwrap(),
+            (close(&[0, 1, 5]), vec![])
+        );
+        assert_eq!(
+            read(&tape, "g1 g1:o:0,1,2,3,u").unwrap(),
+            (close(&[0, 1, 4, 5]), vec![])
+        );
+        // The bar without trades has no size: unknown, whatever its prices.
+        assert_eq!(
+            read(&tape, "g1 g1:o:0,0,0,0,z|size:0").unwrap(),
+            (vec![], close(&[2]))
+        );
+        assert_eq!(
+            read(&tape, "g1 g1:o:0,0,0,0,z|volume:0|delta:0/0").unwrap(),
+            (close(&[2]), vec![])
+        );
+        // Two bars: unknown for want of a bar at slots 0 and 4, and also for
+        // want of a value where the window reads the bar without trades.
+        let pair = "g1:o:0,1,3,4,u;2,3,5,6,u";
+        for op in ["g1", "g1c"] {
+            assert_eq!(
+                read(&tape, &format!("{op} {pair}")).unwrap(),
+                (close(&[1, 5]), close(&[0, 4]))
+            );
+            assert_eq!(
+                read(&tape, &format!("{op} {pair}|volume:0,1")).unwrap(),
+                (close(&[1, 5]), close(&[0, 4]))
+            );
+            assert_eq!(
+                read(&tape, &format!("{op} {pair}|volume:1,0")).unwrap(),
+                (vec![], close(&[0, 4]))
+            );
+            assert_eq!(
+                read(&tape, &format!("{op} {pair}|imbalance:0,2/1")).unwrap(),
+                (close(&[5]), close(&[0, 2, 4]))
+            );
+            assert_eq!(
+                read(&tape, &format!("{op} {pair}|volume:0,1|imbalance:1,1/0")).unwrap(),
+                (close(&[1]), close(&[0, 2, 4]))
+            );
+        }
+        // Malformed parts are rejected with the plan, and a recording without
+        // counters refuses the code rather than reading its price part.
+        assert!(read(&tape, &format!("g1 {pair}|volume:0")).is_err());
+        assert!(read(&tape, &format!("g1 {pair}|delta:0,1")).is_err());
+        let plain = Tape::parse(&recording(false), BAR).unwrap();
+        assert_eq!(
+            read(&plain, &format!("g1 {pair}")).unwrap(),
+            (close(&[1, 5]), close(&[0, 4]))
+        );
+        assert!(read(&plain, &format!("g1 {pair}|volume:0,1"))
+            .unwrap_err()
+            .contains("no counters"));
+        // A recording whose counters cannot be right is refused.
+        let good = recording(true);
+        for (from, to) in [
+            ("1000,600,10", "1000,1001,10"),
+            ("1000,600,10", "1000,600,10.5"),
+            ("1000,600,10", "-1000,600,10"),
+            ("1000,600,10", "inf,600,10"),
+            ("1000,600,10", "1000,600"),
+            ("1000,600,10", "1000,600,10,1"),
+        ] {
+            assert!(good.contains(from));
+            assert!(Tape::parse(&good.replace(from, to), BAR).is_err(), "{to}");
+        }
+    }
 }
