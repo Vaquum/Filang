@@ -54,3 +54,4 @@ jobs:
           node study/verify/native.mjs
           node study/verify/candle-native.mjs
           node query/verify/handoff.mjs
+          node query/verify/cube-source.mjs

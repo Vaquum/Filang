@@ -2,16 +2,22 @@
 // It serves this folder, plus the study engine and its pinned recording read-only, so the bench runs real
 // Filang queries in the browser. It has no login of its own: in production it listens on 127.0.0.1 only,
 // behind the host's Caddy and the Portal login.
+// With CUBE_URL set to Cube's bridge it also serves the cube's bars for Cube's time windows (/bars); without it,
+// or when the bridge cannot answer, the bench reads the pinned recording.
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { cubeSource, CubeError, INTERVALS, WINDOWS } from './cube.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const STUDY = resolve(process.env.FILANG_STUDY || join(HERE, '../study'));
 const DATA = resolve(process.env.FILANG_STUDY_DATA || join(STUDY, '../data/study'));
 const host = process.env.HOST || '127.0.0.1';
 const port = Number(process.env.PORT || process.argv[2] || 8790);
+const cube = process.env.CUBE_URL ? cubeSource({ url: process.env.CUBE_URL }) : null;
+// The window the bench opens on when the cube answers: about as many 15m bars as the pinned recording holds.
+const DEFAULT_WINDOW = '180d';
 
 const mime = new Map([
   ['.html', 'text/html; charset=utf-8'], ['.css', 'text/css; charset=utf-8'],
@@ -49,6 +55,19 @@ const server = createServer(async (req, res) => {
       // The answer names the service: a deploy must be able to tell Query from whatever else holds a port.
       return res.end(JSON.stringify(gone.length ? { service: 'filang-query', ok: false, missing: gone.length } : { service: 'filang-query', ok: true }));
     }
+    if (path === 'bars/windows' || path === 'bars') {
+      const json = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(req.method === 'HEAD' ? undefined : JSON.stringify(body)); };
+      // What the bench may ask for. Without a cube there is the pinned recording only.
+      if (path === 'bars/windows') return json(200, { cube: Boolean(cube), default: DEFAULT_WINDOW, intervals: Object.keys(INTERVALS), windows: cube ? WINDOWS.map(({ key, name }) => ({ key, name })) : [] });
+      if (!cube) return json(404, { error: 'this server has no cube to read; the bench uses its pinned recording' });
+      const asked = new URL(req.url, 'http://127.0.0.1').searchParams;
+      try { return json(200, await cube.bars(asked.get('w') || DEFAULT_WINDOW, asked.get('tf') || '15m')); }
+      catch (e) {
+        if (!(e instanceof CubeError)) throw e;
+        // An unknown window or interval is the asker's mistake; anything else is the cube or its bridge.
+        return json(/^unknown /.test(e.message) ? 400 : 502, { error: e.message });
+      }
+    }
     if (path.split('/').some((s) => s === '..')) { res.writeHead(400); return res.end(); }
     const file = locate(path);
     if (!file) { res.writeHead(404); return res.end('Not found'); }
@@ -65,5 +84,6 @@ const server = createServer(async (req, res) => {
 for (const sig of ['SIGTERM', 'SIGINT']) process.once(sig, () => server.close(() => process.exit(0)));
 server.listen(port, host, async () => {
   const gone = await missing();
-  console.log(`Filang query bench on http://${host}:${port}/ · engine ${STUDY}${gone.length ? ` · MISSING ${gone.join(', ')}` : ''}`);
+  // The port it bound, which is the port asked for unless that was 0: a check that starts its own server asks for any.
+  console.log(`Filang query bench on http://${host}:${server.address().port}/ · engine ${STUDY} · bars ${cube ? `cube at ${process.env.CUBE_URL}` : 'pinned recording'}${gone.length ? ` · MISSING ${gone.join(', ')}` : ''}`);
 });

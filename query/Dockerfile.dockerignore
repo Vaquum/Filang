@@ -2,6 +2,7 @@
 *
 !query/index.html
 !query/serve.mjs
+!query/cube.mjs
 !query/bench
 !query/shared
 !study/src

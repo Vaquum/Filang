@@ -21,7 +21,8 @@ COPY study/composer/patterns.js study/composer/patterns.js
 COPY study/composer/drawing.js study/composer/drawing.js
 COPY study/extensions study/extensions
 COPY study/data-provenance.json study/nyse-sessions.json study/
-COPY query/index.html query/serve.mjs query/
+# cube.mjs is the server's own: it reads Cube's bridge when CUBE_URL names one, and is never served.
+COPY query/index.html query/serve.mjs query/cube.mjs query/
 COPY query/bench query/bench
 COPY query/shared query/shared
 COPY --from=recording /work/data/recorded-bars.csv data/study/recorded-bars.csv
