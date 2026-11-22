@@ -818,7 +818,11 @@ fn prepare_bank_with(
     let representatives = observed
         .checked_add(complement.is_some() as usize)
         .ok_or("geometry catalogue overflow")?;
-    for id in 0..representatives {
+    let positions = occurrences
+        .iter()
+        .map(Vec::as_slice)
+        .chain(complement.iter().map(|_| &[][..]));
+    for (id, positions) in positions.enumerate() {
         let multiplicity = if let Some((actual, key)) = ordered.get(id) {
             if *actual != id {
                 return Err("noncontiguous geometry catalogue".into());
@@ -833,10 +837,8 @@ fn prepare_bank_with(
             absent
         };
         let mut mask = base.clone();
-        if id < observed {
-            for &t in &occurrences[id] {
-                mask.bits[t / 64] |= 1u64 << (t % 64);
-            }
+        for &t in positions {
+            mask.bits[t / 64] |= 1u64 << (t % 64);
         }
         for (qindex, &qualifier) in c.qualifiers.iter().enumerate() {
             let qualified = qualify(&mask, qualifier)?;
