@@ -756,7 +756,13 @@ function asked() {
 const fail = (what) => (e) => { console.error(e); $('#status').textContent = `${what}: ${e.message}`; $('#status').className = 'err'; };
 /** Ask the same question of another window. The question stays; what was selected on the old bars does not. */
 async function openWindow(key) {
-  if (key === loaded() || state.loading) return;
+  if (state.loading) return;
+  if (key === loaded()) {
+    // Choosing what is already on screen still settles the choice. After a cube read that failed, the pinned recording
+    // is shown while the address keeps asking for the cube's window: picking it makes it the window that is kept.
+    if (state.asked || ui.window !== key) { ui.window = key; persist(); state.asked = null; state.notice = ''; render(); }
+    return;
+  }
   state.loading = true; $('#status').className = ''; $('#status').textContent = 'Reading the window…'; renderBars();
   try {
     await load(key);
