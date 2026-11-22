@@ -76,3 +76,17 @@ code on the same host and Rust version. Retain the A1 measurements. Compare
 canonical compact-key digests, every worker response and the scored geometry
 winner. Record the actual workload and host load. The decision criterion is
 parity and each candidate median at or below its paired base p75.
+
+## A5. Compact wide indexes and exercise pointer arrival across a frame
+
+**Hypothesis.** Storing wide observed ranks as exact 16-bit fields reduces
+the final WASM linear memory by at least 25% on A3's workspace. The
+compact engine also updates on the first animation frame at p95 within
+16.7 ms when edit dispatches are spread across the frame interval.
+
+**Method.** Use the same retained recording, widths, marks, axes, reference
+checks and Chromium binary as A3. Keep A3 as the frame-aligned arrival
+control. For A5 insert a deterministic 0–15 ms delay before each input
+dispatch, outside the timing boundary. Run five fresh profiles with 300
+edits each. Require full count parity in the sampled oracles, the memory
+reduction against A3 and p95 at or below 16.7 ms. Retain both workloads.
