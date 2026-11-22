@@ -9,8 +9,8 @@ use crate::{
     dense_run::{self, bank_context, bank_rows, record_path, BankSource, Best, ExecutionConfig},
     dense_tree::Table,
     geometry::{
-        self, Counters, DimensionSet, GeometryDimensionEncoder, GeometryEncoder, GeometryMode,
-        GeometryPattern, COUNTER_COLUMNS,
+        self, Counters, DimensionSet, GeometryDimensionEncoder, GeometryDimensionKey,
+        GeometryEncoder, GeometryMode, GeometryPattern, COUNTER_COLUMNS,
     },
     hash::sha256,
     kernels::Backend,
@@ -726,7 +726,7 @@ fn prepare_bank_with(
         ))
     };
     let mut rows = vec![[0.; 4]; lags.len()];
-    let mut seen = HashMap::<GeometryPattern, usize>::new();
+    let mut seen = HashMap::<GeometryDimensionKey, usize>::new();
     let mut occurrences = Vec::<Vec<usize>>::new();
     // Decisions whose window has no value on a declared dimension. They are
     // invalid for every pattern of this bank, whatever their prices.
@@ -760,7 +760,8 @@ fn prepare_bank_with(
                 }
             }
         };
-        let id = if let Some(&id) = seen.get(pattern) {
+        let key = GeometryDimensionKey::from_pattern(pattern)?;
+        let id = if let Some(&id) = seen.get(&key) {
             id
         } else {
             budget.charge(key_charge)?;
@@ -770,7 +771,7 @@ fn prepare_bank_with(
                 .map_err(|_| "geometry occurrence-table allocation")?;
             let id = occurrences.len();
             occurrences.push(Vec::new());
-            seen.insert(pattern.clone(), id);
+            seen.insert(key, id);
             id
         };
         budget.charge(4 * std::mem::size_of::<usize>())?;
@@ -791,18 +792,19 @@ fn prepare_bank_with(
                 c.mode,
                 c.dimensions,
                 observed,
-                |p| seen.contains_key(p),
+                |pattern| {
+                    GeometryDimensionKey::from_pattern(pattern)
+                        .map_or(false, |key| seen.contains_key(&key))
+                },
             )?
             .ok_or("missing unobserved geometry representative")?,
         )
     } else {
         None
     };
-    let mut ordered = seen
-        .iter()
-        .map(|(pattern, &id)| (id, pattern))
-        .collect::<Vec<_>>();
+    let mut ordered = seen.iter().map(|(&key, &id)| (id, key)).collect::<Vec<_>>();
     ordered.sort_unstable_by_key(|(id, _)| *id);
+    drop(seen);
     let mut catalogue = Writer::new(&record_path(banks, "patterns", bank, "tsv"))?;
     catalogue.write(b"id\tkind\tmultiplicity\tpattern\n")?;
     let mut members = Writer::new(&record_path(banks, "members", bank, "tsv"))?;
@@ -817,21 +819,19 @@ fn prepare_bank_with(
         .checked_add(complement.is_some() as usize)
         .ok_or("geometry catalogue overflow")?;
     for id in 0..representatives {
-        let (pattern, kind, multiplicity) = if id < observed {
-            if ordered[id].0 != id {
+        let multiplicity = if let Some((actual, key)) = ordered.get(id) {
+            if *actual != id {
                 return Err("noncontiguous geometry catalogue".into());
             }
-            (ordered[id].1, "observed", 1u128)
+            catalogue.write(format!("{id}\tobserved\t1\t{key}\n").as_bytes())?;
+            1u128
         } else {
-            (
-                complement
-                    .as_ref()
-                    .ok_or("geometry complement representative")?,
-                "unobserved",
-                absent,
-            )
+            let pattern = complement
+                .as_ref()
+                .ok_or("geometry complement representative")?;
+            catalogue.write(format!("{id}\tunobserved\t{absent}\t{pattern}\n").as_bytes())?;
+            absent
         };
-        catalogue.write(format!("{id}\t{kind}\t{multiplicity}\t{pattern}\n").as_bytes())?;
         let mut mask = base.clone();
         if id < observed {
             for &t in &occurrences[id] {
@@ -853,6 +853,8 @@ fn prepare_bank_with(
             members.write(format!("{id}\t{qindex}\t{state}\t{multiplicity}\n").as_bytes())?;
         }
     }
+    drop(ordered);
+    drop(occurrences);
     if builder.addresses != c.per_bank(bank)? {
         return Err("geometry bank logical coverage mismatch".into());
     }

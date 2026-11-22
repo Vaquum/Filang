@@ -135,3 +135,9 @@ node bindings/verify/chromium.mjs /path/to/chromium recorded-bars.csv counters.c
 Run the Python verification scripts inside an environment with the wheel
 installed. The retained benchmark protocols and results live under
 [the benchmark report](../benchmarks/reports/shared-engine/).
+
+To compare data sources on overlapping closes, install the wheel and run
+`python bindings/verify/compare_sources.py left.csv right.csv --width 4 --dimensions volume,delta`.
+The command records both file digests, compares the requested canonical
+identities and reports the first differences. Omit `--dimensions` for
+price-only comparisons.

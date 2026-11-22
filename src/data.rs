@@ -1,9 +1,13 @@
 use crate::{
     geometry::{Counters, COUNTER_COLUMNS},
-    hash::sha256,
+    hash::{sha256, Sha256},
     Result,
 };
-use std::{fmt::Write as _, fs};
+use std::{
+    fmt::Write as _,
+    fs,
+    io::{BufRead, BufReader},
+};
 
 #[derive(Clone, Debug)]
 pub struct Data {
@@ -26,9 +30,23 @@ impl Data {
     /// Reads either market CSV form. The six-column form carries no counters.
     /// The nine-column recording also yields one `Counters` per bar.
     pub fn read_with_counters(path: &str, interval: i64) -> Result<(Self, Option<Vec<Counters>>)> {
-        let bytes = fs::read(path).map_err(|e| format!("read {path}: {e}"))?;
-        let text = std::str::from_utf8(&bytes).map_err(|e| e.to_string())?;
-        Self::parse_with_counters(text, interval)
+        let io_error = |e| format!("read {path}: {e}");
+        let mut reader = BufReader::new(fs::File::open(path).map_err(io_error)?);
+        let mut line = Vec::new();
+        let count = reader.read_until(b'\n', &mut line).map_err(io_error)?;
+        let mut decoder =
+            MarketCsv::new((count != 0).then(|| csv_line(&line)).transpose()?, interval)?;
+        let mut hash = Sha256::new();
+        hash.update(&line);
+        for index in 0.. {
+            line.clear();
+            if reader.read_until(b'\n', &mut line).map_err(io_error)? == 0 {
+                break;
+            }
+            hash.update(&line);
+            decoder.row(csv_line(&line)?, index)?;
+        }
+        decoder.finish(hash.finish())
     }
     pub fn parse(text: &str, interval: i64) -> Result<Self> {
         Ok(Self::parse_with_counters(text, interval)?.0)
@@ -42,78 +60,12 @@ impl Data {
     /// a negative or non-finite counter, a taker-buy amount above the volume
     /// and a trade count that is not whole are refused.
     pub fn parse_with_counters(text: &str, interval: i64) -> Result<(Self, Option<Vec<Counters>>)> {
-        if interval <= 0 {
-            return Err("interval must be positive".into());
-        }
         let mut rows = text.lines();
-        let mut counters = match rows.next() {
-            Some("timestamp,open,high,low,close,volume") => None,
-            Some(COUNTER_COLUMNS) => Some(Vec::new()),
-            _ => {
-                return Err(format!(
-                    "CSV header must be timestamp,open,high,low,close,volume or {COUNTER_COLUMNS}"
-                ))
-            }
-        };
-        let width = if counters.is_some() { 9 } else { 6 };
-        let mut out = Self {
-            timestamps: vec![],
-            columns: std::array::from_fn(|_| Vec::new()),
-            interval,
-            digest: sha256(text.as_bytes()),
-        };
+        let mut decoder = MarketCsv::new(rows.next(), interval)?;
         for (index, row) in rows.enumerate() {
-            let mut fields = [""; 9];
-            let mut cells = row.split(',');
-            let wrong_width = || format!("CSV line {}: expected {width} fields", index + 2);
-            for field in &mut fields[..width] {
-                *field = cells.next().ok_or_else(wrong_width)?;
-            }
-            if cells.next().is_some() {
-                return Err(wrong_width());
-            }
-            let mut t = fields[0]
-                .parse::<i64>()
-                .map_err(|_| format!("invalid timestamp line {}", index + 2))?;
-            if let Some(counters) = &mut counters {
-                if t % 1000 != 0 {
-                    return Err(format!("open_ms off the whole second line {}", index + 2));
-                }
-                t /= 1000;
-                counters.push(
-                    Counters::parse(fields[6], fields[7], fields[8])
-                        .map_err(|e| format!("CSV line {}: {e}", index + 2))?,
-                );
-            }
-            if let Some(last) = out.timestamps.last() {
-                if t - *last != interval {
-                    return Err(format!("non-contiguous/duplicate timestamp at {t}; gaps must be resolved explicitly, never compressed"));
-                }
-            }
-            let mut v = [0.0f64; 5];
-            for j in 0..5 {
-                v[j] = fields[j + 1]
-                    .parse()
-                    .map_err(|_| format!("invalid numeric field line {}", index + 2))?;
-            }
-            if v.iter().any(|x| !x.is_finite())
-                || v[..4].iter().any(|x| *x <= 0.0)
-                || v[4] < 0.0
-                || v[1] < v[0].max(v[3])
-                || v[2] > v[0].min(v[3])
-                || v[1] < v[2]
-            {
-                return Err(format!("invalid OHLCV line {}", index + 2));
-            }
-            out.timestamps.push(t);
-            for (col, value) in out.columns.iter_mut().zip(v) {
-                col.push(value);
-            }
+            decoder.row(row, index)?;
         }
-        if out.len() < 4 {
-            return Err("at least four bars required".into());
-        }
-        Ok((out, counters))
+        decoder.finish(sha256(text.as_bytes()))
     }
     pub fn index(&self, time: i64) -> usize {
         self.timestamps.partition_point(|x| *x < time)
@@ -128,6 +80,105 @@ impl Data {
     }
 }
 /// Strict Gregorian YYYY-MM-DD, UTC midnight.
+struct MarketCsv {
+    data: Data,
+    counters: Option<Vec<Counters>>,
+    width: usize,
+}
+
+impl MarketCsv {
+    fn new(header: Option<&str>, interval: i64) -> Result<Self> {
+        if interval <= 0 {
+            return Err("interval must be positive".into());
+        }
+        let counters = match header {
+            Some("timestamp,open,high,low,close,volume") => None,
+            Some(COUNTER_COLUMNS) => Some(Vec::new()),
+            _ => {
+                return Err(format!(
+                    "CSV header must be timestamp,open,high,low,close,volume or {COUNTER_COLUMNS}"
+                ))
+            }
+        };
+        let width = if counters.is_some() { 9 } else { 6 };
+        Ok(Self {
+            data: Data {
+                timestamps: Vec::new(),
+                columns: std::array::from_fn(|_| Vec::new()),
+                interval,
+                digest: String::new(),
+            },
+            counters,
+            width,
+        })
+    }
+
+    fn row(&mut self, row: &str, index: usize) -> Result<()> {
+        let mut fields = [""; 9];
+        let mut cells = row.split(',');
+        let wrong_width = || format!("CSV line {}: expected {} fields", index + 2, self.width);
+        for field in &mut fields[..self.width] {
+            *field = cells.next().ok_or_else(wrong_width)?;
+        }
+        if cells.next().is_some() {
+            return Err(wrong_width());
+        }
+        let mut t = fields[0]
+            .parse::<i64>()
+            .map_err(|_| format!("invalid timestamp line {}", index + 2))?;
+        if let Some(counters) = &mut self.counters {
+            if t % 1000 != 0 {
+                return Err(format!("open_ms off the whole second line {}", index + 2));
+            }
+            t /= 1000;
+            counters.push(
+                Counters::parse(fields[6], fields[7], fields[8])
+                    .map_err(|e| format!("CSV line {}: {e}", index + 2))?,
+            );
+        }
+        if let Some(last) = self.data.timestamps.last() {
+            if t - *last != self.data.interval {
+                return Err(format!("non-contiguous/duplicate timestamp at {t}; gaps must be resolved explicitly, never compressed"));
+            }
+        }
+        let mut v = [0.0f64; 5];
+        for j in 0..5 {
+            v[j] = fields[j + 1]
+                .parse()
+                .map_err(|_| format!("invalid numeric field line {}", index + 2))?;
+        }
+        if v.iter().any(|x| !x.is_finite())
+            || v[..4].iter().any(|x| *x <= 0.0)
+            || v[4] < 0.0
+            || v[1] < v[0].max(v[3])
+            || v[2] > v[0].min(v[3])
+            || v[1] < v[2]
+        {
+            return Err(format!("invalid OHLCV line {}", index + 2));
+        }
+        self.data.timestamps.push(t);
+        for (col, value) in self.data.columns.iter_mut().zip(v) {
+            col.push(value);
+        }
+        Ok(())
+    }
+
+    fn finish(mut self, digest: String) -> Result<(Data, Option<Vec<Counters>>)> {
+        if self.data.len() < 4 {
+            return Err("at least four bars required".into());
+        }
+        self.data.digest = digest;
+        Ok((self.data, self.counters))
+    }
+}
+
+fn csv_line(bytes: &[u8]) -> Result<&str> {
+    let row = std::str::from_utf8(bytes).map_err(|err| err.to_string())?;
+    Ok(row
+        .strip_suffix('\n')
+        .map_or(row, |line| line.strip_suffix('\r').unwrap_or(line)))
+}
+
 pub fn date(s: &str) -> Result<i64> {
     let p: Vec<_> = s.split('-').collect();
     if p.len() != 3 || p[0].len() != 4 || p[1].len() != 2 || p[2].len() != 2 {
@@ -213,6 +264,30 @@ mod tests {
         assert!(Data::parse(&good.replace("\n2,", "\n5,"), 1).is_err());
         assert!(Data::parse(&good.replace("0,1,2,1,2,4", "0,0,2,1,2,4"), 1).is_err());
     }
+    #[test]
+    fn streamed_input_has_the_same_data_and_byte_digest_as_in_memory_input() {
+        let raw = [
+            COUNTER_COLUMNS,
+            "0,1,2,1,2,4,1000,600,10",
+            "1000,2,3,1,2,4,2000,1200,8",
+            "2000,2,3,1,2,4,0,0,0",
+            "3000,2,3,1,2,4,5e2,1,1",
+        ]
+        .join("\r\n");
+        let path =
+            std::env::temp_dir().join(format!("filang-streamed-csv-{}.csv", std::process::id()));
+        std::fs::write(&path, &raw).unwrap();
+        let read = Data::read_with_counters(path.to_str().unwrap(), 1);
+        std::fs::remove_file(path).unwrap();
+        let (streamed, sc) = read.unwrap();
+        let (parsed, pc) = Data::parse_with_counters(&raw, 1).unwrap();
+        assert_eq!(streamed.timestamps, parsed.timestamps);
+        assert_eq!(streamed.columns, parsed.columns);
+        assert_eq!(streamed.digest, parsed.digest);
+        assert_eq!(streamed.digest, sha256(raw.as_bytes()));
+        assert_eq!(sc, pc);
+    }
+
     #[test]
     fn nine_column_recording_carries_counters_and_refuses_bad_ones() {
         let six = "timestamp,open,high,low,close,volume\n0,1,2,1,2,4\n1,2,3,1,2,4\n2,2,3,1,2,4\n3,2,3,1,2,4\n";
