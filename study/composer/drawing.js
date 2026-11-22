@@ -1,5 +1,12 @@
 // Portable state for the local edition of Composer 133e301.
+import { parseG1 } from '../src/g1.js';
+
 export const COMPOSER_REVISION = '133e3017ba9143f7dc255df7218ff7bfe46d9d06';
+// A drawing with a dimension switched on is written in a later revision of the format: the same packet with one more
+// field, `dimensions`, the dimension parts of its g1 code in order (["volume:0,1", "delta:0,2/1"]). A packet in the
+// first revision has no such field and means every dimension off. The revision names the Composer commit the format
+// was cut from, as Composer's bench/model.js has it.
+export const DIMENSIONS_REVISION = 'bd6a0ba32e18548b641267418491bfb5f011a274';
 export const DEFAULT_ANCHOR = Date.parse('2025-03-28T19:30:00Z');
 const MAX_PACKET_LENGTH = 96_000;
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -18,7 +25,8 @@ export function drawingG1(packet) {
     if (packet.oriented) rank.push(b.v[1] === b.v[2] ? 'z' : b.d);
     return rank.join(',');
   });
-  return 'g1:' + (packet.oriented ? 'o:' : 'u:') + rows.join(';');
+  const parts = packet.dimensions && packet.dimensions.length ? '|' + packet.dimensions.join('|') : '';
+  return 'g1:' + (packet.oriented ? 'o:' : 'u:') + rows.join(';') + parts;
 }
 
 export function decodeDrawing(text, expectedG1) {
@@ -28,8 +36,16 @@ export function decodeDrawing(text, expectedG1) {
   );
   const p = JSON.parse(text);
   requireValue(
-    object(p) && p.version === 1 && p.revision === COMPOSER_REVISION,
+    object(p) && p.version === 1 && (p.revision === COMPOSER_REVISION || p.revision === DIMENSIONS_REVISION),
     'Unsupported Composer drawing version.',
+  );
+  requireValue(
+    p.dimensions === undefined ||
+      (p.revision === DIMENSIONS_REVISION &&
+        Array.isArray(p.dimensions) &&
+        p.dimensions.length <= 5 &&
+        p.dimensions.every((part) => typeof part === 'string' && part.length <= 200)),
+    'Invalid drawing dimensions.',
   );
   requireValue(
     typeof p.oriented === 'boolean' && Array.isArray(p.bars) && integer(p.bars.length, 1, 20),
@@ -81,6 +97,8 @@ export function decodeDrawing(text, expectedG1) {
     'Invalid continuation settings.',
   );
   requireValue([12, 24, 48].includes(p.limit), 'Invalid number of closest windows.');
+  // The dimension parts are read as strictly as the g1 code they belong to: names, order, one rank a bar, dense ranks.
+  if (p.dimensions && p.dimensions.length) parseG1(drawingG1(p));
   if (expectedG1 !== undefined && expectedG1 !== null)
     requireValue(drawingG1(p) === expectedG1, 'The drawing and exact G1 disagree.');
   return p;

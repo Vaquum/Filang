@@ -2,7 +2,7 @@
 // One interchange, the engine's own: the drawing packet of study/composer/drawing.js, under the parameter names the
 // study page already uses (drawing, g1, pin-relations). Only the shape and what is held on it are carried. Each
 // bench counts on its own history, so a count never crosses.
-import { decodeDrawing, drawingG1, pinnedExpression, COMPOSER_REVISION } from '/study/composer/drawing.js';
+import { decodeDrawing, drawingG1, pinnedExpression, COMPOSER_REVISION, DIMENSIONS_REVISION } from '/study/composer/drawing.js';
 import { parseG1 } from '/study/src/g1.js';
 import { make, clauseText } from '/shared/vocab.js';
 
@@ -37,7 +37,9 @@ export function packetFromG1(code) {
     const pattern = parseG1(code);
     if (!pattern.oriented || pattern.rows.length > 20) return null;
     const bars = pattern.rows.map((row) => ({ v: row.ranks.map((r) => (pattern.rankCount === 1 ? 50 : 15 + (70 * r) / (pattern.rankCount - 1))), d: row.direction === 'd' ? 'd' : 'u' }));
-    const packet = blank(bars, { coordinates: 'ordinal' });
+    // the code's dimension parts travel as they are written; a drawing with any is in the later revision of the format
+    const dimensions = code.split('|').slice(1);
+    const packet = blank(bars, { coordinates: 'ordinal', ...(dimensions.length ? { revision: DIMENSIONS_REVISION, dimensions } : {}) });
     return decodeDrawing(JSON.stringify(packet), code);   // refuses an opening gap: a drawn bar opens at the previous close
   } catch { return null; }
 }
