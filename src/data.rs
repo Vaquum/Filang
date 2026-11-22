@@ -28,9 +28,7 @@ impl Data {
     pub fn read_with_counters(path: &str, interval: i64) -> Result<(Self, Option<Vec<Counters>>)> {
         let bytes = fs::read(path).map_err(|e| format!("read {path}: {e}"))?;
         let text = std::str::from_utf8(&bytes).map_err(|e| e.to_string())?;
-        let (mut data, counters) = Self::parse_with_counters(text, interval)?;
-        data.digest = sha256(&bytes);
-        Ok((data, counters))
+        Self::parse_with_counters(text, interval)
     }
     pub fn parse(text: &str, interval: i64) -> Result<Self> {
         Ok(Self::parse_with_counters(text, interval)?.0)
@@ -65,9 +63,14 @@ impl Data {
             digest: sha256(text.as_bytes()),
         };
         for (index, row) in rows.enumerate() {
-            let fields: Vec<_> = row.split(',').collect();
-            if fields.len() != width {
-                return Err(format!("CSV line {}: expected {width} fields", index + 2));
+            let mut fields = [""; 9];
+            let mut cells = row.split(',');
+            let wrong_width = || format!("CSV line {}: expected {width} fields", index + 2);
+            for field in &mut fields[..width] {
+                *field = cells.next().ok_or_else(wrong_width)?;
+            }
+            if cells.next().is_some() {
+                return Err(wrong_width());
             }
             let mut t = fields[0]
                 .parse::<i64>()

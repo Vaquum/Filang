@@ -352,6 +352,58 @@ mod tests {
     }
 
     #[test]
+    fn text_compiler_keeps_dimension_validity_and_type_rules() {
+        use crate::engine_json;
+
+        let study = Study::new(&recording(true), BAR, "BTCUSDT").unwrap();
+        let query = |find: &str| format!("on BTCUSDT 15m\nfind {find}");
+        let result = |find: &str| {
+            let raw = study.query(&query(find), None).unwrap();
+            let json = engine_json::parse(&raw).unwrap();
+            let result = &json.field("results").unwrap().array().unwrap()[0];
+            let timestamps = |values: &engine_json::Value| {
+                values
+                    .array()
+                    .unwrap()
+                    .iter()
+                    .map(|value| value.number::<i64>().unwrap())
+                    .collect::<Vec<_>>()
+            };
+            (
+                timestamps(result.field("anchors").unwrap()),
+                timestamps(result.field("unknown").unwrap().field("event").unwrap()),
+            )
+        };
+        let close = |slots: &[i64]| slots.iter().map(|i| (i + 1) * BAR).collect::<Vec<_>>();
+        let v = "candle_relation(volume(), is: above, right: volume(bars_ago: 1))";
+        let d = "candle_relation(delta(), is: above, right: 0)";
+        assert_eq!(result(v), (close(&[1, 5]), close(&[0, 4])));
+        assert_eq!(result(d), (close(&[0, 1, 5]), vec![]));
+        assert_eq!(
+            result(&format!("{v} and {d}")),
+            (close(&[1, 5]), close(&[0]))
+        );
+        assert_eq!(
+            result("candle_relation(volume(), is: below, right: prior_low(over: 30m, of: volume))"),
+            (close(&[2]), close(&[0, 1, 4, 5])),
+        );
+        assert!(study
+            .check(&query("candle_relation(size(), right: volume())"))
+            .is_err());
+        assert!(study
+            .check(&query("candle_relation(volume(), right: 0)"))
+            .is_err());
+        assert!(study
+            .check(&query("wick_rejection() where dimension_multiple(delta)"))
+            .is_err());
+        assert!(study
+            .check(&query(
+                "wick_rejection() where dimension_multiple(volume, over: 30m, min: 200 %, max: 3)"
+            ))
+            .is_ok());
+    }
+
+    #[test]
     fn dimension_codes_are_three_valued_and_need_counters() {
         let tape = Tape::parse(&recording(true), BAR).unwrap();
         let close = |slots: &[i64]| slots.iter().map(|s| (s + 1) * BAR).collect::<Vec<_>>();

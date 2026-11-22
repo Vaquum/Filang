@@ -1,6 +1,6 @@
 use filang::geometry::{
     count_domain_decimal_with_dimensions,
-    explore::{declared_count, encode_drawing, Bar, Counts, Reading, Recording},
+    explore::{declared_count, distance, encode_drawing, Bar, Counts, Reading, Recording},
     Counters, Dimension, DimensionSet, GeometryMode, GeometryPattern,
 };
 use std::collections::HashMap;
@@ -106,4 +106,17 @@ fn declared_domain_multiplies_exact_counts_and_supports_wide_windows() {
     }
     let all = declared_count(30, GeometryMode::Oriented, DimensionSet::all()).unwrap();
     assert!(all.len() > 300 && all.chars().all(|c| c.is_ascii_digit()));
+}
+
+#[test]
+fn distance_counts_ties_reversals_and_orientation_in_half_flips() {
+    let up: GeometryPattern = "g1:o:0,1,2,3,u|delta:1/0".parse().unwrap();
+    let down: GeometryPattern = "g1:o:0,1,2,3,d|delta:1/0".parse().unwrap();
+    let flat_axis: GeometryPattern = "g1:o:0,1,2,3,u|delta:0/0".parse().unwrap();
+    let selling: GeometryPattern = "g1:o:0,1,2,3,u|delta:0/1".parse().unwrap();
+    assert_eq!(distance(&up, &up).unwrap(), 0);
+    assert_eq!(distance(&up, &down).unwrap(), 2);
+    assert_eq!(distance(&up, &flat_axis).unwrap(), 1);
+    assert_eq!(distance(&up, &selling).unwrap(), 2);
+    assert!(distance(&up, &up.price()).is_err());
 }

@@ -18,7 +18,7 @@ const reply = new Promise((resolve, reject) => {
   rejectReport = reject;
 });
 const profile = await fs.mkdtemp(path.join(os.tmpdir(), "filang-chromium-"));
-const types = {".mjs": "text/javascript", ".html": "text/html", ".wasm": "application/wasm",
+const types = {".mjs": "text/javascript", ".js": "text/javascript", ".html": "text/html", ".wasm": "application/wasm",
   ".json": "application/json", ".csv": "text/csv"};
 const fixtures = new Map([["/fixture/pinned.csv", priceFixture], ["/fixture/counters.csv", counterFixture]]);
 if (process.env.FILANG_BENCH_CORPUS) {

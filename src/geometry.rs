@@ -687,6 +687,22 @@ impl GeometryEncoder {
     }
 
     fn rank_values(&mut self) {
+        match self.pattern.ranks.as_mut_slice() {
+            [ranks] => {
+                let mut rank = 0;
+                ranks[0] = 0;
+                for (i, pair) in self.values.windows(2).enumerate() {
+                    rank += usize::from(pair[0] != pair[1]);
+                    ranks[i + 1] = rank;
+                }
+                return;
+            }
+            [left, right] => {
+                rank_pair(&self.values, left, right);
+                return;
+            }
+            _ => {}
+        }
         let values = &self.values;
         self.order.sort_unstable_by(|a, b| {
             // Every input was checked finite. Use numeric equality, so the
@@ -694,7 +710,6 @@ impl GeometryEncoder {
             values[*a]
                 .partial_cmp(&values[*b])
                 .expect("finite geometry values")
-                .then_with(|| a.cmp(b))
         });
         let mut previous = None;
         let mut rank = 0;
@@ -708,6 +723,26 @@ impl GeometryEncoder {
             self.pattern.ranks[index / 4][index % 4] = rank;
             previous = Some(value);
         }
+    }
+}
+
+// Each candle's four endpoints already form a sorted run.
+fn rank_pair(values: &[f64], left: &mut [usize; 4], right: &mut [usize; 4]) {
+    let (a, b) = values.split_at(4);
+    let (mut i, mut j) = (0, 0);
+    let mut previous = a[0].min(b[0]);
+    let mut rank = 0;
+    while i < 4 || j < 4 {
+        let (value, slot) = if j == 4 || (i < 4 && a[i] <= b[j]) {
+            i += 1;
+            (a[i - 1], &mut left[i - 1])
+        } else {
+            j += 1;
+            (b[j - 1], &mut right[j - 1])
+        };
+        rank += usize::from(value != previous);
+        *slot = rank;
+        previous = value;
     }
 }
 
