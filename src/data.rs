@@ -36,7 +36,7 @@ impl Data {
         let count = reader.read_until(b'\n', &mut line).map_err(io_error)?;
         let mut decoder =
             MarketCsv::new((count != 0).then(|| csv_line(&line)).transpose()?, interval)?;
-        let mut hash = Sha256::new();
+        let mut hash = Sha256::default();
         hash.update(&line);
         for index in 0.. {
             line.clear();
