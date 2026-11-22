@@ -175,6 +175,7 @@ async function run() {
   equal(absentExpected.matched, 0, "control is unobserved");
   equal(await worker.ask("counts", absent.code), absentExpected, "unobserved count");
   const edits = [];
+  const workerEdits = [];
   edit.oninput = async (event) => {
     const {q, resolve, reject} = event.detail;
     const began = time();
@@ -182,11 +183,14 @@ async function run() {
       const result = await worker.ask("drawCounts", q.ohlc, {reading: q.reading, axes: q.marks});
       equal(result.shape.code, q.code, "editing and reading the same window");
       output.textContent = result.counts.matched;
+      workerEdits.push(time() - began);
       await frame();
       resolve(time() - began);
     } catch (error) { reject(error); }
   };
-  for (const q of cases) {
+  const varied = new URL(location.href).searchParams.get("arrival") === "varied";
+  for (const [i, q] of cases.entries()) {
+    if (varied) await new Promise(resolve => setTimeout(resolve, (i * 7) % 16));
     const elapsed = await new Promise((resolve, reject) =>
       edit.dispatchEvent(new CustomEvent("input", {detail: {q, resolve, reject}})));
     edits.push(elapsed);
@@ -195,7 +199,7 @@ async function run() {
   worker.close();
   return {
     bars: bars.length,
-    loadMs, prepares, edits, memoryBytes,
+    loadMs, prepares, edits, workerEdits, memoryBytes,
     parityChecks: 1 + Math.ceil(cases.length / 19),
     price: {
       loadMs: priceLoadMs, prepares: pricePrepares, memoryBytes: pricePeakWasmBytes,

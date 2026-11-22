@@ -296,8 +296,43 @@ impl<C, W> Keys<C, W> {
     }
 }
 
-type PriceKeys = Keys<GeometryKey, GeometryPattern>;
-type AxisKeys = Keys<u64, DimensionPart>;
+// The widest supported price axis has 1,024 ranks, and a dimension
+// has at most 257. Store those ranks directly and keep the up bit in
+// the first endpoint of each candle. A tied body already identifies a doji.
+#[derive(Eq, PartialEq, Hash)]
+struct WideKey(Box<[u16]>);
+
+impl WideKey {
+    fn price(pattern: &GeometryPattern) -> Self {
+        let mut words = Vec::with_capacity(4 * pattern.len());
+        for (i, ranks) in pattern.ranks().iter().enumerate() {
+            let up = pattern
+                .directions()
+                .map_or(false, |ds| ds[i] == BodyDirection::Up);
+            words.extend([
+                ranks[0] as u16 | (u16::from(up) << 15),
+                ranks[1] as u16,
+                ranks[2] as u16,
+                ranks[3] as u16,
+            ]);
+        }
+        Self(words.into_boxed_slice())
+    }
+
+    fn axis(part: &DimensionPart) -> Self {
+        Self(
+            part.ranks()
+                .iter()
+                .copied()
+                .chain(part.reference())
+                .map(|rank| rank as u16)
+                .collect(),
+        )
+    }
+}
+
+type PriceKeys = Keys<GeometryKey, WideKey>;
+type AxisKeys = Keys<u64, WideKey>;
 
 /// Cache lifetime is explicit. Drop this value to release a width's indexes.
 /// More than one reading or orientation can share the same prepared axes.
@@ -435,13 +470,12 @@ impl PreparedGeometry {
         let mut slots = [&[][..]; 6];
         slots[0] = match price {
             Keys::Compact(postings) => postings.get(&GeometryKey::from_price(pattern)?),
-            Keys::Wide(postings) if pattern.has_dimensions() => postings.get(&pattern.price()),
-            Keys::Wide(postings) => postings.get(pattern),
+            Keys::Wide(postings) => postings.get(&WideKey::price(pattern)),
         };
         for (i, part) in pattern.dimensions().iter().enumerate() {
             slots[i + 1] = match self.axes[part.dimension() as usize].as_ref().unwrap() {
                 Keys::Compact(postings) => postings.get(&part.pack()),
-                Keys::Wide(postings) => postings.get(part),
+                Keys::Wide(postings) => postings.get(&WideKey::axis(part)),
             };
         }
         Ok(MatchLists {
@@ -494,7 +528,7 @@ fn index_prices(
     } else {
         let mut postings = Postings::new(recording.len());
         scan_prices(recording, &mut rows, reading, |end, rows| {
-            postings.insert(encoder.encode_ohlc(rows)?.clone(), end);
+            postings.insert(WideKey::price(encoder.encode_ohlc(rows)?), end);
             Ok(())
         })?;
         Ok(Keys::Wide(postings))
@@ -588,7 +622,7 @@ fn index_axis(recording: &Recording, width: usize, axis: Dimension) -> AxisKeys 
         let mut postings = Postings::new(recording.len());
         for end in prepared {
             let part = encoder.encode(&values[end + 1 - width..=end]);
-            postings.insert(part.clone(), end);
+            postings.insert(WideKey::axis(part), end);
         }
         Keys::Wide(postings)
     }

@@ -60,7 +60,7 @@ await once(server, "listening");
 const port = server.address().port;
 const chrome = spawn(binary, ["--headless", "--disable-gpu", "--no-first-run",
   "--disable-background-networking", `--user-data-dir=${profile}`,
-  `http://127.0.0.1:${port}/bindings/verify/${page}?first=${process.env.FILANG_BENCH_FIRST === "candidate" ? "candidate" : "base"}`],
+  `http://127.0.0.1:${port}/bindings/verify/${page}?first=${process.env.FILANG_BENCH_FIRST === "candidate" ? "candidate" : "base"}&arrival=${process.env.FILANG_BENCH_ARRIVAL === "varied" ? "varied" : "aligned"}`],
   {stdio: ["ignore", "ignore", "inherit"]});
 chrome.once("error", rejectReport);
 chrome.once("exit", (code, signal) => rejectReport(new Error(`Chromium exited with ${code ?? signal}`)));
