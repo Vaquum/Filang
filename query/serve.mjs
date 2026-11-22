@@ -23,7 +23,8 @@ const mime = new Map([
 const studyAsset = /^(?:(?:src|composer|extensions)\/(?:[\w.-]+\/)*[\w.-]+\.(?:js|json)|[\w-]+\.json)$/;
 const pageAsset = /^(?:index\.html|(?:bench|shared)\/[\w.-]+\.(?:js|css))$/;
 // The bench cannot answer without these, so their absence is a failed health check, not a blank page.
-const required = [join(DATA, 'recorded-bars.csv'), join(STUDY, 'data-provenance.json'), join(STUDY, 'nyse-sessions.json'), join(STUDY, 'src/engine.js'), join(STUDY, 'composer/patterns.js')];
+const required = [join(DATA, 'recorded-bars.csv'), join(STUDY, 'data-provenance.json'), join(STUDY, 'nyse-sessions.json'), join(STUDY, 'src/engine.js'), join(STUDY, 'composer/patterns.js'),
+  join(STUDY, 'composer/drawing.js')];   // the bench's vocabulary imports it: without it the page is blank
 
 function locate(path) {
   if (path === 'study/recorded-bars.csv') return join(DATA, 'recorded-bars.csv');
