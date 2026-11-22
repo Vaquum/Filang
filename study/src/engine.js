@@ -4,7 +4,7 @@
 import { leRatTimes, geRatTimes, centsText, ratToPercentText } from './num.js';
 import { isoUTC, isoUTCFull, hmUTC, dateUTC, sha256Hex } from './data.js';
 import { elapsedText, msToText } from './lang.js';
-import { g1FromRecording, matchesG1 } from './g1.js';
+import { chainedG1FromRecording, g1FromRecording, matchesChainedG1, matchesG1 } from './g1.js';
 import { candleSeries } from './candle-series.js';
 import { CANDLE_PATTERNS, ENUMS, ENGINE } from './registry.js';
 import { isBoolType, isCatType } from './check.js';
@@ -87,22 +87,25 @@ function wickSeries(ctx, p) {
   });
 }
 
-function exactGeometrySeries(ctx, p) {
+// exact_g1 reads every bar as recorded. chained_g1 reads the window as a chain: the first bar as recorded, every later
+// bar opening at the close of the recorded bar just before it (see g1.js). Both need the same complete window.
+function exactGeometrySeries(ctx, p, chained = false) {
   return ctx.cached('series:' + p.identity, () => {
     const { rec } = ctx;
     const { pattern, text } = p.args.pattern;
     const length = pattern.rows.length;
     const vals = new Int8Array(rec.n);
     const rankPrices = new Float64Array(pattern.rankCount);
+    const fits = chained ? matchesChainedG1 : matchesG1;
     let consecutive = 0;
     for (let i = 0; i < rec.n; i++) {
       consecutive = rec.present[i] ? consecutive + 1 : 0;
-      vals[i] = consecutive < length ? U : matchesG1(rec, i - length + 1, pattern, rankPrices) ? T : F;
+      vals[i] = consecutive < length ? U : fits(rec, i - length + 1, pattern, rankPrices) ? T : F;
     }
     const why = (i) => {
-      if (vals[i] === U) return `exact twins require ${length} consecutive recorded bars through this close`;
-      const observed = g1FromRecording(rec, i, length, pattern.oriented);
-      return `${observed} ${vals[i] === T ? 'matches' : 'differs from'} ${text}`;
+      if (vals[i] === U) return `${chained ? 'chained' : 'exact'} twins require ${length} consecutive recorded bars through this close`;
+      const observed = (chained ? chainedG1FromRecording : g1FromRecording)(rec, i, length, pattern.oriented);
+      return `${observed}${chained ? ' (later opens read as the previous close)' : ''} ${vals[i] === T ? 'matches' : 'differs from'} ${text}`;
     };
     return { vals, why, windowBars: length };
   });
@@ -265,6 +268,7 @@ export function eventSeries(ctx, p) {
   if (p.name === 'breach_reclaim' || p.name === 'candle_relation') return candleSeries(ctx, p);
   if (p.op === 'def' && p.def.patternId) return candlePatternSeries(ctx, p);
   if (p.op === 'def' && p.name === 'exact_g1') return exactGeometrySeries(ctx, p);
+  if (p.op === 'def' && p.name === 'chained_g1') return exactGeometrySeries(ctx, p, true);
   if (p.op === 'def' && p.name === 'wick_rejection') return wickSeries(ctx, p);
   if (p.op === 'def' && p.name === 'channel_breakout') return breakoutSeries(ctx, p);
   throw new Error(`no event implementation for ${p.name}`);

@@ -9,7 +9,9 @@ pub(super) const MAX_BATCH: usize = 64;
 
 pub(super) enum Node {
     Pattern(CandleRule),
-    Geometry(GeometryPattern),
+    /// A G1 pattern, and whether the window is read as a chain: every bar after the first opening at the
+    /// close of the bar before it, with its low and high widened to include that open.
+    Geometry(GeometryPattern, bool),
     Wick(Ratio, Ratio),
     Breakout(usize),
     Range(usize, Ratio),
@@ -108,12 +110,12 @@ impl Plan {
                     number(words.next(), "pattern length")?,
                     &mut words,
                 )?),
-                "g1" => {
+                "g1" | "g1c" => {
                     let pattern: GeometryPattern = words.next().ok_or("missing G1")?.parse()?;
                     if pattern.is_empty() {
                         return Err("empty G1 event".into());
                     }
-                    Node::Geometry(pattern)
+                    Node::Geometry(pattern, op == "g1c")
                 }
                 "wick" => Node::Wick(
                     Ratio::parse(words.next().ok_or("missing body ratio")?)?,

@@ -99,7 +99,8 @@ pub(super) struct Eval<'a> {
     pub tape: &'a Tape,
     calendar: &'a Calendar,
     windows: HashMap<usize, Rc<Vec<Envelope>>>,
-    keys: HashMap<(usize, bool), Rc<Vec<Key>>>,
+    // by window length, orientation and reading (as recorded or chained): the two readings never share keys
+    keys: HashMap<(usize, bool, bool), Rc<Vec<Key>>>,
     medians: HashMap<usize, Rc<Vec<i64>>>,
     used: usize,
     pub rolling_windows: usize,
@@ -165,7 +166,7 @@ impl<'a> Eval<'a> {
             Node::Pattern(rule) => {
                 self.mask(|i| rule.eval(tape.bars[i]?, i.checked_sub(1).and_then(|j| tape.bars[j])))
             }
-            Node::Geometry(pattern) => self.geometry(pattern)?,
+            Node::Geometry(pattern, chained) => self.geometry(pattern, *chained)?,
             Node::Price(field, lag) => Series::Prices(
                 (0..n)
                     .map(|i| {
@@ -368,7 +369,7 @@ impl<'a> Eval<'a> {
         Ok(store(&mut self.windows, window, out))
     }
 
-    fn geometry(&mut self, pattern: &GeometryPattern) -> Result<Series> {
+    fn geometry(&mut self, pattern: &GeometryPattern, chained: bool) -> Result<Series> {
         let w = pattern.len();
         let tape = self.tape;
         if w > tape.bars.len() {
@@ -376,7 +377,7 @@ impl<'a> Eval<'a> {
         }
         let oriented = pattern.mode() == GeometryMode::Oriented;
         if w <= GEOMETRY_KEY_MAX_BARS {
-            let coordinate = (w, oriented);
+            let coordinate = (w, oriented, chained);
             let keys = match self.keys.get(&coordinate) {
                 Some(keys) => Rc::clone(keys),
                 None => {
@@ -385,7 +386,7 @@ impl<'a> Eval<'a> {
                     let mut rows = vec![[0.0; 4]; w];
                     let mut keys = vec![None; tape.bars.len()];
                     for (end, slot) in keys.iter_mut().enumerate().skip(w - 1) {
-                        if load(tape, end + 1, &mut rows) {
+                        if load(tape, end + 1, &mut rows, chained) {
                             *slot = Some(enc.encode_key_ohlc(&rows)?);
                         }
                     }
@@ -400,7 +401,7 @@ impl<'a> Eval<'a> {
             let mut rows = vec![[0.0; 4]; w];
             let mut enc = GeometryEncoder::new(w, pattern.mode())?;
             for i in w - 1..tape.bars.len() {
-                if load(tape, i + 1, &mut rows) {
+                if load(tape, i + 1, &mut rows, chained) {
                     m.set(i, enc.encode_ohlc(&rows)? == pattern, true);
                 }
             }
@@ -431,13 +432,25 @@ fn push_extreme(q: &mut VecDeque<(usize, i64)>, i: usize, start: usize, v: Optio
     }
 }
 
-fn load(tape: &Tape, end: usize, rows: &mut [[f64; 4]]) -> bool {
+/// Loads the window ending before `end` as open, high, low, close rows. Read as recorded, each row is the bar.
+/// Read as a chain, the first bar is as recorded and every later bar opens at the close of the bar before it,
+/// with its low and high widened to include that open, so its body always lies inside them.
+fn load(tape: &Tape, end: usize, rows: &mut [[f64; 4]], chained: bool) -> bool {
     let start = end - rows.len();
     if !tape.complete(start, end) {
         return false;
     }
+    let mut previous = None;
     for (i, bar) in tape.bars[start..end].iter().enumerate() {
-        rows[i] = bar.expect("complete window").prices();
+        let bar = bar.expect("complete window");
+        rows[i] = match previous.filter(|_| chained) {
+            Some(open) => {
+                let (o, h, l) = (open, bar.h.max(open), bar.l.min(open));
+                [o as f64, h as f64, l as f64, bar.c as f64]
+            }
+            None => bar.prices(),
+        };
+        previous = Some(bar.c);
     }
     true
 }

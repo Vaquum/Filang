@@ -6,7 +6,7 @@ import { startWorker } from '../native/worker.mjs';
 import { compile, QueryError } from '../native/compiler.mjs';
 import { analyze } from '../src/check.js';
 import { runCandidate, compileBool, kAnd, U, EvalContext } from '../src/engine.js';
-import { g1FromRecording } from '../src/g1.js';
+import { chainedG1FromRecording, g1FromRecording } from '../src/g1.js';
 import { EXAMPLES } from '../src/examples.js';
 import { CANDLE_PATTERNS } from '../src/registry.js';
 
@@ -36,6 +36,7 @@ function post(query, source = e.digest, extensions = [], candidate) {
 }
 try {
 const find = 'on BTCUSDT 15m\nfind ';
+const chainSlot = e.rec.slotClosingAt(Date.parse('2025-03-28T19:30:00Z'));
 const queries = [
   ...['starter','transfer','transfer-filter'].map(id=>EXAMPLES.find(x=>x.id===id).text),
   find + 'exact_g1("g1:o:0,1,2,2,u") where quiet_friday_close(last: {30m | 1h})',
@@ -46,6 +47,14 @@ const queries = [
   find + '"Wick rejection" group by weekday(nyse_regular) = fri measure close_return(after: 7d)',
   find + 'wick_rejection(body_max: 0.' + '3'.repeat(4310) + ', wick_min: 45%) where weekday(nyse_regular) = closed',
   find + 'exact_g1("g1:o:0,0,0,0,z") group by weekday(nyse_regular)',
+  // the chained reading: a short window through the key cache, both orientations, and a window too long for keys
+  find + 'chained_g1("g1:o:0,1,3,4,u;2,3,5,6,u") measure close_return(after: [1h,4h])',
+  find + 'chained_g1(' + JSON.stringify(chainedG1FromRecording(e.rec,chainSlot,2,false)) + ')',
+  find + 'chained_g1(' + JSON.stringify(chainedG1FromRecording(e.rec,chainSlot,3)) + ') group by weekday(nyse_regular)',
+  find + 'chained_g1(' + JSON.stringify(chainedG1FromRecording(e.rec,chainSlot,12)) + ')',
+  // both readings of one code in one plan: they must not answer from each other's keys
+  find + 'chained_g1("g1:o:0,1,3,4,u;2,3,5,6,u") and exact_g1("g1:o:0,1,3,4,u;2,3,5,6,u")',
+  find + 'chained_g1("g1:o:1,3,4,5,u;0,2,4,6,d") or exact_g1("g1:o:0,1,3,4,u;2,3,5,6,u")',
   find + '"Wick rejection" where weekday(nyse_regular) = closed and not session_tail(nyse_regular,last:390m)',
   find + '"Wick rejection" where completed_trend(frame:15m) = flat or not (weekday(nyse_regular) != fri)'
 ];
@@ -107,6 +116,12 @@ const {status:gStatus, result:geom} = await post(patterns);
 assert.equal(gStatus,200,geom.error);
 assert.equal(geom.work.geometryWindows,1);
 assert.equal(geom.work.candidates,2);
+// One preparation per reading: the chained keys are built once for both chained codes and never reused for exact_g1.
+const readings = find + 'chained_g1({"g1:o:0,1,3,4,u;2,3,5,6,u" | "g1:o:1,3,4,5,u;0,2,4,6,d"}) or exact_g1("g1:o:0,1,3,4,u;2,3,5,6,u")';
+const {status:rStatus, result:both} = await post(readings);
+assert.equal(rStatus,200,both.error);
+assert.equal(both.work.candidates,2);
+assert.equal(both.work.geometryWindows,2);
 console.log('Passed native batch parity and shared rolling-window and G1 preparation checks.');
 // The native worker also checks an observed prefix with deleted real rows.
 const hammer = analyze(find + 'hammer', e.env).candidates[0];
