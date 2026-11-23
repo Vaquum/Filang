@@ -39,7 +39,8 @@ The pooled median was 7.2 ms to the displayed count, p95 was 16.3 ms,
 and p99 was 17.2 ms. Worker plus DOM p95 was 1.6 ms. The 16.7 ms
 criterion passed. Cold CSV load was 40.6 ms at the median and peak
 retained WASM linear memory was 160,169,984 bytes.
-[Complete browser samples](browser-a1.json)
+[Readable summary](browser-a1.json) · [Complete browser samples](browser-a1.json.gz)
+The archive expands to the original runner output. Its SHA-256 is in the summary.
 
 ## Reproduction
 
