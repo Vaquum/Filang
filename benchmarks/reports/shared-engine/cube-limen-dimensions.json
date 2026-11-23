@@ -1,0 +1,19 @@
+{
+  "sources_sha256": [
+    "4602501f922cc699cbac4d602c81cbc8e5b737d2c0e7648086923d7cb708baf4",
+    "58cd8c11a3966434a03d4f523cf5c33db662e8c2ba69f4a8d2091d23d44eb2d7"
+  ],
+  "width": 4,
+  "reading": "chained",
+  "dimensions": [
+    "volume",
+    "trades",
+    "delta",
+    "size",
+    "imbalance"
+  ],
+  "equal": 65901,
+  "both_unknown": 0,
+  "different": 0,
+  "examples": []
+}

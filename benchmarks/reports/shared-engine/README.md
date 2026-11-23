@@ -63,12 +63,12 @@ protocol retains this result and changes the candidate to address it.
 
 ## A2. Live Cube workload
 
-The loopback bridge was unavailable on the test host. The public Cube
-endpoint returned HTTP 401 to the local benchmark process. The desktop
-browser could view the live app. No local export of the required raw
-15-minute series was available for this run. The live-source comparison
-remains **inconclusive**. The retained-kline A3 attempt has its own source
-and criterion.
+The initial public endpoint probe returned HTTP 401. After the owner
+identified the host, the read-only SSH session captured the exact data
+from the production loopback bridge backed by ClickHouse. Seventeen
+archived level-4 MSCB blocks yielded 66,000 rows from 2025-01-04 12:00 UTC
+through 2026-11-23 00:00 UTC. Query's existing MSCB decoder preserved the
+delivered binary64 counters. [Capture and CSV digests](cube-source.json)
 
 ## A3. Retained klines with frame-aligned edits
 
@@ -145,3 +145,29 @@ matched on price. The Query fixture has no counters. A separate comparison
 of optional dimensions requires both files to contain their delivered
 counters, including the Cube export for live-source parity.
 [Source comparison](source-parity.json)
+
+## A7. Streamed market CSV and compact bank preparation
+
+This attempt preserved every captured count and result digest and reduced
+key probe RSS from roughly 3.5 MB to 2.8 MB. Geometry preparation still
+missed latency and peak RSS. The candidate was 8.49 MB against a base
+p75 of 7.09 MB in that stage. Native study peak RSS also missed by
+81,920 bytes. The joint claim was **not supported** and the broader
+parser and bank changes were removed. A8 addresses the repeated
+whole-executable buffer in the native preparation path.
+[Raw native A7 trials](native-a7.json)
+
+## A8. Bounded native executable fingerprint
+
+Candidate `def7f2f` reused the fingerprint computed with the fixed-size
+file hasher. Native geometry preparation fell from a paired baseline
+median of 165.5 ms and 8.01 MB to 137.3 ms and 5.64 MB. Byte parity still
+held across every artifact. Sweep wall time, study RSS and four-bar
+probe RSS missed their respective gates. The overall claim was
+**not supported** in this five-pair run.
+[Raw native A8 trials](native-a8.json)
+
+The live Cube and retained Limen recordings agreed on all 65,901
+complete common four-bar chained windows in a direct source
+comparison. This held for price and for the combined key with all
+five axes. [Price keys](cube-limen-price.json) · [All axes](cube-limen-dimensions.json)

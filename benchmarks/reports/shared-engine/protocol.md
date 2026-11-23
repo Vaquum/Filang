@@ -140,3 +140,15 @@ and the second hashing pass without changing the receipt digest.
 negative record and replace its broader changes with this narrower change.
 Repeat A6's fresh-process baseline, inputs, five alternating rounds,
 captured result and coverage parity, and unchanged p75 gates.
+
+## A9. Independent native replication
+
+**Hypothesis.** The A8 binary preserves native latency and RSS under
+an independent, larger paired replay. The five-pair A8 trial recorded
+a geometry prepare improvement alongside three missed gates.
+
+**Method.** Reuse the exact A8 baseline and candidate executables and
+inputs. Run 15 alternating fresh-spawn pairs, with the same workload,
+parity checks, timer boundaries and p75 thresholds as A8. Keep A8
+and A9 in the report. Treat this run as a replication of the measured
+platform and inputs.
