@@ -1,5 +1,55 @@
 # Filang engine bindings
 
+Install the engine from PyPI, or fetch the browser package from a versioned
+[GitHub release](https://github.com/Vaquum/Filang/releases). Both packages
+report the same release version and binding ABI through `version()`.
+
+## Published packages
+
+Every push to `main`, including each PR merge, runs
+[`publish-engine.yml`](../.github/workflows/publish-engine.yml). It builds and
+verifies Linux x86_64 (`manylinux_2_28`) and macOS Apple silicon wheels on
+Python 3.10 and 3.13, then publishes `filang` to PyPI using trusted publishing.
+The Python import remains `filang_engine`.
+
+Versions are the Cargo version plus `.postN`, where `N` is the publishing
+workflow's run number: for example, `0.10.0.post123`. This gives every merge
+a unique stable version within `>=0.10,<0.11` without a version-bump commit.
+The same run creates tag `v0.10.0.post123` at its source commit and publishes
+`filang-browser-0.10.0.post123.tar.gz` and `SHA256SUMS`. Reruns use the same
+version. PR runs build and verify packages without publishing.
+
+Pin a published version in Limen and regenerate its hash locks against PyPI:
+
+```sh
+python -m pip install --only-binary=:all: 'filang==0.10.0.post123'
+uv pip compile --generate-hashes requirements.in -o requirements.txt
+```
+
+Use `filang>=0.10,<0.11` in Limen's input requirements (replacing the original
+`filang-engine` distribution name), or pin an exact release. The generated
+lock identifies the exact wheel and its index-provided hash.
+
+Query and Composer can download the four browser files before building their
+images, without Rust or registry credentials:
+
+```sh
+python3 bindings/fetch_browser.py 0.10.0.post123 --out engine
+```
+
+The downloader requires an exact version, checks the archive against the
+release's published `SHA256SUMS`, and writes only `index.mjs`,
+`worker-client.mjs`, `worker.mjs` and `filang_engine.wasm`. The standalone
+script uses only Python's standard library and can be vendored by consumers.
+Keep the chosen version in the consumer repository; do not download `latest`.
+
+PyPI must have the `filang` trusted publisher configured for repository
+`Vaquum/Filang`, workflow `publish-engine.yml`, environment `pypi`. No PyPI
+API token is needed. The workflow finishes by installing from the public index,
+generating a hash lock, and downloading and verifying the public browser release.
+
+## Local build
+
 Build a browser package and an offline Python wheel from this checkout.
 
 ```sh
@@ -58,7 +108,7 @@ application can use the same methods on `await FilangEngine.create()` from
 ## Limen
 
 ```sh
-python -m pip install --no-index --find-links target/engine-dist filang-engine
+python -m pip install --no-index --find-links target/engine-dist filang
 ```
 
 ```python
