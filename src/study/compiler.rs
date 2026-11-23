@@ -12,6 +12,7 @@ use crate::{
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
+    ops::Range,
 };
 
 const DAY: i64 = 86_400_000;
@@ -172,7 +173,12 @@ impl Registry {
                 ))
     }
 
-    fn required_pins(&self, expr: &Expr, env: Environment<'_>, pins: &mut HashSet<String>) {
+    pub(super) fn required_pins(
+        &self,
+        expr: &Expr,
+        env: Environment<'_>,
+        pins: &mut HashSet<String>,
+    ) {
         match expr {
             Expr::Call(name, args) => {
                 if let Some(dep) = self.extensions.get(name) {
@@ -216,6 +222,32 @@ impl Registry {
     pub fn catalogue() -> &'static str {
         CATALOGUE
     }
+
+    pub(super) fn resolve_candle(&self, label: &str) -> Option<&str> {
+        self.pattern_names
+            .get(&label_key(label))
+            .map(String::as_str)
+    }
+
+    pub(super) fn extension_pin(&self, pin: &str) -> Option<&str> {
+        self.extensions
+            .values()
+            .find(|d| d.key() == pin)
+            .map(|d| d.digest.as_str())
+    }
+
+    pub(super) fn expand_pins(&self, pins: &mut HashSet<String>) {
+        let mut pending: Vec<_> = pins.iter().cloned().collect();
+        while let Some(pin) = pending.pop() {
+            if let Some(definition) = self.extensions.values().find(|d| d.key() == pin) {
+                for dependency in &definition.pins {
+                    if pins.insert(dependency.clone()) {
+                        pending.push(dependency.clone());
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn label_key(text: &str) -> String {
@@ -238,6 +270,15 @@ pub(super) fn compile(
     candidate: Option<usize>,
 ) -> Result<Plan> {
     let question = syntax::question(text)?;
+    compile_question(&question, environment, registry, candidate)
+}
+
+pub(super) fn compile_question(
+    question: &Question,
+    environment: Environment<'_>,
+    registry: &Registry,
+    candidate: Option<usize>,
+) -> Result<Plan> {
     if question.instrument != environment.instrument || question.interval != environment.interval {
         return Err("study instrument or interval differs from the loaded recording".into());
     }
@@ -255,17 +296,19 @@ pub(super) fn compile(
     if candidate.map_or(false, |index| index >= count) {
         return Err("candidate is outside the checked study".into());
     }
-    let mut compiler = Compiler::new(environment, registry, &question);
+    let mut compiler = Compiler::new(environment, registry, question);
     let mut requests = Vec::with_capacity(count);
+    let mut selected_filters = Vec::with_capacity(count);
     for index in 0..count {
         let mut remainder = index;
         for (slot, choices) in compiler.indices.iter_mut().zip(&question.choices).rev() {
             *slot = remainder % choices.len();
             remainder /= choices.len();
         }
-        let request = compiler.query()?;
+        let (request, filters) = compiler.query()?;
         if candidate.map_or(true, |i| i == index) {
             requests.push(request);
+            selected_filters.push(filters);
         }
     }
     if let Some(unused) = question
@@ -276,7 +319,59 @@ pub(super) fn compile(
     {
         return Err(format!("binding {unused} is never used"));
     }
-    compiler.finish(requests)
+    let mut plan = compiler.finish(requests)?;
+    for (query, filters) in plan.queries.iter_mut().zip(selected_filters) {
+        query.filters = filters;
+    }
+    Ok(plan)
+}
+
+pub(super) fn clause_errors(
+    question: &Question,
+    env: Environment<'_>,
+    registry: &Registry,
+) -> Vec<(Range<usize>, String)> {
+    let count = question
+        .choices
+        .iter()
+        .try_fold(1usize, |n, choices| n.checked_mul(choices.len()))
+        .unwrap_or(1)
+        .min(MAX_BATCH);
+    let mut errors = Vec::new();
+    for index in 0..count {
+        let mut compiler = Compiler::new(env, registry, question);
+        let mut remainder = index;
+        for (slot, choices) in compiler.indices.iter_mut().zip(&question.choices).rev() {
+            *slot = remainder % choices.len();
+            remainder /= choices.len();
+        }
+        let mut retain = |span: &Range<usize>, error: Result<()>| {
+            if let Err(error) = error {
+                let item = (span.clone(), error);
+                if errors.len() < 32 && !errors.contains(&item) {
+                    errors.push(item);
+                }
+            }
+        };
+        retain(
+            &question.find_span,
+            compiler.event(&question.find).map(|_| ()),
+        );
+        for (filter, span) in question.filters.iter().zip(&question.filter_spans) {
+            retain(span, compiler.boolean(filter, false).map(|_| ()));
+        }
+        if let Some((group, span)) = question.group.as_ref().zip(question.group_span.as_ref()) {
+            retain(span, compiler.group(group).map(|_| ()));
+        }
+        for (measure, span) in question.measures.iter().zip(&question.measure_spans) {
+            retain(
+                span,
+                compiler.horizons(std::slice::from_ref(measure)).map(|_| ()),
+            );
+        }
+    }
+    errors.sort_by_key(|(span, _)| span.start);
+    errors
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -373,12 +468,9 @@ impl<'a> Compiler<'a> {
         Ok(Node { kind, id })
     }
 
-    fn query(&mut self) -> Result<String> {
+    fn query(&mut self) -> Result<(String, Vec<usize>)> {
         let q = self.question;
-        let event = self.emit(&q.find, true)?;
-        if event.kind != Kind::Event {
-            return Err("find needs an event".into());
-        }
+        let event = self.event(&q.find)?;
         let mut filters = Vec::with_capacity(q.filters.len());
         for filter in &q.filters {
             filters.push(self.boolean(filter, false)?);
@@ -389,17 +481,39 @@ impl<'a> Compiler<'a> {
             _ => self.logic(Kind::Condition, true, &filters)?.id.to_string(),
         };
         let group = match &q.group {
-            Some(expr) => {
-                let node = self.emit(expr, false)?;
-                if !node.kind.boolean() && !node.kind.category() {
-                    return Err("group by needs a Boolean or categorical value".into());
-                }
-                node.id.to_string()
-            }
+            Some(expr) => self.group(expr)?.to_string(),
             None => "-".into(),
         };
+        let horizons = self.horizons(&q.measures)?;
+        let mut request = format!("{event} {context} {group}");
+        for horizon in horizons {
+            use std::fmt::Write;
+            write!(request, " {horizon}").expect("write to String");
+        }
+        Ok((request, filters))
+    }
+
+    fn event(&mut self, expr: &'a Expr) -> Result<usize> {
+        let node = self.emit(expr, true)?;
+        if node.kind == Kind::Event {
+            Ok(node.id)
+        } else {
+            Err("find needs an event".into())
+        }
+    }
+
+    fn group(&mut self, expr: &'a Expr) -> Result<usize> {
+        let node = self.emit(expr, false)?;
+        if node.kind.boolean() || node.kind.category() {
+            Ok(node.id)
+        } else {
+            Err("group by needs a Boolean or categorical value".into())
+        }
+    }
+
+    fn horizons(&mut self, measures: &'a [Expr]) -> Result<Vec<i64>> {
         let mut horizons = Vec::new();
-        for measure in &q.measures {
+        for measure in measures {
             let args = match measure {
                 Expr::Call(name, args) if name == "close_return" => args,
                 _ => return Err("measure needs close_return".into()),
@@ -419,12 +533,7 @@ impl<'a> Compiler<'a> {
             }
             args.finish()?;
         }
-        let mut request = format!("{} {context} {group}", event.id);
-        for horizon in horizons {
-            use std::fmt::Write;
-            write!(request, " {horizon}").expect("write to String");
-        }
-        Ok(request)
+        Ok(horizons)
     }
 
     fn literal(&mut self, expr: &'a Expr) -> Result<&'a Literal> {
@@ -480,10 +589,11 @@ impl<'a> Compiler<'a> {
 
     fn duration(&mut self, expr: &'a Expr, min: i64, max: i64, grid: bool) -> Result<i64> {
         match self.literal(expr)? {
-            Literal::Duration(ms)
-                if (min..=max).contains(ms) && (!grid || ms % self.environment.interval == 0) =>
+            Literal::Duration(duration)
+                if (min..=max).contains(&duration.ms)
+                    && (!grid || duration.ms % self.environment.interval == 0) =>
             {
-                Ok(*ms)
+                Ok(duration.ms)
             }
             _ => Err("duration is outside its range or off the recording grid".into()),
         }
@@ -881,9 +991,10 @@ impl<'a> Compiler<'a> {
 fn validate_param(param: &Param, value: &Literal, interval: i64) -> Result<()> {
     let domain = &param.domain;
     let valid = match (&param.kind, value) {
-        (ParamKind::Duration, Literal::Duration(ms)) => {
-            domain.min_ms.map_or(true, |min| *ms >= min)
-                && domain.max_ms.map_or(true, |max| *ms <= max)
+        (ParamKind::Duration, Literal::Duration(duration)) => {
+            let ms = duration.ms;
+            domain.min_ms.map_or(true, |min| ms >= min)
+                && domain.max_ms.map_or(true, |max| ms <= max)
                 && (!domain.grid || ms % interval == 0)
         }
         (ParamKind::Number, Literal::Number(_, false)) => {

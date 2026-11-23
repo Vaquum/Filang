@@ -37,7 +37,10 @@ export class FilangEngine {
   memoryBytes() { return this.#wasm.memory.buffer.byteLength; }
   version() { return this.#call("version"); }
   catalogue() { return this.#call("catalogue"); }
+  studyTerms() { return this.#call("study-terms"); }
+  resolveCandle(name) { return this.#call("resolve-candle", name); }
   inspect(code) { return this.#call("inspect", code); }
+  geometryShape(code) { return this.#call("geometry-shape", code); }
   distance(left, right) { return this.#call("distance", fields(left, right)); }
 
   domain(width, {oriented = true, dimensions = []} = {}) {
@@ -96,6 +99,20 @@ export class FilangEngine {
   study(query, {candidate = null} = {}) {
     return this.#call("study", `${candidate ?? "-"}\n${query}`);
   }
+
+  studyCounts(queries) { return this.#call("study-counts", JSON.stringify(queries)); }
+
+  studyRows(query, {candidate = 0, start = 0, limit = 4096} = {}) {
+    return this.#call("study-rows", `${fields(candidate, start, limit)}\n${query}`);
+  }
+
+  studyClose(query, t, {candidate = 0} = {}) {
+    return this.#call("study-close", `${fields(candidate, t)}\n${query}`);
+  }
+
+  sessionClock(t) { return this.#call("session-clock", String(t)); }
+  describeStudy(query) { return this.#call("study-describe", query); }
+  studyDiagnostics(query) { return this.#call("study-diagnostics", query); }
 
   prepare(width, {oriented = true, reading = "recorded", dimensions = []} = {}) {
     return this.#call("prepare", fields(width, mode(oriented), reading, names(dimensions)));

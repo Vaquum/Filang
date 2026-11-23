@@ -42,14 +42,14 @@ impl Series {
         }
     }
 
-    fn prices(&self) -> Result<&[i64]> {
+    pub(super) fn prices(&self) -> Result<&[i64]> {
         match self {
             Self::Prices(xs) => Ok(xs),
             _ => Err("plan expected a price series".into()),
         }
     }
 
-    fn axis(&self) -> Result<&[f64]> {
+    pub(super) fn axis(&self) -> Result<&[f64]> {
         match self {
             Self::Axis(values) => Ok(values),
             _ => Err("plan expected dimension values".into()),
@@ -137,6 +137,22 @@ impl<'a> Eval<'a> {
 
     pub fn median_windows(&self) -> usize {
         self.medians.len() + self.axis_medians.len()
+    }
+
+    pub(super) fn envelope_at(&self, window: usize, slot: usize) -> Envelope {
+        self.windows
+            .get(&window)
+            .and_then(|values| values.get(slot).copied().flatten())
+    }
+
+    pub(super) fn median_at(&self, window: usize, slot: usize) -> i64 {
+        self.medians.get(&window).map_or(0, |values| values[slot])
+    }
+
+    pub(super) fn axis_median_at(&self, dimension: Dimension, window: usize, slot: usize) -> f64 {
+        self.axis_medians
+            .get(&(dimension, window))
+            .map_or(f64::NAN, |values| values[slot])
     }
 
     fn charge(&mut self, bytes: usize) -> Result<()> {

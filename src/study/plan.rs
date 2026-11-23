@@ -56,6 +56,7 @@ enum Type {
 pub(super) struct Query {
     pub find: usize,
     pub context: Option<usize>,
+    pub filters: Vec<usize>,
     pub group: Option<usize>,
     pub horizons: Vec<usize>,
 }
@@ -373,6 +374,7 @@ impl Plan {
             queries.push(Query {
                 find,
                 context,
+                filters: Vec::new(),
                 group,
                 horizons,
             });

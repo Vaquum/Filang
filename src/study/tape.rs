@@ -164,14 +164,21 @@ impl Tape {
     }
 
     pub(super) fn geometry_recording(&self) -> Result<crate::geometry::explore::Recording> {
+        self.geometry_window(0, self.bars.len())
+    }
+
+    pub(super) fn geometry_window(
+        &self,
+        start: usize,
+        end: usize,
+    ) -> Result<crate::geometry::explore::Recording> {
         use crate::geometry::explore::{Bar as GeometryBar, Recording};
-        let bars = self
-            .bars
+        let bars = self.bars[start..end]
             .iter()
             .enumerate()
             .map(|(slot, bar)| {
                 bar.map(|bar| {
-                    let counters = self.counters.as_ref().and_then(|rows| rows[slot]);
+                    let counters = self.counters.as_ref().and_then(|rows| rows[start + slot]);
                     GeometryBar::new(bar.prices(), counters)
                 })
                 .transpose()
@@ -259,6 +266,16 @@ impl Calendar {
             Some((day, _, wd)) if t < day + 86_400_000 => *wd,
             _ => 5,
         })
+    }
+
+    pub(super) fn session_clock(&self, t: i64) -> Option<Option<(u8, i64, i64)>> {
+        let wd = self.weekday(t)?;
+        if wd == 5 {
+            return Some(None);
+        }
+        let i = self.sessions.partition_point(|s| s.0 <= t);
+        let day = self.sessions[i - 1].0;
+        Some(Some((wd, (t - day) / 60_000, day % 86_400_000)))
     }
 
     pub fn tail(&self, t: i64, last: i64) -> Option<bool> {
