@@ -85,6 +85,9 @@ export function verifyRadiusVectors(engine, vectors) {
     const want = two.distances.flatMap((d, i) => d !== null && d <= radius ? [i] : []);
     equal(engine.composerPositions(interval, {kind: "within"}).positions.map(p => p.start + two.width - 1),
       want, "Composer radius positions");
+    const packed = engine.composerPositionsPacked(interval, {kind: "within"});
+    equal(Array.from(packed.starts, (start, i) => start + packed.spans[i] - 1),
+      want, "Composer packed radius positions");
     equal(radius ? result.within[0] : result.exact[0], want.length, "Composer radius count");
     for (const resultWindow of result.results) {
       const {window, half_flips} = resultWindow;
