@@ -38,8 +38,10 @@ export function verifyRadiusVectors(engine, vectors) {
         matches.filter(slot => slot >= 3).slice(0, 2), name + " page");
       equal(engine.classify(code, search), outcomes, name + " classification");
       equal(engine.counts(code, search), counts, name + " counts");
-      equal(engine.neighbourhood(code, search), {counts, by_distance: [...histogram].sort((a, b) => a[0] - b[0])},
-        name + " neighbourhood");
+      const summary = {counts, by_distance: [...histogram].sort((a, b) => a[0] - b[0])};
+      equal(engine.neighbourhood(code, search), summary, name + " neighbourhood");
+      equal(engine.radiusSeries(code, search), {...summary,
+        states: outcomes.map(x => x === null ? "?" : x ? "1" : "0").join("")}, name + " mask");
       if (previous.some(slot => !matches.includes(slot))) throw new Error(name + " radius did not nest");
       previous = matches;
       if (radius === 0) equal(engine.counts(code, {reading}), engine.counts(code, search), name + " exact counts");
@@ -49,6 +51,7 @@ export function verifyRadiusVectors(engine, vectors) {
     const op = reading === "recorded" ? "exact_g1" : "chained_g1";
     const query = radius => `on BTCUSDT 15m\nfind ${op}("${code}"${radius === undefined ? "" : `, radius: ${radius}`})`;
     equal(engine.study(query(0)), engine.study(query()), name + " zero wire output");
+    equal(engine.describeStudy(query(0)), engine.describeStudy(query()), name + " canonical zero");
     for (const radius of radii) {
       const expected = distances.flatMap((d, slot) => d !== null && d <= radius ? [(slot + 1) * interval] : []);
       equal(engine.study(query(radius)).results[0].anchors, expected, name + " study anchors");

@@ -4,7 +4,7 @@ const engine = FilangEngine.create();
 const methods = new Set([
   "version", "memoryBytes", "inspect", "geometryShape", "distance", "domain", "load", "loadCsv", "prepare", "release",
   "drawingProtocol", "decodeDrawing", "encodeDrawing",
-  "at", "draw", "drawCounts", "counts", "neighbourhood", "positions", "classify", "catalogue", "setCalendar", "installDefinition", "check", "study", "studyCounts",
+  "at", "draw", "drawCounts", "counts", "neighbourhood", "radiusSeries", "positions", "classify", "catalogue", "setCalendar", "installDefinition", "check", "study", "studyCounts",
   "studyRows", "studyClose", "sessionClock", "studyTerms", "resolveCandle", "describeStudy", "studyDiagnostics",
 ]);
 

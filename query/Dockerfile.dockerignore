@@ -13,3 +13,4 @@
 !study/nyse-sessions.json
 !study/recording-lock.json
 !study/prepare_recording.py
+!bindings/fetch_browser.py

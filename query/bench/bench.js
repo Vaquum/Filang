@@ -1,6 +1,6 @@
 // Filang query bench. One locked canvas shows the pattern; the question is written in its row labels.
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
-import { load, loaded, sources, PINNED, run, count, rec, env, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
+import { load, loaded, geometryRadiusAvailable, geometryRadiusReceipt, sources, PINNED, run, count, rec, env, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
 import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText, drawingBars, drawingHeld, drawingRecorded } from '/shared/vocab.js';
 import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
@@ -91,9 +91,29 @@ function drawnParts(c) {
   // close is no chain: it is shown with the reading it was typed with, and says so.
   if (n > 1 && p) forms.push(form('recorded', 'as recorded', 'The same shape with each later open as the recording has it, not as the close before it. The shape ties each later open to that close, so read this way it matches only where the recorded open equals it to the cent, about half of adjacent candles.', 'faint'));
   const loose = n > 1 && !p ? h('span', { class: 'from', title: drawingRecorded(c) ? 'This code has a later bar opening away from the close before it, or keeps no directions, so it cannot be drawn as a chain. It is counted with opens as recorded.' : 'This code cannot be drawn as a chain, and it is asked as one: a window read as a chain always opens each later bar at the close before it, so nothing can match.' }, drawingRecorded(c) ? 'opens as recorded · not a chain' : 'read as a chain · not a chain') : null;
+  const radius = Number(c.args.radius) || 0;
+  let radiusControl = null;
+  if (geometryRadiusAvailable() && !drawingHeld(c)) {
+    const stepRadius = h('input', {type: 'number', min: 0, max: 4294967295, step: 1,
+      value: Array.isArray(c.args.radius) ? '' : radius, placeholder: 'sweep', 'aria-label': 'Comparison radius',
+      onchange: (event) => {
+        const value = event.currentTarget.valueAsNumber;
+        if (!Number.isInteger(value) || value < 0 || value > 4294967295) return;
+        const path = event.currentTarget.closest('[data-clause]')?.dataset.clause;
+        update(() => { c.args.radius = value; });
+        if (path) $(`[data-clause="${path}"] input[aria-label="Comparison radius"]`)?.focus();
+      }});
+    const reading = c.args.recorded ? 'recorded' : 'chained';
+    const bins = radius > 0 ? geometryRadiusReceipt(c.args.g1, reading, radius) : [];
+    const expanded = bins.reduce((sum, [cost, count]) => sum + (cost > 0 ? count : 0), 0);
+    radiusControl = h('span', {class: 'radius-control'},
+      h('label', null, 'Radius ', stepRadius),
+      radius > 0 ? h('small', {title: bins.map(([cost, count]) => `${cost} half-flips · ${int(count)}`).join('\n')},
+        ` +${int(expanded)} within radius`) : null);
+  }
   return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} ${p ? 'drawn shape' : 'g1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
     p && forms.length > 1 ? h('span', { class: 'join form' }, forms) : null), loose,
-  h('code', { class: 'g1' }, c.args.g1),
+  h('code', { class: 'g1' }, c.args.g1), radiusControl,
   c.args.packet ? h('span', { class: 'from', title: OWN_COUNT }, 'From Composer · counted on this window') : null];
 }
 /** The row label of a find clause: a drawn shape reads as a shape, everything else as its phrase. */

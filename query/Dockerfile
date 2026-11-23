@@ -12,6 +12,10 @@ WORKDIR /work/study
 COPY study/prepare_recording.py study/data-provenance.json study/recording-lock.json ./
 RUN FILANG_STUDY_DATA=/work/data python prepare_recording.py --parquet /work/source.parquet --encoder /work/bars.py
 
+ARG FILANG_ENGINE_VERSION=""
+COPY bindings/fetch_browser.py /work/fetch_browser.py
+RUN mkdir -p /work/engine && if [ -n "$FILANG_ENGINE_VERSION" ]; then python /work/fetch_browser.py "$FILANG_ENGINE_VERSION" --out /work/engine; fi
+
 # Stage two holds only what a browser asks for: the bench, the engine modules it imports, and the recording.
 FROM node:22-slim
 WORKDIR /app
@@ -26,6 +30,7 @@ COPY query/index.html query/serve.mjs query/cube.mjs query/
 COPY query/bench query/bench
 COPY query/shared query/shared
 COPY --from=recording /work/data/recorded-bars.csv data/study/recorded-bars.csv
-ENV PORT=8493
+COPY --from=recording /work/engine engine
+ENV PORT=8493 FILANG_QUERY_ENGINE_DIR=/app/engine
 USER 65534:65534
 CMD ["node", "query/serve.mjs"]

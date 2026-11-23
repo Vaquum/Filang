@@ -13,6 +13,8 @@ import { cubeSource, CubeError, INTERVALS, WINDOWS } from './cube.mjs';
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const STUDY = resolve(process.env.FILANG_STUDY || join(HERE, '../study'));
 const DATA = resolve(process.env.FILANG_STUDY_DATA || join(STUDY, '../data/study'));
+const ENGINE = resolve(process.env.FILANG_QUERY_ENGINE_DIR || join(HERE, '../target/engine-dist/browser'));
+const engineAssets = new Set(['index.mjs', 'worker-client.mjs', 'worker.mjs', 'filang_engine.wasm']);
 const host = process.env.HOST || '127.0.0.1';
 const port = Number(process.env.PORT || process.argv[2] || 8790);
 const cube = process.env.CUBE_URL ? cubeSource({ url: process.env.CUBE_URL }) : null;
@@ -23,7 +25,7 @@ const mime = new Map([
   ['.html', 'text/html; charset=utf-8'], ['.css', 'text/css; charset=utf-8'],
   ['.js', 'text/javascript; charset=utf-8'], ['.mjs', 'text/javascript; charset=utf-8'],
   ['.json', 'application/json; charset=utf-8'], ['.csv', 'text/csv; charset=utf-8'],
-  ['.svg', 'image/svg+xml'],
+  ['.svg', 'image/svg+xml'], ['.wasm', 'application/wasm'],
 ]);
 // Only what the browser engine imports is exposed from the study folder.
 const studyAsset = /^(?:(?:src|composer|extensions)\/(?:[\w.-]+\/)*[\w.-]+\.(?:js|json)|[\w-]+\.json)$/;
@@ -33,6 +35,10 @@ const required = [join(DATA, 'recorded-bars.csv'), join(STUDY, 'data-provenance.
   join(STUDY, 'composer/drawing.js')];   // the bench's vocabulary imports it: without it the page is blank
 
 function locate(path) {
+  if (path.startsWith('engine/')) {
+    const asset = path.slice(7);
+    return engineAssets.has(asset) ? join(ENGINE, asset) : null;
+  }
   if (path === 'study/recorded-bars.csv') return join(DATA, 'recorded-bars.csv');
   if (path.startsWith('study/')) {
     const rest = path.slice(6);

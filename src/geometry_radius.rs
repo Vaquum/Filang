@@ -129,6 +129,27 @@ impl PreparedGeometry {
             .collect())
     }
 
+    pub(crate) fn radius_series(
+        &mut self,
+        pattern: &GeometryPattern,
+        reading: Reading,
+        radius: u32,
+    ) -> Result<(String, RadiusCounts)> {
+        let result = self.membership(pattern, reading, radius)?;
+        let mut states = String::with_capacity(result.distance.len());
+        for slot in 0..result.distance.len() {
+            let symbol = if result.valid[slot / 64] & (1 << (slot % 64)) == 0 {
+                '?'
+            } else if result.distance[slot] == OUTSIDE {
+                '0'
+            } else {
+                '1'
+            };
+            states.push(symbol);
+        }
+        Ok((states, result.stats()))
+    }
+
     pub(crate) fn within_masks(
         &mut self,
         pattern: &GeometryPattern,

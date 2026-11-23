@@ -141,6 +141,10 @@ export class FilangEngine {
     return this.#call("neighbourhood", fields(reading, radius, code));
   }
 
+  radiusSeries(code, {reading = "recorded", radius = 0} = {}) {
+    return this.#call("radius-series", fields(reading, radius, code));
+  }
+
   positions(code, {reading = "recorded", start = 0, limit = 100, radius = 0} = {}) {
     return radius === 0 ? this.#call("positions", fields(reading, start, limit, code))
       : this.#call("positions-within", fields(reading, start, limit, radius, code));

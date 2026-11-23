@@ -223,15 +223,21 @@ impl Session {
                 let pattern: GeometryPattern = code.parse()?;
                 self.count(&pattern, Reading::parse(reading)?)
             }
-            b"neighbourhood" => {
+            b"neighbourhood" | b"radius-series" => {
                 let [reading, radius, code] = fields(text)?;
                 let pattern: GeometryPattern = code.parse()?;
                 let radius = number(radius)?;
-                let found = self.window(pattern.len())?.neighbourhood(
-                    &pattern,
-                    Reading::parse(reading)?,
-                    radius,
-                )?;
+                let reading = Reading::parse(reading)?;
+                let window = self.window(pattern.len())?;
+                let (states, found) = if operation == b"radius-series" {
+                    let (states, found) = window.radius_series(&pattern, reading, radius)?;
+                    (format!(",\"states\":\"{states}\""), found)
+                } else {
+                    (
+                        String::new(),
+                        window.neighbourhood(&pattern, reading, radius)?,
+                    )
+                };
                 let counts = counts_json(found.counts);
                 let distances: Vec<_> = found
                     .by_distance
@@ -239,7 +245,7 @@ impl Session {
                     .map(|(&cost, &n)| [cost as usize, n])
                     .collect();
                 Ok(format!(
-                    "{{\"counts\":{counts},\"by_distance\":{distances:?}}}"
+                    "{{\"counts\":{counts},\"by_distance\":{distances:?}{states}}}"
                 ))
             }
             b"counts-within" => {

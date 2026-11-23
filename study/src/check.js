@@ -318,6 +318,10 @@ export class Checker {
         return this.err('domain', `${min} must be at most ${max}`, node);
       }
     }
+    if ((def.name === 'exact_g1' || def.name === 'chained_g1') && args.radius?.rat.num === 0n) {
+      delete args.radius;
+      delete argSource.radius;
+    }
     const plan = {
       op: 'def', name: def.name, version: def.version, kind: def.kind, type: def.result, def,
       args, argSource, named, identity: identityOf(def.id || def.name, def.version, args),
