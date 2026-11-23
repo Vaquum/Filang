@@ -20,3 +20,13 @@ finish in under five seconds with no interval of 100 ms between yields.
 Replace the five- and twenty-bar stretched searches after 10 ms.
 Require the superseded work to yield within 100 ms, with no stale result
 emitted. Report source load separately.
+
+## A2. Prune stretch placements with remaining colour cost
+
+Retain A1's comparison and acceptance bounds. Precompute the lowest
+remaining half-colour cost for each placement and spare count. Use it
+only as a lower bound for score, or to prove no locally valid placement
+exists. Keep the earliest held placement even when its score cannot rank.
+Compare A2 with both the pinned matcher and the unpruned candidate on
+the scenarios the latter completes. Repeat the same five- and twenty-bar
+replacement checks through Chromium's worker.
