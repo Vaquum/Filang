@@ -360,7 +360,11 @@ function fromExpr(node, lets) {
   const ok = (type, args) => (Object.values(args).every((v) => v !== null && v !== undefined) ? { type, args } : raw());
   const prior = (n) => (n?.k === 'call' && /^prior_(low|high)$/.test(n.name) ? { side: n.name.slice(6), over: val(arg(n, 'over')) ?? '4h' } : null);
   // A dimension clause is read back only when every chosen value is one its slot offers; anything else stays formal text.
-  const fit = (type, args) => { const c = ok(type, args); return c.type !== type || CLAUSES[type].slots.every((sl) => sl.kind !== 'enum' || [].concat(args[sl.key]).every((v) => sl.options.includes(v))) ? c : raw(); };
+  const fit = (type, args) => {
+    const clause = ok(type, args);
+    return clause && CLAUSES[type].slots.every(sl => sl.kind !== 'enum'
+      || [].concat(args[sl.key]).every(v => sl.options.includes(v))) ? clause : raw();
+  };
   // The candle a reading is taken from: '0' when it names none, null when it is written any other way than bars_ago.
   const lag = (call) => (!call.args.length ? '0' : call.args.length === 1 && call.args[0].name === 'bars_ago' ? val(call.args[0].value) : null);
 

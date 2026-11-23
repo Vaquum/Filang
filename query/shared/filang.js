@@ -262,7 +262,8 @@ export function run(text) {
     const source = { ...d.manifest.pins.source, verified: bundle.digestVerified };
     out = { ok: true, text, errors: [], analysis: { axes: d.axes, ast: d.ast }, results, manifest: { ...d.manifest, pins: { ...d.manifest.pins, source } }, get ms() { return spent; } };
   } catch (e) {
-    out = { ok: false, text, errors: diagnosticsOf(text, e).errors, results: [] };
+    const { errors, ast } = diagnosticsOf(text, e);
+    out = { ok: false, text, errors, analysis: { ast }, results: [] };
   }
   if (runs.size > 600) runs.delete(runs.keys().next().value);
   runs.set(text, out);

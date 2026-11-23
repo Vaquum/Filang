@@ -207,7 +207,7 @@ function render() {
   const text = toText(m);
   const res = run(text);
   const status = $('#status');
-  const used = counters() && res.ok ? dimensionsIn(text, res.analysis.ast) : [];
+  const used = res.analysis.ast ? dimensionsIn(text, res.analysis.ast) : [];
   // The address reproduces the run. A drawn shape that came as a packet stays in it beside the text, so a reload or a
   // shared link still knows the drawing; it goes when the find is no longer that drawing. The dimension lanes on show
   // are named in it too. What a link carried in the query string is spent.
@@ -1004,7 +1004,11 @@ firstLoad().then(async () => {
     // A question that reads a dimension needs the cube's bars. When the link names no window and the bench was last
     // left on the pinned recording, it opens on the cube's default window rather than on a refusal.
     if (a && state.source.cube && !counters() && !new URLSearchParams(location.hash.slice(1)).get('w') && dimensionsIn(toText(a.model)).length) {
-      try { await load(state.source.default); } catch (e) { state.notice = `The cube could not be read (${e.message}); this question needs its bars`; }
+      try {
+        await load(state.source.default);
+        state.asked = null;
+        state.notice = '';
+      } catch (e) { state.notice = `The cube could not be read (${e.message}); this question needs its bars`; }
     }
     if (a) openModel(a.model, a.preset, a.lanes ?? null); else openModel(fromText(PRESETS[0].text).model, PRESETS[0].id);
   } catch (e) { fail('The bench could not be drawn')(e); }

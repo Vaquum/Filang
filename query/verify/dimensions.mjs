@@ -211,6 +211,11 @@ ok(`${CASES.length} clauses print their exact text, read as one sentence, come b
     assert.match(a.errors[0].message, /counters/);
     same(fromText(written).model.wheres[0], c);
   }
+  const unmapped = 'candle_relation(delta(bars_ago: 1, extra: 2), is: above, right: 0)';
+  const deferred = `${HEAD}\nfind ${unmapped}`;
+  assert.equal(check(deferred).errors[0].kind, 'capability');
+  assert.equal(fromText(deferred).model.find.items[0].type, 'raw');
+  assert.equal(toText(fromText(deferred).model), deferred);
   for (const [i, p] of PRESETS.entries()) {
     const text = toText(fromText(p.text).model);
     assert.deepEqual(dimensionsIn(text), [], p.id);
