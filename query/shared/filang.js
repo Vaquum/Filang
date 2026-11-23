@@ -39,7 +39,10 @@ function browserEngine() {
       return null;
     }
     return engine;
-  })();
+  })().catch(() => {
+    engineLoading = null;
+    return null;
+  });
 }
 
 function radiusGeometry(code, reading, radius) {
@@ -85,7 +88,7 @@ export async function load(window = PINNED) {
   if (window === PINNED) {
     const names = [DATA_FILES.bars, DATA_FILES.provenance, DATA_FILES.sessions, ...EXTENSION_FILES];
     const [csvBytes, provenanceBytes, sessionsBytes, ...ext] = await Promise.all(names.map(bytes));
-    recording = new TextDecoder().decode(csvBytes);
+    recording = csvBytes;
     next = buildEnvironment({
       csvBytes, provenanceBytes, sessionsBytes,
       extensions: EXTENSION_FILES.map((file, i) => ({ file, bytes: ext[i] })),
@@ -98,11 +101,16 @@ export async function load(window = PINNED) {
     const enc = new TextEncoder();
     next = buildEnvironment({ csvBytes: enc.encode(body.csv), provenanceBytes: enc.encode(JSON.stringify(body.provenance)), sessionsBytes });
   }
-  geometryEngine = await engine;
-  if (geometryEngine !== null) {
-    geometryEngine.loadCsv(recording, next.rec.barMs);
-    next.ctx.radiusGeometry = radiusGeometry;
+  let geometry = await engine;
+  if (geometry !== null) {
+    try {
+      geometry.loadCsv(typeof recording === 'string' ? recording : new TextDecoder().decode(recording), next.rec.barMs);
+      next.ctx.radiusGeometry = radiusGeometry;
+    } catch {
+      geometry = null;
+    }
   }
+  geometryEngine = geometry;
   bundle = next; held = window; cache.clear(); radiusCache.clear();
   return bundle;
 }
