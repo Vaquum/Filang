@@ -45,6 +45,11 @@ impl Session {
             None => (request, &[][..]),
         };
         match operation {
+            b"counts" => {
+                let [reading, code] = fields(utf8(payload)?)?;
+                let pattern: GeometryPattern = code.parse()?;
+                return self.count(&pattern, Reading::parse(reading)?);
+            }
             b"load" => return self.set_recording(decode_bars(payload)?),
             b"load-csv" => {
                 let (interval, csv) = utf8(payload)?
@@ -269,11 +274,6 @@ impl Session {
                     DimensionSet::parse(dimensions)?,
                 )?;
                 Ok("null".into())
-            }
-            b"counts" => {
-                let [reading, code] = fields(text)?;
-                let pattern: GeometryPattern = code.parse()?;
-                self.count(&pattern, Reading::parse(reading)?)
             }
             b"neighbourhood" | b"radius-series" => {
                 let [reading, radius, code] = fields(text)?;
