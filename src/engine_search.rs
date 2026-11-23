@@ -517,7 +517,8 @@ impl Search {
                     self.contiguous(frame);
                     let window = Window::consecutive(self.start, self.span);
                     if let Some(axes) = self.axes(frame, window) {
-                        let colours = self.values();
+                        let colours = self.colour_flips();
+                        self.fill_endpoints();
                         self.rank_window(window, colours, axes);
                     }
                 }
@@ -531,6 +532,9 @@ impl Search {
                 } else {
                     self.next_span();
                 }
+            } else if self.span == 2 {
+                self.observe_stretched_pair(frame, selected);
+                self.next_span();
             } else {
                 let mut placement = match self
                     .placement
@@ -546,17 +550,22 @@ impl Search {
                 };
                 let qualified = self.qualifies(self.frame, self.start + self.span + self.extra - 1);
                 let rank = selected && qualified;
-                if (rank || placement.first.is_none()) && self.place(frame, &mut placement, rank) {
-                    self.placement = Some(placement);
-                } else {
-                    if let Some(window) = placement.first {
-                        self.record_hold(window, qualified);
+                if rank || placement.first.is_none() {
+                    while self.place(frame, &mut placement, rank) {
+                        remaining -= 1;
+                        if remaining == 0 {
+                            self.placement = Some(placement);
+                            return false;
+                        }
                     }
-                    if let Some((score, window, flips, off)) = placement.best {
-                        self.record_rank(score, flips, off, window);
-                    }
-                    self.next_span();
                 }
+                if let Some(window) = placement.first {
+                    self.record_hold(window, qualified);
+                }
+                if let Some((score, window, flips, off)) = placement.best {
+                    self.record_rank(score, flips, off, window);
+                }
+                self.next_span();
             }
             remaining -= 1;
         }
@@ -582,10 +591,13 @@ impl Search {
         }
     }
 
-    fn values(&mut self) -> usize {
+    fn fill_endpoints(&mut self) {
         for (i, &row) in self.scratch[..self.span].iter().enumerate() {
             self.endpoints[4 * i..4 * i + 4].copy_from_slice(&boundaries(row));
         }
+    }
+
+    fn colour_flips(&self) -> usize {
         self.shape.colour_flips(&self.scratch[..self.span])
     }
 
@@ -607,7 +619,20 @@ impl Search {
             Some(axes) => axes,
             None => return false,
         };
-        let colours = self.values();
+        let held =
+            !self.holds.is_empty() && self.holds.iter().all(|hold| hold.matches(&self.scratch));
+        let colours = self.colour_flips();
+        let rank = (self.holds.is_empty() || held)
+            && selected
+            && qualified
+            && colours as f64 / 2.0 <= self.bound();
+        if held {
+            self.record_hold(window, qualified);
+        }
+        if colours > self.radius && !rank {
+            return held;
+        }
+        self.fill_endpoints();
         let ends = &self.endpoints[..4 * self.span];
         if self.radius > 0 && self.shape.within(ends, colours, axes, self.radius) {
             self.positions[self.frame].within.push(window);
@@ -637,15 +662,33 @@ impl Search {
             }
             _ => {}
         }
-        let held =
-            !self.holds.is_empty() && self.holds.iter().all(|hold| hold.matches(&self.scratch));
-        if held {
-            self.record_hold(window, qualified);
-        }
-        if (self.holds.is_empty() || held) && selected && qualified {
+        if rank {
             self.rank_window(window, colours, axes);
         }
         held
+    }
+
+    fn observe_stretched_pair(&mut self, frame: &Frame, selected: bool) {
+        let offset = self.extra + 1;
+        let end = self.start + offset;
+        let window = Window {
+            start: self.start as u32,
+            picks: 1 | (1 << offset),
+        };
+        self.scratch[1] = frame.candle(end, 1);
+        if self.first_only || self.holds.iter().all(|hold| hold.matches(&self.scratch)) {
+            if let Some(axes) = self.axes(frame, window) {
+                let qualified = self.qualifies(self.frame, end);
+                self.record_hold(window, qualified);
+                if selected && qualified {
+                    let colours = self.colour_flips();
+                    if colours as f64 / 2.0 <= self.bound() {
+                        self.fill_endpoints();
+                        self.rank_window(window, colours, axes);
+                    }
+                }
+            }
+        }
     }
 
     fn rank_window(&mut self, window: Window, colours: usize, axes: AxisDistance) {
@@ -770,7 +813,8 @@ impl Search {
         let bound = placement
             .best
             .map_or(self.bound(), |(score, ..)| score.min(self.bound()));
-        let colours = self.values();
+        let colours = self.colour_flips();
+        self.fill_endpoints();
         let ends = &self.endpoints[..4 * self.span];
         if let Some((score, flips, off)) = self.shape.rank(ends, colours, axes, bound) {
             if placement.best.map_or(true, |(current, ..)| score < current) {
