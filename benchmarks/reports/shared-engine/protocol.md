@@ -117,3 +117,14 @@ fresh-process workload. Compare full native study replies, compact key
 digests, observed catalogues, captured score regions and frozen winners.
 Require parity and the same paired p75 gates for every measured latency and
 resident-memory metric.
+
+### A2 execution trace after authorized source access
+
+The production bridge is read through the authorized host. Freeze the
+latest fully archived 66,000 bars at level 4 before running locally. Use
+Query's existing binary decoder and preserve the delivered binary64
+counters. Replay the A5 varied-arrival workload with the same p95 gate,
+recording width, marks, read mode, axes, independent count parity and
+cold preparation. The A3 retained-recording frame-aligned control stays
+in the record. Compare the Cube capture with Limen on common closes
+and record source differences separately from binding parity.
