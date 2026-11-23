@@ -9,6 +9,14 @@ mod predicate;
 mod syntax;
 mod tape;
 
+pub(crate) fn geometry_frame(
+    csv: &str,
+    interval: i64,
+) -> crate::Result<(i64, crate::geometry::explore::Recording)> {
+    let tape = tape::Tape::parse(csv, interval)?;
+    Ok((tape.start, tape.geometry_recording()?))
+}
+
 use self::{
     compute::{Eval, Series},
     plan::{Plan, Query},

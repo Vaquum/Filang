@@ -2,9 +2,9 @@
 //! and axis keys independently, so toggling axes never builds their product.
 
 use super::{
-    decimal_price_domain, dimensions::AxisEncoder, BodyDirection, Counters, DecimalNatural,
-    Dimension, DimensionPart, DimensionSet, GeometryEncoder, GeometryKey, GeometryMode,
-    GeometryPattern, GEOMETRY_KEY_MAX_BARS,
+    decimal_price_domain, dimensions::AxisEncoder, matching::half_flips, BodyDirection, Counters,
+    DecimalNatural, Dimension, DimensionPart, DimensionSet, GeometryEncoder, GeometryKey,
+    GeometryMode, GeometryPattern, GEOMETRY_KEY_MAX_BARS,
 };
 use crate::Result;
 use std::{collections::HashMap, hash::Hash, sync::Arc};
@@ -138,6 +138,15 @@ impl Recording {
             return Err(format!("geometry recording exceeds {MAX_SLOTS} grid slots"));
         }
         Ok(Self(bars.into()))
+    }
+
+    pub(crate) fn candle(&self, slot: usize, reading: Reading) -> Option<[f64; 4]> {
+        let bar = (*self.0.get(slot)?)?;
+        let previous_close = slot
+            .checked_sub(1)
+            .and_then(|i| self.0[i])
+            .map(|bar| bar.ohlc[3]);
+        Some(reading.candle(bar.ohlc, previous_close))
     }
 
     pub fn len(&self) -> usize {
@@ -581,7 +590,7 @@ pub fn distance(left: &GeometryPattern, right: &GeometryPattern) -> Result<usize
         total += a
             .iter()
             .zip(b)
-            .map(|(&a, &b)| usize::from((code(a) - code(b)).unsigned_abs()))
+            .map(|(&a, &b)| half_flips(code(a), code(b)))
             .sum::<usize>();
     }
     for (a, b) in left.dimensions().iter().zip(right.dimensions()) {
@@ -603,7 +612,7 @@ fn order_distance(left: &[usize], right: &[usize]) -> usize {
         for i in 0..j {
             let a = left[i].cmp(&left[j]) as i8;
             let b = right[i].cmp(&right[j]) as i8;
-            total += usize::from((a - b).unsigned_abs());
+            total += half_flips(a, b);
         }
     }
     total

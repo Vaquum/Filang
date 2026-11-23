@@ -65,6 +65,24 @@ export class FilangEngine {
     return this.#call("load-csv", `${fields(intervalMs, instrument)}\n${csv}`);
   }
 
+  loadComposerFrame(csv, intervalMs) {
+    return this.#call("composer-load", `${intervalMs}\n${csv}`);
+  }
+
+  composerStart(packet, {timeframes = 31, endMasks} = {}) {
+    const options = JSON.stringify({timeframes, end_masks: endMasks});
+    const drawing = typeof packet === "string" ? packet : JSON.stringify(packet);
+    return this.#call("composer-start", `${options}\n${drawing}`);
+  }
+
+  composerStep(units = 1024) { return this.#call("composer-step", String(units)); }
+
+  composerCancel() { return this.#call("composer-cancel"); }
+
+  composerPositions(intervalMs, {kind = "exact", start = 0, limit = 4096} = {}) {
+    return this.#call("composer-positions", fields(intervalMs, kind, start, limit));
+  }
+
   setCalendar(tsv = "", {table} = {}) {
     return table === undefined ? this.#call("calendar", tsv)
       : this.#call("calendar-named", `${table}\n${tsv}`);
