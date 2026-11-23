@@ -1,0 +1,449 @@
+{
+  "parity": true,
+  "gates": [
+    {
+      "width": 2,
+      "base_ms": 4.790583,
+      "candidate_ms": 0.43425,
+      "passed": true
+    },
+    {
+      "width": 24,
+      "base_ms": 4.61675,
+      "candidate_ms": 0.449333,
+      "passed": true
+    },
+    {
+      "width": 128,
+      "base_ms": 5.451167,
+      "candidate_ms": 0.457542,
+      "passed": true
+    }
+  ],
+  "trials": {
+    "base": [
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 12.520333,
+            "dense_warm_p95_ms": 4.790583
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 61.146333,
+            "dense_warm_p95_ms": 4.61675
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 252.929375,
+            "dense_warm_p95_ms": 5.451167
+          }
+        ]
+      },
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 12.634,
+            "dense_warm_p95_ms": 4.889167
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 61.386375,
+            "dense_warm_p95_ms": 4.579
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 268.972416,
+            "dense_warm_p95_ms": 5.801667
+          }
+        ]
+      },
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 23.161083,
+            "dense_warm_p95_ms": 5.975958
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 63.332625,
+            "dense_warm_p95_ms": 4.697917
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 254.437209,
+            "dense_warm_p95_ms": 6.507666
+          }
+        ]
+      },
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 10.159917,
+            "dense_warm_p95_ms": 4.604125
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 62.327875,
+            "dense_warm_p95_ms": 5.422333
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 241.555416,
+            "dense_warm_p95_ms": 5.020625
+          }
+        ]
+      },
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 10.582958,
+            "dense_warm_p95_ms": 4.676291
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 59.590125,
+            "dense_warm_p95_ms": 4.461667
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 242.57675,
+            "dense_warm_p95_ms": 4.954167
+          }
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 14.174167,
+            "dense_warm_p95_ms": 0.502625
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 62.871208,
+            "dense_warm_p95_ms": 0.449333
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 242.623125,
+            "dense_warm_p95_ms": 0.46075
+          }
+        ]
+      },
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 10.661208,
+            "dense_warm_p95_ms": 0.450792
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 64.881708,
+            "dense_warm_p95_ms": 0.420542
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 258.584375,
+            "dense_warm_p95_ms": 1.114834
+          }
+        ]
+      },
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 11.318584,
+            "dense_warm_p95_ms": 0.404334
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 169.041667,
+            "dense_warm_p95_ms": 0.592208
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 256.345916,
+            "dense_warm_p95_ms": 0.457542
+          }
+        ]
+      },
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 12.918709,
+            "dense_warm_p95_ms": 0.432541
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 60.807541,
+            "dense_warm_p95_ms": 0.403041
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 246.179042,
+            "dense_warm_p95_ms": 0.432125
+          }
+        ]
+      },
+      {
+        "slots": 66000,
+        "axes": [
+          "volume",
+          "trades",
+          "delta",
+          "size",
+          "imbalance"
+        ],
+        "checks": [
+          {
+            "width": 2,
+            "valid": 65995,
+            "dense": 65993,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 5,
+            "cold_ms": 10.426417,
+            "dense_warm_p95_ms": 0.43425
+          },
+          {
+            "width": 24,
+            "valid": 65929,
+            "dense": 65905,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 71,
+            "cold_ms": 59.589875,
+            "dense_warm_p95_ms": 0.50225
+          },
+          {
+            "width": 128,
+            "valid": 65617,
+            "dense": 65489,
+            "sparse": 1,
+            "absent": 0,
+            "unknown": 383,
+            "cold_ms": 251.220875,
+            "dense_warm_p95_ms": 0.447333
+          }
+        ]
+      }
+    ]
+  }
+}

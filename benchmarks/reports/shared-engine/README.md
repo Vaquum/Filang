@@ -192,6 +192,31 @@ of 5.85 ms and a base p75 gate of 6.37 ms. The paired claim was
 **supported** on the measured host and inputs.
 [Raw native A9 trials](native-a9.json)
 
+## A10. Dense observed intersections
+
+Five alternating wheel pairs each evaluated the 66,000-slot synthetic grid
+with all five axes enabled. Dense, sparse, absent and unknown counts agreed
+for every case. Dense warm p95 medians at widths 2, 24 and 128 fell from
+4.79, 4.62 and 5.45 ms to 0.43, 0.45 and 0.46 ms, respectively. Each
+improvement exceeded 50%. The legacy `filang` release binary retained
+SHA-256 `8b27c7d240c87c1f9e0e0188c2fc8994eba57414126084c756c0646eca67a46a`.
+The engine binding command was rebuilt with the cursor implementation.
+[Raw dense-wheel trials](dense-a10.json)
+
+The final browser package replayed 1,500 Cube edits in five fresh profiles.
+Counts agreed with the oracle, frame p95 was 16.3 ms, and worker plus DOM p95
+was 2.1 ms. The old JS price-only corpus took a median 224.6 ms against
+12.8 ms in the final worker, with all 29,812 matches preserved. Both parts
+of the joint A10 claim were **supported**. The final binding's cold CSV load
+was 43.7 ms at the median and retained memory stayed at 162,529,280 bytes.
+[Raw final Cube trials](browser-a10.json)
+
+To repeat the control, build wheels from `def7f2f` and `1653140` using the
+same toolchain. Install each in its own Python 3.13.2 environment and run
+`bindings/verify/synthetic.py` in five fresh processes per environment,
+alternating which wheel runs first. The script asserts exact counts and
+reports the 21-call warm p95 at each width.
+
 ## Repeat the real-Cube trace
 
 The capture command uses the authorized host's existing loopback bridge.
