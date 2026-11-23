@@ -152,3 +152,18 @@ inputs. Run 15 alternating fresh-spawn pairs, with the same workload,
 parity checks, timer boundaries and p75 thresholds as A8. Keep A8
 and A9 in the report. Treat this run as a replication of the measured
 platform and inputs.
+
+## A10. Dense observed intersections
+
+**Hypothesis.** Advancing cursors through sorted occurrence lists cuts the
+worst dense intersection cost while preserving exact match, non-match and
+unknown counts. The edit path should retain the real Cube frame budget.
+
+**Method.** Compare the A9 build with the cursor build. In five alternating
+fresh-process pairs, time the existing 66,000-slot five-axis wheel control at
+widths 2, 24 and 128. Require identical dense, sparse, absent and unknown
+results and at least 50% lower median dense warm p95 at every width. Replay
+the A2 real Cube browser workload on the cursor build in five fresh profiles.
+Require exact oracle parity and a pooled frame p95 of at most 16.7 ms. Check
+whether the legacy release CLI bytes are unchanged. If they differ, repeat A9
+on the final build.
