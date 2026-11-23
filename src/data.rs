@@ -1,4 +1,8 @@
-use crate::{hash::sha256, Result};
+use crate::{
+    geometry::{Counters, COUNTER_COLUMNS},
+    hash::sha256,
+    Result,
+};
 use std::{fmt::Write as _, fs};
 
 #[derive(Clone, Debug)]
@@ -17,20 +21,41 @@ impl Data {
         self.timestamps.is_empty()
     }
     pub fn read(path: &str, interval: i64) -> Result<Self> {
+        Ok(Self::read_with_counters(path, interval)?.0)
+    }
+    /// Reads either market CSV form. The six-column form carries no counters.
+    /// The nine-column recording also yields one `Counters` per bar.
+    pub fn read_with_counters(path: &str, interval: i64) -> Result<(Self, Option<Vec<Counters>>)> {
         let bytes = fs::read(path).map_err(|e| format!("read {path}: {e}"))?;
         let text = std::str::from_utf8(&bytes).map_err(|e| e.to_string())?;
-        let mut data = Self::parse(text, interval)?;
-        data.digest = sha256(&bytes);
-        Ok(data)
+        Self::parse_with_counters(text, interval)
     }
     pub fn parse(text: &str, interval: i64) -> Result<Self> {
+        Ok(Self::parse_with_counters(text, interval)?.0)
+    }
+    /// The six-column form is `timestamp,open,high,low,close,volume`, with the
+    /// timestamp in seconds and the volume in the base asset. The nine-column
+    /// recording is `open_ms,open,high,low,close,base_volume,volume,
+    /// taker_buy_volume,trade_count`: the open time in milliseconds on a whole
+    /// second, the same prices and base volume, then USDT traded, taker-buy
+    /// USDT and the trade count. Its counters may be written with an exponent;
+    /// a negative or non-finite counter, a taker-buy amount above the volume
+    /// and a trade count that is not whole are refused.
+    pub fn parse_with_counters(text: &str, interval: i64) -> Result<(Self, Option<Vec<Counters>>)> {
         if interval <= 0 {
             return Err("interval must be positive".into());
         }
         let mut rows = text.lines();
-        if rows.next() != Some("timestamp,open,high,low,close,volume") {
-            return Err("CSV header must be timestamp,open,high,low,close,volume".into());
-        }
+        let mut counters = match rows.next() {
+            Some("timestamp,open,high,low,close,volume") => None,
+            Some(COUNTER_COLUMNS) => Some(Vec::new()),
+            _ => {
+                return Err(format!(
+                    "CSV header must be timestamp,open,high,low,close,volume or {COUNTER_COLUMNS}"
+                ))
+            }
+        };
+        let width = if counters.is_some() { 9 } else { 6 };
         let mut out = Self {
             timestamps: vec![],
             columns: std::array::from_fn(|_| Vec::new()),
@@ -38,13 +63,28 @@ impl Data {
             digest: sha256(text.as_bytes()),
         };
         for (index, row) in rows.enumerate() {
-            let fields: Vec<_> = row.split(',').collect();
-            if fields.len() != 6 {
-                return Err(format!("CSV line {}: expected 6 fields", index + 2));
+            let mut fields = [""; 9];
+            let mut cells = row.split(',');
+            let wrong_width = || format!("CSV line {}: expected {width} fields", index + 2);
+            for field in &mut fields[..width] {
+                *field = cells.next().ok_or_else(wrong_width)?;
             }
-            let t = fields[0]
+            if cells.next().is_some() {
+                return Err(wrong_width());
+            }
+            let mut t = fields[0]
                 .parse::<i64>()
                 .map_err(|_| format!("invalid timestamp line {}", index + 2))?;
+            if let Some(counters) = &mut counters {
+                if t % 1000 != 0 {
+                    return Err(format!("open_ms off the whole second line {}", index + 2));
+                }
+                t /= 1000;
+                counters.push(
+                    Counters::parse(fields[6], fields[7], fields[8])
+                        .map_err(|e| format!("CSV line {}: {e}", index + 2))?,
+                );
+            }
             if let Some(last) = out.timestamps.last() {
                 if t - *last != interval {
                     return Err(format!("non-contiguous/duplicate timestamp at {t}; gaps must be resolved explicitly, never compressed"));
@@ -73,7 +113,7 @@ impl Data {
         if out.len() < 4 {
             return Err("at least four bars required".into());
         }
-        Ok(out)
+        Ok((out, counters))
     }
     pub fn index(&self, time: i64) -> usize {
         self.timestamps.partition_point(|x| *x < time)
@@ -172,5 +212,44 @@ mod tests {
         assert!(Data::parse(good, 1).is_ok());
         assert!(Data::parse(&good.replace("\n2,", "\n5,"), 1).is_err());
         assert!(Data::parse(&good.replace("0,1,2,1,2,4", "0,0,2,1,2,4"), 1).is_err());
+    }
+    #[test]
+    fn nine_column_recording_carries_counters_and_refuses_bad_ones() {
+        let six = "timestamp,open,high,low,close,volume\n0,1,2,1,2,4\n1,2,3,1,2,4\n2,2,3,1,2,4\n3,2,3,1,2,4\n";
+        let (plain, none) = Data::parse_with_counters(six, 1).unwrap();
+        assert!(none.is_none());
+        let nine = format!(
+            "{COUNTER_COLUMNS}\n0,1,2,1,2,4,1000,600,10\n1000,2,3,1,2,4,2.5e3,1250,7\n2000,2,3,1,2,4,0,0,0\n3000,2,3,1,2,4,1e-7,1e-7,1\n"
+        );
+        let (data, counters) = Data::parse_with_counters(&nine, 1).unwrap();
+        // The same bars as the six-column form: seconds, prices, base volume.
+        assert_eq!(data.timestamps, plain.timestamps);
+        assert_eq!(data.columns, plain.columns);
+        assert_eq!(Data::parse(&nine, 1).unwrap().columns, plain.columns);
+        let counters = counters.unwrap();
+        assert_eq!(counters.len(), 4);
+        assert_eq!(counters[0], Counters::new(1000.0, 600.0, 10.0).unwrap());
+        assert_eq!(counters[1], Counters::new(2500.0, 1250.0, 7.0).unwrap());
+        assert_eq!(counters[2], Counters::new(0.0, 0.0, 0.0).unwrap());
+        assert_eq!(counters[3].volume(), 1e-7);
+        let bad = |from: &str, to: &str| {
+            assert!(nine.contains(from));
+            assert!(
+                Data::parse_with_counters(&nine.replace(from, to), 1).is_err(),
+                "accepted {to}"
+            );
+        };
+        bad("1000,600,10", "1000,1001,10");
+        bad("1000,600,10", "1000,600,10.5");
+        bad("1000,600,10", "-1000,600,10");
+        bad("1000,600,10", "inf,600,10");
+        bad("1000,600,10", "NaN,600,10");
+        bad("1000,600,10", "1e999,600,10");
+        bad("1000,600,10", "1000,600,-10");
+        bad("1000,600,10", "1000,600");
+        bad("1000,600,10", "1000,600,10,1");
+        bad("\n1000,2,3", "\n1001,2,3");
+        bad("\n1000,2,3", "\n3000,2,3");
+        bad("open_ms,", "timestamp,");
     }
 }

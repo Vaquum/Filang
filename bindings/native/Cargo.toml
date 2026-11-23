@@ -1,0 +1,17 @@
+[package]
+name = "filang_engine_binding"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.63"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+filang = { path = "../.." }
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"

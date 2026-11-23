@@ -1,5 +1,5 @@
 use crate::{
-    geometry::{BodyDirection, GeometryPattern},
+    geometry::{BodyDirection, Dimension, DimensionPart, GeometryPattern},
     Result,
 };
 
@@ -39,11 +39,58 @@ pub fn project(pattern: &GeometryPattern, indices: &[usize]) -> Result<GeometryP
     let directions = pattern
         .directions()
         .map(|all| indices.iter().map(|&i| all[i]).collect());
-    canonicalize_rows(rows, directions)
+    let price = canonicalize_rows(rows, directions)?;
+    if !pattern.has_dimensions() {
+        return Ok(price);
+    }
+    // Each axis is re-ranked on its own over the surviving candles. A
+    // reference point is not a candle, so it always stays.
+    let parts = pattern
+        .dimensions()
+        .iter()
+        .map(|part| {
+            let mut ranks: Vec<usize> = indices.iter().map(|&i| part.ranks()[i]).collect();
+            let mut reference = part.reference();
+            let mut levels: Vec<usize> = ranks.iter().chain(reference.iter()).copied().collect();
+            levels.sort_unstable();
+            levels.dedup();
+            for rank in ranks.iter_mut().chain(reference.iter_mut()) {
+                *rank = levels
+                    .binary_search(rank)
+                    .expect("collected rank must exist");
+            }
+            DimensionPart::new(part.dimension(), ranks, reference)
+        })
+        .collect::<Result<Vec<_>>>()?;
+    price.with_parts(parts)
 }
 
 /// Forget body directions while retaining the same complete endpoint weak
-/// order. This is a many-to-one map; it has no inverse in general.
+/// order. This is a many-to-one map; it has no inverse in general. Dimension
+/// parts are kept as they are.
 pub fn forget_orientation(pattern: &GeometryPattern) -> Result<GeometryPattern> {
-    GeometryPattern::new(pattern.ranks().to_vec(), None)
+    let price = GeometryPattern::new(pattern.ranks().to_vec(), None)?;
+    if !pattern.has_dimensions() {
+        return Ok(price);
+    }
+    price.with_parts(pattern.dimensions().to_vec())
+}
+
+/// Turn one dimension off: drop its part and keep everything else. The result
+/// matches every window the input matches, and every window that differs from
+/// it only on that axis. Forgetting a dimension that is already off returns
+/// the pattern unchanged, so this is a projection. It commutes with `project`
+/// and with `forget_orientation`.
+pub fn forget_dimension(
+    pattern: &GeometryPattern,
+    dimension: Dimension,
+) -> Result<GeometryPattern> {
+    pattern.with_parts(
+        pattern
+            .dimensions()
+            .iter()
+            .filter(|part| part.dimension() != dimension)
+            .cloned()
+            .collect(),
+    )
 }

@@ -67,4 +67,7 @@ pub mod geometry_keys_cli;
 
 pub mod geometry_algebra;
 
+mod engine_drawing;
+mod engine_json;
+pub mod engine_session;
 pub mod study;

@@ -1,5 +1,6 @@
 # Rust build output; keep Cargo.lock versioned when the package is added.
 /target/
+/bindings/native/target/
 
 # Local datasets and generated research output.
 /data/

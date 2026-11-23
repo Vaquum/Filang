@@ -12,7 +12,26 @@
 //! order supplied by the caller; the encoding never sorts candles by time.
 
 use crate::Result;
-use std::{cmp::Ordering, collections::HashSet, fmt, str::FromStr};
+use std::{
+    cmp::Ordering,
+    collections::HashSet,
+    fmt,
+    hash::{Hash, Hasher},
+    str::FromStr,
+};
+
+#[path = "geometry_dimensions.rs"]
+mod dimensions;
+#[path = "geometry_explore.rs"]
+pub mod explore;
+
+pub use dimensions::{
+    count_delta_imbalance_occurring, count_delta_imbalance_occurring_decimal,
+    count_domain_decimal_with_dimensions, count_domain_unobserved_decimal_with_dimensions,
+    count_domain_with_dimensions, enumerate_patterns_with_dimensions,
+    first_unobserved_with_dimensions_by, ordered_bell, Counters, Dimension, DimensionPart,
+    DimensionSet, GeometryDimensionEncoder, GeometryDimensionKey, COUNTER_COLUMNS,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum GeometryMode {
@@ -110,10 +129,39 @@ impl Boundary {
 
 /// A canonical global boundary order. Private fields ensure every public
 /// constructor checks rank density, internal candle order, and directions.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+///
+/// A pattern may also switch on dimensions beside price: one weak order per
+/// dimension over the candles' values on that axis, never compared with price
+/// or with another dimension. With none on, this is exactly a 0.9 pattern.
+#[derive(Clone, Debug, Eq, PartialOrd, Ord)]
 pub struct GeometryPattern {
     ranks: Vec<[usize; 4]>,
     directions: Option<Vec<BodyDirection>>,
+    /// Switched-on dimensions in canonical order, each at most once.
+    dimensions: Vec<DimensionPart>,
+}
+
+// Equality is every field, as a derive would write it. It is written out
+// because the hash below is.
+impl PartialEq for GeometryPattern {
+    fn eq(&self, other: &Self) -> bool {
+        self.ranks == other.ranks
+            && self.directions == other.directions
+            && self.dimensions == other.dimensions
+    }
+}
+
+// A pattern with no dimension on feeds a hasher exactly what it fed before
+// dimensions existed, so price-only lookup tables do no additional work.
+// Equal patterns have equal parts, so equal patterns still hash alike.
+impl Hash for GeometryPattern {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ranks.hash(state);
+        self.directions.hash(state);
+        if !self.dimensions.is_empty() {
+            self.dimensions.hash(state);
+        }
+    }
 }
 
 /// Maximum window for the allocation-free, fixed-width lookup key and the
@@ -137,7 +185,20 @@ pub const GEOMETRY_KEY_MAX_BARS: usize = 10;
 pub struct GeometryKey([u64; 4]);
 
 impl GeometryKey {
+    /// Pack a pattern that has no dimension on. A pattern with one on is
+    /// refused rather than weakened to its price part; `GeometryDimensionKey`
+    /// packs those.
     pub fn from_pattern(pattern: &GeometryPattern) -> Result<Self> {
+        if !pattern.dimensions.is_empty() {
+            return Err(
+                "geometry pattern has a dimension on; use the key with dimension words".into(),
+            );
+        }
+        Self::from_price(pattern)
+    }
+
+    /// Pack the price part alone, whatever dimensions the pattern has on.
+    fn from_price(pattern: &GeometryPattern) -> Result<Self> {
         if pattern.len() > GEOMETRY_KEY_MAX_BARS {
             return Err("compact geometry key supports at most ten candles".into());
         }
@@ -249,7 +310,11 @@ impl GeometryKey {
             }
             ranks.push(row);
         }
-        GeometryPattern { ranks, directions }
+        GeometryPattern {
+            ranks,
+            directions,
+            dimensions: Vec::new(),
+        }
     }
 }
 
@@ -273,7 +338,11 @@ impl fmt::Display for GeometryKey {
 
 impl GeometryPattern {
     pub fn new(ranks: Vec<[usize; 4]>, directions: Option<Vec<BodyDirection>>) -> Result<Self> {
-        let pattern = Self { ranks, directions };
+        let pattern = Self {
+            ranks,
+            directions,
+            dimensions: Vec::new(),
+        };
         pattern.validate()?;
         Ok(pattern)
     }
@@ -360,6 +429,9 @@ impl GeometryPattern {
         if used.iter().any(|used| !used) {
             return Err("geometry ranks must be dense and start at zero".into());
         }
+        if !self.dimensions.is_empty() {
+            dimensions::validate_parts(&self.dimensions, self.len())?;
+        }
         Ok(())
     }
 
@@ -382,7 +454,12 @@ impl GeometryPattern {
         Ok(a[a_boundary.index()].cmp(&b[b_boundary.index()]))
     }
 
+    /// A pattern with a dimension on cannot be decided from prices alone and
+    /// is refused here; `matches_ohlc_counters` decides it.
     pub fn matches_ohlc(&self, rows: &[[f64; 4]]) -> Result<bool> {
+        if !self.dimensions.is_empty() {
+            return Err("geometry pattern has a dimension on; supply the counters".into());
+        }
         Ok(*self == Self::from_ohlc(rows, self.mode())?)
     }
 
@@ -391,6 +468,9 @@ impl GeometryPattern {
         rows: &[[f64; 4]],
         directions: Option<&[BodyDirection]>,
     ) -> Result<bool> {
+        if !self.dimensions.is_empty() {
+            return Err("geometry pattern has a dimension on; supply the counters".into());
+        }
         Ok(*self == Self::from_endpoints(rows, self.mode(), directions)?)
     }
 }
@@ -411,8 +491,23 @@ impl fmt::Display for GeometryPattern {
                 write!(f, ",{}", directions[i].token())?;
             }
         }
+        for part in &self.dimensions {
+            write!(f, "|{part}")?;
+        }
         Ok(())
     }
+}
+
+/// One rank as the text grammar writes it: digits only, no sign, and no
+/// leading zero except the single digit `0`.
+fn canonical_rank(token: &str) -> Result<usize> {
+    if token.is_empty()
+        || !token.bytes().all(|b| b.is_ascii_digit())
+        || (token.len() > 1 && token.starts_with('0'))
+    {
+        return Err("geometry ranks must be canonical unsigned decimals".into());
+    }
+    token.parse().map_err(|_| "geometry rank overflow".into())
 }
 
 impl FromStr for GeometryPattern {
@@ -425,6 +520,10 @@ impl FromStr for GeometryPattern {
         } else {
             return Err("geometry pattern must begin g1:u: or g1:o:".into());
         };
+        // The price part is the 0.9 grammar, unchanged. Each "|" after it
+        // begins one dimension part.
+        let mut sections = body.split('|');
+        let body = sections.next().unwrap_or("");
         let mut ranks = Vec::new();
         let mut directions = if mode == GeometryMode::Oriented {
             Some(Vec::new())
@@ -437,13 +536,7 @@ impl FromStr for GeometryPattern {
                 let mut r = [0usize; 4];
                 for rank in &mut r {
                     let token = fields.next().ok_or("geometry candle needs four ranks")?;
-                    if token.is_empty()
-                        || !token.bytes().all(|b| b.is_ascii_digit())
-                        || (token.len() > 1 && token.starts_with('0'))
-                    {
-                        return Err("geometry ranks must be canonical unsigned decimals".into());
-                    }
-                    *rank = token.parse().map_err(|_| "geometry rank overflow")?;
+                    *rank = canonical_rank(token)?;
                 }
                 if let Some(directions) = &mut directions {
                     let token = fields.next().ok_or("oriented geometry needs a direction")?;
@@ -455,7 +548,17 @@ impl FromStr for GeometryPattern {
                 ranks.push(r);
             }
         }
-        Self::new(ranks, directions)
+        let mut dimensions = Vec::new();
+        for section in sections {
+            dimensions.push(DimensionPart::parse(section, ranks.len())?);
+        }
+        let pattern = Self {
+            ranks,
+            directions,
+            dimensions,
+        };
+        pattern.validate()?;
+        Ok(pattern)
     }
 }
 
@@ -499,7 +602,11 @@ impl GeometryEncoder {
         Ok(Self {
             values,
             order,
-            pattern: GeometryPattern { ranks, directions },
+            pattern: GeometryPattern {
+                ranks,
+                directions,
+                dimensions: Vec::new(),
+            },
         })
     }
 
@@ -533,7 +640,7 @@ impl GeometryEncoder {
         if self.pattern.len() > GEOMETRY_KEY_MAX_BARS {
             return Err("compact geometry key supports at most ten candles".into());
         }
-        GeometryKey::from_pattern(self.encode_ohlc(rows)?)
+        GeometryKey::from_price(self.encode_ohlc(rows)?)
     }
 
     pub fn encode_endpoints(
@@ -576,10 +683,26 @@ impl GeometryEncoder {
         if self.pattern.len() > GEOMETRY_KEY_MAX_BARS {
             return Err("compact geometry key supports at most ten candles".into());
         }
-        GeometryKey::from_pattern(self.encode_endpoints(rows, directions)?)
+        GeometryKey::from_price(self.encode_endpoints(rows, directions)?)
     }
 
     fn rank_values(&mut self) {
+        match self.pattern.ranks.as_mut_slice() {
+            [ranks] => {
+                let mut rank = 0;
+                ranks[0] = 0;
+                for (i, pair) in self.values.windows(2).enumerate() {
+                    rank += usize::from(pair[0] != pair[1]);
+                    ranks[i + 1] = rank;
+                }
+                return;
+            }
+            [left, right] => {
+                rank_pair(&self.values, left, right);
+                return;
+            }
+            _ => {}
+        }
         let values = &self.values;
         self.order.sort_unstable_by(|a, b| {
             // Every input was checked finite. Use numeric equality, so the
@@ -587,7 +710,6 @@ impl GeometryEncoder {
             values[*a]
                 .partial_cmp(&values[*b])
                 .expect("finite geometry values")
-                .then_with(|| a.cmp(b))
         });
         let mut previous = None;
         let mut rank = 0;
@@ -601,6 +723,26 @@ impl GeometryEncoder {
             self.pattern.ranks[index / 4][index % 4] = rank;
             previous = Some(value);
         }
+    }
+}
+
+// Each candle's four endpoints already form a sorted run.
+fn rank_pair(values: &[f64], left: &mut [usize; 4], right: &mut [usize; 4]) {
+    let (a, b) = values.split_at(4);
+    let (mut i, mut j) = (0, 0);
+    let mut previous = a[0].min(b[0]);
+    let mut rank = 0;
+    while i < 4 || j < 4 {
+        let (value, slot) = if j == 4 || (i < 4 && a[i] <= b[j]) {
+            i += 1;
+            (a[i - 1], &mut left[i - 1])
+        } else {
+            j += 1;
+            (b[j - 1], &mut right[j - 1])
+        };
+        rank += usize::from(value != previous);
+        *slot = rank;
+        previous = value;
     }
 }
 
@@ -683,6 +825,43 @@ impl DecimalNatural {
         }
     }
 
+    fn add_large_multiple(&mut self, source: &Self, factor: u64) {
+        if let Ok(small) = u32::try_from(factor) {
+            self.add_multiple(source, small);
+        } else {
+            self.add_multiple(&source.multiply(&Self::from_u64(factor)), 1);
+        }
+    }
+
+    fn from_u64(mut value: u64) -> Self {
+        let mut limbs = Vec::new();
+        while value != 0 {
+            limbs.push((value % Self::BASE) as u32);
+            value /= Self::BASE;
+        }
+        Self { limbs }
+    }
+
+    fn multiply(&self, other: &Self) -> Self {
+        if self.limbs.is_empty() || other.limbs.is_empty() {
+            return Self::default();
+        }
+        let mut limbs = vec![0; self.limbs.len() + other.limbs.len()];
+        for (i, &left) in self.limbs.iter().enumerate() {
+            let mut carry = 0;
+            for (j, &right) in other.limbs.iter().enumerate() {
+                let value = limbs[i + j] as u64 + u64::from(left) * u64::from(right) + carry;
+                limbs[i + j] = (value % Self::BASE) as u32;
+                carry = value / Self::BASE;
+            }
+            limbs[i + other.limbs.len()] = carry as u32;
+        }
+        if limbs.last() == Some(&0) {
+            limbs.pop();
+        }
+        Self { limbs }
+    }
+
     fn subtract(&mut self, other: &Self) -> Result<()> {
         let order = self
             .limbs
@@ -730,6 +909,10 @@ fn decimal_domain(n: usize, mode: GeometryMode) -> Result<DecimalNatural> {
     if n > GEOMETRY_KEY_MAX_BARS {
         return Err("decimal geometry count supports at most ten candles".into());
     }
+    decimal_price_domain(n, mode)
+}
+
+fn decimal_price_domain(n: usize, mode: GeometryMode) -> Result<DecimalNatural> {
     let weights = mode.weights();
     let mut counts = vec![DecimalNatural::from_usize(1)];
     for _ in 0..n {
@@ -741,13 +924,10 @@ fn decimal_domain(n: usize, mode: GeometryMode) -> Result<DecimalNatural> {
             for (k, &weight) in weights.iter().enumerate().skip(1) {
                 for j in 0..=r.min(k) {
                     let levels = r + k - j;
-                    // Through ten candles, levels <= 40 and k <= 4. The
-                    // coefficient is small although accumulated counts are
-                    // arbitrary precision. Check the conversion explicitly.
                     let coefficient = choose(levels, k)? * choose(k, j)? * weight;
-                    let factor = u32::try_from(coefficient)
-                        .map_err(|_| "decimal geometry merge coefficient exceeds u32")?;
-                    next[levels].add_multiple(count, factor);
+                    let factor = u64::try_from(coefficient)
+                        .map_err(|_| "decimal geometry merge coefficient exceeds u64")?;
+                    next[levels].add_large_multiple(count, factor);
                 }
             }
         }
@@ -936,6 +1116,7 @@ fn empty_pattern(mode: GeometryMode) -> GeometryPattern {
         } else {
             None
         },
+        dimensions: Vec::new(),
     }
 }
 
@@ -993,7 +1174,11 @@ fn walk_patterns(
                         None
                     };
                     walk_patterns(
-                        &GeometryPattern { ranks, directions },
+                        &GeometryPattern {
+                            ranks,
+                            directions,
+                            dimensions: Vec::new(),
+                        },
                         remaining - 1,
                         mode,
                         visitor,

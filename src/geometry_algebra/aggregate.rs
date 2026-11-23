@@ -31,6 +31,11 @@ pub fn aggregate_partition(
     if pattern.mode() != GeometryMode::Oriented {
         return Err("geometry algebra: exact aggregation requires oriented geometry".into());
     }
+    // A merged candle's volume is a sum, which an order does not determine.
+    // Aggregate the counters first and encode the result.
+    if pattern.has_dimensions() {
+        return Err("geometry algebra: aggregation is undefined with a dimension on".into());
+    }
     if group_lengths.iter().any(|&size| size == 0) {
         return Err("geometry algebra: aggregation groups must be nonempty".into());
     }

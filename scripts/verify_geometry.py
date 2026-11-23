@@ -8,6 +8,13 @@ disjoint complete coverage, full u128 weights and sequential cash/share metrics.
 Summary runs permit only retained task-winner metric replay; the JSON says so.
 The standard-library Python ledger can optionally be accelerated by the existing
 independent joint_ledger.c reference. Neither uses the native geometry engine.
+
+Dimensions (docs/G1_DIMENSIONS.md) are recomputed here as well: the factor a
+dimension adds to a domain is counted as surjections by inclusion/exclusion,
+not by the native binomial recurrence; the dependent sets are found by
+enumerating windows over small whole counters; and every shared vector in
+study/verify/dimension-vectors.json is re-read from its bars. With --binary the
+count command of a built engine is compared with these counts.
 """
 from __future__ import annotations
 
@@ -19,9 +26,10 @@ import csv
 import ctypes
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from fractions import Fraction
 import hashlib
 import io
-from itertools import combinations_with_replacement, product
+from itertools import combinations, combinations_with_replacement, product
 import json
 import math
 from pathlib import Path
@@ -43,6 +51,22 @@ KNOWN_COUNTS = {
                  1971122519237375505852, 349946534568771563626027452,
                  109093488682843434702978214200252),
 }
+
+# Dimensions in the order their parts are written; the two with a reference
+# point rank zero with the candles. The table is section 6 of the contract.
+DIMENSIONS = ("volume", "trades", "delta", "size", "imbalance")
+REFERENCE = frozenset(("delta", "imbalance"))
+DEPENDENT_CORES = (frozenset(("delta", "imbalance")), frozenset(("volume", "trades", "size")))
+KNOWN_DIMENSION_FACTORS = {
+    False: (1, 3, 13, 75, 541, 4683, 47293, 545835, 7087261, 102247563),
+    True: (3, 13, 75, 541, 4683, 47293, 545835, 7087261, 102247563, 1622632573),
+}
+KNOWN_TWO_CANDLE_DOMAINS = {(): 7452, ("volume",): 22356, ("delta",): 96876,
+                            ("volume", "delta"): 290628}
+VECTORS = Path(__file__).resolve().parent.parent / "study" / "verify" / "dimension-vectors.json"
+SIX_COLUMNS = ["timestamp", "open", "high", "low", "close", "volume"]
+NINE_COLUMNS = ["open_ms", "open", "high", "low", "close", "base_volume", "volume",
+                "taker_buy_volume", "trade_count"]
 
 
 def require(condition, message):
@@ -115,6 +139,95 @@ def domain_count(n, mode):
     return sum(count_by_levels(n, mode))
 
 
+def weak_orders(points):
+    """Weak orders of labelled points: surjections onto k levels, summed over k."""
+    require(points >= 0, "invalid point count")
+    return sum(sum((-1) ** (k - j) * math.comb(k, j) * j ** points for j in range(k + 1))
+               for k in range(points + 1))
+
+
+def dimension_set(text):
+    """Names in any order, each at most once; returned in the written order."""
+    names = [name.strip() for name in text.split(",")] if text.strip() else []
+    require(all(name in DIMENSIONS for name in names) and len(set(names)) == len(names),
+            "unknown or repeated dimension")
+    return tuple(name for name in DIMENSIONS if name in names)
+
+
+def dimension_domain_count(n, mode, dimensions):
+    """The declared domain: the price count times one factor per dimension."""
+    total = domain_count(n, mode)
+    for name in dimensions:
+        total *= weak_orders(n + (name in REFERENCE))
+    return total
+
+
+def declares_impossible(dimensions, n):
+    """Whether the declared domain holds patterns no recording can produce."""
+    names = set(dimensions)
+    return (n >= 1 and DEPENDENT_CORES[0] <= names) or (n >= 2 and DEPENDENT_CORES[1] <= names)
+
+
+def delta_imbalance_occurring(n):
+    """Delta with imbalance: sides agree, and within a side the orders are free."""
+    total = 0
+    for p in range(n + 1):
+        for q in range(n - p + 1):
+            ways = math.factorial(n) // (math.factorial(p) * math.factorial(q)
+                                         * math.factorial(n - p - q))
+            total += ways * weak_orders(p) ** 2 * weak_orders(q) ** 2
+    return total
+
+
+def dimension_value(name, volume, taker_buy, trades):
+    """One candle's value, as the formula is written. None is an absent value."""
+    if name == "volume":
+        return volume
+    if name == "trades":
+        return trades
+    if name == "delta":
+        return 2 * taker_buy - volume
+    if name == "size":
+        return volume / trades if trades > 0 else None
+    require(name == "imbalance", "unknown dimension")
+    return (2 * taker_buy - volume) / volume if volume > 0 else None
+
+
+def rank_part(name, values):
+    """Dense ranks of one axis's points; equal values share a rank."""
+    points = list(values) + ([0] if name in REFERENCE else [])
+    levels = {value: rank for rank, value in enumerate(sorted(set(points)))}
+    ranks = [levels[value] for value in points]
+    return ranks[:len(values)], (ranks[-1] if name in REFERENCE else None)
+
+
+def part_text(name, ranks, reference):
+    return (name + ":" + ",".join(map(str, ranks))
+            + ("" if reference is None else "/" + str(reference)))
+
+
+def dimension_part(name, counters):
+    """A window's part for one dimension, or None when a candle has no value."""
+    values = [dimension_value(name, *candle) for candle in counters]
+    if any(value is None for value in values):
+        return None
+    return part_text(name, *rank_part(name, values))
+
+
+def parse_part(text, candles):
+    name, separator, body = text.partition(":")
+    require(separator == ":" and name in DIMENSIONS, "dimension part name")
+    ranks, slash, reference = body.partition("/")
+    require((slash == "/") == (name in REFERENCE), "dimension reference presence")
+    fields = (ranks.split(",") if candles or ranks else []) + ([reference] if slash else [])
+    require(all(re.fullmatch(r"0|[1-9][0-9]*", x) for x in fields),
+            "noncanonical dimension rank decimal")
+    values = list(map(int, fields))
+    require(len(values) == candles + (name in REFERENCE), "one dimension rank per candle")
+    require(set(values) == set(range(len(set(values)))), "dimension ranks must be dense from zero")
+    return name, tuple(values[:candles]), (values[candles] if slash else None)
+
+
 def pattern_text(ranks, directions=None):
     code = "g1:o:" if directions is not None else "g1:u:"
     rows = []
@@ -124,6 +237,18 @@ def pattern_text(ranks, directions=None):
             row += "," + directions[i]
         rows.append(row)
     return code + ";".join(rows)
+
+
+def parse_dimension_pattern(text):
+    """A pattern with any dimension parts: (mode, ranks, directions, parts)."""
+    price, *sections = text.split("|")
+    mode, ranks, directions = parse_pattern(price)
+    parts = [parse_part(section, len(ranks)) for section in sections]
+    order = [DIMENSIONS.index(name) for name, _, _ in parts]
+    require(order == sorted(set(order)), "dimension parts out of order or repeated")
+    require("|".join([price] + [part_text(*part) for part in parts]) == text,
+            "noncanonical pattern string")
+    return mode, ranks, directions, tuple(parts)
 
 
 def parse_pattern(text):
@@ -168,16 +293,34 @@ def canonical_pattern(candles, mode):
     return pattern_text(ranks, directions if mode == "oriented" else None)
 
 
+def read_counters(volume, taker_buy, trades):
+    """One row's counters as the nine-column recording writes them."""
+    amount = r"[0-9]+(\.[0-9]+)?(e[+-]?[0-9]+)?"
+    require(re.fullmatch(amount, volume) and re.fullmatch(amount, taker_buy)
+            and re.fullmatch(r"[0-9]+", trades), "counter text")
+    values = (float(volume), float(taker_buy), float(int(trades)))
+    require(all(math.isfinite(v) for v in values) and values[1] <= values[0]
+            and int(trades) <= (1 << 53) - 1, "counter domain")
+    return values
+
+
 def read_data(path, interval):
-    timestamps, candles = [], []
+    """Timestamps in seconds, OHLC and base volume, and counters when recorded."""
+    timestamps, candles, counters = [], [], None
     with Path(path).open(newline="") as source:
         reader = csv.reader(source)
-        require(next(reader, None) == ["timestamp", "open", "high", "low", "close", "volume"],
-                "CSV schema")
+        header = next(reader, None)
+        require(header in (SIX_COLUMNS, NINE_COLUMNS), "CSV schema")
+        if header == NINE_COLUMNS:
+            counters = []
         for row in reader:
-            require(len(row) == 6, "CSV row arity")
+            require(len(row) == len(header), "CSV row arity")
             timestamp = int(row[0])
-            values = tuple(map(float, row[1:]))
+            if counters is not None:
+                require(timestamp % 1000 == 0, "open_ms off the whole second")
+                timestamp //= 1000
+                counters.append(read_counters(*row[6:]))
+            values = tuple(map(float, row[1:6]))
             require(all(math.isfinite(v) for v in values), "nonfinite OHLCV")
             require(all(v > 0 for v in values[:4]) and values[4] >= 0,
                     "CSV price/volume domain")
@@ -190,7 +333,18 @@ def read_data(path, interval):
             timestamps.append(timestamp)
             candles.append(values)
     require(interval > 0 and len(candles) >= 4, "invalid market timeline")
-    return timestamps, candles
+    return timestamps, candles, counters
+
+
+def window_code(candles, counters, mode, dimensions):
+    """A window's code with the declared dimensions on, or None when it is invalid."""
+    code = canonical_pattern(candles, mode)
+    for name in dimensions:
+        part = dimension_part(name, counters)
+        if part is None:
+            return None
+        code += "|" + part
+    return code
 
 
 def utc_date(text):
@@ -201,19 +355,24 @@ def interval_bits(start, end):
     return ((1 << (end - start)) - 1) << start if end > start else 0
 
 
-def qualify_occurrences(times, length, warmup, qualifier):
+def qualify_occurrences(times, length, warmup, qualifier, invalid=()):
     """Reference qualifiers from occurrence positions and contiguous validity.
 
     Recent occurrences paint future intervals; persistence retains sufficiently
     long consecutive runs. This does not use the native word-doubling algorithm.
+    A window that is invalid on its own, because a candle has no value on a
+    declared dimension, makes every decision whose qualifier reads it invalid:
+    `span` decisions, beginning with its own. No occurrence is ever invalid.
     """
     bits = 0
+    span = 1
     if qualifier == "plain":
         start = warmup
         for t in times:
             bits |= 1 << t
     elif qualifier == "onset":
         start = warmup + 1
+        span = 2
         previous = -2
         for t in times:
             if previous != t - 1:
@@ -225,6 +384,7 @@ def qualify_occurrences(times, length, warmup, qualifier):
         require(name in ("persist", "recent") and 1 <= count <= 100000,
                 "unsupported qualifier")
         start = warmup + count - 1
+        span = count
         if name == "recent":
             begin = end = 0
             for t in times:
@@ -242,6 +402,8 @@ def qualify_occurrences(times, length, warmup, qualifier):
                     bits |= 1 << t
                 previous = t
     valid = interval_bits(min(start, length), length)
+    for t in invalid:
+        valid &= ~interval_bits(t, min(length, t + span))
     return bits & valid, valid
 
 
@@ -291,19 +453,27 @@ def read_tsv(path, header):
     return rows[1:], digest
 
 
-def verify_bank(root, index, cfg, candles, start, end, run_context):
+def verify_bank(root, index, cfg, candles, counters, start, end, run_context):
     windows = [tuple(map(int, entry.split(","))) for entry in cfg["windows"].split(";")]
     lags = windows[index]
     require(lags and lags[0] == 0 and tuple(sorted(set(lags))) == lags,
             "invalid geometry window lags")
     mode = cfg["mode"]
+    dimensions = dimension_set(cfg.get("dimensions", ""))
+    require(not dimensions or counters is not None, "declared dimensions need recorded counters")
     full_length, rows = end - 2, end - start - 2
-    occurrences = OrderedDict()
+    occurrences, invalid = OrderedDict(), []
     for t in range(max(lags), full_length):
-        pattern = canonical_pattern([candles[t - lag] for lag in lags], mode)
-        occurrences.setdefault(pattern, []).append(t)
+        pattern = window_code([candles[t - lag] for lag in lags],
+                              [counters[t - lag] for lag in lags] if dimensions else (),
+                              mode, dimensions)
+        if pattern is None:
+            invalid.append(t)
+        else:
+            occurrences.setdefault(pattern, []).append(t)
     expected_patterns = list(occurrences)
-    total = domain_count(len(lags), mode)
+    windows = max(0, full_length - max(lags)) - len(invalid)
+    total = dimension_domain_count(len(lags), mode, dimensions)
     absent = total - len(occurrences)
     require(absent >= 0, "observed patterns exceed full domain")
     bank_dir = root / "banks"
@@ -317,8 +487,9 @@ def verify_bank(root, index, cfg, candles, start, end, run_context):
     weights = []
     for i, (identity, kind, count, pattern) in enumerate(catalogue):
         require(int(identity) == i, "catalogue identity order")
-        parsed_mode, rank_rows, _ = parse_pattern(pattern)
-        require(parsed_mode == mode and len(rank_rows) == len(lags), "catalogue pattern domain")
+        parsed_mode, rank_rows, _, parts = parse_dimension_pattern(pattern)
+        require(parsed_mode == mode and len(rank_rows) == len(lags)
+                and tuple(name for name, _, _ in parts) == dimensions, "catalogue pattern domain")
         if i < len(occurrences):
             require(kind == "observed" and int(count) == 1 and pattern == expected_patterns[i],
                     "observed catalogue identity/order/weight")
@@ -336,7 +507,7 @@ def verify_bank(root, index, cfg, candles, start, end, run_context):
     cursor, one_hot_union, one_hot_count = 0, 0, 0
     for pattern_id, row in enumerate(catalogue):
         times = occurrences.get(row[3], [])
-        raw_truth, raw_valid = qualify_occurrences(times, full_length, max(lags), "plain")
+        raw_truth, raw_valid = qualify_occurrences(times, full_length, max(lags), "plain", invalid)
         if row[1] == "observed":
             require(one_hot_union & raw_truth == 0, "overlapping full pattern occurrences")
             one_hot_union |= raw_truth
@@ -347,7 +518,7 @@ def verify_bank(root, index, cfg, candles, start, end, run_context):
             pid, qid, sid, weight = member
             require((pid, qid, weight) == (pattern_id, qi, weights[pattern_id])
                     and 0 <= sid < len(states), "membership identity/order/weight")
-            truth, valid = qualify_occurrences(times, full_length, max(lags), qualifier)
+            truth, valid = qualify_occurrences(times, full_length, max(lags), qualifier, invalid)
             truth, valid = (truth >> start) & row_mask, (valid >> start) & row_mask
             require((states[sid].truth, states[sid].valid) == (truth, valid),
                     f"predicate mismatch bank {index} pattern {pattern_id} qualifier {qualifier}")
@@ -355,8 +526,10 @@ def verify_bank(root, index, cfg, candles, start, end, run_context):
             coordinate = (pattern_id, qi, 0)
             first[sid] = coordinate if first[sid] is None else min(first[sid], coordinate)
     expected_raw_valid = interval_bits(min(max(lags), full_length), full_length)
-    require(one_hot_union == expected_raw_valid
-            and one_hot_count == max(0, full_length - max(lags)), "raw window partition")
+    for t in invalid:
+        expected_raw_valid &= ~(1 << t)
+    require(one_hot_union == expected_raw_valid and one_hot_count == windows,
+            "raw window partition")
     require(all((s.count, s.first) == (totals[i], first[i]) for i, s in enumerate(states)),
             "state alias weights/representatives")
     require(sum(totals) == total * len(qualifiers), "full per-bank logical coverage")
@@ -370,7 +543,7 @@ def verify_bank(root, index, cfg, candles, start, end, run_context):
             "preparation marker payload binding")
     integers = struct.unpack_from("<12Q", marker, 328)
     require(integers[:11] == (len(lags), max(lags), full_length, start, rows,
-                            max(0, full_length - max(lags)), len(occurrences), len(catalogue),
+                            windows, len(occurrences), len(catalogue),
                             len(qualifiers), len(members), len(states)),
             "preparation marker counters")
     require(integers[11] <= int(cfg["prepare_mib"]) * (1 << 20), "preparation charge/budget")
@@ -380,13 +553,22 @@ def verify_bank(root, index, cfg, candles, start, end, run_context):
     expected_stats = {
         "bank": index, "window_lags": list(lags), "mode": mode,
         "scored_rows": rows, "scored_start_index": start, "decision_rows": full_length,
-        "windows_encoded": max(0, full_length - max(lags)),
+        "windows_encoded": windows,
         "observed_patterns": len(occurrences), "total_patterns": str(total),
         "unobserved_patterns": str(absent), "qualifiers": qualifiers,
         "logical_conditions": str(total * len(qualifiers)), "catalogue_records": len(catalogue),
         "physical_memberships": len(members), "states": len(states),
         "prepare_payload_charge_bytes": integers[11],
     }
+    dimension_stats = {
+        "dimensions": list(dimensions), "windows_without_a_dimension_value": len(invalid),
+        "count_includes_patterns_that_cannot_occur": declares_impossible(dimensions, len(lags)),
+    }
+    if dimensions:
+        expected_stats.update(dimension_stats)
+    else:
+        require(not any(key in stats for key in dimension_stats),
+                "a bank with no dimension declared reports none")
     require(all(stats.get(key) == value for key, value in expected_stats.items()),
             "preparation JSON counters")
     require(stats["catalogue_bytes"] == sealed(bank_dir / f"patterns-{index:02}.tsv")[0]
@@ -404,6 +586,8 @@ def verify_bank(root, index, cfg, candles, start, end, run_context):
         "preparation_marker_body_sha256": marker_hash,
         "all_catalogue_membership_masks_validity_weights_and_representatives_checked": True,
     }
+    if dimensions:
+        result.update(dimension_stats)
     print(f"geometry bank {index}: {len(occurrences)} observed patterns, "
           f"{len(states)} states, {sum(totals)} logical conditions verified", flush=True)
     return states, result, catalogue
@@ -812,6 +996,174 @@ def verify_best_export(root, cfg, summary, checkpoint):
             "frozen pattern/rule export semantics")
 
 
+def dependence_census(limit=5):
+    """Two-candle windows over small whole counters, for all 31 sets of dimensions.
+
+    Values are exact fractions here, so no float equality decides a tie. The
+    result maps each set to how many of its declared combinations occur.
+    """
+    candles = [(volume, taker_buy, trades) for volume in range(1, limit + 1)
+               for taker_buy in range(volume + 1) for trades in range(1, limit + 1)]
+    exact = {"volume": lambda v, b, n: Fraction(v), "trades": lambda v, b, n: Fraction(n),
+             "delta": lambda v, b, n: Fraction(2 * b - v), "size": lambda v, b, n: Fraction(v, n),
+             "imbalance": lambda v, b, n: Fraction(2 * b - v, v)}
+    values = {candle: {name: exact[name](*candle) for name in DIMENSIONS} for candle in candles}
+    sets = [chosen for size in range(1, 6) for chosen in combinations(DIMENSIONS, size)]
+    seen = {chosen: set() for chosen in sets}
+    for first, second in product(candles, repeat=2):
+        state = {}
+        for name in DIMENSIONS:
+            ranks, reference = rank_part(name, (values[first][name], values[second][name]))
+            state[name] = (tuple(ranks), reference)
+        for chosen in sets:
+            seen[chosen].add(tuple(state[name] for name in chosen))
+    return {chosen: len(states) for chosen, states in seen.items()}
+
+
+def chained(bars):
+    """Later opens read as the previous close; low and high widen to hold them."""
+    rows = [list(bar) for bar in bars]
+    for i in range(1, len(rows)):
+        rows[i][0] = bars[i - 1][3]
+        rows[i][1], rows[i][2] = max(bars[i][1], rows[i][0]), min(bars[i][2], rows[i][0])
+    return rows
+
+
+def verify_vectors(path=VECTORS):
+    """Re-read every shared vector from its bars, sharing no code with the engines."""
+    document = json.loads(Path(path).read_text())
+    require(tuple(document["dimensions"]) == DIMENSIONS, "shared dimension order")
+    windows = parts = absent = 0
+    for vector in document["vectors"]:
+        bars = [list(map(float, bar)) for bar in vector["bars"]]
+        require(all(len(bar) == 7 for bar in bars), "vector bar arity")
+        counters = [tuple(bar[4:]) for bar in bars]
+        require(canonical_pattern(bars, "oriented") == vector["as_recorded"],
+                "as-recorded price code: " + vector["name"])
+        require(canonical_pattern(chained(bars), "oriented") == vector["chained"],
+                "chained price code: " + vector["name"])
+        for name in DIMENSIONS:
+            expected = vector["parts"][name]
+            require(dimension_part(name, counters) == expected,
+                    f"dimension part {name}: " + vector["name"])
+            parts += 1
+            absent += expected is None
+        present = [vector["parts"][name] for name in DIMENSIONS if vector["parts"][name]]
+        code = "|".join([vector["as_recorded"]] + present)
+        require(parse_dimension_pattern(code)[3] == tuple(parse_part(part, len(bars))
+                                                         for part in present),
+                "dimension grammar round trip")
+        windows += 1
+    require(windows >= 11 and absent >= 2, "shared vectors went missing")
+    return {"windows": windows, "parts": parts, "absent_parts": absent}
+
+
+def dimension_self_test():
+    for reference, expected in KNOWN_DIMENSION_FACTORS.items():
+        require(tuple(weak_orders(n + reference) for n in range(1, 11)) == expected,
+                "independent dimension factor fixture")
+    for dimensions, expected in KNOWN_TWO_CANDLE_DOMAINS.items():
+        require(dimension_domain_count(2, "oriented", dimensions) == expected,
+                "two-candle declared domain")
+    # Every weak order of up to five points, written as dense ranks.
+    for points in range(6):
+        orders = {ranks for ranks in product(range(points), repeat=points)
+                  if set(ranks) == set(range(len(set(ranks))))}
+        require(len(orders) == weak_orders(points), "exhaustive weak-order enumeration")
+    census = dependence_census()
+    products = {chosen: math.prod(weak_orders(2 + (name in REFERENCE)) for name in chosen)
+                for chosen in census}
+    dependent = {chosen for chosen in census if census[chosen] != products[chosen]}
+    require(dependent == {chosen for chosen in census if declares_impossible(chosen, 2)},
+            "the dependent sets are exactly those holding a dependent core")
+    require((census[("delta", "imbalance")], products[("delta", "imbalance")]) == (25, 169)
+            and (census[("volume", "trades", "size")], products[("volume", "trades", "size")]) == (13, 27)
+            and (census[DIMENSIONS], products[DIMENSIONS]) == (209, 4563),
+            "two-candle dependence census")
+    require([delta_imbalance_occurring(n) for n in range(4)] == [1, 3, 25, 459],
+            "delta with imbalance closed form")
+    # Qualifiers over a timeline in which some windows are invalid on their
+    # own, against the scalar definition of each qualifier.
+    hole_checks = 0
+    for length, warmup in ((9, 0), (11, 2)):
+        for holes in ((), (warmup + 1,), (warmup + 2, warmup + 3), (length - 1,), (warmup, warmup + 4)):
+            free = [t for t in range(warmup, length) if t not in holes]
+            for raw in range(1 << len(free)):
+                times = [t for i, t in enumerate(free) if (raw >> i) & 1]
+                values = [t in times for t in range(length)]
+                valid = [t >= warmup and t not in holes for t in range(length)]
+                for qualifier in ("plain", "onset", "persist:1", "persist:3", "recent:3", "recent:16"):
+                    want_truth = want_valid = 0
+                    for t in range(length):
+                        if qualifier == "plain":
+                            truth, good = values[t], valid[t]
+                        elif qualifier == "onset":
+                            truth = t > 0 and values[t] and not values[t - 1]
+                            good = t > 0 and valid[t] and valid[t - 1]
+                        else:
+                            name, n = qualifier.split(":")
+                            n = int(n)
+                            good = t + 1 >= n and all(valid[t + 1 - n:t + 1])
+                            truth = (all if name == "persist" else any)(values[max(0, t + 1 - n):t + 1])
+                        if good:
+                            want_valid |= 1 << t
+                            if truth:
+                                want_truth |= 1 << t
+                    require(qualify_occurrences(times, length, warmup, qualifier, holes)
+                            == (want_truth, want_valid), "qualifier parity with invalid windows")
+                    hole_checks += 1
+    for good in ("g1:o:4,5,6,7,d;0,1,2,3,d|volume:0,1|delta:0,2/1", "g1:o:0,1,2,3,u|delta:1/0",
+                 "g1:u:0,1,2,3;0,1,2,3;0,1,2,3|volume:0,0,1|delta:2,0,1/1", "g1:u:0,1,2,3"):
+        parse_dimension_pattern(good)
+    rejected = 0
+    for tail in ("|", "|volume:", "|volume:00", "|volume:0,1", "|volume:0/1", "|volume:1",
+                 "|delta:1", "|delta:0/", "|delta:2/0", "|delta:0/2", "|flow:0", "|Volume:0",
+                 "|volume:0|volume:0", "|delta:1/0|volume:0", "|volume:0 ", "|volume:-0",
+                 "|volume:0|", "|imbalance:0/0/0"):
+        try:
+            parse_dimension_pattern("g1:o:0,1,2,3,u" + tail)
+        except ValueError:
+            rejected += 1
+            continue
+        require(False, "accepted a malformed dimension part: " + tail)
+    return {"factors_1_through_10": {"no_reference": list(KNOWN_DIMENSION_FACTORS[False]),
+                                     "with_reference": list(KNOWN_DIMENSION_FACTORS[True])},
+            "two_candle_census": {"dependent_sets": len(dependent),
+                                  "independent_sets": len(census) - len(dependent),
+                                  "delta_imbalance": [25, 169], "volume_trades_size": [13, 27],
+                                  "all_five": [209, 4563]},
+            "malformed_parts_rejected": rejected,
+            "qualifier_crosschecks_with_invalid_windows": hole_checks,
+            "shared_vectors": verify_vectors()}
+
+
+def verify_count_command(binary):
+    """Compare a built engine's geometry-count with the counts recomputed here."""
+    checks = 0
+    sets = [()] + [chosen for size in range(1, 6) for chosen in combinations(DIMENSIONS, size)]
+    for mode in WEIGHTS:
+        for n in range(11):
+            for chosen in sets:
+                command = [str(binary), "geometry-count", "--bars", str(n), "--mode", mode]
+                expected = {"version": 1, "bars": n, "mode": mode}
+                if chosen:
+                    # Any order is accepted; the report uses the written order.
+                    command += ["--dimensions", ",".join(reversed(chosen))]
+                    expected["dimensions"] = list(chosen)
+                expected["complete_patterns"] = str(dimension_domain_count(n, mode, chosen))
+                if chosen:
+                    expected["count_includes_patterns_that_cannot_occur"] = \
+                        declares_impossible(chosen, n)
+                if chosen == ("delta", "imbalance"):
+                    expected["patterns_that_can_occur"] = str(
+                        domain_count(n, mode) * delta_imbalance_occurring(n))
+                output = subprocess.run(command, check=True, capture_output=True, text=True).stdout
+                require(json.loads(output) == expected and list(json.loads(output)) == list(expected),
+                        "geometry-count disagrees: " + " ".join(command))
+                checks += 1
+    return {"binary": str(binary), "binary_sha256": sha(binary), "count_reports_checked": checks}
+
+
 def self_test():
     for mode, expected in KNOWN_COUNTS.items():
         require(tuple(domain_count(n, mode) for n in range(1, 9)) == expected,
@@ -866,7 +1218,8 @@ def self_test():
     return {"status": "PASS", "unoriented_pair_rank_orders": len(cases),
             "strict_pair_rank_orders": 321, "oriented_pair_rank_orders": 7452,
             "qualifier_scalar_crosschecks": qualifier_checks,
-            "counts_1_through_8": {mode: list(map(str, values)) for mode, values in KNOWN_COUNTS.items()}}
+            "counts_1_through_8": {mode: list(map(str, values)) for mode, values in KNOWN_COUNTS.items()},
+            "dimensions": dimension_self_test()}
 
 
 def verify(root, ledger_backend="auto", max_state_pairs=4000000, metric_cache=4096,
@@ -886,7 +1239,7 @@ def verify(root, ledger_backend="auto", max_state_pairs=4000000, metric_cache=40
             "configuration/data/engine/backend/output context")
     context_body, _ = sealed_body(root / "context.chk")
     require(context_body.decode() == summary["context_sha256"], "committed run context")
-    timestamps, candles = read_data(data_path, int(cfg["interval_seconds"]))
+    timestamps, candles, counters = read_data(data_path, int(cfg["interval_seconds"]))
     start, end = bisect_left(timestamps, utc_date(cfg["start"])), bisect_left(timestamps, utc_date(cfg["end"]))
     require(end - start >= 4, "scored interval too short")
     require(timestamps[0] <= utc_date(cfg["start"])
@@ -896,7 +1249,7 @@ def verify(root, ledger_backend="auto", max_state_pairs=4000000, metric_cache=40
             "exact scored boundaries and causal input end")
     banks, reports, catalogues = [], [], []
     for index in range(len(cfg["windows"].split(";"))):
-        bank, report, catalogue = verify_bank(root, index, cfg, candles, start, end,
+        bank, report, catalogue = verify_bank(root, index, cfg, candles, counters, start, end,
                                              summary["context_sha256"])
         banks.append(bank)
         reports.append(report)
@@ -916,6 +1269,20 @@ def verify(root, ledger_backend="auto", max_state_pairs=4000000, metric_cache=40
             and int(summary["observed_pattern_instances"]) == sum(r["observed_patterns"] for r in reports)
             and int(summary["physical_pattern_representatives"]) == sum(map(len, catalogues)),
             "geometry source physical/logical summary counters")
+    dimensions = dimension_set(cfg.get("dimensions", ""))
+    dimension_summary = {
+        "dimensions": list(dimensions),
+        "windows_without_a_dimension_value":
+            str(sum(r.get("windows_without_a_dimension_value", 0) for r in reports)),
+        "count_includes_patterns_that_cannot_occur":
+            any(r.get("count_includes_patterns_that_cannot_occur", False) for r in reports),
+    }
+    if dimensions:
+        require(all(summary.get(key) == value for key, value in dimension_summary.items()),
+                "geometry dimension summary")
+    else:
+        require(not any(key in summary for key in dimension_summary),
+                "a run with no dimension declared reports none")
     task_report = verify_tasks(root, cfg, summary, banks, candles, start, end,
                                ledger_backend, max_state_pairs, metric_cache)
     result = {"status": "PASS", "data_sha256": sha(data_path),
@@ -924,6 +1291,8 @@ def verify(root, ledger_backend="auto", max_state_pairs=4000000, metric_cache=40
               "predicate_method": "independent endpoint ranks and occurrence-based qualifiers",
               "certificate_method": "three input statuses and exact output possibilities",
               "mask_disagreements": 0, **task_report, "seconds": time.perf_counter() - clock}
+    if dimensions:
+        result.update(dimension_summary)
     destination = root / "verification"
     destination.mkdir(exist_ok=True)
     (destination / "geometry.json").write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
@@ -942,7 +1311,7 @@ def verify_evaluation(root, data_path, ledger_backend="auto", output=None):
     require(sha(data_path) == report["data_sha256"], "evaluation source data changed")
     require(sha(root / "selection.tsv") == report["selection_sha256"]
             and sha(root / "rule.txt") == report["rule_sha256"], "frozen selection/rule binding")
-    timestamps, candles = read_data(data_path, int(report["interval_seconds"]))
+    timestamps, candles, counters = read_data(data_path, int(report["interval_seconds"]))
     start = bisect_left(timestamps, utc_date(report["start"]))
     end = len(candles)
     require(end - start >= 4 and timestamps[0] <= utc_date(report["start"])
@@ -959,11 +1328,21 @@ def verify_evaluation(root, data_path, ledger_backend="auto", output=None):
         require(len(row) == 4 and int(row[0]) == slot, "frozen selection slot")
         lags = tuple(map(int, row[1].split(",")))
         require(lags and lags[0] == 0 and lags == tuple(sorted(set(lags))), "frozen selection lags")
-        mode, ranks, _ = parse_pattern(row[3])
+        mode, ranks, _, parts = parse_dimension_pattern(row[3])
         require(len(ranks) == len(lags), "frozen pattern/window arity")
-        times = [t for t in range(max(lags), full_length)
-                 if canonical_pattern([candles[t - lag] for lag in lags], mode) == row[3]]
-        truth, valid = qualify_occurrences(times, full_length, max(lags), row[2])
+        dimensions = tuple(name for name, _, _ in parts)
+        require(not dimensions or counters is not None,
+                "a frozen pattern with a dimension on needs recorded counters")
+        times, invalid = [], []
+        for t in range(max(lags), full_length):
+            code = window_code([candles[t - lag] for lag in lags],
+                               [counters[t - lag] for lag in lags] if dimensions else (),
+                               mode, dimensions)
+            if code is None:
+                invalid.append(t)
+            elif code == row[3]:
+                times.append(t)
+        truth, valid = qualify_occurrences(times, full_length, max(lags), row[2], invalid)
         truth, valid = (truth >> start) & row_mask, (valid >> start) & row_mask
         masks.append(State(1, (slot, 0, 0), truth, valid, (), ()))
     table = truth_table((root / "rule.txt").read_text().strip())
@@ -1010,6 +1389,9 @@ def main():
     parser.add_argument("--out", help="also write verification JSON to this exact path")
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--counts", type=int, help="print exact full-domain counts through N candles")
+    parser.add_argument("--dimensions", default="",
+                        help="with --counts: the dimensions that are on, e.g. volume,delta")
+    parser.add_argument("--binary", help="with --self-test: also check this engine's geometry-count")
     parser.add_argument("--ledger", choices=("auto", "python", "c"), default="auto")
     parser.add_argument("--max-task-state-pairs", type=int, default=4000000)
     parser.add_argument("--metric-cache", type=int, default=4096)
@@ -1017,10 +1399,15 @@ def main():
     require(bool(args.run or args.evaluation or args.self_test or args.counts is not None),
             "choose --run, --evaluation, --self-test or --counts")
     if args.self_test:
-        print(json.dumps(self_test(), indent=2))
+        report = self_test()
+        if args.binary:
+            report["count_command"] = verify_count_command(args.binary)
+        print(json.dumps(report, indent=2))
     if args.counts is not None:
         require(0 <= args.counts <= 32, "reference count display supports 0..32")
-        print(json.dumps({mode: [str(domain_count(n, mode)) for n in range(args.counts + 1)]
+        dimensions = dimension_set(args.dimensions)
+        print(json.dumps({mode: [str(dimension_domain_count(n, mode, dimensions))
+                                 for n in range(args.counts + 1)]
                           for mode in WEIGHTS}, indent=2))
     if args.run:
         verify(args.run, args.ledger, args.max_task_state_pairs, args.metric_cache, args.data, args.out)

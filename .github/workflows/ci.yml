@@ -55,3 +55,27 @@ jobs:
           node study/verify/candle-native.mjs
           node query/verify/handoff.mjs
           node query/verify/cube-source.mjs
+
+      - name: Build and verify the shared engine bindings
+        run: |
+          rustup target add wasm32-unknown-unknown --toolchain stable
+          python3 bindings/build.py
+          node study/catalogue/generate.mjs --check
+          python3 study/verify/dimension-vectors.py
+          python3 -m venv "$RUNNER_TEMP/filang-binding-test"
+          "$RUNNER_TEMP/filang-binding-test/bin/python" -m pip install --no-index --no-deps target/engine-dist/*.whl
+          "$RUNNER_TEMP/filang-binding-test/bin/python" bindings/verify/vectors.py
+          python3 bindings/verify/vectors.py --cli target/release/filang
+      - name: Prove the browser and Limen binding contracts
+        if: runner.os == 'Linux'
+        run: |
+          "$RUNNER_TEMP/filang-study-python/bin/python" bindings/verify/prepare_limen.py "$RUNNER_TEMP/filang-study.parquet" "$RUNNER_TEMP/filang-limen.csv"
+          "$RUNNER_TEMP/filang-binding-test/bin/python" bindings/verify/limen.py "$RUNNER_TEMP/filang-limen.csv"
+          node bindings/verify/query.mjs
+          node bindings/verify/chromium.mjs "$(command -v google-chrome)" data/study/recorded-bars.csv "$RUNNER_TEMP/filang-limen.csv"
+      - name: Export the integration packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: filang-engine-${{ runner.os }}-${{ runner.arch }}
+          path: target/engine-dist/
+          if-no-files-found: error

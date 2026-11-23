@@ -8,8 +8,10 @@
 use crate::{
     data::date,
     geometry::{
-        count_domain_decimal, count_domain_unobserved_decimal, GeometryEncoder, GeometryKey,
-        GeometryMode,
+        count_domain_decimal, count_domain_decimal_with_dimensions,
+        count_domain_unobserved_decimal, count_domain_unobserved_decimal_with_dimensions, Counters,
+        DimensionSet, GeometryDimensionEncoder, GeometryEncoder, GeometryKey, GeometryMode,
+        COUNTER_COLUMNS,
     },
     hash::{file_sha256, sha256, Sha256},
     report::quote,
@@ -17,9 +19,9 @@ use crate::{
 };
 use std::{
     collections::{hash_map::Entry, HashMap},
-    fmt::Write as _,
+    fmt::{Display, Write as _},
     fs::{self, File, OpenOptions},
-    hash::{BuildHasherDefault, Hasher},
+    hash::{BuildHasherDefault, Hash, Hasher},
     io::{BufRead, BufReader, BufWriter, Read, Write},
     path::{Path, PathBuf},
     sync::{
@@ -47,6 +49,8 @@ pub struct Config {
     pub end: String,
     pub bars: Vec<usize>,
     pub modes: Vec<GeometryMode>,
+    /// The dimensions every task of this run has on. Empty is 0.9 geometry.
+    pub dimensions: DimensionSet,
     pub workers: usize,
     pub memory_mib: usize,
     pub max_rows: usize,
@@ -109,6 +113,8 @@ impl Config {
 pub(crate) struct DirectionData {
     pub(crate) timestamps: Vec<i64>,
     pub(crate) columns: [Vec<f64>; 4],
+    // One per bar when the input is the nine-column recording.
+    pub(crate) counters: Option<Vec<Counters>>,
     pub(crate) consecutive: Vec<u32>,
     pub(crate) digest: String,
     pub(crate) source_bytes: u64,
@@ -134,8 +140,9 @@ impl DirectionData {
             let capacity = self.len() + additional;
             // Includes all input vectors, allocator slack, parsing buffers and
             // a reserve for at least one worker; checked before allocation.
+            let row_bytes = if self.counters.is_some() { 96 } else { 64 };
             let estimate = capacity
-                .checked_mul(64)
+                .checked_mul(row_bytes)
                 .and_then(|v| v.checked_add(8 * MIB))
                 .ok_or("direction input memory estimate overflow")?;
             if estimate > memory_bytes {
@@ -151,6 +158,11 @@ impl DirectionData {
                 column
                     .try_reserve_exact(additional)
                     .map_err(|_| "direction OHLC allocation failed")?;
+            }
+            if let Some(counters) = &mut self.counters {
+                counters
+                    .try_reserve_exact(additional)
+                    .map_err(|_| "direction counter allocation failed")?;
             }
         }
         Ok(())
@@ -173,6 +185,7 @@ impl DirectionData {
         let mut out = Self {
             timestamps: Vec::new(),
             columns: std::array::from_fn(|_| Vec::new()),
+            counters: None,
             consecutive: Vec::new(),
             digest: String::new(),
             source_bytes: 0,
@@ -200,17 +213,30 @@ impl DirectionData {
             line_number += 1;
             let row = line.trim_end_matches(&['\r', '\n'][..]);
             if line_number == 1 {
-                if row != "timestamp,open,high,low,close,volume" {
-                    return Err("CSV header must be timestamp,open,high,low,close,volume".into());
+                // The nine-column recording carries counters beside the same
+                // prices: its open time is in milliseconds and its sixth
+                // column is the base volume the six-column form calls volume.
+                if row == COUNTER_COLUMNS {
+                    out.counters = Some(Vec::new());
+                } else if row != "timestamp,open,high,low,close,volume" {
+                    return Err(format!(
+                        "CSV header must be timestamp,open,high,low,close,volume or {COUNTER_COLUMNS}"
+                    ));
                 }
                 continue;
             }
             let mut fields = row.split(',');
-            let timestamp = fields
+            let mut timestamp = fields
                 .next()
                 .ok_or("direction missing timestamp")?
                 .parse::<i64>()
                 .map_err(|_| format!("invalid timestamp line {line_number}"))?;
+            if out.counters.is_some() {
+                if timestamp % 1000 != 0 {
+                    return Err(format!("open_ms off the whole second line {line_number}"));
+                }
+                timestamp /= 1000;
+            }
             if timestamp.rem_euclid(interval_seconds) != 0 {
                 return Err(format!("off-grid timestamp line {line_number}"));
             }
@@ -222,8 +248,29 @@ impl DirectionData {
                     .parse()
                     .map_err(|_| format!("invalid numeric field line {line_number}"))?;
             }
+            let bar_counters = if out.counters.is_some() {
+                let mut text = [""; 3];
+                for slot in &mut text {
+                    *slot = fields
+                        .next()
+                        .ok_or_else(|| format!("expected nine CSV fields line {line_number}"))?;
+                }
+                Some(
+                    Counters::parse(text[0], text[1], text[2])
+                        .map_err(|e| format!("line {line_number}: {e}"))?,
+                )
+            } else {
+                None
+            };
             if fields.next().is_some() {
-                return Err(format!("expected six CSV fields line {line_number}"));
+                return Err(format!(
+                    "expected {} CSV fields line {line_number}",
+                    if out.counters.is_some() {
+                        "nine"
+                    } else {
+                        "six"
+                    }
+                ));
             }
             if values.iter().any(|v| !v.is_finite())
                 || values[..4].iter().any(|v| *v <= 0.0)
@@ -267,6 +314,9 @@ impl DirectionData {
             for (column, value) in out.columns.iter_mut().zip(values) {
                 column.push(value);
             }
+            if let (Some(counters), Some(bar)) = (&mut out.counters, bar_counters) {
+                counters.push(bar);
+            }
         }
         if out.len() == 0 {
             return Err("direction input contains no bars".into());
@@ -308,8 +358,8 @@ impl Hasher for KeyHasher {
     }
 }
 
-struct PatternCounts {
-    key: GeometryKey,
+struct PatternCounts<K = GeometryKey> {
+    key: K,
     // max_rows is limited to u32::MAX; no pattern can exceed that count.
     counts: [u32; 18],
 }
@@ -338,7 +388,7 @@ struct Source {
 
 impl Source {
     fn metadata(&self) -> String {
-        format!(
+        let mut text = format!(
             "\"format\":{},\"source_csv\":{},\"source_sha256\":{},\"source_bytes\":{},\"engine_sha256\":{},\"interval_seconds\":{},\"history_start\":{},\"validation_start\":{},\"test_start\":{},\"end\":{},\"input_rows\":{},\"selected_rows\":{},\"first_timestamp\":{},\"last_timestamp\":{},\"gap_count\":{},\"missing_grid_bars\":{},\"context_sha256\":{}",
             quote(FORMAT), quote(&self.data_path), quote(&self.data.digest),
             self.data.source_bytes, quote(&self.engine_sha256), self.config.interval_seconds,
@@ -347,7 +397,13 @@ impl Source {
             self.end - self.first, self.data.timestamps[0],
             self.data.timestamps[self.data.len() - 1], self.data.gap_count,
             self.data.missing_grid_bars, quote(&self.identity),
-        )
+        );
+        // A run with no dimension on reports exactly what it always did.
+        if !self.config.dimensions.is_empty() {
+            write!(text, ",\"dimensions\":{}", self.config.dimensions.json())
+                .expect("String writes are infallible");
+        }
+        text
     }
 }
 
@@ -445,6 +501,9 @@ fn task_identity(source: &Source, task: Task) -> String {
     format!("{}\n{}\n{}\n", source.identity, task.bars, task.mode)
 }
 
+// With no dimension on, a task runs this function, which is the function the
+// sweep had before dimensions existed, unchanged. A task with dimensions on
+// runs `execute_dimension_task` below instead.
 fn execute_task(source: &Source, task: Task, task_root: &Path) -> Result<()> {
     let began = Instant::now();
     let id = task.id();
@@ -602,6 +661,208 @@ fn execute_task(source: &Source, task: Task, task_root: &Path) -> Result<()> {
     Ok(())
 }
 
+/// One task with dimensions on: the loop of `execute_task` over keys that
+/// carry one more word per dimension. A window in which a candle has no value
+/// on one of them is invalid: it is counted, and given to no pattern.
+fn execute_dimension_task(source: &Source, task: Task, task_root: &Path) -> Result<()> {
+    let data = &source.data;
+    let dimensions = source.config.dimensions;
+    let counters = data
+        .counters
+        .as_deref()
+        .ok_or("direction dimensions need a recording with counters")?;
+    let mut encoder = GeometryDimensionEncoder::new(task.bars, task.mode, dimensions)?;
+    let mut rows = [[0.0f64; 4]; 10];
+    let mut window = [counters[0]; 10];
+    execute_windows(source, task, task_root, |t| {
+        for (lag, (row, slot)) in rows[..task.bars].iter_mut().zip(&mut window).enumerate() {
+            let index = t - lag;
+            for (value, column) in row.iter_mut().zip(&data.columns) {
+                *value = column[index];
+            }
+            *slot = counters[index];
+        }
+        encoder.encode_key_ohlc(&rows[..task.bars], &window[..task.bars])
+    })
+}
+
+/// The body of a task with dimensions on. `encode` reads the window whose
+/// current candle is row `t`, current first; `None` is a window that is
+/// invalid for this task's dimensions. It follows `execute_task` step for
+/// step, so that the two write the same artifacts for the same windows.
+fn execute_windows<K, F>(source: &Source, task: Task, task_root: &Path, mut encode: F) -> Result<()>
+where
+    K: Copy + Eq + Hash + Display,
+    F: FnMut(usize) -> Result<Option<K>>,
+{
+    let began = Instant::now();
+    let dimensions = source.config.dimensions;
+    let id = task.id();
+    let staging = task_root.join(format!(".{id}.partial"));
+    if staging.exists() {
+        fs::remove_dir_all(&staging).map_err(|e| e.to_string())?;
+    }
+    fs::create_dir(&staging).map_err(|e| e.to_string())?;
+    let start = source.first + task.bars - 1;
+    let stop = source.end.saturating_sub(1);
+    let candidates = stop.saturating_sub(start);
+    let universe = count_domain_decimal_with_dimensions(task.bars, task.mode, dimensions)?;
+    let capacity = universe
+        .parse::<usize>()
+        .unwrap_or(candidates)
+        .min(candidates);
+    let mut lookup: HashMap<K, u32, BuildHasherDefault<KeyHasher>> =
+        HashMap::with_hasher(BuildHasherDefault::default());
+    lookup
+        .try_reserve(capacity)
+        .map_err(|_| "direction key table allocation failed")?;
+    let mut patterns = Vec::<PatternCounts<K>>::new();
+    patterns
+        .try_reserve_exact(capacity)
+        .map_err(|_| "direction count allocation failed")?;
+    let mut counts = [0u64; 18];
+    let mut gap_purged = 0u64;
+    let mut boundary_purged = 0u64;
+    let mut dimension_purged = 0u64;
+    let mut events = 0u64;
+    let mut output = writer(&staging.join("events.tsv"))?;
+    output
+        .write_all(EVENT_HEADER.as_bytes())
+        .map_err(|e| e.to_string())?;
+    let data = &source.data;
+    for t in start..stop {
+        if data.consecutive[t + 1] < (task.bars + 1) as u32 {
+            gap_purged += 1;
+            continue;
+        }
+        let timestamp = data.timestamps[t];
+        let target_timestamp = data.timestamps[t + 1];
+        let split = if timestamp < source.bounds[1] {
+            0
+        } else if timestamp < source.bounds[2] {
+            1
+        } else {
+            2
+        };
+        let split_end = source.bounds[split + 1];
+        if target_timestamp >= split_end
+            || target_timestamp + source.config.interval_seconds > split_end
+        {
+            boundary_purged += 1;
+            continue;
+        }
+        let key = match encode(t)? {
+            Some(key) => key,
+            None => {
+                dimension_purged += 1;
+                continue;
+            }
+        };
+        let pattern_id = match lookup.entry(key) {
+            Entry::Occupied(entry) => *entry.get(),
+            Entry::Vacant(entry) => {
+                let index = patterns.len() as u32;
+                patterns.push(PatternCounts {
+                    key,
+                    counts: [0; 18],
+                });
+                entry.insert(index);
+                index
+            }
+        };
+        let target_cc = sign(data.columns[3][t + 1], data.columns[3][t]);
+        let target_body = sign(data.columns[3][t + 1], data.columns[0][t + 1]);
+        let current_cc = sign(data.columns[3][t], data.columns[3][t - 1]);
+        let current_body = sign(data.columns[3][t], data.columns[0][t]);
+        let offset = split * 6;
+        for (target, direction) in [target_cc, target_body].iter().enumerate() {
+            let position = offset + target * 3 + (*direction + 1) as usize;
+            patterns[pattern_id as usize].counts[position] += 1;
+            counts[position] += 1;
+        }
+        writeln!(
+            output,
+            "{timestamp}\t{target_timestamp}\t{}\t{pattern_id}\t{target_cc}\t{target_body}\t{current_cc}\t{current_body}",
+            SPLITS[split]
+        )
+        .map_err(|e| e.to_string())?;
+        events += 1;
+    }
+    let event_artifact = finish_writer(output, "events.tsv")?;
+    // The key table is no longer needed while potentially large catalogues
+    // are serialized. Keep only fixed keys and their sufficient statistics.
+    drop(lookup);
+    let encode_seconds = began.elapsed().as_secs_f64();
+    let mut output = writer(&staging.join("patterns.tsv"))?;
+    output
+        .write_all(PATTERN_HEADER.as_bytes())
+        .map_err(|e| e.to_string())?;
+    let mut training_observed = 0usize;
+    for (id, pattern) in patterns.iter().enumerate() {
+        if pattern.counts[..6].iter().any(|count| *count > 0) {
+            training_observed += 1;
+        }
+        write!(output, "{id}\t{}", pattern.key).map_err(|e| e.to_string())?;
+        for count in pattern.counts {
+            write!(output, "\t{count}").map_err(|e| e.to_string())?;
+        }
+        writeln!(output).map_err(|e| e.to_string())?;
+    }
+    let pattern_artifact = finish_writer(output, "patterns.tsv")?;
+    let unobserved = |observed| {
+        count_domain_unobserved_decimal_with_dimensions(task.bars, task.mode, dimensions, observed)
+    };
+    // Nothing is added to the summary of a task with no dimension on.
+    let dimension_summary = if dimensions.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "\"dimension_purged\":{dimension_purged},\"count_includes_patterns_that_cannot_occur\":{},",
+            dimensions.includes_patterns_that_cannot_occur(task.bars)
+        )
+    };
+    let summary = format!(
+        "{{\"version\":1,\"status\":\"COMPLETE\",{},\"task\":{},\"bars\":{},\"mode\":{},\"window_order\":\"current_first_contiguous\",\"label_lag\":1,\"decision_timestamp_semantics\":\"candle_open_known_at_open_plus_interval\",\"target_cc\":\"sign(close[t+1]-close[t])\",\"target_body\":\"sign(close[t+1]-open[t+1])\",\"universe_patterns\":{},\"observed_patterns\":{},\"unobserved_patterns\":{},\"training_observed_patterns\":{},\"training_unobserved_patterns\":{},\"candidate_decisions\":{},\"gap_purged\":{},\"boundary_purged\":{},{dimension_summary}\"events\":{},\"split_counts\":{}}}\n",
+        source.metadata(), quote(&id), task.bars, quote(&task.mode.to_string()), quote(&universe),
+        patterns.len(), quote(&unobserved(patterns.len())?),
+        training_observed, quote(&unobserved(training_observed)?),
+        candidates, gap_purged, boundary_purged, events, count_json(&counts)
+    );
+    let summary_artifact = text_artifact(&staging, "summary.json", &summary)?;
+    let identity_artifact = text_artifact(&staging, "task.identity", &task_identity(source, task))?;
+    let elapsed = began.elapsed().as_secs_f64();
+    let timing_artifact = text_artifact(
+        &staging,
+        "timing.json",
+        &format!(
+            "{{\"encode_events_seconds\":{encode_seconds:.9},\"task_seconds\":{elapsed:.9}}}\n"
+        ),
+    )?;
+    let mut artifacts = String::from("file\tbytes\tsha256\n");
+    for artifact in [
+        event_artifact,
+        pattern_artifact,
+        summary_artifact,
+        identity_artifact,
+        timing_artifact,
+    ] {
+        writeln!(
+            artifacts,
+            "{}\t{}\t{}",
+            artifact.name, artifact.bytes, artifact.digest
+        )
+        .expect("String writes are infallible");
+    }
+    text_artifact(&staging, "artifacts.tsv", &artifacts)?;
+    text_artifact(
+        &staging,
+        "artifacts.tsv.sha256",
+        &format!("{}\n", sha256(artifacts.as_bytes())),
+    )?;
+    fs::rename(staging, task_root.join(&id)).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 fn verify_task(source: &Source, task: Task, task_root: &Path) -> Result<bool> {
     let directory = task_root.join(task.id());
     if !directory.exists() {
@@ -681,6 +942,13 @@ pub fn run(mut config: Config) -> Result<String> {
     if data.len() < 4 {
         return Err("direction experiment requires at least four bars".into());
     }
+    // A dimension is refused, not weakened, on a recording without counters.
+    if !config.dimensions.is_empty() && data.counters.is_none() {
+        return Err(format!(
+            "direction dimensions {} need a recording with counters: {COUNTER_COLUMNS}",
+            config.dimensions
+        ));
+    }
     let first = data.index(bounds[0]);
     let end = data.index(bounds[3]);
     if first == end || end - first <= *config.bars.last().unwrap() {
@@ -707,8 +975,15 @@ pub fn run(mut config: Config) -> Result<String> {
         }
     }
     let engine_sha256 = file_sha256(std::env::current_exe().map_err(|e| e.to_string())?)?;
+    // The dimensions are part of a run's identity. With none on, the identity
+    // is written exactly as it was before dimensions existed.
+    let dimension_identity = if config.dimensions.is_empty() {
+        String::new()
+    } else {
+        format!(",\"dimensions\":{}", config.dimensions.json())
+    };
     let canonical = format!(
-        "{{\"format\":{},\"source_sha256\":{},\"engine_sha256\":{},\"interval_seconds\":{},\"history_start\":{},\"validation_start\":{},\"test_start\":{},\"end\":{},\"bars\":[{}],\"modes\":[{}]}}\n",
+        "{{\"format\":{},\"source_sha256\":{},\"engine_sha256\":{},\"interval_seconds\":{},\"history_start\":{},\"validation_start\":{},\"test_start\":{},\"end\":{},\"bars\":[{}],\"modes\":[{}]{dimension_identity}}}\n",
         quote(FORMAT), quote(&data.digest), quote(&engine_sha256), config.interval_seconds,
         quote(&config.history_start), quote(&config.validation_start), quote(&config.test_start),
         quote(&config.end), config.bars.iter().map(usize::to_string).collect::<Vec<_>>().join(","),
@@ -727,11 +1002,17 @@ pub fn run(mut config: Config) -> Result<String> {
     let input_bytes = data
         .timestamps
         .capacity()
-        .checked_mul(64)
+        .checked_mul(if data.counters.is_some() { 96 } else { 64 })
         .and_then(|v| v.checked_add(4 * MIB))
         .ok_or("direction memory estimate overflow")?;
+    // A key with dimension words is forty bytes wider, in the table and in
+    // the catalogue.
     let task_bytes = (end - first)
-        .checked_mul(224)
+        .checked_mul(if config.dimensions.is_empty() {
+            224
+        } else {
+            304
+        })
         .and_then(|v| v.checked_add(8 * MIB))
         .ok_or("direction worker memory estimate overflow")?;
     let available = (config.memory_mib * MIB)
@@ -802,7 +1083,11 @@ pub fn run(mut config: Config) -> Result<String> {
                 break;
             }
             let index = pending[position];
-            let result = execute_task(&source, tasks[index], &task_root);
+            let result = if source.config.dimensions.is_empty() {
+                execute_task(&source, tasks[index], &task_root)
+            } else {
+                execute_dimension_task(&source, tasks[index], &task_root)
+            };
             let failed = result.is_err();
             results.lock().unwrap().push((index, result));
             if failed {

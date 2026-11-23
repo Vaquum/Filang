@@ -1,5 +1,8 @@
 use super::project;
-use crate::{geometry::GeometryPattern, Result};
+use crate::{
+    geometry::{DimensionPart, GeometryPattern},
+    Result,
+};
 
 /// Maximum number of dynamic-programming cells for a single composition
 /// calculation. This affects this optional module only, never Filang's engine.
@@ -9,6 +12,9 @@ fn check_inputs(left: &GeometryPattern, right: &GeometryPattern, shared: usize) 
     if left.mode() != right.mode() {
         return Err("geometry algebra: both operands must have the same orientation mode".into());
     }
+    if left.dimension_set() != right.dimension_set() {
+        return Err("geometry algebra: both operands must have the same dimensions on".into());
+    }
     if shared > left.len().min(right.len()) {
         return Err("geometry algebra: overlap exceeds a window's length".into());
     }
@@ -17,6 +23,8 @@ fn check_inputs(left: &GeometryPattern, right: &GeometryPattern, shared: usize) 
 
 /// Whether the suffix of left and prefix of right have exactly the same
 /// induced endpoint weak order and, if oriented, the same body directions.
+/// With dimensions on, the shared candles and the reference point must also
+/// stand in the same order on every axis.
 ///
 /// Compatibility permits composition, but does not determine the unobserved
 /// comparisons between endpoints exclusive to the two windows.
@@ -31,49 +39,56 @@ pub fn overlap_compatible(
     Ok(project(left, &l)? == project(right, &r)?)
 }
 
-struct MergePlan<'a> {
-    left: &'a GeometryPattern,
-    right: &'a GeometryPattern,
-    shared: usize,
-    // A shared endpoint level must be matched to precisely its counterpart.
+/// Receives one completion: maps from each operand's levels to merged levels.
+type Visit<'a> = dyn FnMut(&[usize], &[usize]) -> Result<()> + 'a;
+
+/// Two strictly ordered chains of levels on one axis, and the levels the two
+/// operands must share. Price is one axis; each dimension is another.
+struct Merge {
+    // A shared level must be matched to precisely its counterpart.
     // Non-shared levels may interleave or become equal across operands.
     l_anchor: Vec<Option<usize>>,
     r_anchor: Vec<Option<usize>>,
 }
 
-impl<'a> MergePlan<'a> {
+impl Merge {
     fn new(
-        left: &'a GeometryPattern,
-        right: &'a GeometryPattern,
-        shared: usize,
-    ) -> Result<Option<Self>> {
-        if !overlap_compatible(left, right, shared)? {
-            return Ok(None);
+        l_levels: usize,
+        r_levels: usize,
+        anchors: impl Iterator<Item = (usize, usize)>,
+    ) -> Result<Self> {
+        let mut l_anchor = vec![None; l_levels];
+        let mut r_anchor = vec![None; r_levels];
+        for (l, r) in anchors {
+            if l_anchor[l].map_or(false, |previous| previous != r)
+                || r_anchor[r].map_or(false, |previous| previous != l)
+            {
+                return Err("geometry algebra: inconsistent shared-level anchors".into());
+            }
+            l_anchor[l] = Some(r);
+            r_anchor[r] = Some(l);
         }
-        let mut l_anchor = vec![None; left.level_count()];
-        let mut r_anchor = vec![None; right.level_count()];
-        for row in 0..shared {
+        Ok(Self { l_anchor, r_anchor })
+    }
+
+    /// The price axis: the four endpoints of every shared candle are anchors.
+    fn price(left: &GeometryPattern, right: &GeometryPattern, shared: usize) -> Result<Self> {
+        let anchors = (0..shared).flat_map(|row| {
             let lrow = left.ranks()[left.len() - shared + row];
             let rrow = right.ranks()[row];
-            for endpoint in 0..4 {
-                let l = lrow[endpoint];
-                let r = rrow[endpoint];
-                if l_anchor[l].map_or(false, |previous| previous != r)
-                    || r_anchor[r].map_or(false, |previous| previous != l)
-                {
-                    return Err("geometry algebra: inconsistent shared-level anchors".into());
-                }
-                l_anchor[l] = Some(r);
-                r_anchor[r] = Some(l);
-            }
-        }
-        Ok(Some(Self {
-            left,
-            right,
-            shared,
-            l_anchor,
-            r_anchor,
-        }))
+            (0..4).map(move |endpoint| (lrow[endpoint], rrow[endpoint]))
+        });
+        Self::new(left.level_count(), right.level_count(), anchors)
+    }
+
+    /// One dimension's axis: every shared candle is an anchor, and so is the
+    /// reference point, which is the same point in both operands.
+    fn dimension(left: &DimensionPart, right: &DimensionPart, shared: usize) -> Result<Self> {
+        let first = left.ranks().len() - shared;
+        let anchors = (0..shared)
+            .map(|row| (left.ranks()[first + row], right.ranks()[row]))
+            .chain(left.reference().zip(right.reference()));
+        Self::new(left.level_count(), right.level_count(), anchors)
     }
 
     fn can_left_only(&self, i: usize) -> bool {
@@ -101,7 +116,7 @@ impl<'a> MergePlan<'a> {
 
     /// Count every valid completion, without generating any complete pattern.
     /// This is a constrained Delannoy recurrence. A path chooses L, R, or
-    /// both at each new global price level, with shared levels tied exactly.
+    /// both at each new global level, with shared levels tied exactly.
     fn suffix_counts(&self) -> Result<Vec<u128>> {
         let l = self.l_anchor.len();
         let r = self.r_anchor.len();
@@ -142,27 +157,9 @@ impl<'a> MergePlan<'a> {
         Ok(counts)
     }
 
-    fn materialize(&self, lmap: &[usize], rmap: &[usize]) -> Result<GeometryPattern> {
-        let rows = self
-            .left
-            .ranks()
-            .iter()
-            .map(|r| r.map(|rank| lmap[rank]))
-            .chain(
-                self.right.ranks()[self.shared..]
-                    .iter()
-                    .map(|r| r.map(|rank| rmap[rank])),
-            )
-            .collect();
-        let directions = self.left.directions().map(|l| {
-            let mut all = l.to_vec();
-            all.extend_from_slice(&self.right.directions().unwrap()[self.shared..]);
-            all
-        });
-        GeometryPattern::new(rows, directions)
-    }
-
-    fn collect(&self, counts: &[u128], output: &mut Vec<GeometryPattern>) -> Result<()> {
+    /// Visit every completion as a pair of maps from each operand's levels to
+    /// the levels of the merged axis, in the order left, right, tied.
+    fn collect(&self, counts: &[u128], visit: &mut Visit<'_>) -> Result<()> {
         // Explicit DFS frames avoid a call-stack limit for a long but
         // deterministic one-completion chain. Backtracking reuses rank maps.
         struct Frame {
@@ -181,7 +178,7 @@ impl<'a> MergePlan<'a> {
         }];
         while let Some(frame) = stack.last_mut() {
             if frame.i == self.l_anchor.len() && frame.j == self.r_anchor.len() {
-                output.push(self.materialize(&lmap, &rmap)?);
+                visit(&lmap, &rmap)?;
                 stack.pop();
                 continue;
             }
@@ -221,8 +218,102 @@ impl<'a> MergePlan<'a> {
     }
 }
 
+/// The merge of every axis of two compatible operands: price first, then each
+/// switched-on dimension in canonical order. Incompatible operands have none.
+struct MergePlan<'a> {
+    left: &'a GeometryPattern,
+    right: &'a GeometryPattern,
+    shared: usize,
+    price: Merge,
+    dimensions: Vec<Merge>,
+}
+
+impl<'a> MergePlan<'a> {
+    fn new(
+        left: &'a GeometryPattern,
+        right: &'a GeometryPattern,
+        shared: usize,
+    ) -> Result<Option<Self>> {
+        if !overlap_compatible(left, right, shared)? {
+            return Ok(None);
+        }
+        let dimensions = left
+            .dimensions()
+            .iter()
+            .zip(right.dimensions())
+            .map(|(l, r)| Merge::dimension(l, r, shared))
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Some(Self {
+            left,
+            right,
+            shared,
+            price: Merge::price(left, right, shared)?,
+            dimensions,
+        }))
+    }
+
+    /// The suffix counts of every axis, and the product of their totals:
+    /// the axes are completed independently of one another.
+    fn counts(&self) -> Result<(Vec<u128>, Vec<Vec<u128>>, u128)> {
+        let price = self.price.suffix_counts()?;
+        let mut total = price[0];
+        let mut dimensions = Vec::with_capacity(self.dimensions.len());
+        for merge in &self.dimensions {
+            let counts = merge.suffix_counts()?;
+            total = total
+                .checked_mul(counts[0])
+                .ok_or("geometry algebra: composition count exceeds u128")?;
+            dimensions.push(counts);
+        }
+        Ok((price, dimensions, total))
+    }
+
+    fn materialize(&self, lmap: &[usize], rmap: &[usize]) -> Result<GeometryPattern> {
+        let rows = self
+            .left
+            .ranks()
+            .iter()
+            .map(|r| r.map(|rank| lmap[rank]))
+            .chain(
+                self.right.ranks()[self.shared..]
+                    .iter()
+                    .map(|r| r.map(|rank| rmap[rank])),
+            )
+            .collect();
+        let directions = self.left.directions().map(|l| {
+            let mut all = l.to_vec();
+            all.extend_from_slice(&self.right.directions().unwrap()[self.shared..]);
+            all
+        });
+        GeometryPattern::new(rows, directions)
+    }
+
+    fn materialize_part(
+        &self,
+        axis: usize,
+        lmap: &[usize],
+        rmap: &[usize],
+    ) -> Result<DimensionPart> {
+        let left = &self.left.dimensions()[axis];
+        let right = &self.right.dimensions()[axis];
+        let ranks = left
+            .ranks()
+            .iter()
+            .map(|&rank| lmap[rank])
+            .chain(right.ranks()[self.shared..].iter().map(|&rank| rmap[rank]))
+            .collect();
+        DimensionPart::new(
+            left.dimension(),
+            ranks,
+            left.reference().map(|rank| lmap[rank]),
+        )
+    }
+}
+
 /// Exact number of complete geometries extending the two operand patterns
 /// with the specified shared suffix/prefix. Incompatible windows have count 0.
+/// With dimensions on, each axis is completed separately and the count is the
+/// product over the axes.
 ///
 /// Rejects unsupported DP memory and u128 cardinality overflow explicitly.
 /// This count is a structural fact, not an observed sample frequency.
@@ -233,7 +324,7 @@ pub fn composition_count(
 ) -> Result<u128> {
     match MergePlan::new(left, right, shared)? {
         None => Ok(0),
-        Some(plan) => Ok(plan.suffix_counts()?[0]),
+        Some(plan) => Ok(plan.counts()?.2),
     }
 }
 
@@ -253,19 +344,68 @@ pub fn compose_overlap(
         Some(plan) => plan,
         None => return Ok(Vec::new()),
     };
-    let counts = plan.suffix_counts()?;
-    if counts[0] > max_results as u128 {
+    let (price_counts, dimension_counts, total) = plan.counts()?;
+    if total > max_results as u128 {
         return Err(format!(
-            "geometry algebra: {} completions exceed max_results={max_results}",
-            counts[0]
+            "geometry algebra: {total} completions exceed max_results={max_results}"
         ));
     }
     let mut output = Vec::new();
     output
-        .try_reserve_exact(counts[0] as usize)
+        .try_reserve_exact(total as usize)
         .map_err(|_| "geometry algebra: cannot reserve completion output")?;
-    plan.collect(&counts, &mut output)?;
-    debug_assert_eq!(output.len() as u128, counts[0]);
+    if plan.dimensions.is_empty() {
+        plan.price.collect(&price_counts, &mut |lmap, rmap| {
+            output.push(plan.materialize(lmap, rmap)?);
+            Ok(())
+        })?;
+        debug_assert_eq!(output.len() as u128, total);
+        return Ok(output);
+    }
+    // Every axis has at least one completion here, so no axis's list is
+    // longer than the checked total. The result is their Cartesian product:
+    // price outermost, the last dimension changing first.
+    let mut prices = Vec::new();
+    plan.price.collect(&price_counts, &mut |lmap, rmap| {
+        prices.push(plan.materialize(lmap, rmap)?);
+        Ok(())
+    })?;
+    let mut axes = Vec::with_capacity(plan.dimensions.len());
+    for (axis, (merge, counts)) in plan.dimensions.iter().zip(&dimension_counts).enumerate() {
+        let mut parts = Vec::new();
+        merge.collect(counts, &mut |lmap, rmap| {
+            parts.push(plan.materialize_part(axis, lmap, rmap)?);
+            Ok(())
+        })?;
+        axes.push(parts);
+    }
+    let mut choice = vec![0usize; axes.len()];
+    for price in &prices {
+        loop {
+            let parts = axes
+                .iter()
+                .zip(&choice)
+                .map(|(parts, &at)| parts[at].clone())
+                .collect();
+            output.push(price.with_parts(parts)?);
+            let mut axis = axes.len();
+            loop {
+                if axis == 0 {
+                    break;
+                }
+                axis -= 1;
+                choice[axis] += 1;
+                if choice[axis] < axes[axis].len() {
+                    break;
+                }
+                choice[axis] = 0;
+            }
+            if choice.iter().all(|at| *at == 0) {
+                break;
+            }
+        }
+    }
+    debug_assert_eq!(output.len() as u128, total);
     Ok(output)
 }
 

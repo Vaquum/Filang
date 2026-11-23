@@ -8,7 +8,10 @@ use crate::{
     dense_io::{self, Reader, Writer},
     dense_run::{self, bank_context, bank_rows, record_path, BankSource, Best, ExecutionConfig},
     dense_tree::Table,
-    geometry::{self, GeometryEncoder, GeometryMode, GeometryPattern},
+    geometry::{
+        self, Counters, DimensionSet, GeometryDimensionEncoder, GeometryEncoder, GeometryMode,
+        GeometryPattern, COUNTER_COLUMNS,
+    },
     hash::sha256,
     kernels::Backend,
     report::{num, quote},
@@ -35,6 +38,8 @@ pub struct Config {
     pub start: i64,
     pub end: i64,
     pub mode: GeometryMode,
+    /// The dimensions every bank of this run declares. Empty is 0.9 geometry.
+    pub dimensions: DimensionSet,
     pub windows: Vec<Vec<usize>>,
     pub qualifiers: Vec<Qualifier>,
     pub qualifier_text: String,
@@ -108,12 +113,18 @@ impl Config {
             .map(str::trim)
             .collect::<Vec<_>>()
             .join(",");
+        // Optional: with the key absent or empty the bank is a 0.9 bank.
+        let dimensions = match fields.remove("dimensions") {
+            Some(text) => DimensionSet::parse(&text)?,
+            None => DimensionSet::NONE,
+        };
         let out = Self {
             data: take(&mut fields, "data")?,
             interval_seconds: number(&mut fields, "interval_seconds")?,
             start: data::date(&take(&mut fields, "start")?)?,
             end: data::date(&take(&mut fields, "end")?)?,
             mode: GeometryMode::parse(&take(&mut fields, "mode")?)?,
+            dimensions,
             windows,
             qualifiers: qualifier_text
                 .split(',')
@@ -175,7 +186,7 @@ impl Config {
             {
                 return Err("geometry windows require distinct increasing lags from 0, at most nine bars and maximum lag 100000".into());
             }
-            geometry::count_domain(window.len(), self.mode)?;
+            geometry::count_domain_with_dimensions(window.len(), self.mode, self.dimensions)?;
         }
         let names = self.qualifier_text.split(',').collect::<Vec<_>>();
         if names.len() != self.qualifiers.len() {
@@ -195,11 +206,22 @@ impl Config {
         self.logical()?;
         Ok(())
     }
+    /// The declared domain of one bank: the price count times one factor for
+    /// each declared dimension. With none declared it is the 0.9 count.
     pub fn pattern_count(&self, bank: usize) -> Result<u128> {
-        geometry::count_domain(
+        geometry::count_domain_with_dimensions(
             self.windows.get(bank).ok_or("geometry bank address")?.len(),
             self.mode,
+            self.dimensions,
         )
+    }
+    /// Whether some bank's declared count includes patterns that no recording
+    /// can produce, because its dimensions hold a dependent core.
+    pub fn includes_patterns_that_cannot_occur(&self) -> bool {
+        self.windows.iter().any(|window| {
+            self.dimensions
+                .includes_patterns_that_cannot_occur(window.len())
+        })
     }
     pub fn per_bank(&self, bank: usize) -> Result<u128> {
         self.pattern_count(bank)?
@@ -361,15 +383,29 @@ pub fn qualify(mask: &Mask, qualifier: Qualifier) -> Result<Mask> {
 
 pub struct Source<'a> {
     config: &'a Config,
+    // One per bar when the recording carries them; required by a dimension.
+    counters: Option<Vec<Counters>>,
     labels: Vec<String>,
     catalogue_records: Vec<AtomicUsize>,
     preparations: Vec<Mutex<Option<Preparation>>>,
 }
 impl<'a> Source<'a> {
     pub fn new(config: &'a Config) -> Result<Self> {
+        Self::with_counters(config, None)
+    }
+    /// A pattern with a dimension on is refused, not weakened, on a recording
+    /// without counters.
+    pub fn with_counters(config: &'a Config, counters: Option<Vec<Counters>>) -> Result<Self> {
         config.validate()?;
+        if !config.dimensions.is_empty() && counters.is_none() {
+            return Err(format!(
+                "geometry dimensions {} need a recording with counters: {COUNTER_COLUMNS}",
+                config.dimensions
+            ));
+        }
         Ok(Self {
             config,
+            counters,
             labels: config.labels(),
             catalogue_records: (0..config.windows.len())
                 .map(|_| AtomicUsize::new(0))
@@ -394,9 +430,9 @@ pub fn run(
     capture: bool,
 ) -> Result<String> {
     let config = Config::parse(raw)?;
-    let data = Data::read(&config.data, config.interval_seconds)?;
+    let (data, counters) = Data::read_with_counters(&config.data, config.interval_seconds)?;
     let range = config.validate_data(&data)?;
-    let source = Source::new(&config)?;
+    let source = Source::with_counters(&config, counters)?;
     dense_run::run_banks(
         raw,
         out,
@@ -477,12 +513,16 @@ impl Preparation {
             .observed_patterns
             .checked_add((self.unobserved_patterns > 0) as u64)
             .ok_or("geometry catalogue count overflow")?;
+        // With a dimension on, a window in which a candle has no value on it
+        // is invalid and is not encoded; otherwise every window is.
+        let windows = cut.saturating_sub(max_lag) as u64;
         if self.window_size != lags.len() as u64
             || self.max_lag != max_lag as u64
             || self.decision_rows != cut as u64
             || self.scored_start != range.start as u64
             || self.scored_rows != bank_rows(range) as u64
-            || self.windows_encoded != cut.saturating_sub(max_lag) as u64
+            || self.windows_encoded > windows
+            || c.dimensions.is_empty() && self.windows_encoded != windows
             || self.observed_patterns > self.windows_encoded
             || self.total_patterns != c.pattern_count(bank)?
             || self
@@ -607,9 +647,23 @@ fn valid_from(mask: &mut Mask, start: usize) {
     }
 }
 
+/// Prepare a bank of a recording that carries no counters.
+#[cfg(test)]
 fn prepare_bank(
     c: &Config,
     data: &Data,
+    range: std::ops::Range<usize>,
+    context: &str,
+    bank: usize,
+    banks: &Path,
+) -> Result<Preparation> {
+    prepare_bank_with(c, data, None, range, context, bank, banks)
+}
+
+fn prepare_bank_with(
+    c: &Config,
+    data: &Data,
+    counters: Option<&[Counters]>,
     range: std::ops::Range<usize>,
     context: &str,
     bank: usize,
@@ -648,15 +702,35 @@ fn prepare_bank(
             .and_then(|n| n.checked_add(65536 + lags.len() * 1024))
             .ok_or("geometry mask budget overflow")?,
     )?;
+    // Each declared dimension adds one rank per candle to every stored key.
     let key_charge = lags
         .len()
-        .checked_mul(80)
-        .and_then(|n| n.checked_add(768))
+        .checked_mul(80 + 8 * c.dimensions.len())
+        .and_then(|n| n.checked_add(768 + 64 * c.dimensions.len()))
         .ok_or("geometry key charge overflow")?;
     let mut encoder = GeometryEncoder::new(lags.len(), c.mode)?;
+    // Present only when a dimension is declared. With none, every window
+    // takes the price encoder above, exactly as before dimensions existed.
+    let mut dimensional = if c.dimensions.is_empty() {
+        None
+    } else {
+        let counters = counters.ok_or("geometry dimensions need a recording with counters")?;
+        if counters.len() != data.len() {
+            return Err("geometry counters do not match the recording's bars".into());
+        }
+        budget.charge(lags.len() * std::mem::size_of::<Counters>())?;
+        Some((
+            GeometryDimensionEncoder::new(lags.len(), c.mode, c.dimensions)?,
+            counters,
+            vec![counters[0]; lags.len()],
+        ))
+    };
     let mut rows = vec![[0.; 4]; lags.len()];
     let mut seen = HashMap::<GeometryPattern, usize>::new();
     let mut occurrences = Vec::<Vec<usize>>::new();
+    // Decisions whose window has no value on a declared dimension. They are
+    // invalid for every pattern of this bank, whatever their prices.
+    let mut invalid = Vec::<usize>::new();
     for t in max_lag..cut {
         for (row, &lag) in rows.iter_mut().zip(lags) {
             let index = t - lag;
@@ -667,7 +741,25 @@ fn prepare_bank(
                 data.columns[3][index],
             ];
         }
-        let pattern = encoder.encode_ohlc(&rows)?;
+        let pattern = match &mut dimensional {
+            None => encoder.encode_ohlc(&rows)?,
+            Some((encoder, counters, window)) => {
+                for (slot, &lag) in window.iter_mut().zip(lags) {
+                    *slot = counters[t - lag];
+                }
+                match encoder.encode_ohlc(&rows, window)? {
+                    Some(pattern) => pattern,
+                    None => {
+                        budget.charge(2 * std::mem::size_of::<usize>())?;
+                        invalid
+                            .try_reserve(1)
+                            .map_err(|_| "geometry invalid-window allocation")?;
+                        invalid.push(t);
+                        continue;
+                    }
+                }
+            }
+        };
         let id = if let Some(&id) = seen.get(pattern) {
             id
         } else {
@@ -694,8 +786,14 @@ fn prepare_bank(
     let complement = if absent > 0 {
         budget.charge(key_charge)?;
         Some(
-            geometry::first_unobserved_by(lags.len(), c.mode, observed, |p| seen.contains_key(p))?
-                .ok_or("missing unobserved geometry representative")?,
+            geometry::first_unobserved_with_dimensions_by(
+                lags.len(),
+                c.mode,
+                c.dimensions,
+                observed,
+                |p| seen.contains_key(p),
+            )?
+            .ok_or("missing unobserved geometry representative")?,
         )
     } else {
         None
@@ -712,6 +810,9 @@ fn prepare_bank(
     let mut builder = Builder::new(bank_rows(&range), c.bank_budget)?;
     let mut base = Mask::empty(cut);
     valid_from(&mut base, max_lag);
+    for &t in &invalid {
+        base.valid[t / 64] &= !(1u64 << (t % 64));
+    }
     let representatives = observed
         .checked_add(complement.is_some() as usize)
         .ok_or("geometry catalogue overflow")?;
@@ -771,7 +872,7 @@ fn prepare_bank(
         decision_rows: cut as u64,
         scored_start: range.start as u64,
         scored_rows: bank_rows(&range) as u64,
-        windows_encoded: cut.saturating_sub(max_lag) as u64,
+        windows_encoded: (cut.saturating_sub(max_lag) - invalid.len()) as u64,
         observed_patterns: observed as u64,
         catalogue_records: representatives as u64,
         qualifier_count: c.qualifiers.len() as u64,
@@ -783,18 +884,29 @@ fn prepare_bank(
         logical_conditions: builder.addresses,
     };
     metadata.validate(c, bank, &range)?;
+    // Nothing is added to the statistics of a bank with no dimension declared.
+    let dimension_statistics = if c.dimensions.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "\"dimensions\":{},\"windows_without_a_dimension_value\":{},\"count_includes_patterns_that_cannot_occur\":{},",
+            c.dimensions.json(),
+            invalid.len(),
+            c.dimensions.includes_patterns_that_cannot_occur(lags.len())
+        )
+    };
     let statistics = format!(concat!(
         "{{\"version\":1,\"source\":\"geometry\",\"bank\":{},\"window_lags\":[{}],\"mode\":{},",
         "\"scored_rows\":{},\"scored_start_index\":{},\"decision_rows\":{},\"windows_encoded\":{},",
         "\"observed_patterns\":{},\"total_patterns\":{},\"unobserved_patterns\":{},\"qualifiers\":[{}],",
         "\"logical_conditions\":{},\"catalogue_records\":{},\"physical_memberships\":{},\"states\":{},",
-        "\"bank_payload_bytes\":{},\"prepare_payload_charge_bytes\":{},\"catalogue_bytes\":{},\"member_bytes\":{},",
+        "\"bank_payload_bytes\":{},\"prepare_payload_charge_bytes\":{},\"catalogue_bytes\":{},\"member_bytes\":{},{}",
         "\"seconds\":{},\"alias_scope\":\"fixed_causal_input_and_scored_timeline_only\"}}\n"),
         bank, lag_text(lags), quote(&c.mode.to_string()), metadata.scored_rows, metadata.scored_start,
         metadata.decision_rows, metadata.windows_encoded, observed, quote(&total.to_string()), quote(&absent.to_string()),
         c.qualifier_text.split(',').map(quote).collect::<Vec<_>>().join(","), quote(&builder.addresses.to_string()),
         representatives, builder.cells, builder.entries.len(), builder.payload, budget.used, catalogue_bytes, members_bytes,
-        num(now.elapsed().as_secs_f64()));
+        dimension_statistics, num(now.elapsed().as_secs_f64()));
     let stats_hash = plain_write(
         &record_path(banks, "preparation", bank, "json"),
         statistics.as_bytes(),
@@ -814,6 +926,18 @@ fn prepare_bank(
     dense_io::put(&marker, &record)?;
     eprintln!("Prepared geometry {}: {} causal windows, {} observed patterns, {} states; {} logical conditions",
         lag_text(lags), metadata.windows_encoded, observed, builder.entries.len(), builder.addresses);
+    if !c.dimensions.is_empty() {
+        eprintln!(
+            "  dimensions {}: {} windows without a value are invalid{}",
+            c.dimensions,
+            invalid.len(),
+            if c.dimensions.includes_patterns_that_cannot_occur(lags.len()) {
+                "; the declared count includes patterns that cannot occur"
+            } else {
+                ""
+            }
+        );
+    }
     Ok(metadata)
 }
 
@@ -857,8 +981,9 @@ impl Source<'_> {
             let pattern = fields[3].parse::<GeometryPattern>()?;
             if pattern.mode() != self.config.mode
                 || pattern.len() != self.config.windows[bank].len()
+                || pattern.dimension_set() != self.config.dimensions
             {
-                return Err("geometry catalogue mode/window".into());
+                return Err("geometry catalogue mode/window/dimensions".into());
             }
             return Ok((pattern, fields[1].to_owned(), multiplicity));
         }
@@ -919,7 +1044,15 @@ impl BankSource for Source<'_> {
         banks: &Path,
         _backend: Backend,
     ) -> Result<()> {
-        let metadata = prepare_bank(self.config, data, range, context, bank, banks)?;
+        let metadata = prepare_bank_with(
+            self.config,
+            data,
+            self.counters.as_deref(),
+            range,
+            context,
+            bank,
+            banks,
+        )?;
         let records = usize::try_from(metadata.catalogue_records)
             .map_err(|_| "geometry catalogue size overflow")?;
         *self.preparations[bank]
@@ -967,6 +1100,7 @@ impl BankSource for Source<'_> {
     }
     fn summary_fields(&self, _banks: &Path) -> Result<String> {
         let (mut total, mut encoded, mut observed, mut physical) = (0u128, 0u128, 0u128, 0u128);
+        let mut invalid = 0u128;
         let mut windows = Vec::new();
         for (bank, cache) in self.preparations.iter().enumerate() {
             let held = cache
@@ -981,6 +1115,8 @@ impl BankSource for Source<'_> {
             encoded = encoded
                 .checked_add(m.windows_encoded as u128)
                 .ok_or("geometry encoded count overflow")?;
+            // Windows of the causal prefix that no pattern of the bank reads.
+            invalid += (m.decision_rows.saturating_sub(m.max_lag) - m.windows_encoded) as u128;
             observed = observed
                 .checked_add(m.observed_patterns as u128)
                 .ok_or("geometry observed count overflow")?;
@@ -994,7 +1130,7 @@ impl BankSource for Source<'_> {
                 m.observed_patterns, quote(&m.unobserved_patterns.to_string()), m.catalogue_records,
                 m.states, quote(&m.logical_conditions.to_string())));
         }
-        Ok(format!(concat!(
+        let mut fields = format!(concat!(
             "\"source\":\"geometry\",\"geometry_version\":1,\"mode\":{},\"window_banks\":[{}],",
             "\"total_raw_pattern_universe\":{},\"observed_encoded_rows\":{},\"observed_pattern_instances\":{},",
             "\"physical_pattern_representatives\":{},\"qualifiers\":[{}],\"allow_same_bank\":{},",
@@ -1002,7 +1138,19 @@ impl BankSource for Source<'_> {
             "\"alias_scope\":\"fixed_causal_input_and_scored_timeline_only\""),
             quote(&self.config.mode.to_string()), windows.join(","), quote(&total.to_string()),
             quote(&encoded.to_string()), quote(&observed.to_string()), quote(&physical.to_string()),
-            self.config.qualifier_text.split(',').map(quote).collect::<Vec<_>>().join(","), self.config.allow_same_bank))
+            self.config.qualifier_text.split(',').map(quote).collect::<Vec<_>>().join(","), self.config.allow_same_bank);
+        // A run with no dimension declared reports exactly what it always did.
+        if !self.config.dimensions.is_empty() {
+            write!(
+                fields,
+                ",\"dimensions\":{},\"windows_without_a_dimension_value\":{},\"count_includes_patterns_that_cannot_occur\":{}",
+                self.config.dimensions.json(),
+                quote(&invalid.to_string()),
+                self.config.includes_patterns_that_cannot_occur()
+            )
+            .map_err(|e| e.to_string())?;
+        }
+        Ok(fields)
     }
 }
 
