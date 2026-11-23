@@ -46,10 +46,7 @@ fn values(m: &Metrics, interval: i64) -> [f64; 10] {
     ]
 }
 pub fn engine_id() -> Result<String> {
-    Ok(sha256(
-        &fs::read(std::env::current_exe().map_err(|e| e.to_string())?)
-            .map_err(|e| e.to_string())?,
-    ))
+    crate::hash::file_sha256(std::env::current_exe().map_err(|e| e.to_string())?)
 }
 pub fn catalog_id() -> Result<String> {
     let (g, a) = anchors::catalog()?;

@@ -904,11 +904,12 @@ pub fn run_banks(
     let requested = c.validate(source)?;
     source.validate(d, range.clone())?;
     Backend::resolve(backend.name())?;
+    let engine_sha = crate::anchor_run::engine_id()?;
     let context = sha256(
         format!(
             "{context_prefix}|{raw}|{}|{}|{}|{proof}|{capture}",
             d.digest,
-            crate::anchor_run::engine_id()?,
+            engine_sha,
             backend.name()
         )
         .as_bytes(),
@@ -1111,7 +1112,7 @@ pub fn run_banks(
         Some(b) => source.best_json(b, &c.rules, &banks)?,
         None => "null".into(),
     };
-    let summary=format!("{{\"version\":1,\"status\":{},\"coverage_complete\":{},\"context_sha256\":{},\"data_sha256\":{},\"engine_sha256\":{},{},\"requested_strategy_addresses\":{},\"resolved_strategy_addresses\":{},\"signature_pair_products_resolved\":{},\"tree_node_pairs_visited\":{},\"certified_nonleaf_products\":{},\"metric_regions_evaluated\":{},\"completed_tasks\":{},\"new_tasks\":{},\"reused_tasks\":{},\"result_digest\":{},\"best\":{},\"prepare_seconds_this_invocation\":{},\"whole_seconds_this_invocation\":{},\"native_workers\":{},\"backend\":{},\"proof\":{},\"capture\":{},\"role\":\"retrospective_systems_discovery_not_validation\"}}\n",quote(if complete{"PASS"}else if prepare_only{"PREPARED"}else{"PAUSED"}),complete,quote(&context),quote(&d.digest),quote(&crate::anchor_run::engine_id()?),source_fields,quote(&requested.to_string()),quote(&covered.to_string()),quote(&pairs.to_string()),quote(&visits.to_string()),quote(&certified.to_string()),regions,done,new_tasks,reused,quote(&result_hash.finish()),best_json,num(preparation_seconds),num(clock.elapsed().as_secs_f64()),workers,quote(backend.name()),proof,capture);
+    let summary=format!("{{\"version\":1,\"status\":{},\"coverage_complete\":{},\"context_sha256\":{},\"data_sha256\":{},\"engine_sha256\":{},{},\"requested_strategy_addresses\":{},\"resolved_strategy_addresses\":{},\"signature_pair_products_resolved\":{},\"tree_node_pairs_visited\":{},\"certified_nonleaf_products\":{},\"metric_regions_evaluated\":{},\"completed_tasks\":{},\"new_tasks\":{},\"reused_tasks\":{},\"result_digest\":{},\"best\":{},\"prepare_seconds_this_invocation\":{},\"whole_seconds_this_invocation\":{},\"native_workers\":{},\"backend\":{},\"proof\":{},\"capture\":{},\"role\":\"retrospective_systems_discovery_not_validation\"}}\n",quote(if complete{"PASS"}else if prepare_only{"PREPARED"}else{"PAUSED"}),complete,quote(&context),quote(&d.digest),quote(&engine_sha),source_fields,quote(&requested.to_string()),quote(&covered.to_string()),quote(&pairs.to_string()),quote(&visits.to_string()),quote(&certified.to_string()),regions,done,new_tasks,reused,quote(&result_hash.finish()),best_json,num(preparation_seconds),num(clock.elapsed().as_secs_f64()),workers,quote(backend.name()),proof,capture);
     fs::write(dir.join("summary.json"), &summary).map_err(|e| e.to_string())?;
     Ok(summary)
 }
