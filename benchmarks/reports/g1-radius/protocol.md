@@ -18,3 +18,13 @@ radius timings and report observed keys, not declared domain size. Check
 the reference half-flip cost independently, including directions and
 the signed zero comparisons. Enumerate small observed domains and
 check nesting, projections, ties and zero-radius identity.
+
+## A2. Integrated Query and Composer replication
+
+Repeat A1 against the same baseline and recording with the Query
+control and Composer matching integrated. Use the identical five
+paired processes, four prepared keys, repetitions, byte checks and
+5% timing band. Verify the Query control in Chrome with the two-bar
+pinned shape. Check Composer's dimension-aware windows against the
+shared radius vectors, and rerun its eleven worker timing scenarios
+on the same five real histories.
