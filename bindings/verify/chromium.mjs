@@ -76,5 +76,6 @@ try {
     await once(chrome, "exit");
   }
   server.close();
-  await fs.rm(profile, {recursive: true, force: true});
+  // Chromium children can finish writing the profile after its main process exits.
+  await fs.rm(profile, {recursive: true, force: true, maxRetries: 10, retryDelay: 100});
 }

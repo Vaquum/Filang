@@ -57,7 +57,7 @@ impl Session {
         match operation {
             b"version" if text.is_empty() => Ok(format!(
                 "{{\"abi\":{ABI_VERSION},\"version\":\"{}\"}}",
-                env!("CARGO_PKG_VERSION")
+                option_env!("FILANG_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))
             )),
             b"catalogue" if text.is_empty() => Ok(study::Study::catalogue().into()),
             b"calendar" => {
