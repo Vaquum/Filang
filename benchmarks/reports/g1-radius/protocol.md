@@ -36,3 +36,11 @@ count operation into the early dispatch path, keeping its parser,
 prepared index and response the same. Repeat the five paired processes,
 four keys, byte checks and 5% criterion. Retain the A2 result whether
 or not this attempt improves it.
+
+## A4. Isolate radius from the merged prerequisites
+
+A3 still missed the one-bar band with the older baseline. Compare the
+radius candidate with the same Query, Composer and adaptive-postings
+prerequisites compiled without radius. This comparison isolates the cost
+of radius from the larger command dispatch changes. Retain the earlier
+samples, byte checks, five paired processes and 5% criterion.
