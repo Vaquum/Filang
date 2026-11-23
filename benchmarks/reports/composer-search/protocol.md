@@ -30,3 +30,10 @@ exists. Keep the earliest held placement even when its score cannot rank.
 Compare A2 with both the pinned matcher and the unpruned candidate on
 the scenarios the latter completes. Repeat the same five- and twenty-bar
 replacement checks through Chromium's worker.
+
+## A3. Ranking tie-break verification
+
+Compare the fixed heap against the A2 oracle queries and browser timing
+scenarios. Retain the same criteria and workload. Check an 800-bar flat
+tape separately. With equal scores, choosing shorter spans and the
+latest end timestamps must precede truncating the ranking heap.
