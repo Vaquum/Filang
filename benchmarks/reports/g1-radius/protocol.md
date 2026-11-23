@@ -28,3 +28,11 @@ paired processes, four prepared keys, repetitions, byte checks and
 pinned shape. Check Composer's dimension-aware windows against the
 shared radius vectors, and rerun its eleven worker timing scenarios
 on the same five real histories.
+
+## A3. Preserve direct dispatch for exact counts
+
+A2 exceeded the 5% timing band for one bar. Move the existing exact
+count operation into the early dispatch path, keeping its parser,
+prepared index and response the same. Repeat the five paired processes,
+four keys, byte checks and 5% criterion. Retain the A2 result whether
+or not this attempt improves it.
