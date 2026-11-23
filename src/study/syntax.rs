@@ -116,6 +116,15 @@ pub(super) struct Question {
     pub measure_spans: Vec<Range<usize>>,
 }
 
+impl Question {
+    pub fn select(&self, mut candidate: usize, indices: &mut [usize]) {
+        for (slot, values) in indices.iter_mut().zip(&self.choices).rev() {
+            *slot = candidate % values.len();
+            candidate /= values.len();
+        }
+    }
+}
+
 #[derive(Debug)]
 enum Kind {
     Keyword(&'static str),

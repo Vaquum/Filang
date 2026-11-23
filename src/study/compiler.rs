@@ -2,7 +2,7 @@ use super::{
     extension::{Case, Definition, Param, ParamKind, BUNDLED},
     plan::{Plan, MAX_BATCH},
     predicate::CandleRule,
-    syntax::{self, Argument, Comparison, Expr, Literal, Question},
+    syntax::{self, Argument, Comparison, Duration, Expr, Literal, Question},
     tape::{DAYS, TRENDS},
 };
 use crate::{
@@ -110,10 +110,16 @@ pub(super) struct Environment<'a> {
 
 #[derive(Default)]
 pub(super) struct Registry {
-    patterns: HashMap<String, String>,
+    patterns: HashMap<String, NamedPattern>,
     functions: HashSet<String>,
     pattern_names: HashMap<String, String>,
     extensions: HashMap<String, Definition>,
+}
+
+#[derive(Clone)]
+struct NamedPattern {
+    instruction: String,
+    rule: String,
 }
 
 impl Registry {
@@ -122,19 +128,18 @@ impl Registry {
         let mut registry = Self::default();
         for pattern in document.field("patterns")?.array()? {
             let function = pattern.field("function")?.text()?;
-            let instruction = pattern.field("instruction")?.text()?;
+            let named = NamedPattern {
+                instruction: pattern.field("instruction")?.text()?.to_owned(),
+                rule: pattern.field("rule")?.text()?.to_owned(),
+            };
             registry.functions.insert(function.to_owned());
-            registry
-                .patterns
-                .insert(function.to_owned(), instruction.to_owned());
+            registry.patterns.insert(function.to_owned(), named.clone());
             registry
                 .pattern_names
                 .insert(function.to_owned(), function.to_owned());
             for label in pattern.field("labels")?.array()? {
                 let label = label_key(label.text()?);
-                registry
-                    .patterns
-                    .insert(label.clone(), instruction.to_owned());
+                registry.patterns.insert(label.clone(), named.clone());
                 registry.pattern_names.insert(label, function.to_owned());
             }
         }
@@ -346,17 +351,13 @@ pub(super) fn compile_question(
     }
     let mut compiler = Compiler::new(environment, registry, question);
     let mut requests = Vec::with_capacity(count);
-    let mut selected_filters = Vec::with_capacity(count);
+    let mut selected = Vec::with_capacity(count);
     for index in 0..count {
-        let mut remainder = index;
-        for (slot, choices) in compiler.indices.iter_mut().zip(&question.choices).rev() {
-            *slot = remainder % choices.len();
-            remainder /= choices.len();
-        }
-        let (request, filters) = compiler.query()?;
+        question.select(index, &mut compiler.indices);
+        let (request, filters, horizons) = compiler.query()?;
         if candidate.map_or(true, |i| i == index) {
             requests.push(request);
-            selected_filters.push(filters);
+            selected.push((filters, horizons));
         }
     }
     if let Some(unused) = question
@@ -368,8 +369,9 @@ pub(super) fn compile_question(
         return Err(format!("binding {unused} is never used"));
     }
     let mut plan = compiler.finish(requests)?;
-    for (query, filters) in plan.queries.iter_mut().zip(selected_filters) {
+    for (query, (filters, horizons)) in plan.queries.iter_mut().zip(selected) {
         query.filters = filters;
+        query.column_labels = horizons.into_iter().map(|d| d.text.clone()).collect();
     }
     Ok(plan)
 }
@@ -388,11 +390,7 @@ pub(super) fn clause_errors(
     let mut errors = Vec::new();
     for index in 0..count {
         let mut compiler = Compiler::new(env, registry, question);
-        let mut remainder = index;
-        for (slot, choices) in compiler.indices.iter_mut().zip(&question.choices).rev() {
-            *slot = remainder % choices.len();
-            remainder /= choices.len();
-        }
+        question.select(index, &mut compiler.indices);
         let mut retain = |span: &Range<usize>, error: Result<()>| {
             if let Err(error) = error {
                 let item = (span.clone(), error);
@@ -471,6 +469,7 @@ struct Compiler<'a> {
     indices: Vec<usize>,
     nodes: Vec<String>,
     ids: HashMap<String, usize>,
+    notes: HashMap<usize, String>,
     used: HashSet<String>,
     locals: Option<HashMap<&'a str, &'a Literal>>,
     depth: usize,
@@ -485,6 +484,7 @@ impl<'a> Compiler<'a> {
             indices: vec![0; question.choices.len()],
             nodes: Vec::new(),
             ids: HashMap::new(),
+            notes: HashMap::new(),
             used: HashSet::new(),
             locals: None,
             depth: 0,
@@ -500,23 +500,36 @@ impl<'a> Compiler<'a> {
         if wire.len() >= 1_048_576 {
             return Err("compiled study exceeds 1 MiB".into());
         }
-        Plan::parse(&wire, self.environment.interval)
+        let mut plan = Plan::parse(&wire, self.environment.interval)?;
+        plan.notes = self.notes;
+        Ok(plan)
     }
 
     fn intern(&mut self, kind: Kind, text: String) -> Result<Node> {
-        if let Some(&id) = self.ids.get(&text) {
+        self.intern_noted(kind, text, None)
+    }
+
+    fn intern_noted(&mut self, kind: Kind, text: String, note: Option<String>) -> Result<Node> {
+        let key = match &note {
+            Some(note) => format!("{text}\t{note}"),
+            None => text.clone(),
+        };
+        if let Some(&id) = self.ids.get(&key) {
             return Ok(Node { kind, id });
         }
         let id = self.nodes.len();
         if id >= 2048 {
             return Err("study plan exceeds 2,048 nodes".into());
         }
-        self.ids.insert(text.clone(), id);
+        self.ids.insert(key, id);
+        if let Some(note) = note {
+            self.notes.insert(id, note);
+        }
         self.nodes.push(text);
         Ok(Node { kind, id })
     }
 
-    fn query(&mut self) -> Result<(String, Vec<usize>)> {
+    fn query(&mut self) -> Result<(String, Vec<usize>, Vec<&'a Duration>)> {
         let q = self.question;
         let event = self.event(&q.find)?;
         let mut filters = Vec::with_capacity(q.filters.len());
@@ -534,11 +547,11 @@ impl<'a> Compiler<'a> {
         };
         let horizons = self.horizons(&q.measures)?;
         let mut request = format!("{event} {context} {group}");
-        for horizon in horizons {
+        for horizon in &horizons {
             use std::fmt::Write;
-            write!(request, " {horizon}").expect("write to String");
+            write!(request, " {}", horizon.ms).expect("write to String");
         }
-        Ok((request, filters))
+        Ok((request, filters, horizons))
     }
 
     fn event(&mut self, expr: &'a Expr) -> Result<usize> {
@@ -559,7 +572,7 @@ impl<'a> Compiler<'a> {
         }
     }
 
-    fn horizons(&mut self, measures: &'a [Expr]) -> Result<Vec<i64>> {
+    fn horizons(&mut self, measures: &'a [Expr]) -> Result<Vec<&'a Duration>> {
         let mut horizons = Vec::new();
         for measure in measures {
             let args = match measure {
@@ -573,11 +586,11 @@ impl<'a> Compiler<'a> {
                 scalar => std::slice::from_ref(scalar),
             };
             for expr in expressions {
-                let ms = self.duration(expr, QUARTER_HOUR, WEEK, true)?;
-                if horizons.contains(&ms) {
+                let horizon = self.checked_duration(expr, QUARTER_HOUR, WEEK, true)?;
+                if horizons.iter().any(|d: &&Duration| d.ms == horizon.ms) {
                     return Err("outcome horizon appears more than once".into());
                 }
-                horizons.push(ms);
+                horizons.push(horizon);
             }
             args.finish()?;
         }
@@ -645,12 +658,22 @@ impl<'a> Compiler<'a> {
     }
 
     fn duration(&mut self, expr: &'a Expr, min: i64, max: i64, grid: bool) -> Result<i64> {
+        Ok(self.checked_duration(expr, min, max, grid)?.ms)
+    }
+
+    fn checked_duration(
+        &mut self,
+        expr: &'a Expr,
+        min: i64,
+        max: i64,
+        grid: bool,
+    ) -> Result<&'a Duration> {
         match self.literal(expr)? {
             Literal::Duration(duration)
                 if (min..=max).contains(&duration.ms)
                     && (!grid || duration.ms % self.environment.interval == 0) =>
             {
-                Ok(duration.ms)
+                Ok(duration)
             }
             _ => Err("duration is outside its range or off the recording grid".into()),
         }
@@ -747,9 +770,13 @@ impl<'a> Compiler<'a> {
 
     fn named(&mut self, name: &str, quoted: bool) -> Result<Node> {
         let normalized = label_key(name);
-        if let Some(instruction) = self.registry.patterns.get(&normalized) {
+        if let Some(pattern) = self.registry.patterns.get(&normalized) {
             if quoted || self.registry.functions.contains(name) || !name.is_ascii() {
-                return self.intern(Kind::Event, instruction.clone());
+                return self.intern_noted(
+                    Kind::Event,
+                    pattern.instruction.clone(),
+                    Some(pattern.rule.clone()),
+                );
             }
         }
         match (normalized.as_str(), quoted) {
@@ -868,7 +895,12 @@ impl<'a> Compiler<'a> {
         if self.registry.functions.contains(name) {
             let args = Args::new(name, arguments, None)?;
             args.finish()?;
-            return self.intern(Kind::Event, self.registry.patterns[name].clone());
+            let pattern = &self.registry.patterns[name];
+            return self.intern_noted(
+                Kind::Event,
+                pattern.instruction.clone(),
+                Some(pattern.rule.clone()),
+            );
         }
         let positional = match name {
             "exact_g1" | "chained_g1" => Some("pattern"),
@@ -883,6 +915,7 @@ impl<'a> Compiler<'a> {
             _ => None,
         };
         let mut a = Args::new(name, arguments, positional)?;
+        let mut note = None;
         let (kind, op) = match name {
             "exact_g1" | "chained_g1" => {
                 let source = match self.literal(a.required("pattern")?)? {
@@ -937,8 +970,9 @@ impl<'a> Compiler<'a> {
                 if state.kind != Kind::State {
                     return Err("held needs a State".into());
                 }
-                let time = self.duration(a.required("for")?, QUARTER_HOUR, WEEK, true)?;
-                (Kind::Condition, format!("held {} {time}", state.id))
+                let time = self.checked_duration(a.required("for")?, QUARTER_HOUR, WEEK, true)?;
+                note = Some(time.text.clone());
+                (Kind::Condition, format!("held {} {}", state.id, time.ms))
             }
             "weekday" => {
                 self.calendar(a.required("calendar")?)?;
@@ -1013,7 +1047,16 @@ impl<'a> Compiler<'a> {
                 (Kind::Condition, format!("share {part} {lag} {min} {max}"))
             }
             "range_multiple" | "dimension_multiple" => {
-                let over = self.duration_arg(a.take("over"), 4 * 3_600_000, QUARTER_HOUR, WEEK)?;
+                let over = match a.take("over") {
+                    Some(expr) => {
+                        let duration = self.checked_duration(expr, QUARTER_HOUR, WEEK, true)?;
+                        if name == "range_multiple" {
+                            note = Some(duration.text.clone());
+                        }
+                        duration.ms
+                    }
+                    None => self.duration_arg(None, 4 * 3_600_000, QUARTER_HOUR, WEEK)?,
+                };
                 let min = self.ratio(a.take("min"), "15/10", false, false)?;
                 let max = match a.take("max") {
                     Some(expr) => {
@@ -1047,7 +1090,7 @@ impl<'a> Compiler<'a> {
             _ => return Err(format!("unknown or unavailable study call {name}")),
         };
         a.finish()?;
-        self.intern(kind, op)
+        self.intern_noted(kind, op, note)
     }
 }
 

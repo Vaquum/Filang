@@ -38,6 +38,10 @@ def cargo_build(target_dir, release_version, *, toolchain=None, target=None):
         cmd += ["--target", target]
     env = dict(os.environ)
     env["FILANG_RELEASE_VERSION"] = release_version
+    if target == "wasm32-unknown-unknown":
+        flags = "CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUSTFLAGS"
+        if not any(key in env for key in ("CARGO_ENCODED_RUSTFLAGS", "RUSTFLAGS", flags)):
+            env[flags] = "-C strip=symbols"
     if sys.platform == "darwin":
         env["MACOSX_DEPLOYMENT_TARGET"] = "11.0"
     subprocess.run(cmd, check=True, cwd=ROOT, env=env)

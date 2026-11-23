@@ -3,7 +3,7 @@ use super::{
     compute::{Eval, Series},
     plan::Node,
     predicate::Field,
-    tape::Tape,
+    tape::{Calendar, Tape},
 };
 use crate::{
     geometry::{
@@ -13,11 +13,14 @@ use crate::{
     rules::Cmp,
     Result,
 };
+use std::collections::HashMap;
 
 pub(super) struct Explain<'a> {
     pub eval: &'a Eval<'a>,
     pub nodes: &'a [Node],
     pub series: &'a [Series],
+    pub notes: &'a HashMap<usize, String>,
+    pub calendar: &'a Calendar,
 }
 
 impl Explain<'_> {
@@ -34,6 +37,7 @@ impl Explain<'_> {
         let tape = self.eval.tape;
         let t = tape.close(i);
         let bar = tape.bars[i];
+        let note = self.notes.get(&id).map(String::as_str);
         let reason = match &self.nodes[id] {
             Node::Wick(body_max, wick_min) => match bar {
                 None => "bar absent from the recording".into(),
@@ -53,8 +57,9 @@ impl Explain<'_> {
                         "≥"
                     };
                     format!(
-                        "range {}; body {} = {:.1}% ({body_cmp} maximum); lower wick {} = {:.1}% ({wick_cmp} minimum)",
-                        cents(range), cents(body), percentage(body, range), cents(wick), percentage(wick, range)
+                        "range {}; body {} = {:.1}% {body_cmp} {}; lower wick {} = {:.1}% {wick_cmp} {}",
+                        cents(range), cents(body), percentage(body, range), body_max.percent_text(),
+                        cents(wick), percentage(wick, range), wick_min.percent_text()
                     )
                 }
             },
@@ -65,7 +70,7 @@ impl Explain<'_> {
             }
             Node::Pattern(rule) => {
                 let width = rule.width();
-                if state == "unknown" || i + 1 < width {
+                let observed = if state == "unknown" || i + 1 < width {
                     format!("This pattern requires {width} consecutive completed candles.")
                 } else {
                     let mut observed = Vec::with_capacity(width);
@@ -76,6 +81,10 @@ impl Explain<'_> {
                         "Observed OHLC, oldest first: {}. Pattern result: {state}.",
                         observed.join(" → ")
                     )
+                };
+                match note {
+                    Some(rule) => format!("{rule} {observed}"),
+                    None => observed,
                 }
             }
             Node::Reclaim(..) => match self.series[id].reclaim(i, self.series)? {
@@ -120,21 +129,25 @@ impl Explain<'_> {
                         "inside"
                     };
                     format!(
-                        "{} is {:.3}% from {}. It is {relation} the limit.",
+                        "{} is {:.3}% from {}. Limit {}. It is {relation} the limit.",
                         cents(a),
                         percentage((a - b).abs(), b),
-                        cents(b)
+                        cents(b),
+                        limit.percent_text()
                     )
                 }
             }
-            Node::Share(part, lag, ..) => {
+            Node::Share(part, lag, min, max) => {
                 let candle = i.checked_sub(*lag).and_then(|j| tape.bars[j]);
                 match candle.filter(|b| b.h > b.l) {
-                    Some(b) => format!(
-                        "{} was {:.2}% of the candle range.",
-                        field_label(*part),
-                        percentage(part.value(b), b.h - b.l)
-                    ),
+                    Some(b) => {
+                        let mut field = field_label(*part).to_owned();
+                        field[..1].make_ascii_uppercase();
+                        format!(
+                            "{field} was {:.2}% of the candle range. Required {} to {}. Result: {state}.",
+                            percentage(part.value(b), b.h - b.l), min.percent_text(), max.percent_text()
+                        )
+                    }
                     None => "The selected candle is absent or has zero range.".into(),
                 }
             }
@@ -144,31 +157,42 @@ impl Explain<'_> {
                     Some(bar) => format!(
                         "This range was {:.3} × the preceding {} median.",
                         2.0 * (bar.h - bar.l) as f64 / median as f64,
-                        duration(*window as i64 * tape.interval)
+                        note.map_or_else(|| duration(*window as i64 * tape.interval), str::to_owned)
                     ),
                     None => "The previous window is incomplete or its median range is zero.".into(),
                 }
             }
-            Node::Range(window, _) => match (bar, self.eval.envelope_at(*window, i)) {
+            Node::Range(window, limit) => match (bar, self.eval.envelope_at(*window, i)) {
                 (Some(bar), Some((low, high))) => format!(
-                    "The {} range is {} to {} ({:.3}% of the close). State at t: {state}.",
+                    "The {} range is {} to {}. Width {} = {:.3}% of the close {}. Limit {}. State at t: {state}.",
                     duration(*window as i64 * tape.interval),
                     cents(low),
                     cents(high),
-                    percentage(high - low, bar.c)
+                    cents(high - low),
+                    percentage(high - low, bar.c),
+                    cents(bar.c),
+                    limit.percent_text()
                 ),
                 _ => "The range is unavailable because the recording has no candle at this close."
                     .into(),
             },
             Node::Held(child, steps) => {
                 let first = (i + 1).saturating_sub(*steps);
+                let required = (*steps as i64 - 1) * tape.interval;
+                let label = note.map_or_else(|| duration(required), str::to_owned);
                 let mask = self.series[*child].mask()?;
                 let witness = (first..=i).rev().find(|&j| mask.at(j) == (false, true));
                 if let Some(slot) = witness {
+                    let holding = if slot < i && (slot + 1..=i).all(|j| mask.at(j) == (true, true)) {
+                        format!("; true since {}, only {}", utc(tape.close(slot + 1)), elapsed(t - tape.close(slot + 1)))
+                    } else {
+                        String::new()
+                    };
                     format!(
-                        "state false at {} ({}), inside the required window",
+                        "state false at {} ({}), inside the required {label} window from {}{holding}",
                         utc(tape.close(slot)),
-                        self.explain(*child, slot, remaining)?
+                        self.explain(*child, slot, remaining)?,
+                        utc(t - required)
                     )
                 } else if i + 1 < *steps {
                     format!("needs {steps} samples; the first recorded close is {} (warmup: absent samples are unknown)", utc(tape.close(0)))
@@ -179,17 +203,33 @@ impl Explain<'_> {
                         self.explain(*child, slot, remaining)?
                     )
                 } else {
+                    let run_start = (0..first)
+                        .rev()
+                        .find(|&j| mask.at(j) != (true, true))
+                        .map_or(0, |j| j + 1);
                     format!(
-                        "true at all {steps} samples {} … {}",
+                        "true at all {steps} samples {} … {}; true since {} ({} ≥ {label})",
                         utc(tape.close(first)),
-                        utc(t)
+                        utc(t),
+                        utc(tape.close(run_start)),
+                        elapsed(t - tape.close(run_start)),
                     )
                 }
             }
             Node::Weekday => match state {
-                "unknown" => format!("anchor {} is outside nyse_regular coverage", utc(t)),
+                "unknown" => {
+                    let (start, end) = self.calendar.bounds();
+                    format!("anchor {} is outside nyse_regular coverage (New York dates {} … {}, end exclusive)",
+                        utc(t), date(start), date(end))
+                }
                 "closed" => format!("{} has no nyse_regular session", utc(t)),
-                day => format!("The New York date of {} is a {} session.", utc(t), day),
+                day => {
+                    let (weekday, minutes, _) = self.calendar.session_clock(t).flatten()
+                        .expect("known calendar session");
+                    let name = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"][weekday as usize];
+                    format!("New York date {} is a nyse_regular session (stored weekday {name}, {day})",
+                        date(t - minutes * 60_000))
+                }
             },
             Node::Tail(last) => format!(
                 "{} is {} the last {} of the New York session.",
@@ -409,6 +449,20 @@ fn duration(ms: i64) -> String {
     }
 }
 
+fn elapsed(ms: i64) -> String {
+    let minutes = ms / 60_000;
+    match (minutes / 60, minutes % 60) {
+        (0, minutes) => format!("{minutes}m"),
+        (hours, 0) => format!("{hours}h"),
+        (hours, minutes) => format!("{hours}h{minutes}m"),
+    }
+}
+
+fn date(ms: i64) -> String {
+    let mut time = utc(ms);
+    time.truncate(time.find(' ').expect("formatted date"));
+    time
+}
 fn cents(value: i64) -> String {
     let magnitude = value.unsigned_abs();
     let sign = if value < 0 { "-" } else { "" };

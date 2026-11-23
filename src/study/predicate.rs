@@ -48,6 +48,41 @@ impl Decimal {
 }
 
 impl Ratio {
+    pub fn percent_text(&self) -> String {
+        let text = |digits: &[u8]| {
+            if digits.is_empty() {
+                "0".to_owned()
+            } else {
+                digits.iter().rev().map(|&d| char::from(b'0' + d)).collect()
+            }
+        };
+        if let (Some(num), Some(den)) = (self.num.small, self.den.small) {
+            if let Some(scaled) = num.checked_mul(100) {
+                if scaled % den == 0 {
+                    return format!("{}%", scaled / den);
+                }
+            }
+        }
+        if let Some((&1, zeros)) = self.den.digits.split_last() {
+            if zeros.iter().all(|&digit| digit == 0) {
+                let scaled = text(&self.num.multiply(100));
+                let radix = zeros.len();
+                let value = if scaled.len() > radix {
+                    let (whole, fraction) = scaled.split_at(scaled.len() - radix);
+                    format!("{whole}.{fraction}")
+                } else {
+                    format!("0.{}{scaled}", "0".repeat(radix - scaled.len()))
+                };
+                return format!("{}%", value.trim_end_matches('0').trim_end_matches('.'));
+            }
+        }
+        format!(
+            "100 × {}/{}%",
+            text(&self.num.digits),
+            text(&self.den.digits)
+        )
+    }
+
     pub fn parse(text: &str) -> Result<Self> {
         let ratio = Self::magnitude(text)?;
         if ratio.compare(1, 1) == Ordering::Less {

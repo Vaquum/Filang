@@ -224,8 +224,7 @@ export function step(slot, v, dir) {
 
 // ---------------------------------------------------------------- Filang text → model
 
-// An expression the vocabulary has no clause for gives null. The caller then keeps the whole line it stands in as
-// formal text, in the engine's own canonical wording: the engine's syntax tree carries no text for its parts.
+// An expression the vocabulary has no clause for is kept in the engine's canonical wording.
 function fromExpr(node, lets) {
   const val = (n) => {
     if (!n) return null;
@@ -319,19 +318,20 @@ export function fromText(text) {
   const lines = d.canonical.split('\n');
   const line = (word) => lines.filter((l) => l.startsWith(word + ' ')).map((l) => ({ type: 'raw', args: { text: l.slice(word.length + 1) } }));
   const lets = new Map(ast.lets.map((b) => [b.name, b.value]));
+  const clause = (n) => fromExpr(n, lets) ?? (n.text ? { type: 'raw', args: { text: n.text } } : null);
   const top = ast.find.k === 'or' || ast.find.k === 'and' ? ast.find : { k: 'or', items: [ast.find] };
-  const found = top.items.map((n) => fromExpr(n, lets));
+  const found = top.items.map(clause);
   const model = { find: found.every(Boolean) ? { join: top.k, items: found } : { join: 'or', items: line('find') }, wheres: [], split: null, horizons: [] };
   const formal = line('where');
   ast.wheres.forEach((w, i) => {
-    const parts = (w.k === 'and' ? w.items : [w]).map((n) => fromExpr(n, lets));
+    const parts = (w.k === 'and' ? w.items : [w]).map(clause);
     if (parts.every(Boolean)) model.wheres.push(...parts); else model.wheres.push(formal[i]);
   });
   if (ast.group) {
     const g = ast.group;
     if (g.k === 'call' && g.name === 'weekday') model.split = make('weekday');
     else if (g.k === 'call' && g.name === 'completed_trend') model.split = make('trend', { frame: g.args[0]?.value?.text ?? '4h' });
-    else model.split = fromExpr(g, lets) ?? line('group by')[0];
+    else model.split = clause(g) ?? line('group by')[0];
   }
   for (const m of ast.measures) {
     if (m.name !== 'close_return') continue;

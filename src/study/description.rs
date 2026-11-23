@@ -24,32 +24,38 @@ impl Study {
 
     pub fn diagnostics(&self, source: &str) -> String {
         let header = 0..source.find('\n').unwrap_or(source.len());
-        let errors = match syntax::question(source) {
-            Err(error) => vec![(error_span(source, &error, header), error)],
-            Ok(question) => match compiler::compile_question(
-                &question,
-                self.environment(),
-                &self.registry,
-                None,
-            ) {
-                Ok(_) => Vec::new(),
-                Err(error) => {
-                    let mut errors =
-                        compiler::clause_errors(&question, self.environment(), &self.registry);
-                    if errors.is_empty() {
-                        errors.push((header, error));
+        let parsed = syntax::question(source);
+        let errors = match &parsed {
+            Err(error) => vec![(error_span(source, error, header), error.clone())],
+            Ok(question) => {
+                match compiler::compile_question(question, self.environment(), &self.registry, None)
+                {
+                    Ok(_) => Vec::new(),
+                    Err(error) => {
+                        let mut errors =
+                            compiler::clause_errors(question, self.environment(), &self.registry);
+                        if errors.is_empty() {
+                            errors.push((header, error));
+                        }
+                        errors
                     }
-                    errors
                 }
-            },
+            }
         };
         let ok = errors.is_empty();
+        let syntax = match parsed {
+            Ok(question) if !ok && errors.iter().all(|(_, e)| e.contains("counters")) => {
+                let (canonical, ast) = render_question(&question, None);
+                format!(",\"canonical\":{},\"ast\":{ast}", quote(&canonical))
+            }
+            _ => String::new(),
+        };
         let errors = errors
             .into_iter()
             .map(|(span, error)| diagnostic(source, span, &error))
             .collect::<Vec<_>>()
             .join(",");
-        format!("{{\"ok\":{ok},\"errors\":[{errors}]}}")
+        format!("{{\"ok\":{ok},\"errors\":[{errors}]{syntax}}}")
     }
 
     pub fn describe(&self, source: &str) -> Result<String> {
@@ -63,12 +69,8 @@ impl Study {
         let mut candidate_manifest = Vec::with_capacity(plan.queries.len());
         let mut pins = HashSet::new();
         for index in 0..plan.queries.len() {
-            let mut remainder = index;
             let mut choices = vec![0usize; axes.len()];
-            for (slot, values) in choices.iter_mut().zip(&question.choices).rev() {
-                *slot = remainder % values.len();
-                remainder /= values.len();
-            }
+            question.select(index, &mut choices);
             let (resolved, _) = render_question(&question, Some(&choices));
             let selected = syntax::question(&resolved)?;
             for expr in std::iter::once(&selected.find)
@@ -280,23 +282,40 @@ struct Printed {
     ast: String,
 }
 
+impl Printed {
+    fn with_text(mut self) -> Self {
+        self.ast.pop();
+        write!(self.ast, ",\"text\":{}}}", quote(&self.text)).expect("format expression text");
+        self
+    }
+}
+
 fn literal(value: &Literal) -> Printed {
     match value {
         Literal::Name(name) => Printed {
             text: name.clone(),
             ast: format!("{{\"k\":\"id\",\"name\":{}}}", quote(name)),
-        },
+        }
+        .with_text(),
         Literal::Text(value) => {
             let text = quote(value);
             let ast = format!("{{\"k\":\"str\",\"value\":{text}}}");
-            Printed { text, ast }
+            Printed { text, ast }.with_text()
         }
         Literal::Number(value, pct) => {
             let kind = if *pct { "pct" } else { "num" };
             let suffix = if *pct { "%" } else { "" };
             Printed {
                 text: format!("{value}{suffix}"),
-                ast: format!("{{\"k\":\"{kind}\",\"text\":{}}}", quote(value)),
+                ast: if *pct {
+                    format!(
+                        "{{\"k\":\"pct\",\"text\":{},\"canonical_text\":{}}}",
+                        quote(value),
+                        quote(&format!("{value}%"))
+                    )
+                } else {
+                    format!("{{\"k\":\"{kind}\",\"text\":{}}}", quote(value))
+                },
             }
         }
         Literal::Duration(d) => {
@@ -366,7 +385,8 @@ fn render(q: &Question, expr: &Expr, selected: Option<&[usize]>, min: u8) -> Pri
             return Printed {
                 text: format!("{{{text}}}"),
                 ast: format!("{{\"k\":\"choices\",\"items\":[{ast}]}}"),
-            };
+            }
+            .with_text();
         }
         Expr::Vector(items) => {
             let items = children(items, 0);
@@ -379,7 +399,8 @@ fn render(q: &Question, expr: &Expr, selected: Option<&[usize]>, min: u8) -> Pri
             return Printed {
                 text: format!("[{text}]"),
                 ast: format!("{{\"k\":\"vec\",\"items\":[{ast}]}}"),
-            };
+            }
+            .with_text();
         }
         Expr::Call(name, args) => {
             let rendered = args
@@ -418,7 +439,8 @@ fn render(q: &Question, expr: &Expr, selected: Option<&[usize]>, min: u8) -> Pri
                     "{{\"k\":\"call\",\"name\":{},\"args\":[{ast}]}}",
                     quote(name)
                 ),
-            };
+            }
+            .with_text();
         }
         Expr::Logic(and, items) => {
             let (precedence, kind) = if *and { (2, "and") } else { (1, "or") };
@@ -468,7 +490,28 @@ fn render(q: &Question, expr: &Expr, selected: Option<&[usize]>, min: u8) -> Pri
     if precedence < min {
         value.text = format!("({})", value.text);
     }
-    value
+    value.with_text()
+}
+
+pub(super) fn receipt_lines(question: &Question, candidate: usize) -> String {
+    let mut choices = vec![0; question.choices.len()];
+    question.select(candidate, &mut choices);
+    let text = |expr: &Expr| quote(&render(question, expr, Some(&choices), 0).text);
+    let list = |items: &[Expr]| items.iter().map(text).collect::<Vec<_>>().join(",");
+    let find = text(&question.find);
+    let group = question
+        .group
+        .as_ref()
+        .map_or_else(|| "null".to_owned(), text);
+    let on = quote(&format!(
+        "{} {}",
+        question.instrument, question.interval_text
+    ));
+    format!(
+        "{{\"on\":{on},\"find\":{find},\"wheres\":[{}],\"group\":{group},\"measures\":[{}]}}",
+        list(&question.filters),
+        list(&question.measures),
+    )
 }
 
 fn render_question(q: &Question, selected: Option<&[usize]>) -> (String, String) {
