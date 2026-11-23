@@ -125,6 +125,30 @@ the browser worker. Direct calls in a browser test or single-threaded
 application can use the same methods on `await FilangEngine.create()` from
 `index.mjs`.
 
+### Composer search
+
+Load each required timeframe with `await filang.ask("loadComposerFrame", csv,
+intervalMs)`. Search a validated drawing packet with
+`await filang.searchComposer(packet, {timeframes, onProgress})`. The
+timeframe mask uses bits 0–4 for 15m, 30m, 1h, 2h and 4h. Starting another
+search supersedes the old search and rejects it with `AbortError`.
+Progress reports scanned and total start slots.
+
+Search returns exact and held counts, closest distinct windows, broken
+rules on fallback, and the six most frequent one-comparison changes.
+Each window has the frame, times and selected bar offsets needed to
+describe it from Composer's recording. Read large match sets with
+`ask("composerPositions", intervalMs, {kind, start, limit})`. The kinds
+are `exact`, `held`, `qualified-exact`, `qualified-held` and
+`near:N` for a zero-based one-away result. Resume at the returned
+`next` index.
+
+Composer can pass `endMasks` to apply its own continuation criterion.
+Supply five entries in timeframe order. Each entry is either null or a
+string of 0 and 1 over the recording's grid slots. Qualified counts and
+ranked results respect the mask. Every exact, held and one-away position
+remains available for separate statistics.
+
 ## Limen
 
 ```sh

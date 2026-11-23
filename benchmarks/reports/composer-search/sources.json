@@ -1,0 +1,47 @@
+[
+  {
+    "name": "15m",
+    "seconds": 900,
+    "repo": "vaquum/binance_btcusdt_15m_klines",
+    "revision": "b7360e155d5aeca4f16607c34610d7c2bc032c6f",
+    "file_name": "btcusdt_15m_kline_20200101_to_20261122.parquet",
+    "sha256": "1de309cffe5678aa503ba4c9b5d0b44cf3147d6f79956589613df83c9d2ee90b",
+    "row_count": 241565
+  },
+  {
+    "name": "30m",
+    "seconds": 1800,
+    "repo": "vaquum/binance_btcusdt_30m_klines",
+    "revision": "c9f49e34ab8d77c29f29909053189fc4381c6cd3",
+    "file_name": "btcusdt_30m_kline_20200101_to_20261122.parquet",
+    "sha256": "04a515dd0b315b1262a375e1c158dbaf99b379de256b9741adbbdaee89717d52",
+    "row_count": 120784
+  },
+  {
+    "name": "1h",
+    "seconds": 3600,
+    "repo": "vaquum/binance_btcusdt_1h_klines",
+    "revision": "f81c721212f0fba92c90ade9e80080cc102448d8",
+    "file_name": "btcusdt_1h_kline_20200101_to_20261122.parquet",
+    "sha256": "062146dc6a4887e94817336cbe20e186617ae528e8f721570f80933548973e1f",
+    "row_count": 60398
+  },
+  {
+    "name": "2h",
+    "seconds": 7200,
+    "repo": "vaquum/binance_btcusdt_2h_klines",
+    "revision": "657f0dc07aba8a24f91b1c07790292b9deac7f66",
+    "file_name": "btcusdt_2h_kline_20200101_to_20261122.parquet",
+    "sha256": "681be102f30293f414a9768e76448ed2bbf055c8d40e2fd22b8ef1658ff8f6b4",
+    "row_count": 30205
+  },
+  {
+    "name": "4h",
+    "seconds": 14400,
+    "repo": "vaquum/binance_btcusdt_4h_klines",
+    "revision": "59d8c1d4b9019c12bbf4573445892a25a439286b",
+    "file_name": "btcusdt_4h_kline_20200101_to_20261122.parquet",
+    "sha256": "2ccb75f25621082a164b0393450178dbb2cd345fda5a21915484c6f13ec42816",
+    "row_count": 15107
+  }
+]

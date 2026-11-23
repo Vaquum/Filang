@@ -1,0 +1,11 @@
+{"stage":"load","milliseconds":317.228625,"bars":468059}
+{"scenario":"default","elapsed":34.345916999999986,"maxStep":0.9398749999999723,"oracle":124,"mode":"nearest","exact":[68,35,6,4,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"default-repeat","elapsed":26.049041999999986,"maxStep":0.19354199999997945,"oracle":137,"mode":"nearest","exact":[68,35,6,4,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"2-bars-only-4h","elapsed":16.528291999999965,"maxStep":0.39629200000001674,"oracle":38,"mode":"nearest","exact":[68,35,6,4,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"10-bars","elapsed":57.367875000000026,"maxStep":6.148500000000013,"oracle":250,"mode":"nearest","exact":[0,0,0,0,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"20-bars","elapsed":90.90370899999994,"maxStep":5.849917000000005,"oracle":375,"mode":"nearest","exact":[0,0,0,0,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"20-bars-shape-only","elapsed":570.2349170000002,"maxStep":8.005500000000211,"oracle":949,"mode":"nearest","exact":[0,0,0,0,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"2-bars-pin","elapsed":95.35970799999996,"maxStep":6.475750000000062,"oracle":300,"mode":"held","exact":[68,35,6,4,0],"held":[121167,61081,30576,15397,7742],"nearest":12}
+{"scenario":"5-bars-pin-stretch-0","elapsed":169.7337090000001,"maxStep":2.6387500000000728,"oracle":305,"mode":"held","exact":[0,0,0,0,0],"held":[121140,61059,30550,15385,7740],"nearest":12}
+{"scenario":"5-bars-pin-stretch-4","elapsed":5200.897583,"maxStep":29.74212499999976,"oracle":2393,"mode":"held","exact":[0,0,0,0,0],"held":[605625,305209,152667,76884,38691],"nearest":12}
+{"scenario":"10-bars-pin-stretch-4","outcome":"timed-out","wall_limit_ms":30000,"remaining_scenarios":"not run"}

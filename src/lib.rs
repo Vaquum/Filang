@@ -69,5 +69,6 @@ pub mod geometry_algebra;
 
 mod engine_drawing;
 mod engine_json;
+mod engine_search;
 pub mod engine_session;
 pub mod study;

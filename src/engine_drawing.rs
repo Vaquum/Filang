@@ -5,6 +5,7 @@ use crate::{
     engine_json::{self, Value},
     geometry::{
         explore::{encode_drawing, Reading},
+        matching::{Pin, Price},
         GeometryMode, GeometryPattern,
     },
     Result,
@@ -17,10 +18,25 @@ pub(crate) fn protocol() -> String {
     format!(r#"{{"version":1,"plain":"{PLAIN_REVISION}","dimensioned":"{DIMENSIONS_REVISION}"}}"#)
 }
 
+pub(crate) struct Drawing {
+    pub pattern: GeometryPattern,
+    pub rows: Vec<[f64; 4]>,
+    pub pins: Vec<Pin>,
+    pub skeleton: usize,
+    pub stretch: usize,
+    pub limit: usize,
+    expression: Option<String>,
+}
+
 pub(crate) fn read(
     text: &str,
     expected: Option<&str>,
 ) -> Result<(GeometryPattern, Option<String>)> {
+    let drawing = parse(text, expected)?;
+    Ok((drawing.pattern, drawing.expression))
+}
+
+pub(crate) fn parse(text: &str, expected: Option<&str>) -> Result<Drawing> {
     if text.is_empty() || text.encode_utf16().count() > 96_000 {
         return Err("drawing packet has an invalid size".into());
     }
@@ -78,16 +94,18 @@ pub(crate) fn read(
         rows.push([open, high, low, close]);
         last = Some(close);
     }
-    integer(value.field("skeleton")?, 0, width)?;
-    integer(value.field("stretch")?, 0, if width == 1 { 0 } else { 4 })?;
+    let skeleton = integer(value.field("skeleton")?, 0, width)?;
+    let stretch = integer(value.field("stretch")?, 0, if width == 1 { 0 } else { 4 })?;
     let pins = value.field("pins")?.array()?;
     if pins.len() > width * (4 * width + 1) * 2 {
         return Err("too many drawing pins".into());
     }
     let mut rules = Vec::new();
+    let mut search_pins = Vec::with_capacity(pins.len());
     for pin in pins {
         if matches!(pin.object()?.get("color"), Some(Value::Bool(true))) {
             let bar = integer(pin.field("bar")?, 0, width - 1)?;
+            search_pins.push(Pin::Colour(bar));
             if mode == GeometryMode::Oriented {
                 let [open, _, _, close] = rows[bar];
                 let op = relation(close, open);
@@ -98,12 +116,14 @@ pub(crate) fn read(
             let a = point(pin.field("a")?, width)?;
             let b = point(pin.field("b")?, width)?;
             if a != b {
-                let (ap, av) = endpoint(rows[a.0], mode, a.1);
-                let (bp, bv) = endpoint(rows[b.0], mode, b.1);
+                let ap = Price::endpoint(a.1, rows[a.0], mode);
+                let bp = Price::endpoint(b.1, rows[b.0], mode);
+                search_pins.push(Pin::Relation((a.0, ap), (b.0, bp)));
+                let op = relation(ap.value(rows[a.0]), bp.value(rows[b.0]));
                 let lags = (width - 1 - a.0, width - 1 - b.0);
                 push_rule(
                     &mut rules,
-                    compare((ap, lags.0), relation(av, bv), (bp, lags.1)),
+                    compare((ap.name(), lags.0), op, (bp.name(), lags.1)),
                 );
             }
         }
@@ -117,7 +137,8 @@ pub(crate) fn read(
     {
         return Err("invalid continuation settings".into());
     }
-    if ![12.0, 24.0, 48.0].contains(&finite(value.field("limit")?)?) {
+    let limit = finite(value.field("limit")?)?;
+    if ![12.0, 24.0, 48.0].contains(&limit) {
         return Err("invalid number of closest windows".into());
     }
     let price = encode_drawing(&rows, mode, Reading::Recorded, &[])?;
@@ -150,7 +171,15 @@ pub(crate) fn read(
             format!("candle_window({rules}, bars: {width})")
         })
     };
-    Ok((pattern, expression))
+    Ok(Drawing {
+        pattern,
+        rows,
+        pins: search_pins,
+        skeleton,
+        stretch,
+        limit: limit as usize,
+        expression,
+    })
 }
 
 fn point(value: &Value, width: usize) -> Result<(usize, &str)> {
@@ -160,24 +189,6 @@ fn point(value: &Value, width: usize) -> Result<(usize, &str)> {
         return Err("invalid drawing pin point".into());
     }
     Ok((bar, part))
-}
-
-fn endpoint(
-    [open, high, low, close]: [f64; 4],
-    mode: GeometryMode,
-    position: &str,
-) -> (&'static str, f64) {
-    match position {
-        "L" => ("low", low),
-        "H" => ("high", high),
-        "B" if mode == GeometryMode::Unoriented => ("body_low", open.min(close)),
-        "T" if mode == GeometryMode::Unoriented => ("body_high", open.max(close)),
-        "B" if close >= open => ("open", open),
-        "B" => ("close", close),
-        "T" if close >= open => ("close", close),
-        "T" => ("open", open),
-        _ => unreachable!("validated pin"),
-    }
 }
 
 fn relation(left: f64, right: f64) -> &'static str {
