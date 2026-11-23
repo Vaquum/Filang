@@ -1,0 +1,17 @@
+{"stage":"load","milliseconds":219.94079200000002,"bars":468059}
+{"scenario":"default","elapsed":34.16616700000003,"maxStep":1.0881669999999986,"oracle":97,"mode":"nearest","exact":[68,35,6,4,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"default-repeat","elapsed":26.012333000000012,"maxStep":0.21249999999997726,"oracle":98,"mode":"nearest","exact":[68,35,6,4,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"2-bars-only-4h","elapsed":15.941958,"maxStep":0.4860830000000078,"oracle":33,"mode":"nearest","exact":[68,35,6,4,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"10-bars","elapsed":38.378791999999976,"maxStep":1.479665999999952,"oracle":181,"mode":"nearest","exact":[0,0,0,0,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"20-bars","elapsed":77.03445799999997,"maxStep":5.124000000000024,"oracle":311,"mode":"nearest","exact":[0,0,0,0,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"20-bars-shape-only","elapsed":506.16433299999994,"maxStep":5.630792000000156,"oracle":835,"mode":"nearest","exact":[0,0,0,0,0],"held":[0,0,0,0,0],"nearest":12}
+{"scenario":"2-bars-pin","elapsed":89.10395900000003,"maxStep":0.17475000000013097,"oracle":225,"mode":"held","exact":[68,35,6,4,0],"held":[121167,61081,30576,15397,7742],"nearest":12}
+{"scenario":"5-bars-pin-stretch-0","elapsed":187.2216659999999,"maxStep":0.29500000000007276,"oracle":277,"mode":"held","exact":[0,0,0,0,0],"held":[121140,61059,30550,15385,7740],"nearest":12}
+{"scenario":"5-bars-pin-stretch-4","elapsed":962.3527500000005,"maxStep":1.0441249999998945,"oracle":1927,"mode":"held","exact":[0,0,0,0,0],"held":[605625,305209,152667,76884,38691],"nearest":12}
+{"scenario":"10-bars-pin-stretch-4","elapsed":839.0978329999998,"maxStep":5.957833999999821,"oracle":2209,"mode":"held","exact":[0,0,0,0,0],"held":[605448,305001,152434,76764,38653],"nearest":12}
+{"scenario":"20-bars-pin-stretch-4","elapsed":1409.683165999999,"maxStep":5.276834000000235,"oracle":3352,"mode":"held","exact":[0,0,0,0,0],"held":[605062,304584,152019,76505,38622],"nearest":12}
+{"scenario":"5-bars-skeleton","elapsed":412.1957089999996,"maxStep":0.5604170000005979,"oracle":414,"mode":"held","exact":[0,0,0,0,0],"held":[51813,27586,14273,7354,3487],"nearest":12}
+{"scenario":"5-bars-cross-pin","elapsed":849.383749999999,"maxStep":0.42220799999995506,"oracle":721,"mode":"held","exact":[0,0,0,0,0],"held":[352338,176840,88436,44314,22363],"nearest":12}
+{"scenario":"10-bars-17-pins","elapsed":1457.6059590000004,"maxStep":4.080625000002328,"oracle":784,"mode":"held","exact":[0,0,0,0,0],"held":[1341,729,365,171,83],"nearest":12}
+{"scenario":"10-bars-17-pins-filter","elapsed":314.00374999999985,"maxStep":1.6962080000012065,"oracle":220,"mode":"fallback","exact":[0,0,0,0,0],"held":[80,47,24,8,10],"nearest":12}
+{"scenario":"2-bars-pin-filter","elapsed":77.67974999999933,"maxStep":0.40129199999864795,"oracle":314,"mode":"held","exact":[68,35,6,4,0],"held":[605744,305326,152795,76945,38705],"nearest":12}

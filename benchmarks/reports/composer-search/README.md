@@ -44,3 +44,16 @@ FILANG_COMPOSER_FIXTURES=/tmp/composer-fixtures node bindings/verify/chromium.mj
 
 The other two fixture arguments belong to the shared Chrome runner and
 are unused by the Composer page. See the prior [protocol](protocol.md).
+
+## A3. Ranking ties
+
+The regression fixture has 800 identical bars. All complete two-bar
+windows score zero. The search now starts at slot 798, the latest
+complete window, then selects the remaining distinct windows in
+descending time order. The original bounded heap kept the first 480
+scores and started at slot 479.
+
+The [oracle replay](oracle-a3.jsonl) still agreed on all 16 real-history
+cases. The [Chrome replay](chromium-a3.json) passed all eleven budgets.
+Its longest search took 1.314 s, its maximum progress gap was 11.8 ms,
+and the slower replacement took 11.4 ms.

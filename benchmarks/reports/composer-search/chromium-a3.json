@@ -1,0 +1,257 @@
+{
+  "passed": true,
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+  "loadMs": 223,
+  "loaded": [
+    {
+      "slots": 241728
+    },
+    {
+      "slots": 120864
+    },
+    {
+      "slots": 60432
+    },
+    {
+      "slots": 30216
+    },
+    {
+      "slots": 15108
+    }
+  ],
+  "timings": [
+    {
+      "name": "default",
+      "elapsed": 31.59999990463257,
+      "maxGap": 3.5,
+      "gaps": 59,
+      "exact": [
+        68,
+        35,
+        6,
+        4,
+        0
+      ],
+      "held": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "default-repeat",
+      "elapsed": 24.300000190734863,
+      "maxGap": 0.5999999046325684,
+      "gaps": 59,
+      "exact": [
+        68,
+        35,
+        6,
+        4,
+        0
+      ],
+      "held": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "2-bars-only-4h",
+      "elapsed": 17.200000286102295,
+      "maxGap": 0.7000002861022949,
+      "gaps": 59,
+      "exact": [
+        68,
+        35,
+        6,
+        4,
+        0
+      ],
+      "held": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "10-bars",
+      "elapsed": 45.89999961853027,
+      "maxGap": 2.0999999046325684,
+      "gaps": 59,
+      "exact": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "held": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "20-bars",
+      "elapsed": 87.5,
+      "maxGap": 5.400000095367432,
+      "gaps": 60,
+      "exact": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "held": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "20-bars-shape-only",
+      "elapsed": 551.3000001907349,
+      "maxGap": 11.800000190734863,
+      "gaps": 90,
+      "exact": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "held": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "2-bars-pin",
+      "elapsed": 86,
+      "maxGap": 1.0999999046325684,
+      "gaps": 145,
+      "exact": [
+        68,
+        35,
+        6,
+        4,
+        0
+      ],
+      "held": [
+        121167,
+        61081,
+        30576,
+        15397,
+        7742
+      ]
+    },
+    {
+      "name": "5-bars-pin-stretch-0",
+      "elapsed": 205.90000009536743,
+      "maxGap": 2,
+      "gaps": 318,
+      "exact": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "held": [
+        121140,
+        61059,
+        30550,
+        15385,
+        7740
+      ]
+    },
+    {
+      "name": "5-bars-pin-stretch-4",
+      "elapsed": 1020.2999997138977,
+      "maxGap": 3.9000000953674316,
+      "gaps": 1508,
+      "exact": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "held": [
+        605625,
+        305209,
+        152667,
+        76884,
+        38691
+      ]
+    },
+    {
+      "name": "10-bars-pin-stretch-4",
+      "elapsed": 769,
+      "maxGap": 2,
+      "gaps": 1379,
+      "exact": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "held": [
+        605448,
+        305001,
+        152434,
+        76764,
+        38653
+      ]
+    },
+    {
+      "name": "20-bars-pin-stretch-4",
+      "elapsed": 1313.5,
+      "maxGap": 4.400000095367432,
+      "gaps": 1659,
+      "exact": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "held": [
+        605062,
+        304584,
+        152019,
+        76505,
+        38622
+      ]
+    }
+  ],
+  "cancellation": [
+    {
+      "width": 5,
+      "error": "AbortError",
+      "elapsed": 11.400000095367432
+    },
+    {
+      "width": 20,
+      "error": "AbortError",
+      "elapsed": 10.600000381469727
+    }
+  ],
+  "failures": []
+}
