@@ -64,6 +64,23 @@ assert.equal(drawingRecorded(question(asRecorded(shape)).find.items[0]), true);
 // a drawing that holds nothing cannot be asked as held relations, whatever the link says
 assert.equal(readLink(link(one, true)).held, false);
 
+if (process.argv.includes('--engine')) {
+  const {FilangEngine} = await import('../../target/engine-dist/browser/index.mjs');
+  const {readFile} = await import('node:fs/promises');
+  const {DATA_FILES} = await import('/study/src/boot.js');
+  const {readBytes} = await import('/study/verify/node-env.js');
+  const engine = await FilangEngine.create(await readFile(
+    new URL('../../target/engine-dist/browser/filang_engine.wasm', import.meta.url)));
+  try {
+    engine.loadCsv(new TextDecoder().decode(readBytes(DATA_FILES.bars)), e.rec.barMs);
+    const questions = [exact, held, shape, asRecorded(shape)].map(r => toText(question(r)));
+    assert.deepEqual(engine.studyCounts(questions),
+      [324, 4828, 1463, 772].map(count => ({count, error: null})));
+  } finally {
+    engine.close();
+  }
+}
+
 // ---- a link that cannot be read says so and names nothing
 for (const bad of ['?drawing=' + encodeURIComponent('{"version":1,"revision":"nope"}'), '?drawing=not-json', link(two, true).replace('g1%3Ao%3A0', 'g1%3Ao%3A9'), '?g1=g2:x']) assert.ok(readLink(bad).error, bad);
 assert.equal(readLink(''), null); assert.equal(readLink('?pattern=hammer'), null);

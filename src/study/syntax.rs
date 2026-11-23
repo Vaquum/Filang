@@ -1,5 +1,8 @@
 use crate::{engine_json, Result};
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Range,
+};
 
 pub(super) const MAX_DEPTH: usize = 64;
 const MAX_TOKENS: usize = 12_288;
@@ -10,7 +13,25 @@ pub(super) enum Literal {
     Name(String),
     Text(String),
     Number(String, bool),
-    Duration(i64),
+    Duration(Duration),
+}
+
+#[derive(Clone, Debug, Eq)]
+pub(super) struct Duration {
+    pub ms: i64,
+    pub text: String,
+}
+
+impl PartialEq for Duration {
+    fn eq(&self, other: &Self) -> bool {
+        self.ms == other.ms
+    }
+}
+
+impl std::hash::Hash for Duration {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::hash::Hash::hash(&self.ms, state);
+    }
 }
 
 impl Literal {
@@ -81,12 +102,18 @@ pub(super) struct Argument {
 pub(super) struct Question {
     pub instrument: String,
     pub interval: i64,
+    pub interval_text: String,
     pub bindings: HashMap<String, Expr>,
+    pub binding_order: Vec<String>,
     pub choices: Vec<Vec<Literal>>,
     pub find: Expr,
+    pub find_span: Range<usize>,
     pub filters: Vec<Expr>,
+    pub filter_spans: Vec<Range<usize>>,
     pub group: Option<Expr>,
+    pub group_span: Option<Range<usize>>,
     pub measures: Vec<Expr>,
+    pub measure_spans: Vec<Range<usize>>,
 }
 
 #[derive(Debug)]
@@ -107,11 +134,12 @@ pub(super) fn question(source: &str) -> Result<Question> {
     let mut parser = Parser::new(source)?;
     parser.require_keyword("on")?;
     let instrument = parser.name()?;
-    let interval = match parser.advance() {
-        Kind::Scalar(Literal::Duration(ms)) => ms,
+    let duration = match parser.advance() {
+        Kind::Scalar(Literal::Duration(duration)) => duration,
         _ => return parser.fail("expected bar duration after instrument"),
     };
     let mut bindings = HashMap::new();
+    let mut binding_order = Vec::new();
     while parser.keyword("let") {
         let name = parser.name()?;
         if !matches!(parser.advance(), Kind::Compare(Comparison::Eq)) {
@@ -126,23 +154,32 @@ pub(super) fn question(source: &str) -> Result<Question> {
         if bindings.insert(name.clone(), value).is_some() {
             return Err(format!("duplicate binding {name}"));
         }
+        binding_order.push(name);
     }
     parser.require_keyword("find")?;
-    let find = parser.expr(0)?;
+    let (find, find_span) = parser.clause(source)?;
     let mut filters = Vec::new();
+    let mut filter_spans = Vec::new();
     while parser.keyword("where") {
-        filters.push(parser.expr(0)?);
+        let (filter, span) = parser.clause(source)?;
+        filters.push(filter);
+        filter_spans.push(span);
     }
-    let group = if parser.keyword("group") {
+    let (group, group_span) = if parser.keyword("group") {
         parser.require_keyword("by")?;
-        Some(parser.expr(0)?)
+        let (group, span) = parser.clause(source)?;
+        (Some(group), Some(span))
     } else {
-        None
+        (None, None)
     };
     let mut measures = Vec::new();
+    let mut measure_spans = Vec::new();
     while parser.keyword("measure") {
-        match parser.expr(0)? {
-            measure @ Expr::Call(..) => measures.push(measure),
+        match parser.clause(source)? {
+            (measure @ Expr::Call(..), span) => {
+                measures.push(measure);
+                measure_spans.push(span);
+            }
             _ => return parser.fail("expected an outcome call after measure"),
         }
     }
@@ -172,13 +209,19 @@ pub(super) fn question(source: &str) -> Result<Question> {
     }
     Ok(Question {
         instrument,
-        interval,
+        interval: duration.ms,
+        interval_text: duration.text,
         bindings,
+        binding_order,
         choices: parser.choices,
         find,
+        find_span,
         filters,
+        filter_spans,
         group,
+        group_span,
         measures,
+        measure_spans,
     })
 }
 
@@ -307,7 +350,14 @@ fn number(input: &str) -> Result<(Kind, &str)> {
             .and_then(|a| a.checked_mul(unit))
             .filter(|&a| (1..=9_007_199_254_740_991).contains(&a))
             .ok_or("invalid duration")?;
-        Ok((Kind::Scalar(Literal::Duration(ms)), &rest[units_end..]))
+        let duration = Duration {
+            ms,
+            text: input[..end + units_end].to_owned(),
+        };
+        Ok((
+            Kind::Scalar(Literal::Duration(duration)),
+            &rest[units_end..],
+        ))
     } else {
         let pct = rest.starts_with('%');
         Ok((
@@ -336,6 +386,13 @@ impl Parser {
 
     fn current(&self) -> &Kind {
         &self.tokens[self.index].kind
+    }
+
+    fn clause(&mut self, source: &str) -> Result<(Expr, Range<usize>)> {
+        let start = self.tokens[self.index].offset;
+        let expr = self.expr(0)?;
+        let end = self.tokens[self.index].offset;
+        Ok((expr, start..start + source[start..end].trim_end().len()))
     }
 
     fn advance(&mut self) -> Kind {
