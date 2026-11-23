@@ -128,6 +128,15 @@ class Engine:
     def study_counts(self, queries):
         return self._call("study-counts", json.dumps(queries))
 
+    def study_rows(self, query, *, candidate=0, start=0, limit=4096):
+        return self._call("study-rows", f"{_fields(candidate, start, limit)}\n{query}")
+
+    def study_close(self, query, t, *, candidate=0):
+        return self._call("study-close", f"{_fields(candidate, t)}\n{query}")
+
+    def session_clock(self, t):
+        return self._call("session-clock", str(t))
+
     def prepare(self, width, *, oriented=True, reading="recorded", dimensions=()):
         return self._call(
             "prepare", _fields(width, _mode(oriented), reading, ",".join(dimensions))

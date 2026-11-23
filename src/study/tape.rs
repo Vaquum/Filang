@@ -261,6 +261,16 @@ impl Calendar {
         })
     }
 
+    pub(super) fn session_clock(&self, t: i64) -> Option<Option<(u8, i64, i64)>> {
+        let wd = self.weekday(t)?;
+        if wd == 5 {
+            return Some(None);
+        }
+        let i = self.sessions.partition_point(|s| s.0 <= t);
+        let day = self.sessions[i - 1].0;
+        Some(Some((wd, (t - day) / 60_000, day % 86_400_000)))
+    }
+
     pub fn tail(&self, t: i64, last: i64) -> Option<bool> {
         let i = self.sessions.partition_point(|s| s.1 < t);
         if self.sessions.get(i).map_or(false, |s| s.1 - last < t) {

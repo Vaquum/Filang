@@ -1,5 +1,6 @@
 //! Bounded, close-anchored research studies over a checked Filang plan.
 //! This path shares the native geometry and packed mask representations.
+mod bench;
 mod candles;
 mod compiler;
 mod compute;
@@ -363,36 +364,53 @@ fn write_result(
         } else {
             out.push_str("null");
         }
-        out.push_str(",\"out\":[");
-        let start = tape.bars[i].expect("present occurrence").c;
-        for (k, &h) in query.horizons.iter().enumerate() {
-            if k > 0 {
-                out.push(',');
-            }
-            match tape.bars.get(i + h) {
-                None => out.push_str("{\"status\":\"censored\",\"value\":null}"),
-                Some(None) => out.push_str("{\"status\":\"unknown\",\"value\":null}"),
-                Some(Some(bar)) => write!(
-                    out,
-                    "{{\"status\":\"observed\",\"value\":{}}}",
-                    (bar.c - start) as f64 / start as f64
-                )
-                .expect("format string"),
-            }
-        }
-        out.push(']');
-        if let Some((breach, level)) = series[query.find].reclaim(i, series)? {
-            write!(
-                out,
-                ",\"reclaim\":{{\"breach\":{},\"reclaim\":{},\"level\":{level}}}",
-                tape.close(breach),
-                tape.close(i)
-            )
-            .expect("format string");
-        }
+        write_outcomes(out, tape, i, &query.horizons);
+        write_reclaim(out, tape, series, query, i)?;
         out.push('}');
     }
     out.push_str("]}");
+    Ok(())
+}
+
+fn write_outcomes(out: &mut String, tape: &Tape, i: usize, horizons: &[usize]) {
+    use std::fmt::Write;
+    out.push_str(",\"out\":[");
+    let start = tape.bars[i].expect("present occurrence").c;
+    for (k, &h) in horizons.iter().enumerate() {
+        if k > 0 {
+            out.push(',');
+        }
+        match tape.bars.get(i + h) {
+            None => out.push_str("{\"status\":\"censored\",\"value\":null}"),
+            Some(None) => out.push_str("{\"status\":\"unknown\",\"value\":null}"),
+            Some(Some(bar)) => write!(
+                out,
+                "{{\"status\":\"observed\",\"value\":{}}}",
+                (bar.c - start) as f64 / start as f64
+            )
+            .expect("format string"),
+        }
+    }
+    out.push(']');
+}
+
+fn write_reclaim(
+    out: &mut String,
+    tape: &Tape,
+    series: &[Series],
+    query: &Query,
+    i: usize,
+) -> Result<()> {
+    use std::fmt::Write;
+    if let Some((breach, level)) = series[query.find].reclaim(i, series)? {
+        write!(
+            out,
+            ",\"reclaim\":{{\"breach\":{},\"reclaim\":{},\"level\":{level}}}",
+            tape.close(breach),
+            tape.close(i)
+        )
+        .expect("format string");
+    }
     Ok(())
 }
 

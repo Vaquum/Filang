@@ -54,6 +54,32 @@ for (const question of receipts) {
   for (const [i, candidate] of oracle.candidates.entries()) {
     const expected = runCandidate(bundle.ctx, candidate);
     assert.deepEqual(answers[i].anchors, expected.matches.map(row => row.t), question);
+    const page = engine.studyRows(question, {candidate: i, limit: 8});
+    assert.equal(page.event_count, expected.rows.length, question);
+    assert.deepEqual(page.survivors, expected.survivors, question);
+    assert.deepEqual(page.clause_stats, expected.clauseStats.map(s => [s.T, s.F, s.U]), question);
+    assert.deepEqual(page.group_labels, expected.group?.keys.map(key => ({
+      key, label: expected.group.labels[key],
+    })) ?? [], question);
+    const receipt = row => ({
+      slot: row.i, t: row.t, group: row.group?.key ?? null,
+      where: row.results.map(r => r.v < 0 ? null : r.v === 1),
+      fail_at: row.failAt, out: row.out.map(({status, value}) => ({status, value})),
+    });
+    assert.deepEqual(page.rows.map(({reclaim, ...row}) => row), expected.rows.slice(0, 8).map(receipt), question);
+    assert.equal(page.next, expected.rows[8]?.i ?? null, question);
+    if (page.next !== null) {
+      const next = engine.studyRows(question, {candidate: i, start: page.next, limit: 2});
+      assert.deepEqual(next.rows.map(({reclaim, ...row}) => row), expected.rows.slice(8, 10).map(receipt), question);
+    }
+    const slot = Math.min(123, bundle.rec.n - 1);
+    const facts = engine.studyClose(question, bundle.rec.closeTime(slot), {candidate: i});
+    assert.equal(facts.slot, slot);
+    assert.equal(facts.group, expected.group?.at(slot).key ?? null, question);
+    assert.deepEqual(facts.where, expected.clauses.map(c => {
+      const {v} = c.at(slot);
+      return v < 0 ? null : v === 1;
+    }), question);
   }
 }
 const expected = receipts.map(query => ({count: engine.study(query, {candidate: 0}).results[0].counts.matches, error: null}));
@@ -83,6 +109,14 @@ for (const code of shapes) {
   assert.equal(shape.chained, rows?.slice(1).every((row, i) => row[0] === rows[i][3]) ?? null);
 }
 assert.throws(() => engine.geometryShape("g2:unknown"));
+
+for (const t of [0, ...Array.from({length: 24}, (_, i) => bundle.rec.closeTime(i * 121))]) {
+  const day = bundle.cal.dayAt(t);
+  const expected = day.kind === "session"
+    ? `${day.s.weekday.toUpperCase()} ${bundle.cal.localHM(t, day.s)}`
+    : day.kind === "closed" ? "no session" : "outside calendar";
+  assert.equal(engine.sessionClock(t).text, expected);
+}
 
 const order = process.argv[2];
 if (order) {

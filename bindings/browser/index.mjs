@@ -82,6 +82,16 @@ export class FilangEngine {
 
   studyCounts(queries) { return this.#call("study-counts", JSON.stringify(queries)); }
 
+  studyRows(query, {candidate = 0, start = 0, limit = 4096} = {}) {
+    return this.#call("study-rows", `${fields(candidate, start, limit)}\n${query}`);
+  }
+
+  studyClose(query, t, {candidate = 0} = {}) {
+    return this.#call("study-close", `${fields(candidate, t)}\n${query}`);
+  }
+
+  sessionClock(t) { return this.#call("session-clock", String(t)); }
+
   prepare(width, {oriented = true, reading = "recorded", dimensions = []} = {}) {
     return this.#call("prepare", fields(width, mode(oriented), reading, names(dimensions)));
   }

@@ -257,15 +257,17 @@ pub(super) fn compile(
     }
     let mut compiler = Compiler::new(environment, registry, &question);
     let mut requests = Vec::with_capacity(count);
+    let mut selected_filters = Vec::with_capacity(count);
     for index in 0..count {
         let mut remainder = index;
         for (slot, choices) in compiler.indices.iter_mut().zip(&question.choices).rev() {
             *slot = remainder % choices.len();
             remainder /= choices.len();
         }
-        let request = compiler.query()?;
+        let (request, filters) = compiler.query()?;
         if candidate.map_or(true, |i| i == index) {
             requests.push(request);
+            selected_filters.push(filters);
         }
     }
     if let Some(unused) = question
@@ -276,7 +278,11 @@ pub(super) fn compile(
     {
         return Err(format!("binding {unused} is never used"));
     }
-    compiler.finish(requests)
+    let mut plan = compiler.finish(requests)?;
+    for (query, filters) in plan.queries.iter_mut().zip(selected_filters) {
+        query.filters = filters;
+    }
+    Ok(plan)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -373,7 +379,7 @@ impl<'a> Compiler<'a> {
         Ok(Node { kind, id })
     }
 
-    fn query(&mut self) -> Result<String> {
+    fn query(&mut self) -> Result<(String, Vec<usize>)> {
         let q = self.question;
         let event = self.emit(&q.find, true)?;
         if event.kind != Kind::Event {
@@ -424,7 +430,7 @@ impl<'a> Compiler<'a> {
             use std::fmt::Write;
             write!(request, " {horizon}").expect("write to String");
         }
-        Ok(request)
+        Ok((request, filters))
     }
 
     fn literal(&mut self, expr: &'a Expr) -> Result<&'a Literal> {

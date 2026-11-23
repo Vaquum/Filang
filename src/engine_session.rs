@@ -125,6 +125,23 @@ impl Session {
                 }
                 Ok(format!("[{}]", entries.join(",")))
             }
+            b"study-rows" => {
+                let (page, query) = text.split_once('\n').ok_or("missing study text")?;
+                let [candidate, start, limit] = fields(page)?;
+                self.study()?.occurrence_page(
+                    query,
+                    number(candidate)?,
+                    number(start)?,
+                    number(limit)?,
+                )
+            }
+            b"study-close" => {
+                let (close, query) = text.split_once('\n').ok_or("missing study text")?;
+                let [candidate, t] = fields(close)?;
+                self.study()?
+                    .close_facts(query, number(candidate)?, number(t)?)
+            }
+            b"session-clock" => Ok(self.study()?.session_clock(number(text)?)),
             b"inspect" => inspect(&text.parse()?),
             b"geometry-shape" => Ok(geometry_shape(&text.parse()?)),
             b"distance" => {
