@@ -1,16 +1,13 @@
 //! Exact order differences and scale-normalized comparison of observed windows.
-use super::{BodyDirection, GeometryMode, GeometryPattern};
+use super::{
+    explore::half_flips, BodyDirection, Dimension, DimensionPart, GeometryMode, GeometryPattern,
+};
 use crate::Result;
 use std::collections::HashSet;
 
 const SIZE_FLOOR: f64 = 0.02;
 const SIZE_WEIGHT: f64 = 0.05;
 const FLIP_WEIGHT: f64 = 0.3;
-
-#[inline]
-pub(super) fn half_flips(left: i8, right: i8) -> usize {
-    usize::from((left - right).unsigned_abs())
-}
 
 #[inline]
 fn relation(left: f64, right: f64) -> i8 {
@@ -43,16 +40,40 @@ impl Comparison {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) struct Difference {
+    pub axis: Option<Dimension>,
     pub left: usize,
     pub right: usize,
     pub expected: i8,
     pub observed: i8,
 }
 
+#[derive(Clone, Copy)]
 pub(crate) enum Exact {
     Match,
     OneAway(Difference),
     Different,
+}
+
+impl Exact {
+    fn combined(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Match, other) | (other, Self::Match) => other,
+            _ => Self::Different,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct AxisDistance {
+    cost: usize,
+    changed: Exact,
+}
+
+impl AxisDistance {
+    pub(crate) const ZERO: Self = Self {
+        cost: 0,
+        changed: Exact::Match,
+    };
 }
 
 pub(crate) struct Shape {
@@ -60,6 +81,8 @@ pub(crate) struct Shape {
     log_sizes: Vec<[f64; 2]>,
     pairs: Vec<Comparison>,
     colours: Vec<i8>,
+    axes: Vec<DimensionPart>,
+    pairs_total: usize,
 }
 
 impl Shape {
@@ -91,11 +114,22 @@ impl Shape {
         let colours = pattern
             .directions()
             .map_or_else(Vec::new, |dirs| dirs.iter().copied().map(colour).collect());
+        let axes = pattern.dimensions().to_vec();
+        let pairs_total = pairs.len()
+            + axes
+                .iter()
+                .map(|part| {
+                    let n = part.ranks().len() + usize::from(part.reference().is_some());
+                    n * (n - 1) / 2
+                })
+                .sum::<usize>();
         Ok(Self {
             normalized,
             log_sizes,
             pairs,
             colours,
+            axes,
+            pairs_total,
         })
     }
 
@@ -103,36 +137,105 @@ impl Shape {
         self.colours
             .iter()
             .zip(rows)
-            .map(|(&expected, &[o, _, _, c])| half_flips(expected, relation(c, o)))
+            .map(|(&expected, &[o, _, _, c])| half_flips(expected, relation(c, o)) as usize)
             .sum()
     }
 
     pub fn colour_at(&self, i: usize, [o, _, _, c]: [f64; 4]) -> usize {
         self.colours
             .get(i)
-            .map_or(0, |&expected| half_flips(expected, relation(c, o)))
+            .map_or(0, |&expected| half_flips(expected, relation(c, o)) as usize)
     }
 
-    pub fn exact_or_one_away(&self, endpoints: &[f64], colour_flips: usize) -> Exact {
+    pub fn has_axes(&self) -> bool {
+        !self.axes.is_empty()
+    }
+
+    pub fn axis_distance(
+        &self,
+        mut read: impl FnMut(usize, Dimension) -> Option<f64>,
+    ) -> Option<AxisDistance> {
+        let mut result = AxisDistance::ZERO;
+        let mut values = [0.0; 21];
+        for axis in &self.axes {
+            let dimension = axis.dimension();
+            let width = axis.ranks().len();
+            for (i, value) in values[..width].iter_mut().enumerate() {
+                *value = read(i, dimension)?;
+            }
+            values[width] = 0.0;
+            let n = width + usize::from(axis.reference().is_some());
+            let rank = |i| {
+                if i < width {
+                    axis.ranks()[i]
+                } else {
+                    axis.reference().expect("signed axis")
+                }
+            };
+            for a in 0..n {
+                for b in a + 1..n {
+                    let observed = relation(values[a], values[b]);
+                    let expected = rank(a).cmp(&rank(b)) as i8;
+                    let flips = half_flips(observed, expected) as usize;
+                    if flips != 0 {
+                        result.cost += flips;
+                        result.changed = result.changed.combined(Exact::OneAway(Difference {
+                            axis: Some(dimension),
+                            left: a,
+                            right: b,
+                            expected,
+                            observed,
+                        }));
+                    }
+                }
+            }
+        }
+        Some(result)
+    }
+
+    pub fn within(
+        &self,
+        endpoints: &[f64],
+        colours: usize,
+        axes: AxisDistance,
+        radius: usize,
+    ) -> bool {
+        let mut cost = colours + axes.cost;
+        for &pair in &self.pairs {
+            if cost > radius {
+                return false;
+            }
+            cost += half_flips(pair.expected, pair.at(endpoints)) as usize;
+        }
+        cost <= radius
+    }
+
+    pub fn exact_or_one_away(
+        &self,
+        endpoints: &[f64],
+        colour_flips: usize,
+        axes: AxisDistance,
+    ) -> Exact {
         if colour_flips != 0 {
             return Exact::Different;
         }
-        let mut difference = None;
+        let mut difference = axes.changed;
         for &pair in &self.pairs {
             let observed = pair.at(endpoints);
             if observed != pair.expected {
-                if difference.is_some() {
-                    return Exact::Different;
-                }
-                difference = Some(Difference {
+                difference = difference.combined(Exact::OneAway(Difference {
+                    axis: None,
                     left: pair.left as usize,
                     right: pair.right as usize,
                     expected: pair.expected,
                     observed,
-                });
+                }));
+                if matches!(difference, Exact::Different) {
+                    return difference;
+                }
             }
         }
-        difference.map_or(Exact::Match, Exact::OneAway)
+        difference
     }
 
     pub fn look(&self, endpoints: &[f64]) -> (f64, f64) {
@@ -158,7 +261,13 @@ impl Shape {
     }
 
     /// Optional score pruning uses only nonnegative terms, preserving ranking.
-    pub fn rank(&self, endpoints: &[f64], colours: usize, bound: f64) -> Option<(f64, usize, f64)> {
+    pub fn rank(
+        &self,
+        endpoints: &[f64],
+        colours: usize,
+        axes: AxisDistance,
+        bound: f64,
+    ) -> Option<(f64, usize, f64)> {
         let colour_score = colours as f64 / 2.0;
         if colour_score > bound {
             return None;
@@ -168,11 +277,11 @@ impl Shape {
         if base > bound {
             return None;
         }
-        let mut flips = 0;
+        let mut flips = axes.cost;
         for &pair in &self.pairs {
-            flips += half_flips(pair.expected, pair.at(endpoints));
+            flips += half_flips(pair.expected, pair.at(endpoints)) as usize;
         }
-        let score = base + FLIP_WEIGHT * (flips as f64 / 2.0) / self.pairs.len() as f64;
+        let score = base + FLIP_WEIGHT * (flips as f64 / 2.0) / self.pairs_total as f64;
         (score <= bound).then_some((score, colours + flips, shape))
     }
 }
@@ -401,13 +510,18 @@ mod tests {
             |rows: &[[f64; 4]]| rows.iter().flat_map(|&r| boundaries(r)).collect::<Vec<_>>();
         let scaled = drawn.map(|candle| candle.map(|value| value * 2. + 10.));
         assert!(matches!(
-            shape.exact_or_one_away(&endpoint_values(&scaled), shape.colour_flips(&scaled)),
+            shape.exact_or_one_away(
+                &endpoint_values(&scaled),
+                shape.colour_flips(&scaled),
+                AxisDistance::ZERO
+            ),
             Exact::Match
         ));
         let (score, flips, _) = shape
             .rank(
                 &endpoint_values(&scaled),
                 shape.colour_flips(&scaled),
+                AxisDistance::ZERO,
                 f64::INFINITY,
             )
             .unwrap();
@@ -416,19 +530,24 @@ mod tests {
 
         let changed = [[20., 50., 15., 40.], [42., 85., 30., 60.]];
         let ends = endpoint_values(&changed);
-        let actual = shape.exact_or_one_away(&ends, 0);
+        let actual = shape.exact_or_one_away(&ends, 0, AxisDistance::ZERO);
         assert!(matches!(
             actual,
             Exact::OneAway(Difference {
+                axis: None,
                 left: 2,
                 right: 5,
                 expected: 0,
                 observed: -1
             })
         ));
-        let (score, flips, _) = shape.rank(&ends, 0, f64::INFINITY).unwrap();
+        let (score, flips, _) = shape
+            .rank(&ends, 0, AxisDistance::ZERO, f64::INFINITY)
+            .unwrap();
         let expected = GeometryPattern::from_ohlc(&changed, GeometryMode::Oriented).unwrap();
         assert_eq!(flips, distance(&pattern, &expected).unwrap());
-        assert!(shape.rank(&ends, 0, score / 2.0).is_none());
+        assert!(shape
+            .rank(&ends, 0, AxisDistance::ZERO, score / 2.0)
+            .is_none());
     }
 }

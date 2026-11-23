@@ -2,12 +2,17 @@
 //! and axis keys independently, so toggling axes never builds their product.
 
 use super::{
-    decimal_price_domain, dimensions::AxisEncoder, matching::half_flips, BodyDirection, Counters,
-    DecimalNatural, Dimension, DimensionPart, DimensionSet, GeometryEncoder, GeometryKey,
-    GeometryMode, GeometryPattern, GEOMETRY_KEY_MAX_BARS,
+    decimal_price_domain, dimensions::AxisEncoder, BodyDirection, Counters, DecimalNatural,
+    Dimension, DimensionPart, DimensionSet, GeometryEncoder, GeometryKey, GeometryMode,
+    GeometryPattern, GEOMETRY_KEY_MAX_BARS,
 };
 use crate::Result;
 use std::{collections::HashMap, hash::Hash, ops::Range, sync::Arc};
+
+#[path = "geometry_radius.rs"]
+mod radius;
+pub(crate) use radius::half_flips;
+pub use radius::RadiusCounts;
 
 /// A recording contains grid slots, including missing bars.
 pub const MAX_SLOTS: usize = 1_000_000;
@@ -147,6 +152,10 @@ impl Recording {
             .and_then(|i| self.0[i])
             .map(|bar| bar.ohlc[3]);
         Some(reading.candle(bar.ohlc, previous_close))
+    }
+
+    pub(crate) fn dimension_at(&self, slot: usize, dimension: Dimension) -> Option<f64> {
+        self.0.get(slot).copied().flatten()?.value(dimension)
     }
 
     pub fn len(&self) -> usize {
@@ -731,44 +740,7 @@ pub fn distance(left: &GeometryPattern, right: &GeometryPattern) -> Result<usize
     {
         return Err("distance needs a common width, orientation and dimension set".into());
     }
-    let price_left: Vec<_> = left.ranks().iter().flatten().copied().collect();
-    let price_right: Vec<_> = right.ranks().iter().flatten().copied().collect();
-    let mut total = order_distance(&price_left, &price_right);
-    if let (Some(a), Some(b)) = (left.directions(), right.directions()) {
-        let code = |direction| match direction {
-            BodyDirection::Down => -1i8,
-            BodyDirection::Flat => 0,
-            BodyDirection::Up => 1,
-        };
-        total += a
-            .iter()
-            .zip(b)
-            .map(|(&a, &b)| half_flips(code(a), code(b)))
-            .sum::<usize>();
-    }
-    for (a, b) in left.dimensions().iter().zip(right.dimensions()) {
-        let levels = |part: &DimensionPart| {
-            part.ranks()
-                .iter()
-                .copied()
-                .chain(part.reference())
-                .collect::<Vec<_>>()
-        };
-        total += order_distance(&levels(a), &levels(b));
-    }
-    Ok(total)
-}
-
-fn order_distance(left: &[usize], right: &[usize]) -> usize {
-    let mut total = 0;
-    for j in 1..left.len() {
-        for i in 0..j {
-            let a = left[i].cmp(&left[j]) as i8;
-            let b = right[i].cmp(&right[j]) as i8;
-            total += half_flips(a, b);
-        }
-    }
-    total
+    Ok(radius::distance(left, right))
 }
 
 fn index_axis(recording: &Recording, width: usize, axis: Dimension) -> AxisKeys {

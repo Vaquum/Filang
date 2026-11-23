@@ -95,6 +95,13 @@ function exactGeometrySeries(ctx, p, chained = false) {
     const { pattern, text } = p.args.pattern;
     const length = pattern.rows.length;
     const vals = new Int8Array(rec.n);
+    const radius = Number(p.args.radius?.rat.num ?? 0n);
+    if (radius) {
+      const reading = chained ? 'chained' : 'recorded';
+      if (!ctx.radiusGeometry) throw new Error('The browser engine package is required for a positive g1 radius');
+      const resolved = ctx.radiusGeometry(text, reading, radius);
+      return {...resolved, windowBars: length};
+    }
     const rankPrices = new Float64Array(pattern.rankCount);
     const fits = chained ? matchesChainedG1 : matchesG1;
     let consecutive = 0;

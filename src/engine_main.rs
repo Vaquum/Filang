@@ -42,11 +42,11 @@ fn finish(flags: &HashMap<String, String>) -> Result<()> {
 fn engine_cli(mut flags: HashMap<String, String>) -> Result<String> {
     use filang::engine_session::Session;
 
-    let operation = take(&mut flags, "--operation")?;
+    let mut operation = take(&mut flags, "--operation")?;
     let mut session = Session::default();
     if matches!(
         operation.as_str(),
-        "counts" | "positions" | "classify" | "at" | "check" | "study"
+        "counts" | "neighbourhood" | "positions" | "classify" | "at" | "check" | "study"
     ) {
         let bars = take(&mut flags, "--bars")?;
         let interval = take(&mut flags, "--interval-ms")?;
@@ -86,15 +86,29 @@ fn engine_cli(mut flags: HashMap<String, String>) -> Result<String> {
             let width = take(&mut flags, "--width")?;
             format!("{width}\t{mode}\t{axes}")
         }
-        "counts" => {
+        "counts" | "neighbourhood" => {
             let pattern = take(&mut flags, "--pattern")?;
-            format!("{reading}\t{pattern}")
+            let radius = flags.remove("--radius").unwrap_or_else(|| "0".into());
+            if operation == "counts" && radius == "0" {
+                format!("{reading}\t{pattern}")
+            } else {
+                if operation == "counts" {
+                    operation = "counts-within".into();
+                }
+                format!("{reading}\t{radius}\t{pattern}")
+            }
         }
         "positions" | "classify" => {
             let pattern = take(&mut flags, "--pattern")?;
             let start = flags.remove("--start").unwrap_or_else(|| "0".into());
             let limit = flags.remove("--limit").unwrap_or_else(|| "100".into());
-            format!("{reading}\t{start}\t{limit}\t{pattern}")
+            let radius = flags.remove("--radius").unwrap_or_else(|| "0".into());
+            if radius == "0" {
+                format!("{reading}\t{start}\t{limit}\t{pattern}")
+            } else {
+                operation.push_str("-within");
+                format!("{reading}\t{start}\t{limit}\t{radius}\t{pattern}")
+            }
         }
         "at" => {
             let end = take(&mut flags, "--end-slot")?;

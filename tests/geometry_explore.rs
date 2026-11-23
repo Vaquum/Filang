@@ -204,3 +204,59 @@ fn distance_counts_ties_reversals_and_orientation_in_half_flips() {
     assert_eq!(distance(&up, &selling).unwrap(), 2);
     assert!(distance(&up, &up.price()).is_err());
 }
+
+#[test]
+fn radius_nests_over_complete_one_bar_domains_with_a_signed_axis() {
+    use filang::geometry::explore::{distance, Bar, Reading, Recording};
+    use filang::geometry::{
+        enumerate_patterns, BodyDirection, Counters, Dimension, DimensionSet, GeometryMode,
+    };
+
+    for mode in [GeometryMode::Oriented, GeometryMode::Unoriented] {
+        let prices = enumerate_patterns(1, mode, usize::MAX).unwrap();
+        let mut bars = Vec::new();
+        for pattern in &prices {
+            let [low, bottom, top, high] = pattern.ranks()[0].map(|value| value as f64 + 10.0);
+            let (open, close) = if pattern.directions().map(|d| d[0]) == Some(BodyDirection::Down) {
+                (top, bottom)
+            } else {
+                (bottom, top)
+            };
+            for taker in [40.0, 50.0, 60.0] {
+                let counters = Counters::new(100.0, taker, 10.0).unwrap();
+                bars.push(Some(
+                    Bar::new([open, high, low, close], Some(counters)).unwrap(),
+                ));
+            }
+        }
+        let tape = Recording::new(bars).unwrap();
+        let dims = DimensionSet::NONE.with(Dimension::Delta);
+        let observed: Vec<_> = (0..tape.len())
+            .map(|slot| {
+                tape.pattern_at(slot, 1, mode, Reading::Recorded, dims)
+                    .unwrap()
+                    .unwrap()
+            })
+            .collect();
+        let mut prepared = tape.prepare(1).unwrap();
+        for target in &observed {
+            let mut previous = Vec::new();
+            for radius in 0..=16 {
+                let want: Vec<_> = observed
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, pattern)| distance(target, pattern).unwrap() <= radius as usize)
+                    .map(|(slot, _)| slot as u32)
+                    .collect();
+                let actual = prepared
+                    .positions_within(target, Reading::Recorded, radius, 0, tape.len())
+                    .unwrap();
+                assert_eq!(actual, want);
+                assert!(previous
+                    .iter()
+                    .all(|slot| actual.binary_search(slot).is_ok()));
+                previous = actual;
+            }
+        }
+    }
+}

@@ -16,6 +16,7 @@ pub(super) enum Node {
     /// A G1 pattern, and whether the window is read as a chain: every bar after the first opening at the
     /// close of the bar before it, with its low and high widened to include that open.
     Geometry(GeometryPattern, bool),
+    GeometryWithin(GeometryPattern, bool, u32),
     Wick(Ratio, Ratio),
     Breakout(usize),
     Range(usize, Ratio),
@@ -145,12 +146,22 @@ impl Plan {
                     number(words.next(), "pattern length")?,
                     &mut words,
                 )?),
-                "g1" | "g1c" => {
+                "g1" | "g1c" | "g1r" | "g1cr" => {
                     let pattern: GeometryPattern = words.next().ok_or("missing G1")?.parse()?;
                     if pattern.is_empty() {
                         return Err("empty G1 event".into());
                     }
-                    Node::Geometry(pattern, op == "g1c")
+                    let chained = matches!(op, "g1c" | "g1cr");
+                    let radius: u32 = if op.ends_with('r') {
+                        number(words.next(), "geometry radius")?
+                    } else {
+                        0
+                    };
+                    if radius == 0 {
+                        Node::Geometry(pattern, chained)
+                    } else {
+                        Node::GeometryWithin(pattern, chained, radius)
+                    }
                 }
                 "wick" => Node::Wick(
                     Ratio::parse(words.next().ok_or("missing body ratio")?)?,

@@ -72,8 +72,8 @@ export class FilangEngine {
     return this.#call("composer-load", `${intervalMs}\n${csv}`);
   }
 
-  composerStart(packet, {timeframes = 31, endMasks} = {}) {
-    const options = JSON.stringify({timeframes, end_masks: endMasks});
+  composerStart(packet, {timeframes = 31, endMasks, radius = 0} = {}) {
+    const options = JSON.stringify({timeframes, end_masks: endMasks, radius});
     const drawing = typeof packet === "string" ? packet : JSON.stringify(packet);
     return this.#call("composer-start", `${options}\n${drawing}`);
   }
@@ -150,14 +150,27 @@ export class FilangEngine {
     return text;
   }
 
-  counts(code, {reading = "recorded"} = {}) { return this.#call("counts", fields(reading, code)); }
-
-  positions(code, {reading = "recorded", start = 0, limit = 100} = {}) {
-    return this.#call("positions", fields(reading, start, limit, code));
+  counts(code, {reading = "recorded", radius = 0} = {}) {
+    return radius === 0 ? this.#call("counts", fields(reading, code))
+      : this.#call("counts-within", fields(reading, radius, code));
   }
 
-  classify(code, {reading = "recorded", start = 0, limit = 4096} = {}) {
-    return this.#call("classify", fields(reading, start, limit, code));
+  neighbourhood(code, {reading = "recorded", radius = 0} = {}) {
+    return this.#call("neighbourhood", fields(reading, radius, code));
+  }
+
+  radiusSeries(code, {reading = "recorded", radius = 0} = {}) {
+    return this.#call("radius-series", fields(reading, radius, code));
+  }
+
+  positions(code, {reading = "recorded", start = 0, limit = 100, radius = 0} = {}) {
+    return radius === 0 ? this.#call("positions", fields(reading, start, limit, code))
+      : this.#call("positions-within", fields(reading, start, limit, radius, code));
+  }
+
+  classify(code, {reading = "recorded", start = 0, limit = 4096, radius = 0} = {}) {
+    return radius === 0 ? this.#call("classify", fields(reading, start, limit, code))
+      : this.#call("classify-within", fields(reading, start, limit, radius, code));
   }
 
   #call(operation, payload = "") {

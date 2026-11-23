@@ -5,7 +5,14 @@ use super::{
     predicate::Field,
     tape::Tape,
 };
-use crate::{geometry::explore::Reading, rules::Cmp, Result};
+use crate::{
+    geometry::{
+        explore::{distance, Reading},
+        GeometryPattern,
+    },
+    rules::Cmp,
+    Result,
+};
 
 pub(super) struct Explain<'a> {
     pub eval: &'a Eval<'a>,
@@ -52,40 +59,9 @@ impl Explain<'_> {
                 }
             },
             Node::Breakout(width) => self.breakout(i, *width, state),
-            Node::Geometry(wanted, chained) => {
-                let width = wanted.len();
-                let reading = if *chained {
-                    Reading::Chained
-                } else {
-                    Reading::Recorded
-                };
-                if state == "unknown" || i + 1 < width {
-                    format!(
-                        "geometry requires {width} consecutive recorded bars through this close"
-                    )
-                } else {
-                    let recording = tape.geometry_window(i + 1 - width, i + 1)?;
-                    let shape = recording.pattern_at(
-                        width - 1,
-                        width,
-                        wanted.mode(),
-                        reading,
-                        wanted.dimension_set(),
-                    )?;
-                    let observed = shape
-                        .map_or_else(|| "unavailable geometry".into(), |shape| shape.to_string());
-                    let note = if *chained {
-                        " (later opens read as the previous close)"
-                    } else {
-                        ""
-                    };
-                    let relation = if state == "true" {
-                        "matches"
-                    } else {
-                        "differs from"
-                    };
-                    format!("{observed}{note} {relation} {wanted}")
-                }
+            Node::Geometry(wanted, chained) => self.geometry(i, wanted, *chained, 0, state)?,
+            Node::GeometryWithin(wanted, chained, radius) => {
+                self.geometry(i, wanted, *chained, *radius, state)?
             }
             Node::Pattern(rule) => {
                 let width = rule.width();
@@ -312,6 +288,59 @@ impl Explain<'_> {
             }
         };
         Ok(reason)
+    }
+
+    fn geometry(
+        &self,
+        slot: usize,
+        wanted: &GeometryPattern,
+        chained: bool,
+        radius: u32,
+        state: &str,
+    ) -> Result<String> {
+        let width = wanted.len();
+        let reading = if chained {
+            Reading::Chained
+        } else {
+            Reading::Recorded
+        };
+        if state == "unknown" || slot + 1 < width {
+            let required = if wanted.has_dimensions() {
+                " and all selected dimension readings"
+            } else {
+                ""
+            };
+            return Ok(format!(
+                "geometry requires {width} consecutive recorded bars through this close{required}"
+            ));
+        }
+        let recording = self.eval.tape.geometry_window(slot + 1 - width, slot + 1)?;
+        let observed = recording
+            .pattern_at(
+                width - 1,
+                width,
+                wanted.mode(),
+                reading,
+                wanted.dimension_set(),
+            )?
+            .ok_or("geometry unavailable at close")?;
+        let note = if chained {
+            " (later opens read as the previous close)"
+        } else {
+            ""
+        };
+        if radius > 0 {
+            let cost = distance(wanted, &observed)?;
+            return Ok(format!(
+                "{observed}{note} differs by {cost} half-flips from {wanted} (radius {radius})."
+            ));
+        }
+        let relation = if state == "true" {
+            "matches"
+        } else {
+            "differs from"
+        };
+        Ok(format!("{observed}{note} {relation} {wanted}"))
     }
 
     fn breakout(&self, i: usize, width: usize, state: &str) -> String {

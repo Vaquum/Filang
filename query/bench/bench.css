@@ -139,7 +139,9 @@ body.bench {
 .lane-head .join.form button.faint:not([aria-pressed="true"]) { color: var(--t3); }
 .lane-head .join.form { margin-left: 0; }
 .lane-head .join.form button { text-transform: none; letter-spacing: .02em; font-size: 11px; }
-.lane-head .shape-line .g1, .lane-head .shape-line .from { flex-basis: 100%; min-width: 0; font: 400 11px/1.4 var(--mono); color: var(--t3); letter-spacing: 0;
+.lane-head .shape-line .g1, .lane-head .shape-line .radius-control { display: inline-flex; gap: 6px; align-items: baseline; font: 400 11px/1.4 var(--mono); color: var(--t2); }
+.lane-head .shape-line .radius-control input { width: 5em; font: inherit; color: inherit; }
+.lane-head .shape-line .from { flex-basis: 100%; min-width: 0; font: 400 11px/1.4 var(--mono); color: var(--t3); letter-spacing: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lane-head .shape-line .from { white-space: normal; text-wrap: balance; }
 .lane.compact .lane-head .shape-line .from { display: none; }

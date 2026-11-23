@@ -16,6 +16,9 @@ export const PINNED = 'pinned';
 
 let bundle = null;
 let held = null;
+let geometryEngine = null;
+let engineLoading = null;
+const radiusCache = new Map();
 const cache = new Map();
 
 const bytes = async (name) => {
@@ -23,6 +26,46 @@ const bytes = async (name) => {
   if (!r.ok) throw Error(`${name}: ${r.status}`);
   return new Uint8Array(await r.arrayBuffer());
 };
+
+function browserEngine() {
+  return engineLoading ??= (async () => {
+    const endpoint = '/engine/index.mjs';
+    const available = await fetch(endpoint, {method: 'HEAD', cache: 'no-cache'});
+    if (!available.ok) return null;
+    const {FilangEngine} = await import(endpoint);
+    const engine = await FilangEngine.create();
+    if (typeof engine.radiusSeries !== 'function') {
+      engine.close();
+      return null;
+    }
+    return engine;
+  })().catch(() => {
+    engineLoading = null;
+    return null;
+  });
+}
+
+function radiusGeometry(code, reading, radius) {
+  const key = JSON.stringify([code, reading, radius]);
+  if (radiusCache.has(key)) return radiusCache.get(key);
+  const result = geometryEngine.radiusSeries(code, {reading, radius});
+  const vals = Int8Array.from(result.states, state => state === '1' ? T : state === '0' ? F : U);
+  const why = i => {
+    if (vals[i] === U) return 'Geometry requires consecutive recorded bars and all selected readings.';
+    const shape = geometryEngine.geometryShape(code);
+    const dimensions = code.split('|').slice(1).map(part => part.slice(0, part.indexOf(':')));
+    const observed = geometryEngine.at(i, shape.ranks.length, {reading, oriented: shape.directions !== null, dimensions});
+    const distance = geometryEngine.distance(code, observed.code).half_flips;
+    return `${observed.code} differs by ${distance} half-flips from ${code} (radius ${radius}).`;
+  };
+  const series = {vals, why, counts: result.counts, byDistance: result.by_distance};
+  if (radiusCache.size >= 64) radiusCache.delete(radiusCache.keys().next().value);
+  radiusCache.set(key, series);
+  return series;
+}
+
+export const geometryRadiusAvailable = () => geometryEngine !== null;
+export const geometryRadiusReceipt = (code, reading, radius) => radiusGeometry(code, reading, radius).byDistance;
 
 /** What this server can read: { cube, default, windows: [{ key, name }] }. Without a cube, the pinned recording only. */
 export async function sources() {
@@ -40,9 +83,12 @@ export async function sources() {
 export async function load(window = PINNED) {
   if (bundle && held === window) return bundle;
   let next;
+  let recording;
+  const engine = browserEngine();
   if (window === PINNED) {
     const names = [DATA_FILES.bars, DATA_FILES.provenance, DATA_FILES.sessions, ...EXTENSION_FILES];
     const [csvBytes, provenanceBytes, sessionsBytes, ...ext] = await Promise.all(names.map(bytes));
+    recording = csvBytes;
     next = buildEnvironment({
       csvBytes, provenanceBytes, sessionsBytes,
       extensions: EXTENSION_FILES.map((file, i) => ({ file, bytes: ext[i] })),
@@ -51,10 +97,21 @@ export async function load(window = PINNED) {
     const [answer, sessionsBytes] = await Promise.all([fetch('/bars?w=' + encodeURIComponent(window), { cache: 'no-store' }), bytes(DATA_FILES.sessions)]);
     const body = await answer.json().catch(() => null);
     if (!answer.ok || !body?.csv) throw Error(body?.error || `bars: ${answer.status}`);
+    recording = body.csv;
     const enc = new TextEncoder();
     next = buildEnvironment({ csvBytes: enc.encode(body.csv), provenanceBytes: enc.encode(JSON.stringify(body.provenance)), sessionsBytes });
   }
-  bundle = next; held = window; cache.clear();
+  let geometry = await engine;
+  if (geometry !== null) {
+    try {
+      geometry.loadCsv(typeof recording === 'string' ? recording : new TextDecoder().decode(recording), next.rec.barMs);
+      next.ctx.radiusGeometry = radiusGeometry;
+    } catch {
+      geometry = null;
+    }
+  }
+  geometryEngine = geometry;
+  bundle = next; held = window; cache.clear(); radiusCache.clear();
   return bundle;
 }
 

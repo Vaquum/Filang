@@ -384,8 +384,14 @@ fn render(q: &Question, expr: &Expr, selected: Option<&[usize]>, min: u8) -> Pri
         Expr::Call(name, args) => {
             let rendered = args
                 .iter()
-                .map(|arg| {
+                .filter_map(|arg| {
                     let value = render(q, &arg.value, selected, 0);
+                    if matches!(name.as_str(), "exact_g1" | "chained_g1")
+                        && arg.name.as_deref() == Some("radius")
+                        && value.text.bytes().all(|b| matches!(b, b'0' | b'.'))
+                    {
+                        return None;
+                    }
                     let text = arg.name.as_ref().map_or_else(
                         || value.text.clone(),
                         |name| format!("{name}: {}", value.text),
@@ -394,10 +400,10 @@ fn render(q: &Question, expr: &Expr, selected: Option<&[usize]>, min: u8) -> Pri
                         .name
                         .as_ref()
                         .map_or_else(|| "null".into(), |name| quote(name));
-                    Printed {
+                    Some(Printed {
                         text,
                         ast: format!("{{\"name\":{key},\"value\":{}}}", value.ast),
-                    }
+                    })
                 })
                 .collect::<Vec<_>>();
             let text = rendered

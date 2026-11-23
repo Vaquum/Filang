@@ -90,6 +90,11 @@ its canonical shape and its optional pinned expression. `encodeDrawing`
 selects the packet revision from the supplied parts. `drawingProtocol`
 returns both compatible revisions. `distance` returns comparison
 differences in half-flips for a pair of complete patterns.
+Pass `radius` to `counts`, `positions` or `classify` to include
+patterns within that many half-flips over their selected axes and
+orientations. `neighbourhood` returns counts plus observed window counts
+by distance. The default radius is zero. Study's `exact_g1` and
+`chained_g1` accept an optional `radius` and sweep lists.
 
 Use `study(query, {candidate})` for Query's Filang text and its close-anchored
 counts, eligible closes, unknowns, groups and outcomes. Candidate indices
@@ -143,11 +148,23 @@ are `exact`, `held`, `qualified-exact`, `qualified-held` and
 `near:N` for a zero-based one-away result. Resume at the returned
 `next` index.
 
+A drawing with selected dimension parts uses the same g1 distance as
+Study. Supply `radius` to include the per-frame `within` cohort and use the
+`within` position kind to page it. Radius zero pages exact twins.
+
 Composer can pass `endMasks` to apply its own continuation criterion.
 Supply five entries in timeframe order. Each entry is either null or a
 string of 0 and 1 over the recording's grid slots. Qualified counts and
 ranked results respect the mask. Every exact, held and one-away position
 remains available for separate statistics.
+
+### Query radius control
+
+The Query bench serves the browser package at `/engine/`. For a local
+build, run `python3 bindings/build.py --only browser` from the repository
+root. For a container build, pass the pinned package release using
+`--build-arg FILANG_ENGINE_VERSION=...`. A shape row accepts a radius in
+half-flips and shows the count of additional occurrences.
 
 ## Limen
 

@@ -4,7 +4,7 @@ use crate::{
     engine_json::Value,
     geometry::{
         explore::{Reading, Recording},
-        matching::{boundaries, holds, Difference, Exact, Hold, Shape},
+        matching::{boundaries, holds, AxisDistance, Difference, Exact, Hold, Shape},
     },
     study, Result,
 };
@@ -166,6 +166,7 @@ struct FrameMatches {
     held: Vec<Window>,
     qualified_exact: Vec<Window>,
     qualified_held: Vec<Window>,
+    within: Vec<Window>,
 }
 
 struct Placement {
@@ -316,6 +317,7 @@ pub(crate) struct Search {
     frames: [Option<Frame>; 5],
     selected: u8,
     end_masks: [Option<Box<[u8]>>; 5],
+    radius: usize,
     shape: Shape,
     holds: Vec<Hold>,
     by_bar: Vec<Vec<Hold>>,
@@ -353,9 +355,10 @@ impl Search {
                 return Err("load every selected timeframe before searching".into());
             }
         }
-        if !drawing.pattern.dimension_set().is_empty() {
-            return Err("Composer search currently expects a price drawing".into());
-        }
+        let radius = options
+            .object()?
+            .get("radius")
+            .map_or(Ok(0), |value| value.number::<u32>())? as usize;
         let mut end_masks: [Option<Box<[u8]>>; 5] = Default::default();
         if let Some(masks) = options.object()?.get("end_masks") {
             let masks = masks.array()?;
@@ -391,7 +394,7 @@ impl Search {
             }
         }
         let has_ending_rules = ending_at.iter().any(|rules| !rules.is_empty());
-        let first_only = holds.iter().all(|hold| hold.last() == 0);
+        let first_only = !shape.has_axes() && holds.iter().all(|hold| hold.last() == 0);
         let stretch = if holds.is_empty() { 0 } else { drawing.stretch };
         let total = frames
             .iter()
@@ -402,6 +405,7 @@ impl Search {
             frames: frames.clone(),
             selected,
             end_masks,
+            radius,
             shape,
             holds,
             by_bar,
@@ -465,23 +469,22 @@ impl Search {
             } else if self.fallback {
                 if selected && self.qualifies(self.frame, self.start + self.span - 1) {
                     self.contiguous(frame);
-                    let colours = self.values();
-                    let ends = &self.endpoints[..4 * self.span];
-                    if let Some((score, flips, off)) = self.shape.rank(ends, colours, self.bound())
-                    {
-                        self.record_rank(
-                            score,
-                            flips,
-                            off,
-                            Window::consecutive(self.start, self.span),
-                        );
+                    let window = Window::consecutive(self.start, self.span);
+                    if let Some(axes) = self.axes(frame, window) {
+                        let colours = self.values();
+                        let ends = &self.endpoints[..4 * self.span];
+                        if let Some((score, flips, off)) =
+                            self.shape.rank(ends, colours, axes, self.bound())
+                        {
+                            self.record_rank(score, flips, off, window);
+                        }
                     }
                 }
                 self.next_start();
             } else {
                 if self.extra == 0 && self.placement.is_none() {
                     self.contiguous(frame);
-                    self.observe_consecutive(selected);
+                    self.observe_consecutive(frame, selected);
                     if self.holds.is_empty()
                         || self.first_only
                             && self.by_bar[0]
@@ -548,12 +551,31 @@ impl Search {
         self.shape.colour_flips(&self.scratch[..self.span])
     }
 
-    fn observe_consecutive(&mut self, selected: bool) {
+    fn axes(&self, frame: &Frame, window: Window) -> Option<AxisDistance> {
+        if !self.shape.has_axes() {
+            return Some(AxisDistance::ZERO);
+        }
+        let mut slots = [0; MAX_BARS];
+        for (i, offset) in window.offsets().enumerate() {
+            slots[i] = window.start as usize + offset;
+        }
+        self.shape
+            .axis_distance(|i, axis| frame.recording.dimension_at(slots[i], axis))
+    }
+
+    fn observe_consecutive(&mut self, frame: &Frame, selected: bool) {
         let window = Window::consecutive(self.start, self.span);
+        let axes = match self.axes(frame, window) {
+            Some(axes) => axes,
+            None => return,
+        };
         let qualified = self.qualifies(self.frame, self.start + self.span - 1);
         let colours = self.values();
         let ends = &self.endpoints[..4 * self.span];
-        match self.shape.exact_or_one_away(ends, colours) {
+        if self.radius > 0 && self.shape.within(ends, colours, axes, self.radius) {
+            self.positions[self.frame].within.push(window);
+        }
+        match self.shape.exact_or_one_away(ends, colours, axes) {
             Exact::Match => {
                 let matches = &mut self.positions[self.frame];
                 matches.exact.push(window);
@@ -579,7 +601,7 @@ impl Search {
             _ => {}
         }
         if self.holds.is_empty() && selected && qualified {
-            if let Some((score, flips, off)) = self.shape.rank(ends, colours, self.bound()) {
+            if let Some((score, flips, off)) = self.shape.rank(ends, colours, axes, self.bound()) {
                 self.record_rank(score, flips, off, window);
             }
         }
@@ -644,6 +666,10 @@ impl Search {
             start: self.start as u32,
             picks,
         };
+        let axes = match self.axes(frame, window) {
+            Some(axes) => axes,
+            None => return true,
+        };
         placement.first.get_or_insert(window);
         if !rank {
             return false;
@@ -653,7 +679,7 @@ impl Search {
             .map_or(self.bound(), |(score, ..)| score.min(self.bound()));
         let colours = self.values();
         let ends = &self.endpoints[..4 * self.span];
-        if let Some((score, flips, off)) = self.shape.rank(ends, colours, bound) {
+        if let Some((score, flips, off)) = self.shape.rank(ends, colours, axes, bound) {
             if placement.best.map_or(true, |(current, ..)| score < current) {
                 placement.best = Some((score, window, flips, off));
             }
@@ -692,6 +718,14 @@ impl Search {
         }
         self.best.push(ranked);
         self.seen += 1;
+    }
+
+    fn within(&self, frame: usize) -> &[Window] {
+        if self.radius == 0 {
+            &self.positions[frame].exact
+        } else {
+            &self.positions[frame].within
+        }
     }
 
     fn qualifies(&self, frame: usize, end: usize) -> bool {
@@ -738,6 +772,7 @@ impl Search {
         let positions = match kind {
             "exact" => &self.positions[frame].exact,
             "held" => &self.positions[frame].held,
+            "within" => self.within(frame),
             "qualified-exact" => self.qualified(frame, false),
             "qualified-held" => self.qualified(frame, true),
             _ => {
@@ -790,8 +825,14 @@ impl Search {
         let held: [usize; 5] = std::array::from_fn(|i| self.positions[i].held.len());
         let qualified_exact: [usize; 5] = std::array::from_fn(|i| self.qualified(i, false).len());
         let qualified_held: [usize; 5] = std::array::from_fn(|i| self.qualified(i, true).len());
+        let band = if self.radius > 0 {
+            let within: [usize; 5] = std::array::from_fn(|i| self.within(i).len());
+            format!(",\"within\":{within:?}")
+        } else {
+            String::new()
+        };
         let mut out = format!(
-            "{{\"done\":true,\"mode\":\"{mode}\",\"exact\":{exact:?},\"held\":{held:?},\"qualified_exact\":{qualified_exact:?},\"qualified_held\":{qualified_held:?},\"results\":["
+            "{{\"done\":true,\"mode\":\"{mode}\",\"exact\":{exact:?},\"held\":{held:?},\"qualified_exact\":{qualified_exact:?},\"qualified_held\":{qualified_held:?}{band},\"results\":["
         );
         let mut ranked: Vec<_> = self.best.iter().collect();
         ranked.sort_unstable();
@@ -838,7 +879,10 @@ impl Search {
             }
             let (_, k, w) = bucket.example.expect("populated near bucket");
             let frame = self.frames[k].as_ref().expect("example frame");
-            write!(out, "{{\"a\":{},\"b\":{},\"was\":{},\"relation\":{},\"count\":{n},\"timeframe\":{},\"example\":",
+            let axis = diff
+                .axis
+                .map_or_else(String::new, |name| format!("\"axis\":\"{name}\","));
+            write!(out, "{{{axis}\"a\":{},\"b\":{},\"was\":{},\"relation\":{},\"count\":{n},\"timeframe\":{},\"example\":",
                 diff.left, diff.right, diff.expected, diff.observed, frame.interval_ms).expect("write neighbour");
             w.write(&mut out, frame);
             out.push('}');

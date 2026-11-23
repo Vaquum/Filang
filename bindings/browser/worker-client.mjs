@@ -38,8 +38,8 @@ export function openFilangWorker(url = new URL("./worker.mjs", import.meta.url))
 
   return {
     ask(method, ...args) { return ask(method, args); },
-    searchComposer(packet, {timeframes = 31, endMasks, onProgress} = {}) {
-      return ask("searchComposer", [packet, {timeframes, endMasks}], onProgress);
+    searchComposer(packet, {timeframes = 31, endMasks, radius = 0, onProgress} = {}) {
+      return ask("searchComposer", [packet, {timeframes, endMasks, radius}], onProgress);
     },
     close() { stop(new Error("Filang worker has closed")); },
   };

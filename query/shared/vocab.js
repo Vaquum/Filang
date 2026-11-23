@@ -138,7 +138,12 @@ export const CLAUSES = {
   drawing: {
     role: 'event', group: 'Shape', title: 'Drawn shape', def: 'chained_g1',
     slots: [], defaults: { g1: '', packet: null, held: false, recorded: false }, phrase: [],
-    text: (a) => (a.held && a.packet && pinnedExpression(a.packet)) || `${a.recorded ? 'exact_g1' : 'chained_g1'}(${JSON.stringify(a.g1)})`,
+    text: (a) => {
+      const held = a.held && a.packet && pinnedExpression(a.packet);
+      if (held) return held;
+      const r = Array.isArray(a.radius) ? lit(a.radius) : Number(a.radius) || 0;
+      return `${a.recorded ? 'exact_g1' : 'chained_g1'}(${JSON.stringify(a.g1)}${r ? `, radius: ${r}` : ''})`;
+    },
     keywords: '',
   },
   raw: {
@@ -282,8 +287,14 @@ function fromExpr(node, lets) {
     }
     case 'chained_g1': case 'exact_g1': {
       // either reading of a g1 is a drawn shape: the chain, or the same shape with its opens as recorded
-      const code = node.args.length === 1 ? node.args[0].value : null;
-      return code?.k === 'str' && /^g1:[ou]:/.test(code.value) ? { type: 'drawing', args: { g1: code.value, packet: null, held: false, recorded: node.name === 'exact_g1' } } : raw();
+      const code = arg(node, 'pattern', 0);
+      const radiusNode = arg(node, 'radius');
+      const radius = val(radiusNode);
+      const allowed = node.args.length === 1 || (node.args.length === 2 && radiusNode && radius !== null);
+      if (!allowed || code?.k !== 'str' || !/^g1:[ou]:/.test(code.value)) return raw();
+      return { type: 'drawing', args: { g1: code.value, packet: null, held: false,
+        recorded: node.name === 'exact_g1', ...(Array.isArray(radius) || Number(radius) > 0 ? {radius} : {}) } };
+
     }
     case 'session_tail': return ok('tail', { last: val(arg(node, 'last')) });
     case 'held': {

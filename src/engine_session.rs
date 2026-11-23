@@ -45,6 +45,11 @@ impl Session {
             None => (request, &[][..]),
         };
         match operation {
+            b"counts" => {
+                let [reading, code] = fields(utf8(payload)?)?;
+                let pattern: GeometryPattern = code.parse()?;
+                return self.count(&pattern, Reading::parse(reading)?);
+            }
             b"load" => return self.set_recording(decode_bars(payload)?),
             b"load-csv" => {
                 let (interval, csv) = utf8(payload)?
@@ -270,39 +275,55 @@ impl Session {
                 )?;
                 Ok("null".into())
             }
-            b"counts" => {
-                let [reading, code] = fields(text)?;
+            b"neighbourhood" | b"radius-series" => {
+                let [reading, radius, code] = fields(text)?;
                 let pattern: GeometryPattern = code.parse()?;
-                self.count(&pattern, Reading::parse(reading)?)
+                let radius = number(radius)?;
+                let reading = Reading::parse(reading)?;
+                let window = self.window(pattern.len())?;
+                let (states, found) = if operation == b"radius-series" {
+                    let (states, found) = window.radius_series(&pattern, reading, radius)?;
+                    (format!(",\"states\":\"{states}\""), found)
+                } else {
+                    (
+                        String::new(),
+                        window.neighbourhood(&pattern, reading, radius)?,
+                    )
+                };
+                let counts = counts_json(found.counts);
+                let distances: Vec<_> = found
+                    .by_distance
+                    .iter()
+                    .map(|(&cost, &n)| [cost as usize, n])
+                    .collect();
+                Ok(format!(
+                    "{{\"counts\":{counts},\"by_distance\":{distances:?}{states}}}"
+                ))
             }
-            b"positions" => {
-                let [reading, start, limit, code] = fields(text)?;
-                let limit = number(limit)?;
-                if limit > MAX_PAGE {
-                    return Err(format!("geometry page exceeds {MAX_PAGE} positions"));
-                }
+            b"counts-within" => {
+                let [reading, radius, code] = fields(text)?;
                 let pattern: GeometryPattern = code.parse()?;
-                let positions = self.window(pattern.len())?.positions(
-                    &pattern,
-                    Reading::parse(reading)?,
-                    number(start)?,
-                    limit,
-                )?;
+                let radius = number(radius)?;
+                let reading = Reading::parse(reading)?;
+                let found = self
+                    .window(pattern.len())?
+                    .counts_within(&pattern, reading, radius)?;
+                Ok(counts_json(found))
+            }
+            b"positions" | b"positions-within" => {
+                let (reading, start, limit, radius, code) = geometry_page(operation, text)?;
+                let pattern: GeometryPattern = code.parse()?;
+                let positions = self
+                    .window(pattern.len())?
+                    .positions_within(&pattern, reading, radius, start, limit)?;
                 Ok(format!("{positions:?}"))
             }
-            b"classify" => {
-                let [reading, start, limit, code] = fields(text)?;
-                let limit = number(limit)?;
-                if limit > MAX_PAGE {
-                    return Err(format!("geometry page exceeds {MAX_PAGE} positions"));
-                }
+            b"classify" | b"classify-within" => {
+                let (reading, start, limit, radius, code) = geometry_page(operation, text)?;
                 let pattern: GeometryPattern = code.parse()?;
-                let values = self.window(pattern.len())?.classify(
-                    &pattern,
-                    Reading::parse(reading)?,
-                    number(start)?,
-                    limit,
-                )?;
+                let values = self
+                    .window(pattern.len())?
+                    .classify_within(&pattern, reading, radius, start, limit)?;
                 let mut out = String::from("[");
                 for (i, value) in values.into_iter().enumerate() {
                     if i != 0 {
@@ -327,10 +348,7 @@ impl Session {
 
     fn count(&mut self, pattern: &GeometryPattern, reading: Reading) -> Result<String> {
         let result = self.window(pattern.len())?.counts(pattern, reading)?;
-        Ok(format!(
-            "{{\"matched\":{},\"false_count\":{},\"unknown\":{}}}",
-            result.matched, result.false_count, result.unknown
-        ))
+        Ok(counts_json(result))
     }
 
     fn set_recording(&mut self, recording: Recording) -> Result<String> {
@@ -490,6 +508,37 @@ fn draw(text: &str) -> Result<(GeometryPattern, Reading)> {
 
 fn utf8(input: &[u8]) -> Result<&str> {
     str::from_utf8(input).map_err(|_| "expected UTF-8 input".into())
+}
+
+fn geometry_page<'a>(
+    operation: &[u8],
+    text: &'a str,
+) -> Result<(Reading, usize, usize, u32, &'a str)> {
+    let (reading, start, limit, radius, code) = if operation.ends_with(b"-within") {
+        let [reading, start, limit, radius, code] = fields(text)?;
+        (reading, start, limit, number(radius)?, code)
+    } else {
+        let [reading, start, limit, code] = fields(text)?;
+        (reading, start, limit, 0, code)
+    };
+    let limit = number(limit)?;
+    if limit > MAX_PAGE {
+        return Err(format!("geometry page exceeds {MAX_PAGE} positions"));
+    }
+    Ok((
+        Reading::parse(reading)?,
+        number(start)?,
+        limit,
+        radius,
+        code,
+    ))
+}
+
+fn counts_json(counts: explore::Counts) -> String {
+    format!(
+        "{{\"matched\":{},\"false_count\":{},\"unknown\":{}}}",
+        counts.matched, counts.false_count, counts.unknown
+    )
 }
 
 fn composer_timeframe(interval: i64) -> Result<usize> {
