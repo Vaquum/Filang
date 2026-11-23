@@ -73,11 +73,13 @@ jobs:
           node bindings/verify/query-contract.mjs
           node query/verify/handoff.mjs
           node query/verify/cube-source.mjs
+          node query/verify/dimensions.mjs
           node query/verify/parity.mjs
           # and once more on the published release the bench's image is built with
           python3 bindings/fetch_browser.py "$(sed -n 's/.*FILANG_ENGINE_VERSION: "\(.*\)"/\1/p' query/docker-compose.yml)" --out "$RUNNER_TEMP/filang-query-engine"
           FILANG_QUERY_ENGINE_DIR="$RUNNER_TEMP/filang-query-engine" node query/verify/parity.mjs
           FILANG_QUERY_ENGINE_DIR="$RUNNER_TEMP/filang-query-engine" node query/verify/handoff.mjs
+          FILANG_QUERY_ENGINE_DIR="$RUNNER_TEMP/filang-query-engine" node query/verify/dimensions.mjs
           node bindings/verify/chromium.mjs "$(command -v google-chrome)" data/study/recorded-bars.csv "$RUNNER_TEMP/filang-limen.csv"
       - name: Export the integration packages
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

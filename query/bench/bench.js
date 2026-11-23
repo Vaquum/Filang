@@ -1,11 +1,11 @@
 // Filang query bench. One locked canvas shows the pattern; the question is written in its row labels.
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
 import { load, loaded, geometryRadiusReceipt, sources, PINNED, run, count, rec, env, definition, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
-import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText, drawingBars, drawingHeld, drawingRecorded } from '/shared/vocab.js';
+import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, DIMENSIONS, make, clone, toText, bodyText, fromText, clauseText, splitText, phraseText, drawingBars, drawingHeld, drawingRecorded, drawingDimensions, g1Price, g1Parts, offered, dimensionsIn } from '/shared/vocab.js';
 import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
 import { candleChart, candleAnatomy, distPlot, rateRail, tapeOverview } from '/shared/chart.js';
-import { aggregate, caseColumns, domainOf, drawLane, drawAxis, drawColumnTrack, drawGlyph, drawShape, geom, barsOf, offsetLabel, unitText } from './lanes.js';
+import { aggregate, caseColumns, columnAt, domainOf, drawLane, drawAxis, drawColumnTrack, drawDimensionLane, drawGlyph, drawShape, geom, barsOf, offsetLabel, unitText, lanesShown, setLane, lanesParam, lanesFromParam, dimensionColumns, dimensionText, dimensionExact, UNIT } from './lanes.js';
 
 // The other two aspects of the tool. They are separate apps today; these links carry the pattern across.
 // On a vaquum.fi host they are the deployed sites behind the same Portal login; elsewhere, the local servers.
@@ -19,6 +19,8 @@ const persist = () => { try { localStorage.setItem('filang.bench', JSON.stringif
 const state = { model: null, preset: PRESETS[0].id, candidate: 0, rows: 'ledger', splitBy: 'trend', cells: 'candle', unit: 'pct', track: 'up', lead: 8,
   lane: null, slot: null, side: 'kept', page: 0, sort: 'date', focus: null, catalog: '', catSort: 'family',
   caseSort: { key: 't', dir: 1 }, casePage: 0, caseKey: '', caseFollow: false, notice: '',
+  // The dimension lanes switched on or off by hand. A dimension the question refers to is shown without a switch.
+  dims: {},
   // What the server can read (the cube's windows, or the pinned recording only) and whether a window is being fetched.
   // `asked` is a window the cube could not give when the page opened: the address keeps asking for it.
   source: { cube: false, default: PINNED, windows: [] }, loading: false, asked: null };
@@ -36,6 +38,14 @@ function wilson(k, n) {
 const label = (text, cls = '') => h('span', { class: 'label ' + cls }, text);
 const note = (text, cls = '') => h('span', { class: 'note ' + cls }, text);
 const quiet = (text, fn, title) => h('button', { class: 'quiet', type: 'button', title, onclick: (e) => { e.stopPropagation(); fn(); } }, text);
+// A dimension is one number per candle beside its prices, read from the cube's counters. Bars without counters have
+// none: there the bench offers no dimension clause and no lane, and the engine refuses a question that uses one.
+const DIM = Object.fromEntries(DIMENSIONS.map((d) => [d.key, d]));
+const counters = () => rec().hasCounters;
+/** Whether the loaded bars can be asked this clause. */
+const can = (c) => offered(c.type, counters());
+/** Whether a run failed only because the bars lack what the question reads: the engine's capability refusal, and nothing else. */
+const refusal = (res) => !res.ok && res.errors.length > 0 && res.errors.every((e) => e.kind === 'capability');
 
 function summarize(rows, k) {
   const v = observed(rows, k); const n = v.length;
@@ -65,8 +75,15 @@ const rebuilt = new Map();
 /** The drawing a drawn shape stands for: the packet it came with, or one rebuilt from its g1 at even rank spacing. */
 function packetOf(c) {
   if (c.args.packet) return c.args.packet;
-  if (!rebuilt.has(c.args.g1)) rebuilt.set(c.args.g1, packetFromG1(c.args.g1));
-  return rebuilt.get(c.args.g1);
+  const code = c.args.g1;            // the dimension parts travel with the drawing, as its `dimensions`
+  if (!rebuilt.has(code)) rebuilt.set(code, packetFromG1(code));
+  return rebuilt.get(code);
+}
+/** A g1 code as lines: the price shape, then each dimension it switches on with its candles from lowest to highest. */
+function codeLines(c) {
+  return [h('code', { class: 'g1' }, g1Price(c.args.g1)),
+    g1Parts(c.args.g1).map((p) => h('code', { class: 'g1 part', title: `${DIM[p.key].label}: ${DIM[p.key].what}. Only the order is asked${p.reference === null ? '' : '; below zero is net selling, above it net buying'}.` },
+      h('b', null, p.text), ` ${p.order}`))];
 }
 /** A drawn shape as a row label: its glyph at true proportions, what is asked of it, and its g1. */
 function drawnParts(c) {
@@ -113,14 +130,14 @@ function drawnParts(c) {
   }
   return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} ${p ? 'drawn shape' : 'g1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
     p && forms.length > 1 ? h('span', { class: 'join form' }, forms) : null), loose,
-  h('code', { class: 'g1' }, c.args.g1), radiusControl,
+  codeLines(c), radiusControl,
   c.args.packet ? h('span', { class: 'from', title: OWN_COUNT }, 'From Composer · counted on this window') : null];
 }
 /** The row label of a find clause: a drawn shape reads as a shape, everything else as its phrase. */
 const findParts = (c, path) => (c.type === 'drawing' ? drawnParts(c) : phrase(c, slotEdit(path)));
 /** The recorded candles ending at one close, as a link that draws them in Composer; a reason when they are not a drawing. */
 function candlesLink(i, cls = 'quiet') {
-  const m = state.model; const n = Math.max(2, Math.min(20, findBarsKnown(m) ? findBars(m) : 3)); const res = casePacket(rec(), i, n);
+  const m = state.model; const n = Math.max(2, Math.min(20, findBarsKnown(m) ? findBars(m) : 3)); const res = casePacket(rec(), i, n, ctx?.dims ?? []);
   // the candles are sent as the chain they are read as, so what Composer draws is the shape this close matches
   return res.packet ? h('a', { class: cls + ' out', href: composerLink(COMPOSER, res.packet), target: '_blank', rel: 'noopener', onclick: (e) => e.stopPropagation(),
     title: `The ${n} recorded candles ending at this close, drawn as a chain: each later bar opens at the previous close. Nothing is held. Composer counts them on its own history.` }, `Draw these ${n} candles in Composer ↗`)
@@ -151,7 +168,7 @@ function buildLanes(res, r, text, H) {
   const m = state.model; const lanes = [];
   const active = m.wheres.map((c, i) => ({ c, i })).filter((x) => !x.c.off);
   const key = (id) => `${text}#${state.candidate}#${id}`;
-  const add = (lane) => { lane.slots = lane.rows.map((row) => row.i); lane.agg = aggregate(lane.key || key(lane.id), lane.slots, state.lead, H, state.unit); lanes.push(lane); return lane; };
+  const add = (lane) => { lane.slots = lane.rows.map((row) => row.i); lane.aggKey = lane.key || key(lane.id); lane.agg = aggregate(lane.aggKey, lane.slots, state.lead, H, state.unit); lanes.push(lane); return lane; };
   add({ id: 'find', kind: 'find', rows: r.rows, r, title: 'The pattern' });
   if (state.rows === 'ledger') {
     // Each pattern's compared values are its own runs. The query's axes are in source order and the patterns open it,
@@ -190,19 +207,29 @@ function render() {
   const text = toText(m);
   const res = run(text);
   const status = $('#status');
-  if (!res.ok) { const msg = res.errors.map((e) => e.message).join(' · '); status.textContent = msg; status.className = 'err'; formal.message(msg); return; }
+  const used = counters() && res.ok ? dimensionsIn(text, res.analysis.ast) : [];
+  // The address reproduces the run. A drawn shape that came as a packet stays in it beside the text, so a reload or a
+  // shared link still knows the drawing; it goes when the find is no longer that drawing. The dimension lanes on show
+  // are named in it too. What a link carried in the query string is spent.
+  const address = () => {
+    const dr = m.find.items.find((c) => c.type === 'drawing' && c.args.packet)?.args.packet; const ln = lanesParam(used, state.dims);
+    try { history.replaceState(null, '', location.pathname + '#q=' + encodeURIComponent(text) + (dr ? '&dr=' + encodeURIComponent(JSON.stringify(dr)) : '') + (state.source.cube ? '&w=' + encodeURIComponent(state.asked || loaded()) : '') + (ln === null ? '' : '&ln=' + ln)); } catch { /* the address is optional */ }
+  };
+  if (!res.ok) {
+    // What these bars lack is the engine's to refuse and the bench's to show: the question stays, and so does its address.
+    if (refusal(res)) { address(); return renderRefused(text, res); }
+    const msg = res.errors.map((e) => e.message).join(' · '); status.textContent = msg; status.className = 'err'; formal.message(msg); return;
+  }
   if (state.rows === 'compare' && res.results.length < 2) { state.rows = 'ledger'; return render(); }
   state.candidate = Math.min(state.candidate, res.results.length - 1);
   const r = res.results[state.candidate];
   const hk = m.horizons.map(barsOf); const H = Math.min(96, Math.max(16, ...hk));
   const pbars = Math.min(state.lead + 1, findBars(m));
   const lanes = buildLanes(res, r, text, H);
-  ctx = { res, r, text, H, hk, pbars, lanes, answer: lanes.find((l) => l.id === answerId(lanes)), caseLanes: [] };
-  // A drawn shape that came as a packet stays in the address beside the text, so a reload or a shared link still knows
-  // the drawing; it goes when the find is no longer that drawing. What a link carried in the query string is spent.
-  const dr = m.find.items.find((c) => c.type === 'drawing' && c.args.packet)?.args.packet;
-  try { history.replaceState(null, '', location.pathname + '#q=' + encodeURIComponent(text) + (dr ? '&dr=' + encodeURIComponent(JSON.stringify(dr)) : '') + (state.source.cube ? '&w=' + encodeURIComponent(state.asked || loaded()) : '')); } catch { /* the address is optional */ }
+  ctx = { res, r, text, H, hk, pbars, lanes, answer: lanes.find((l) => l.id === answerId(lanes)), caseLanes: [], used, dims: counters() ? lanesShown(used, state.dims) : [] };
+  address();
   if (document.activeElement !== formal.el.querySelector('textarea')) formal.set(text); else formal.message('');
+  addInput.disabled = false;
   $('#left').hidden = !ui.left; $('#right').hidden = !ui.right; $('#drawer').hidden = !ui.drawer;
   status.className = ''; status.textContent = state.notice || `${res.ms.toFixed(0)} ms · sha256 ${env().digest.slice(0, 10)} ${env().digestVerified ? 'verified' : 'unverified'}`;
   renderBars(); renderCanvas(); renderLeft(); renderRight(); renderDrawer();
@@ -211,26 +238,39 @@ function render() {
 
 // ---------------------------------------------------------------- bars
 
+const enc = (name, value, open) => { const b = h('button', { class: 'enc', type: 'button', 'data-menu': '1', onclick: () => open(b) }, label(name), h('span', { class: 'val' }, value), h('i', null, '▼')); return b; };
+/** The bars the question is asked of, and the starting questions: the two choices that stand whether or not it can be answered. */
+const windowEnc = () => (state.source.cube ? enc('Window', state.loading ? 'Loading…' : env().provenance.source === 'cube' ? env().provenance.window_name : 'Pinned recording', (b) => menu(b, { title: 'Window', hint: 'The bars the question is asked of: Cube’s time windows, read from the cube. A window ends at the latest complete bar.', value: loaded(),
+  options: [...state.source.windows.map((w) => ({ value: w.key, label: w.name })), { value: PINNED, label: 'Pinned recording', detail: 'Jan to May 2025, the bars the verification suite counts' }], onChange: openWindow })) : null);
+const questionEnc = () => enc('Question', PRESETS.find((p) => p.id === state.preset)?.title || 'Custom', (b) => menu(b, { title: 'Starting questions', value: state.preset, options: PRESETS.map((p) => ({ value: p.id, label: p.title })), onChange: (id) => open(PRESETS.find((p) => p.id === id)) }));
+
 function renderBars() {
-  const { res, r, answer } = ctx; const m = state.model; const R = rec(); const n = answer.rows.length;
+  const m = state.model; const R = rec();
   const prov = env().provenance; const fromCube = prov.source === 'cube';
   // Bars after the cube's canonical mark can still change: Cube shows them too, and says how far the mark has come.
   $('#chip').textContent = `${R.instrument} ${R.barText} · ${R.venue || 'Binance spot'} · ${env().rangeText} · ${int(R.presentCount)} ${R.presentCount === 1 ? 'close' : 'closes'} · `
     + (fromCube ? `cube, through ${isoUTC(Date.parse(prov.through)).slice(0, 16)} UTC${prov.provisional_rows ? ` · last ${int(prov.provisional_rows)} provisional` : ''}` : 'pinned recording');
   $('#chip').title = fromCube ? `Read from the market-state cube through Cube's bridge${prov.canonical_through ? `. Canonical through ${isoUTC(Date.parse(prov.canonical_through)).slice(0, 16)} UTC; later bars are provisional` : ''}.` : 'The pinned BTCUSDT 15m recording built into this server.';
+  // Without an answer only the catalogue and the query text have anything to show: the other panels wait for one.
+  for (const b of document.querySelectorAll('.toggles button')) { const p = b.dataset.panel; b.disabled = !ctx && p !== 'left' && p !== 'query'; b.setAttribute('aria-pressed', String(!b.disabled && (p === 'left' ? ui.left : p === 'right' ? ui.right : ui.drawer === p))); }
+  $('#to-cube').href = CUBE; $('#to-cube').title = 'Open the Cube explorer';
+  if (!ctx) {
+    // A refused question has no answer to read out and no canvas to encode: the window and the question remain.
+    mount($('#readout'), note('The engine refused this question'));
+    mount($('#encbar'), windowEnc(), questionEnc());
+    $('#to-composer').href = COMPOSER; $('#to-composer').title = 'Open the Composer bench';
+    return;
+  }
+  const { res, r, answer } = ctx; const n = answer.rows.length;
   mount($('#readout'), h('b', null, int(n)), note(n === 1 ? 'close in the answer' : 'closes in the answer'), r.columns.length ? h('span', { class: 'sep' }) : null,
     r.columns.slice(0, 3).map((c, k) => h('span', { class: 'sub' }, h('b', { class: 'fig' }, summarize(answer.rows, k).up), ` up after ${c.text}`)));
-  for (const b of document.querySelectorAll('.toggles button')) { const p = b.dataset.panel; b.setAttribute('aria-pressed', String(p === 'left' ? ui.left : p === 'right' ? ui.right : ui.drawer === p)); }
-  const enc = (name, value, open) => { const b = h('button', { class: 'enc', type: 'button', 'data-menu': '1', onclick: () => open(b) }, label(name), h('span', { class: 'val' }, value), h('i', null, '▼')); return b; };
   const sweeps = res.results.length > 1;
   const first = m.find.items[0]; const pid = first.type === 'pattern' ? first.args.p.replaceAll('_', '-') : null;
   const frame = m.split?.type === 'trend' ? m.split.args.frame : '4h';
-  const windowName = fromCube ? prov.window_name : 'Pinned recording';
   mount($('#encbar'),
-    state.source.cube ? enc('Window', state.loading ? 'Loading…' : windowName, (b) => menu(b, { title: 'Window', hint: 'The bars the question is asked of: Cube’s time windows, read from the cube. A window ends at the latest complete bar.', value: loaded(),
-      options: [...state.source.windows.map((w) => ({ value: w.key, label: w.name })), { value: PINNED, label: 'Pinned recording', detail: 'Jan to May 2025, the bars the verification suite counts' }], onChange: openWindow })) : null,
-    enc('Question', PRESETS.find((p) => p.id === state.preset)?.title || 'Custom', (b) => menu(b, { title: 'Starting questions', value: state.preset, options: PRESETS.map((p) => ({ value: p.id, label: p.title })), onChange: (id) => open(PRESETS.find((p) => p.id === id)) })),
-    enc('Rows', { ledger: 'Ledger', split: state.splitBy === 'trend' ? `Split by ${frame} trend` : 'Split by session day', compare: 'Compared runs', cases: 'Cases' }[state.rows], (b) => menu(b, {
+    windowEnc(),
+    questionEnc(),
+    enc('Rows', { ledger: 'Ledger', split: state.splitBy === 'trend' ? `Split by ${frame} trend` : state.splitBy === 'weekday' ? 'Split by session day' : 'Split by condition', compare: 'Compared runs', cases: 'Cases' }[state.rows], (b) => menu(b, {
       title: 'Rows', hint: 'What each row under the pattern holds.', value: state.rows === 'split' ? 'split:' + state.splitBy : state.rows,
       options: [{ value: 'ledger', label: 'Ledger', detail: 'One row per condition, drawn from the closes it leaves' },
         { value: 'split:trend', label: `Split by ${frame} trend`, detail: `The answer divided by the last completed ${frame} bar` },
@@ -245,6 +285,11 @@ function renderBars() {
       options: [{ value: 'pct', label: '% of the anchor close', detail: 'The unit of the measured return' }, { value: 'range', label: 'R', detail: 'Multiples of the anchor candle’s high–low range' }], onChange: (v) => { state.unit = v; render(); } })),
     enc('Columns', state.track === 'up' ? 'Closed above anchor' : 'Median range', (b) => menu(b, { title: 'Column track', hint: 'The band under the canvas, for the selected row.', value: state.track,
       options: [{ value: 'up', label: 'Closed above the anchor', detail: 'Share of closes above the anchor close, around 50%' }, { value: 'range', label: 'Median range', detail: 'Median high–low range of each column, as % of the anchor close' }], onChange: (v) => { state.track = v; render(); } })),
+    // One switch per dimension, on bars that carry them. A lane the question refers to is on until it is switched off.
+    counters() ? (() => { const b = h('button', { class: 'enc', type: 'button',
+      onclick: () => slotPopover(b, { multi: true, empty: true, title: 'Dimension lanes', slot: { key: 'lanes', kind: 'enum', options: DIMENSIONS.map((d) => d.key), labels: Object.fromEntries(DIMENSIONS.map((d) => [d.key, d.label])) }, value: ctx.dims,
+        onChange: (v) => { for (const d of DIMENSIONS) setLane(state.dims, ctx.used, d.key, v.includes(d.key)); render(); } }) },
+    label('Lanes'), h('span', { class: 'val' }, ctx.dims.length > 2 ? `${ctx.dims.length} dimensions` : ctx.dims.map((d) => DIM[d].label).join(', ') || 'None'), h('i', null, '▼')); return b; })() : null,
     (() => { const b = h('button', { class: 'enc', type: 'button', onclick: () => slotPopover(b, { multi: true, title: 'Measured horizons', slot: { key: 'after', kind: 'enum', options: HORIZONS, sweep: true }, value: m.horizons, onChange: (v) => update((x) => { x.horizons = v; }) }) },
       label('Measure'), h('span', { class: 'val' }, m.horizons.join(', ') || 'None'), h('i', null, '▼')); return b; })(),
     enc('Lead-in', state.lead + ' bars', (b) => menu(b, { title: 'Lead-in', hint: 'Bars shown before the deciding close.', value: state.lead, options: [4, 8, 16, 32].map((v) => ({ value: v, label: v + ' bars' })), onChange: (v) => { state.lead = v; render(); } })));
@@ -253,7 +298,6 @@ function renderBars() {
   const drawn = pid ? null : m.find.items.find((c) => c.type === 'drawing'); const out = drawn ? packetOf(drawn) : null; const carry = out && out.bars.length >= 2;
   $('#to-composer').href = pid ? `${COMPOSER}?pattern=${pid}` : carry ? composerLink(COMPOSER, out) : COMPOSER;
   $('#to-composer').title = pid ? 'Open this pattern in Composer' : carry ? `Draw this shape in Composer${drawn.args.packet ? '' : ', at even spacing: a g1 keeps order, not distances'}` : drawn ? 'Composer draws two bars or more and joins each open to the previous close: this shape is not carried' : 'Open the Composer bench';
-  $('#to-cube').href = CUBE; $('#to-cube').title = 'Open the Cube explorer';
 }
 
 // ---------------------------------------------------------------- canvas
@@ -328,6 +372,7 @@ function renderCanvas() {
   const { r, H, hk, pbars, lanes } = ctx; const host = $('#lanes');
   const shown = r.columns.slice(0, 2).map((_, k) => k);
   $('#canvas').style.setProperty('--hz', Math.max(1, shown.length));
+  layoutDims(ctx.dims);   // the lanes under the candles take their height first: the candles have what is left
   const avail = host.clientHeight; const slim = lanes.filter((l) => l.kind === 'off').length; const real = lanes.filter((l) => l.kind !== 'off');
   const pinnedH = real.length === 1 && state.rows !== 'cases' ? avail - slim * 33 - 1 : state.rows === 'cases' ? Math.round(Math.max(120, Math.min(176, avail * 0.24))) : Math.round(Math.max(132, Math.min(240, avail * 0.34)));
   const answerH = state.rows === 'cases' && real.length > 1 ? Math.min(150, 42 + 21 * state.model.wheres.filter((c) => !c.off).length) : 0;
@@ -367,13 +412,118 @@ function renderCanvas() {
   if ([...host.querySelectorAll(':scope > .lane')].map((e) => e.dataset.lane).join('|') !== order.join('|')) host.append(...order.map((id) => nodes.get(id).el));
   for (const lane of all) if (lane.agg) drawLane(nodes.get(lane.id).svgHost, { agg: lane.agg, domain: lane.kind === 'case' ? domainOf([lane.agg], true) : aggDomain, lead: state.lead, H, pbars, horizons: hk,
     mode: lane.kind === 'case' ? 'candle' : state.cells, unit: state.unit, height: heights.get(lane.id) - 1, scale: lane.id === 'find' });
-  host.onmouseleave = () => host.classList.remove('hot');
+  host.onmouseleave = () => { host.classList.remove('hot'); readDims(null); };
   host.classList.remove('hot');
   drawAxis($('#axis'), { lead: state.lead, H, pbars, horizons: hk });
   $('#rowlabel').textContent = { ledger: 'The question, line by line', split: 'The answer, split', compare: 'The answer, per compared value', cases: '' }[state.rows];
   mount($('#trackhead'), h('span', null, 'Closes'), shown.length ? shown.map((k) => h('span', { title: 'Share closing higher, and the median return' }, `${r.columns[k].text} up`)) : h('span', null, '—'));
   mount($('#collabel'), label(state.track === 'up' ? 'Closed above anchor' : 'Median range'), note(sel ? `${sel.title}, per bar` : ''));
   if (sel?.agg) drawColumnTrack($('#coltrack'), { agg: sel.agg, lead: state.lead, H, pbars, horizons: hk, measure: state.track });
+  drawDims();
+}
+
+// ---------------------------------------------------------------- dimension lanes
+
+// One lane per dimension on show, under the candles and on their columns, for the selected row: the median of its
+// closes' candles in each column, or one close's own candles. Each lane names its dimension, carries its own switch,
+// and reads out one column: the deciding close, or the column under the pointer.
+const dimNodes = new Map(); const dimHeld = new WeakMap();
+function layoutDims(keys) {
+  if (!keys.length && !dimNodes.size) return;
+  const canvas = $('#canvas');
+  let host = $('#dims');
+  if (!keys.length) {
+    host.remove();
+    canvas.classList.remove('with-dimensions');
+    dimNodes.clear();
+    return;
+  }
+  if (!host) {
+    host = h('div', { id: 'dims' });
+    canvas.insertBefore(host, canvas.querySelector('.band'));
+    canvas.classList.add('with-dimensions');
+  }
+  for (const [key, n] of dimNodes) if (!keys.includes(key)) { n.el.remove(); dimNodes.delete(key); }
+  for (const key of keys) {
+    if (dimNodes.has(key)) continue;
+    const d = DIM[key]; const n = { svgHost: h('div', { class: 'dim-svg' }), cursor: h('i', { class: 'dim-cursor', hidden: true }), read: h('div', { class: 'dim-read' }) };
+    n.el = h('div', { class: 'dimlane row3', 'data-dim': key, role: 'group', 'aria-label': `${d.label} lane` },
+      h('div', { class: 'dim-head' }, h('span', { class: 'name', title: cap(d.what) }, label(d.label), note(d.what)),
+        quiet('Hide', () => { setLane(state.dims, ctx.used, key, false); render(); }, `Hide the ${d.label.toLowerCase()} lane`)),
+      h('div', { class: 'dim-track' }, n.svgHost, n.cursor), n.read);
+    n.svgHost.addEventListener('mousemove', (e) => readDims(columnAt(n.svgHost, e.clientX, state.lead, ctx.H, ctx.pbars)));
+    n.svgHost.addEventListener('mouseleave', () => readDims(null));
+    dimNodes.set(key, n);
+  }
+  if ([...host.children].map((e) => e.dataset.dim).join('|') !== keys.join('|')) host.append(...keys.map((key) => dimNodes.get(key).el));
+}
+function drawDims() {
+  if (!ctx.dims.length) return;
+  const { sel, H, hk, pbars } = ctx; const R = rec(); ctx.dimCols = new Map();
+  if (!dimHeld.has(R)) dimHeld.set(R, new Map());
+  const held = dimHeld.get(R);
+  for (const key of ctx.dims) {
+    const id = `${sel.kind === 'case' ? 'case:' + sel.row.i : sel.aggKey}|${state.lead}|${H}|${key}`;
+    if (!held.has(id)) { if (held.size > 240) held.delete(held.keys().next().value); held.set(id, dimensionColumns(R, sel.slots, state.lead, H, key)); }
+    ctx.dimCols.set(key, held.get(id));
+    drawDimensionLane(dimNodes.get(key).svgHost, { agg: held.get(id), lead: state.lead, H, pbars, horizons: hk });
+  }
+  readDims(null);
+}
+/** Read every lane at one column: the deciding close when no column is pointed at. */
+function readDims(k) {
+  if (!ctx?.dimCols) return;
+  const at = k ?? 0;
+  for (const [key, agg] of ctx.dimCols) {
+    const n = dimNodes.get(key); const col = agg.cols[at + state.lead]; const some = col && col.n;
+    n.read.title = !some ? 'No recorded value in this column' : agg.single ? `${dimensionExact(key, col.v)} ${UNIT[key]}` : `Median of ${int(col.n)} candles. Middle half ${dimensionText(key, col.q1)} to ${dimensionText(key, col.q3)}.`;
+    mount(n.read, h('b', { class: 'fig' }, some ? dimensionText(key, col.v) : '—'),
+      h('small', null, agg.single ? null : h('span', { class: 'dim' }, 'med '), UNIT[key], h('span', { class: 'dim' }, ` · ${offsetLabel(at).toLowerCase()}`)));
+    n.cursor.hidden = k === null;
+    if (k !== null) n.cursor.style.left = geom(Math.max(120, Math.floor(n.svgHost.clientWidth)), state.lead, ctx.H, ctx.pbars).x(k) + 'px';
+  }
+}
+
+// ---------------------------------------------------------------- a question these bars cannot answer
+
+/**
+ * The engine refused the question, as it does when a line reads a dimension and the bars carry no counters.
+ * Nothing is drawn. Every line is listed and the engine's refusal stands where the line's drawing would be.
+ * The ways out stay live: another window, another question, the catalogue, the formal text, or the line muted or removed.
+ */
+function renderRefused(text, res) {
+  const m = state.model; const said = (errors) => [...new Set(errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')))];
+  const msg = said(res.errors).join(' · '); const status = $('#status');
+  ctx = null; closePopover(); hideAdd(); addInput.disabled = true;
+  status.textContent = msg; status.className = 'err';
+  if (document.activeElement !== formal.el.querySelector('textarea')) formal.set(text, msg); else formal.message(msg);
+  $('#left').hidden = !ui.left; $('#right').hidden = true; $('#drawer').hidden = ui.drawer !== 'query';
+  renderBars();
+  $('#axis').replaceChildren(); $('#coltrack').replaceChildren(); mount($('#pager')); mount($('#trackhead')); mount($('#collabel')); $('#rowlabel').textContent = '';
+  layoutDims([]);
+  // Each line is asked on its own, so the refusal is put on the lines it is about.
+  const own = (body) => { const r = run(`${HEAD}\n${body}`); return r.ok ? [] : said(r.errors); };
+  const rows = [
+    ...m.find.items.map((c, k) => ({ id: 'x:f' + k, no: k ? '' : '01', role: k ? m.find.join : 'Find', c, why: own(`find ${clauseText(c)}`),
+      acts: m.find.items.length > 1 ? [quiet('Remove', () => update((x) => { x.find.items.splice(k, 1); }), 'Remove this pattern')] : [quiet('Change pattern', () => togglePanel('left', true), 'Open the pattern catalogue')] })),
+    ...m.wheres.map((c, i) => ({ id: 'x:w' + i, no: pad(i + 2), role: 'And', c, why: c.off ? [] : own(`find ${ANY_CLOSE}\nwhere ${clauseText(c)}`),
+      acts: [c.off ? quiet('Unmute', () => update(() => { c.off = false; }), 'Apply this condition again') : quiet('Mute', () => update(() => { c.off = true; }), 'Keep the line but stop applying it'),
+        quiet('Remove', () => update((x) => { x.wheres.splice(i, 1); }))] })),
+    ...(m.split ? [{ id: 'x:g', no: '', role: 'Group by', c: m.split, why: own(`find ${ANY_CLOSE}\ngroup by ${splitText(m.split)}`),
+      acts: [quiet('Remove', () => update(() => { state.rows = 'ledger'; }), 'Remove this grouping')] }] : []),
+  ];
+  if (!rows.some((row) => row.why.length)) rows[0].why = said(res.errors);   // the refusal is of the question as a whole
+  const host = $('#lanes'); const order = rows.map((row) => row.id);
+  for (const [id, n] of nodes) if (!order.includes(id)) { n.el.remove(); nodes.delete(id); }
+  for (const row of rows) {
+    const n = nodeFor(row.id); n.lane = { kind: 'off' }; n.born = false;
+    n.el.className = 'lane row3 refused' + (row.c.off ? ' muted' : ''); n.el.style.height = ''; n.el.tabIndex = -1;
+    mount(n.head, h('span', { class: 'no' }, row.no), h('span', { class: 'role' }, label(row.c.off ? 'Muted' : row.role), h('span', { class: 'acts' }, row.acts)),
+      h('div', { class: 'texts' }, h('div', { class: 'text' + (row.c.type === 'drawing' ? ' shape-line' : '') }, h('span', null, row.id === 'x:g' ? splitText(row.c) : cap(phraseText(row.c))), row.c.type === 'drawing' ? codeLines(row.c) : null)));
+    mount(n.svgHost, row.why.map((t) => h('p', { class: 'refusal' }, t))); mount(n.track);
+  }
+  host.append(...order.map((id) => nodes.get(id).el)); host.classList.remove('hot');
+  renderLeft(); renderDrawer();
 }
 
 function hover(lane, n, e) {
@@ -386,6 +536,7 @@ function hover(lane, n, e) {
       : k > 0 ? [`median close ${unitText(col.c, state.unit)}`, `${Math.round(col.up * 100)}% closed above the anchor`, `middle half ${unitText(col.q1, state.unit)} to ${unitText(col.q3, state.unit)}`, `n ${int(col.n)}`]
         : [`median close ${unitText(col.c, state.unit)}`, `median range ${pct(col.rng).replace('+', '')}`, `n ${int(col.n)}`];
   mount(tip, h('b', null, `${lane.title} · ${offsetLabel(k)}`), lines.map((t) => h('span', null, t)));
+  readDims(k);
   tip.style.top = n.el.offsetTop + 8 + 'px';
   tip.style.left = (x + 14 + tip.offsetWidth > host.clientWidth - 8 ? x - 14 - tip.offsetWidth : x + 14) + 'px';
   host.classList.add('hot');
@@ -400,10 +551,14 @@ function selectLane(lane) {
 
 // ---------------------------------------------------------------- left: pattern catalogue
 
-const catalog = new Map();
+// A pattern's count and glyph are of one recording's bars: another window is another recording.
+const catalogs = new WeakMap();
+const catalogFor = () => { const R = rec(); if (!catalogs.has(R)) catalogs.set(R, new Map()); return catalogs.get(R); };
 const LEVELS = [make('reclaim'), make('reclaim', { side: 'high' }), make('breakout'), make('relation'), make('wickrej')];
+// Events read from a dimension, each under a short name of its own. They are listed only for bars that carry the dimensions.
+const FLOWS = [['Net buying', make('taker')], ['Net selling', make('taker', { side: 'below' })], ['Rising volume', make('dimback')], ['New volume high', make('dimlevel')]];
 function patternInfo(c) {
-  const text = clauseText(c);
+  const text = clauseText(c); const catalog = catalogFor();
   if (!catalog.has(text)) {
     const res = run(`${HEAD}\nfind ${text}`); const bars = c.type === 'pattern' ? PATTERNS.find((p) => p.id === c.args.p).bars : 1;
     catalog.set(text, res.ok ? { n: res.results[0].counts.T, bars, agg: aggregate('cat|' + text, res.results[0].rows.map((x) => x.i), bars - 1, 0, 'range') } : { n: 0, bars, agg: null });
@@ -418,9 +573,10 @@ function renderLeft() {
   const items = [
     ...PATTERNS.map((p) => ({ c: make('pattern', { p: p.id }), name: p.name, sub: `${p.ja} · ${p.bars} ${p.bars === 1 ? 'bar' : 'bars'}`, hay: (p.name + ' ' + p.ja + ' ' + p.aliases.join(' ')).toLowerCase(), group: 'named' })),
     ...LEVELS.map((c) => ({ c, name: CLAUSES[c.type].title, sub: cap(phraseText(c)), hay: (phraseText(c) + ' ' + CLAUSES[c.type].title + ' ' + CLAUSES[c.type].keywords).toLowerCase(), group: 'level' })),
+    ...FLOWS.filter(([, c]) => can(c)).map(([name, c]) => ({ c, name, sub: cap(phraseText(c)), hay: (name + ' ' + phraseText(c) + ' ' + CLAUSES[c.type].title + ' ' + CLAUSES[c.type].keywords).toLowerCase(), group: 'dimension' })),
   ].filter((x) => !q || x.hay.includes(q));
   if (state.catSort === 'count') for (const x of items) patternInfo(x.c);
-  const info = (x) => catalog.get(clauseText(x.c)); const ready = items.every(info); const pending = [];
+  const info = (x) => catalogFor().get(clauseText(x.c)); const ready = items.every(info); const pending = [];
   const row = (x) => {
     const text = clauseText(x.c); const glyph = h('span'); const count = h('b'); const bar = h('u');
     const fill = () => { const i = patternInfo(x.c); count.textContent = int(i.n); bar.style.width = Math.min(100, (Math.sqrt(i.n / R.presentCount) / Math.sqrt(0.2)) * 100) + '%'; if (i.agg && i.n) drawGlyph(glyph, i.agg, i.bars); };
@@ -438,7 +594,8 @@ function renderLeft() {
   const search = h('input', { class: 'search', type: 'text', placeholder: 'Search, in English or Japanese', value: state.catalog, 'aria-label': 'Search patterns', oninput: (e) => { state.catalog = e.target.value; renderLeft(); } });
   mount(el, search,
     state.catSort === 'count' ? section('On this tape', live, sortBtn)
-      : [section('Named candles', live.filter((x) => x.group === 'named'), sortBtn), section('Level events', live.filter((x) => x.group === 'level'), live.some((x) => x.group === 'named') ? null : sortBtn)],
+      : [section('Named candles', live.filter((x) => x.group === 'named'), sortBtn), section('Level events', live.filter((x) => x.group === 'level'), live.some((x) => x.group === 'named') ? null : sortBtn),
+        section('Dimension events', live.filter((x) => x.group === 'dimension'), live.some((x) => x.group !== 'dimension') ? null : sortBtn)],
     section('Not on this tape', none),
     !items.length ? h('p', { class: 'empty', style: 'padding:16px 18px' }, 'No pattern matches that search.') : null);
   el.scrollTop = top;
@@ -449,14 +606,22 @@ function renderLeft() {
 
 // ---------------------------------------------------------------- right: inspect
 
-function factsAt(i) {
+function factsAt(i, dimensions = false) {
   const R = rec(); const out = [];
   if (!R.present[i]) return out;
   const ev = (c, why) => { const res = run(`${HEAD}\nfind ${clauseText(c)}`); if (!res.ok) return null; const x = res.results[0]; return x.event.series.vals[i] === T ? { c, section: 'event', n: x.counts.T, why: why ?? x.event.series.why(i) } : null; };
   const cond = (c, section) => { const res = run(`${HEAD}\nfind ${ANY_CLOSE}\nwhere ${clauseText(c)}`); if (!res.ok) return null; const at = res.results[0].clauses[0].at(i); return at.v === T ? { c, section, n: res.results[0].survivors[0], why: at.why } : null; };
   const first = (list, fn, arg) => { for (const c of list) { const f = fn(c, arg); if (f) return f; } return null; };
-  const groupAt = (expr) => run(`${HEAD}\nfind ${ANY_CLOSE}\ngroup by ${expr}`).results[0].group.at(i);
   const push = (f) => { if (f) out.push(f); };
+  if (dimensions) {
+    // What the candle's dimensions say: the taker side, volume against its recent median and the candle before, and a new extreme.
+    push(first(['above', 'below', 'equal'].map((side) => make('taker', { side })), ev));
+    push(first(['3', '2.5', '2', '1.5', '1.25'].map((min) => make('dimx', { min })), cond) || first(['0.25', '0.5', '0.75'].map((max) => make('dimxmax', { max })), cond));
+    push(ev(make('dimback')) || ev(make('dimback', { rel: 'below' })));
+    for (const side of ['high', 'low']) push(first(['24h', '12h', '4h'].map((over) => make('dimlevel', { over, side })), ev));
+    return out;
+  }
+  const groupAt = (expr) => run(`${HEAD}\nfind ${ANY_CLOSE}\ngroup by ${expr}`).results[0].group.at(i);
   for (const p of PATTERNS) push(ev(make('pattern', { p: p.id }), p.rule));
   for (const side of ['low', 'high']) push(first(['24h', '12h', '4h'].map((over) => make('reclaim', { side, over })), ev) || first(['24h', '12h', '4h'].map((over) => make('reclaim', { side, over, within: '3' })), ev));
   push(first(['48h', '24h', '12h', '4h'].map((over) => make('breakout', { over })), ev));
@@ -482,13 +647,15 @@ function factsAt(i) {
 function definitionOf(c) {
   if (c.type === 'drawing') {
     const n = drawingBars(c); const rel = c.args.packet ? relationsOf(c.args.packet) : []; const held = drawingHeld(c);
+    const parts = held ? [] : g1Parts(c.args.g1); const dims = held ? '' : drawingDimensions(c);
     const same = `every endpoint in the drawn order, with the same ties${c.args.g1[3] === 'o' ? ' and the same directions' : ''}`;
     return { title: `${packetOf(c) ? 'Drawn shape' : 'G1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
-      summary: held ? `${rel.length === 1 ? 'One relation' : rel.length + ' relations'} held on ${n} fixed candles ending at the close. Only which side each level lies on is kept, not the drawn distance.`
+      summary: (held ? `${rel.length === 1 ? 'One relation' : rel.length + ' relations'} held on ${n} fixed candles ending at the close. Only which side each level lies on is kept, not the drawn distance.`
         : n === 1 ? `The last candle has ${same}.`
           : drawingRecorded(c) ? `The last ${n} candles, with their opens as recorded, have ${same}. ${packetOf(c) ? 'This shape ties each later open to the close before it, so the recorded open must equal that close to the cent.' : 'In this code a later open lies away from the close before it, or no directions are kept, so it is not a chain and cannot be drawn as one.'}`
-            : `The last ${n} candles, read as a chain, have ${same}: the first as recorded, each later one opening at the close before it.${packetOf(c) ? '' : ' This code is not a chain, so no window read this way can match it.'}`,
-      formula: [...(held ? rel.map(cap) : [c.args.g1]), ...(c.args.packet ? ['Composer’s skeleton, stretch, next-bar term, timeframes and picks are not part of this question.', OWN_COUNT] : [])] };
+            : `The last ${n} candles, read as a chain, have ${same}: the first as recorded, each later one opening at the close before it.${packetOf(c) ? '' : ' This code is not a chain, so no window read this way can match it.'}`)
+        + (dims ? ` ${cap(dims)} ${parts.length > 1 ? 'stand' : 'stands'} in the code’s order from candle to candle, ties included${parts.some((p) => p.reference !== null) ? ', each signed one on its side of zero' : ''}. A candle without the value leaves the window unknown.` : ''),
+      formula: [...(held ? rel.map(cap) : [g1Price(c.args.g1), ...parts.map((p) => `${p.text} · ${DIM[p.key].label}: ${p.order}`)]), ...(c.args.packet ? ['Composer’s skeleton, stretch, next-bar term, timeframes and picks are not part of this question.', OWN_COUNT] : [])] };
   }
   if (c.type === 'pattern') { const p = PATTERNS.find((x) => x.id === c.args.p); return { title: `${p.name} · ${p.ja}`, summary: p.rule, formula: [] }; }
   const d = CLAUSES[c.type].def && definition(CLAUSES[c.type].def);
@@ -521,6 +688,15 @@ function renderRight() {
       h('span', { class: 'box', 'aria-hidden': 'true' }), h('span', null, cap(phraseText(f.c))), h('span', { class: 'n' }, on ? `${int(f.n)} on tape` : `leaves ${int(left)}`), h('small', null, f.why));
     };
     const group = (title, key) => { const list = facts.filter((f) => f.section === key); return list.length ? [label(title, 'sub-label'), list.map(fact)] : null; };
+    const dimensionFacts = counters() ? h('details', null, h('summary', null, 'Dimension facts')) : null;
+    if (dimensionFacts) dimensionFacts.addEventListener('toggle', () => {
+      if (!dimensionFacts.isConnected || !dimensionFacts.open || dimensionFacts.childElementCount > 1) return;
+      const values = h('dl', { class: 'kv2' }, DIMENSIONS.map(d => [
+        h('dt', { title: cap(d.what) }, d.label),
+        h('dd', null, dimensionExact(d.key, R.dimension(d.key)[i]), h('span', { class: 'base' }, ` ${UNIT[d.key]}`)),
+      ]));
+      dimensionFacts.append(values, ...factsAt(i, true).map(fact));
+    });
     const mark = (v) => h('span', { class: 'v' + (v === T ? '' : ' f') }, SYM[v]);
     const nav = (text, d, title) => h('button', { class: 'quiet step', type: 'button', title, 'aria-label': title, disabled: at < 0 ? !rows.length : !rows[at + d], onclick: () => stepClose(d) }, text);
     mount(el,
@@ -536,7 +712,7 @@ function renderRight() {
           row.results.map((x, k) => h('li', null, mark(x.v), h('span', null, cap(applied[k] ? phraseText(applied[k]) : ar.clauses[k].text)), h('small', null, x.why))),
           row.out.map((o, k) => h('li', null, h('span', { class: 'v' }, '→'), h('span', null, `After ${ar.columns[k].text}: `, h('b', { class: 'fig' }, o.status === 'observed' ? pct(o.value) : o.status)), h('small', null, o.why))))
           : h('p', { class: 'empty' }, 'The pattern does not occur at this close. ' + r.event.series.why(i))),
-      h('section', { class: 'block' }, h('div', { class: 'sec' }, label('Facts at this close'), note('Tick to add')), group('What happened', 'event'), group('Anatomy', 'anatomy'), group('Context', 'context')));
+      h('section', { class: 'block' }, h('div', { class: 'sec' }, label('Facts at this close'), note('Tick to add')), group('What happened', 'event'), group('Anatomy', 'anatomy'), group('Context', 'context'), dimensionFacts));
     candleAnatomy(drawing, { rec: R, i, height: 176 });
     el.scrollTop = top;
     return;
@@ -573,9 +749,9 @@ const formal = plate({ label: 'Filang', onEdit: (text) => {
   if (!f.model) return formal.message(f.error.message);
   for (const c of state.model.find.items) if (c.type === 'drawing' && c.args.packet) attach(f.model, c.args.packet);
   const check = run(toText(f.model));
-  if (!check.ok) return formal.message(check.errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')).join(' · '));
+  if (!check.ok && !refusal(check)) return formal.message(check.errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')).join(' · '));
   state.model = f.model; state.preset = null; state.lane = null; state.slot = null; state.notice = '';
-  if (f.model.split) { state.rows = 'split'; state.splitBy = f.model.split.type === 'weekday' ? 'weekday' : 'trend'; } else if (state.rows === 'split') state.rows = 'ledger';
+  if (f.model.split) { state.rows = 'split'; state.splitBy = f.model.split.type; } else if (state.rows === 'split') state.rows = 'ledger';
   render();
 } });
 
@@ -613,12 +789,12 @@ function casesTable(host, lane, rows, removed) {
 
 function renderDrawer() {
   const el = $('#drawer');
-  if (!ui.drawer) { delete el.dataset.tab; return; }
+  if (!ui.drawer || (!ctx && ui.drawer !== 'query')) { delete el.dataset.tab; return; }   // a refused question has only its text to show
   // The query editor must survive a redraw: rebuilding the drawer would detach the textarea being typed in,
   // drop its focus after every valid keystroke, and send the next keys to the global shortcuts.
   if (ui.drawer === 'query' && el.dataset.tab === 'query' && el.contains(formal.el)) return;
   const was = el.dataset.tab; el.dataset.tab = ui.drawer;
-  const { sel, res } = ctx; const R = rec(); const body = h('div', { class: 'body' });
+  const { sel, res } = ctx || {}; const R = rec(); const body = h('div', { class: 'body' });
   const head = (title, text, ...seg) => h('header', null, label(title, 'title'), note(text), h('span', { class: 'seg' }, seg), quiet('Close', () => togglePanel(ui.drawer)));
   if (ui.drawer === 'cases') {
     const lane = sel.kind === 'case' ? ctx.answer : sel; const hasRemoved = lane.kind === 'where';
@@ -642,7 +818,7 @@ function renderDrawer() {
     candleChart(chart, { rec: R, from, to, anchor: i, marks: new Set(lane.slots), label: state.slot === null ? 'FIRST CLOSE' : 'INSPECTED', height: Math.max(120, tape.parentElement.clientHeight - 80),
       levels: ev ? [{ price: ev.level, label: 'FROZEN LEVEL', from: R.slotClosingAt(ev.breach) ?? i }] : [], onPick: (slot) => { state.slot = slot; if (!ui.right) ui.right = true; render(); } });
   } else if (ui.drawer === 'query') {
-    const copy = h('button', { type: 'button', onclick: async () => { try { await navigator.clipboard.writeText(ctx.text); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select the text to copy'; } setTimeout(() => { copy.textContent = 'Copy'; }, 1400); } }, 'Copy');
+    const copy = h('button', { type: 'button', onclick: async () => { try { await navigator.clipboard.writeText(toText(state.model)); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select the text to copy'; } setTimeout(() => { copy.textContent = 'Copy'; }, 1400); } }, 'Copy');
     mount(el, head('Query', 'The rows write this text. Editing it rewrites the rows as soon as it checks.', copy), body);
     mount(body, formal.el);
   } else {
@@ -670,12 +846,15 @@ function pool() {
   const out = [];
   for (const part of ['lower_wick', 'upper_wick', 'body']) out.push(make('share', { part }), make('sharemax', { part }));
   out.push(make('rangex'), make('tail'), make('quiet'));
+  for (const dim of ['volume', 'trades', 'size']) out.push(make('dimx', { dim }), make('dimxmax', { dim }));
+  for (const by of ['delta', 'imbalance']) for (const side of ['above', 'below', 'equal']) out.push(make('taker', { side, by }));
+  for (const d of DIMENSIONS) out.push(make('dimback', { dim: d.key }), make('dimlevel', { dim: d.key }), make('dimlevel', { dim: d.key, side: 'low' }));
   for (const dir of ['up', 'down']) out.push(make('trend', { dir }));
   for (const side of ['high', 'low']) out.push(make('near', { side }), make('reclaim', { side }));
   out.push(make('breakout'), make('relation'), make('wickrej'));
   for (const day of ['mon', 'tue', 'wed', 'thu', 'fri', 'closed']) out.push(make('weekday', { day }));
   for (const p of PATTERNS) out.push(make('pattern', { p: p.id }));
-  return out;
+  return out.filter(can);   // bars without the cube's counters are offered no dimension
 }
 function suggestions(q) {
   const m = state.model; const tokens = q.toLowerCase().split(/[\s,]+/).filter(Boolean); const out = [];
@@ -688,19 +867,23 @@ function suggestions(q) {
   if (wantsSplit && has('split by group 4h trend')) out.push({ tag: 'Rows', label: 'split the answer by 4h trend', mode: () => { state.rows = 'split'; state.splitBy = 'trend'; state.model.split = make('trend'); } });
   if (wantsSplit && has('split by group session day weekday')) out.push({ tag: 'Rows', label: 'split the answer by session day', mode: () => { state.rows = 'split'; state.splitBy = 'weekday'; } });
   const present = new Set([...m.find.items, ...m.wheres].map(clauseText));
-  for (const base of tokens.length ? pool() : OFFERS) {
+  const offers = OFFERS.filter(can); const room = 15 + (tokens.length ? 0 : offers.filter((c) => CLAUSES[c.type].needs).length);   // the dimension offers are added to the list, not put in place of others
+  for (const base of tokens.length ? pool() : offers) {
     const def = CLAUSES[base.type];
-    // Clauses that come in variants (a day, a direction) match on their own wording, so "friday" finds Friday only.
-    const hay = phraseText(base) + ' ' + (base.type === 'pattern' ? PATTERNS.find((p) => p.id === base.args.p).ja : base.type === 'weekday' ? 'weekday calendar' : base.type === 'trend' ? 'trend higher timeframe direction' : def.title + ' ' + def.keywords);
+    // Clauses that come in variants (a day, a direction, a dimension) match on their own wording, so "friday" finds Friday only.
+    const hay = phraseText(base) + ' ' + (base.type === 'pattern' ? PATTERNS.find((p) => p.id === base.args.p).ja : base.type === 'weekday' ? 'weekday calendar' : base.type === 'trend' ? 'trend higher timeframe direction' : def.needs ? def.keywords : def.title + ' ' + def.keywords);
     if (tokens.length && (!words.length || !has(hay))) continue;
     const c = clone(base);
     for (const sl of def.slots) { if (sl.kind === 'pct' && pctTok) c.args[sl.key] = pctTok; else if (sl.kind === 'dur' && durTok) c.args[sl.key] = durTok; else if (sl.kind === 'num' && numTok) c.args[sl.key] = numTok; }
     if (negate) c.not = true;
     if (present.has(clauseText(c)) || (asOr && def.role !== 'event')) continue;
-    out.push(asOr ? { tag: 'Or', label: phraseText(c), apply: (x) => { x.find.join = 'or'; x.find.items.push(c); } } : { tag: 'And', label: phraseText(c), apply: (x) => { x.wheres.push(c); } });
-    if (out.length > 15) break;
+    out.push(asOr ? { tag: 'Or', label: phraseText(c), apply: (x) => { x.find.join = 'or'; x.find.items.push(c); } } : { tag: 'And', label: phraseText(c), defer: !tokens.length && !!def.needs, apply: (x) => { x.wheres.push(c); } });
+    if (out.length > room) break;
   }
-  for (const s of out) if (s.apply) { const x = clone(m); s.apply(x); s.n = count(bodyText(x)); }
+  for (const s of out) if (s.apply) {
+    const x = clone(m); s.apply(x); const body = bodyText(x);
+    if (s.defer) s.readCount = () => count(body); else s.n = count(body);
+  }
   return out.filter((s) => s.mode || s.n !== null);
 }
 const addInput = $('#add'); let addBox = null; let addList = []; let addPick = 0;
@@ -709,8 +892,17 @@ function showAdd() {
   if (!addBox) { addBox = h('div', { class: 'pop', role: 'listbox', style: 'max-height:356px' }); document.body.append(addBox); }
   mount(addBox, h('header', null, label(addInput.value.trim() ? 'Matches' : 'Conditions to add'), label('Closes left')),
     h('ul', null, addList.length ? addList.map((s, i) => h('li', null, h('button', { type: 'button', class: i === addPick ? 'active' : '', onmousedown: (e) => e.preventDefault(), onclick: () => applyAdd(s) },
-      h('span', null, label(s.tag, 'tag'), cap(s.label)), h('span', { class: 'fig' }, s.mode ? '' : int(s.n))))) : h('li', { class: 'none' }, 'Nothing matches. Try wick, range, friday, session, trend, quiet, level, or a candle name.')),
+      h('span', null, label(s.tag, 'tag'), cap(s.label)), h('span', { class: 'fig', 'data-count': s.defer ? i : null }, s.mode ? '' : s.defer ? '…' : int(s.n))))) : h('li', { class: 'none' }, 'Nothing matches. Try wick, range, friday, session, trend, quiet, level, or a candle name.')),
     h('footer', null, 'Type to search. Add numbers to set values: wick 60%, quiet 48h. Begin with “or” for another pattern.'));
+  const list = addList;
+  if (list.some(s => s.readCount)) requestAnimationFrame(() => setTimeout(() => {
+    if (!addBox || addList !== list) return;
+    for (const cell of addBox.querySelectorAll('[data-count]')) {
+      const s = list[Number(cell.dataset.count)];
+      const n = s.readCount();
+      cell.textContent = n === null ? '—' : int(n);
+    }
+  }, 0));
   const r = addInput.closest('.cell').getBoundingClientRect();
   addBox.style.width = Math.max(440, r.width) + 'px'; addBox.style.maxWidth = '560px'; addBox.style.left = r.left + 'px'; addBox.style.top = Math.max(8, r.top - addBox.offsetHeight - 1) + 'px';
 }
@@ -742,7 +934,7 @@ for (const b of document.querySelectorAll('.toggles button')) b.addEventListener
 document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
   const map = { p: 'left', i: 'right', c: 'cases', t: 'tape', q: 'query', l: 'limen' };
-  if (map[e.key]) { e.preventDefault(); togglePanel(map[e.key]); }
+  if (map[e.key] && (ctx || e.key === 'p' || e.key === 'q')) { e.preventDefault(); togglePanel(map[e.key]); }
   if (e.key === '/') { e.preventDefault(); addInput.focus(); }
   if ((e.key === ',' || e.key === '.') && ctx && (state.slot !== null || ctx.sel.rows.length)) { e.preventDefault(); if (!ui.right) ui.right = true; stepClose(e.key === '.' ? 1 : -1); }
   if (e.key === 'Escape' && state.slot !== null && !document.querySelector('.pop')) { state.slot = null; if (state.lane?.startsWith('case:')) state.lane = null; render(); }
@@ -752,26 +944,30 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-function openModel(model, preset) {
+function openModel(model, preset, lanes = null) {
   Object.assign(state, { model, preset, candidate: 0, lane: null, slot: null, page: 0, side: 'kept' });
+  // A new question shows the lanes it refers to and the ones a link names. A lane switched on by hand stays on; one switched off comes back.
+  state.dims = lanes === null ? Object.fromEntries(Object.entries(state.dims).filter(([, on]) => on)) : lanesFromParam(lanes, dimensionsIn(toText(model)));
   state.rows = state.model.split ? 'split' : 'ledger';
-  if (state.model.split) state.splitBy = state.model.split.type === 'weekday' ? 'weekday' : 'trend';
+  if (state.model.split) state.splitBy = state.model.split.type;
   render();
 }
 const open = (p) => { state.notice = ''; openModel(fromText(p.text).model, p.id); };
+/** Whether a question can be opened: it runs, or the engine refuses it only for what these bars lack, and the bench then says so. */
+const opens = (model) => { const r = run(toText(model)); return r.ok || refusal(r); };
 /** The question a link asks: a drawing carried from Composer, else the text in the address, else none. */
 function asked() {
   const link = readLink(location.search);
   if (link && !link.error) {
     const model = { find: { join: 'or', items: [make('drawing', { g1: link.g1, packet: link.packet, held: link.held })] }, wheres: [], split: null, horizons: ['1h', '4h'] };
-    if (run(toText(model)).ok) return { model, preset: null };
+    if (opens(model)) return { model, preset: null };
   }
   if (link) state.notice = `The drawing in the link could not be read${link.error ? `: ${link.error.replace(/\.$/, '')}` : ''}`;
   const hash = new URLSearchParams(location.hash.slice(1)); const q = hash.get('q'); const given = q ? fromText(q).model : null;
-  if (!given || !run(toText(given)).ok) return null;
+  if (!given || !opens(given)) return null;
   const preset = PRESETS.find((p) => toText(fromText(p.text).model) === toText(given))?.id ?? null;
   if (hash.get('dr')) try { attach(given, decodeDrawing(hash.get('dr'))); } catch { /* the text still asks the question; only the drawing is lost */ }
-  return { model: given, preset };
+  return { model: given, preset, lanes: hash.get('ln') };
 }
 const fail = (what) => (e) => { console.error(e); $('#status').textContent = `${what}: ${e.message}`; $('#status').className = 'err'; };
 /** Ask the same question of another window. The question stays; what was selected on the old bars does not. */
@@ -802,10 +998,15 @@ async function firstLoad() {
     state.notice = `The cube could not be read (${e.message}); showing the pinned recording`;
   }
 }
-firstLoad().then(() => {
+firstLoad().then(async () => {
   try {
     const a = asked();
-    if (a) openModel(a.model, a.preset); else openModel(fromText(PRESETS[0].text).model, PRESETS[0].id);
+    // A question that reads a dimension needs the cube's bars. When the link names no window and the bench was last
+    // left on the pinned recording, it opens on the cube's default window rather than on a refusal.
+    if (a && state.source.cube && !counters() && !new URLSearchParams(location.hash.slice(1)).get('w') && dimensionsIn(toText(a.model)).length) {
+      try { await load(state.source.default); } catch (e) { state.notice = `The cube could not be read (${e.message}); this question needs its bars`; }
+    }
+    if (a) openModel(a.model, a.preset, a.lanes ?? null); else openModel(fromText(PRESETS[0].text).model, PRESETS[0].id);
   } catch (e) { fail('The bench could not be drawn')(e); }
 }, fail('The bars could not be loaded'));
 let timer; window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(() => state.model && render(), 120); });

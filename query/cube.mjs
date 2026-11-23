@@ -1,6 +1,7 @@
 // Bars from the market-state cube, read through Cube's own bridge, for the windows Cube offers.
 // The bridge serves the cube's bars on its dyadic time grid (/cube/bars, MSCB blocks); this turns a window of
-// them into the recording the study engine reads: open_ms,open,high,low,close,volume with prices in exact cents.
+// them into the recording the study engine reads: prices in exact cents, then the cube's counters under the cube's
+// names (base_volume in BTC; volume and taker_buy_volume in USDT; trade_count), which g1's dimensions are read from.
 // Server side only. Nothing here is served to a browser, and a browser never talks to the bridge.
 import { gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
@@ -21,7 +22,7 @@ export const WINDOWS = Object.freeze([
   { key: '1y', name: 'Last 12 months', span: 365 * DAY }, { key: 'ytd', name: 'This year' },
   { key: 'lastyear', name: 'Last year' }, { key: 'all', name: 'All history' },
 ]);
-const COLUMNS = ['open_ms', 'open', 'high', 'low', 'close', 'volume'];
+const COLUMNS = ['open_ms', 'open', 'high', 'low', 'close', 'base_volume', 'volume', 'taker_buy_volume', 'trade_count'];
 const FIELDS = ['open', 'high', 'low', 'close', 'vol', 'tbvol', 'btc', 'cnt'];   // MSCB order, f64 each, then the column u32
 
 export class CubeError extends Error {}
@@ -87,6 +88,12 @@ const volume = (value) => {
   return text === '' ? '0' : text;
 };
 
+/** A counter as the engine reads it: the shortest text that reads back to the same float. Nothing is rounded. */
+function counter(value, what, openMs) {
+  if (!Number.isFinite(value) || value < 0) throw new CubeError(`the bar opening ${new Date(openMs).toISOString()} has ${what} ${value}`);
+  return String(value);
+}
+
 /** A client of one bridge. It holds the bridge's current pack and the last few windows it built. */
 export function cubeSource({ url, fetch: get = fetch, keep = 4, packMaxAgeMs = 30_000, now = Date.now }) {
   const base = url.replace(/\/+$/, '');
@@ -142,8 +149,11 @@ export function cubeSource({ url, fetch: get = fetch, keep = 4, packMaxAgeMs = 3
         const openMs = Math.round((held.t0 + block.col[i] * step * held.baseSeconds) * 1000);
         if (openMs <= lastOpen) throw new CubeError('the bridge answered bars out of time order');
         lastOpen = openMs;
+        const traded = block.vol[i]; const takerBuy = block.tbvol[i]; const trades = block.cnt[i];
+        if (takerBuy > traded) throw new CubeError(`the bar opening ${new Date(openMs).toISOString()} has taker-buy volume ${takerBuy} above its volume ${traded}`);
+        if (!Number.isSafeInteger(trades) || trades < 0) throw new CubeError(`the bar opening ${new Date(openMs).toISOString()} has trade count ${trades}`);
         lines.push([openMs, cents(block.open[i], 'open', openMs), cents(block.high[i], 'high', openMs), cents(block.low[i], 'low', openMs),
-          cents(block.close[i], 'close', openMs), volume(block.btc[i])].join(','));
+          cents(block.close[i], 'close', openMs), volume(block.btc[i]), counter(traded, 'volume', openMs), counter(takerBuy, 'taker-buy volume', openMs), String(trades)].join(','));
       }
       end = Math.min(to, measured * step);
       if (end < to) break;                       // the cube has not measured further: the window ends here
@@ -160,7 +170,7 @@ export function cubeSource({ url, fetch: get = fetch, keep = 4, packMaxAgeMs = 3
         row_count: lines.length - 1, csv_sha256: createHash('sha256').update(csv).digest('hex'),
         source: 'cube', window: key, window_name: name, interval, from: new Date(ms(b0)).toISOString(), through: new Date(ms(end)).toISOString(),
         canonical_through: held.canonicalThrough, provisional_rows: provisional, state_token: held.token,
-        derived_by: 'Cube bridge /cube/bars (MSCB), open, high, low, close in exact cents and BTC volume. No rows or prices generated.',
+        derived_by: 'Cube bridge /cube/bars (MSCB): open, high, low, close in exact cents; BTC volume; USDT traded, taker-buy USDT and trades as the bridge delivers them. No rows or prices generated.',
       },
       csv,
     };

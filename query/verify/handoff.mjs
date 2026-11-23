@@ -146,4 +146,35 @@ if (gap > 5) assert.equal(casePacket(rec, gap + 1 < rec.n ? gap + 1 : gap, 3).wh
   assert.deepEqual(slotsOf(toText(more)), slotsOf(edited));
 }
 
+// ---- dimensions: a drawing with a dimension switched on travels in the later revision of the format, with the
+// dimension parts of its g1 code beside the bars. Composer's bench writes exactly this (its bench/model.js).
+{
+  const DIMENSIONS_REVISION = drawingRevision(['volume']);
+  const bars = [{ v: [10, 20, 40, 50], d: 'u' }, { v: [30, 40, 60, 70], d: 'u' }];
+  const dimensions = ['volume:0,1', 'delta:0,2/1'];
+  const drawn = packet(bars, [], { revision: DIMENSIONS_REVISION, dimensions });
+  const code = 'g1:o:0,1,3,4,u;2,3,5,6,u|volume:0,1|delta:0,2/1';
+  assert.equal(drawingG1(drawn), code);
+  const read = readLink(link(drawn));
+  assert.equal(read.error, undefined, read.error); assert.equal(read.g1, code); assert.deepEqual(read.packet.dimensions, dimensions);
+  // the question it asks is the code with its parts, and the text gives the same drawing back
+  const m = question(read); const text = toText(m);
+  assert.ok(text.includes(`chained_g1(${JSON.stringify(code)})`), text);
+  const back = fromText(text).model; attach(back, read.packet);
+  assert.deepEqual(back.find.items[0].args.packet, read.packet);
+  // a g1 that came without a drawing is rebuilt with its parts, and the link to Composer carries them
+  const rebuilt = packetFromG1(code);
+  assert.equal(rebuilt.revision, DIMENSIONS_REVISION); assert.deepEqual(rebuilt.dimensions, dimensions); assert.equal(drawingG1(rebuilt), code);
+  assert.ok(decodeURIComponent(composerLink('http://x/', rebuilt)).includes('"dimensions":["volume:0,1","delta:0,2/1"]'));
+  assert.equal(packetFromG1('g1:o:0,1,3,4,u;2,3,5,6,u').revision, COMPOSER_REVISION, 'with every dimension off the packet is the first revision, to the letter');
+  // what is refused: dimensions in the first revision, parts that are not a g1's, and a code that disagrees
+  for (const bad of [packet(bars, [], { dimensions }), packet(bars, [], { revision: DIMENSIONS_REVISION, dimensions: ['delta:0,2/1', 'volume:0,1'] }),
+    packet(bars, [], { revision: DIMENSIONS_REVISION, dimensions: ['volume:0'] }), packet(bars, [], { revision: DIMENSIONS_REVISION, dimensions: 'volume:0,1' }),
+    packet(bars, [], { revision: DIMENSIONS_REVISION, dimensions: ['flow:0,1'] })]) {
+    assert.ok(readLink(`?drawing=${encodeURIComponent(JSON.stringify(bad))}`).error, JSON.stringify(bad.dimensions));
+  }
+  assert.ok(readLink(link(drawn).replace(encodeURIComponent('volume:0,1|'), encodeURIComponent('volume:1,0|'))).error, 'the drawing and its g1 must agree on the dimension parts too');
+  assert.equal(readLink(`?drawing=${encodeURIComponent(JSON.stringify(packet(bars, [], { revision: DIMENSIONS_REVISION })))}`).error, undefined, 'the later revision with nothing switched on reads as all off');
+}
+
 console.log(`Hand-off: 324, 1,463 chained and 772 as recorded, and 4,828 pinned, as the engine's own checks count them; all three forms round-trip; ${sent} recorded windows drawn, each the chained code of its candles and a match of it (${whole} with every open on the close before it, ${moved} without).`);
