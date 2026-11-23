@@ -46,7 +46,8 @@ const terms = FUNCTIONS.map((fn) => {
   };
 });
 const termPath = new URL("./terms.json", import.meta.url);
-const termText = JSON.stringify({schema: "filang-study-terms-v1", terms}, null, 2) + "\n";
+const termText = '{\n  "schema": "filang-study-terms-v1",\n  "terms": [\n' +
+  terms.map(term => '    ' + JSON.stringify(term)).join(',\n') + '\n  ]\n}\n';
 if (process.argv.includes("--check")) {
   if (fs.readFileSync(termPath, "utf8") !== termText) throw new Error("Filang terms catalogue is stale");
 } else {
