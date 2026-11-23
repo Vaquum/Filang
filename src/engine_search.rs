@@ -124,6 +124,7 @@ impl Window {
 
 struct Ranked {
     score: f64,
+    end_ms: i64,
     order: usize,
     frame: usize,
     window: Window,
@@ -135,6 +136,8 @@ impl Ord for Ranked {
     fn cmp(&self, other: &Self) -> Ordering {
         self.score
             .total_cmp(&other.score)
+            .then_with(|| self.window.span().cmp(&other.window.span()))
+            .then_with(|| other.end_ms.cmp(&self.end_ms))
             .then_with(|| self.order.cmp(&other.order))
     }
 }
@@ -671,20 +674,23 @@ impl Search {
     }
 
     fn record_rank(&mut self, score: f64, half_flips: usize, off: f64, window: Window) {
-        if score >= self.bound() {
-            return;
-        }
-        if self.best.len() >= self.rank_capacity() {
-            self.best.pop();
-        }
-        self.best.push(Ranked {
+        let frame = self.frames[self.frame].as_ref().expect("ranked frame");
+        let ranked = Ranked {
             score,
+            end_ms: frame.time(window.start as usize + window.span()),
             order: self.seen,
             frame: self.frame,
             window,
             half_flips,
             off,
-        });
+        };
+        if self.best.len() >= self.rank_capacity() {
+            if self.best.peek().map_or(false, |worst| &ranked >= worst) {
+                return;
+            }
+            self.best.pop();
+        }
+        self.best.push(ranked);
         self.seen += 1;
     }
 
@@ -788,21 +794,7 @@ impl Search {
             "{{\"done\":true,\"mode\":\"{mode}\",\"exact\":{exact:?},\"held\":{held:?},\"qualified_exact\":{qualified_exact:?},\"qualified_held\":{qualified_held:?},\"results\":["
         );
         let mut ranked: Vec<_> = self.best.iter().collect();
-        ranked.sort_unstable_by(|a, b| {
-            a.score
-                .total_cmp(&b.score)
-                .then_with(|| a.window.span().cmp(&b.window.span()))
-                .then_with(|| {
-                    let end = |r: &Ranked| {
-                        self.frames[r.frame]
-                            .as_ref()
-                            .expect("ranked frame")
-                            .time(r.window.start as usize + r.window.span())
-                    };
-                    end(b).cmp(&end(a))
-                })
-                .then_with(|| a.order.cmp(&b.order))
-        });
+        ranked.sort_unstable();
         let mut times = Vec::<(i64, i64)>::new();
         for r in ranked {
             let frame = self.frames[r.frame].as_ref().expect("ranked frame");
@@ -853,5 +845,49 @@ impl Search {
         }
         out.push_str("]}");
         out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{engine_json, engine_session::Session};
+
+    #[test]
+    fn equal_scores_retain_the_latest_distinct_windows_beyond_heap_capacity() {
+        use std::fmt::Write;
+
+        let interval = 900_000;
+        let mut session = Session::default();
+        let mut csv = format!("composer-load\n{interval}\nopen_ms,open,high,low,close,volume\n");
+        for i in 0..800 {
+            writeln!(
+                csv,
+                "{},100.00,120.00,75.00,100.00,1",
+                i64::from(i) * interval
+            )
+            .unwrap();
+        }
+        session.call(csv.as_bytes()).unwrap();
+        let packet = r#"{"version":1,"revision":"133e3017ba9143f7dc255df7218ff7bfe46d9d06","oriented":true,
+            "bars":[{"v":[75,100,100,120],"d":"u"},{"v":[75,100,100,120],"d":"u"}],
+            "pins":[],"skeleton":0,"stretch":0,"limit":12,"next":{"dir":0,"measure":"any","bps":10,"atr":1}}"#;
+        session
+            .call(format!("composer-start\n{{\"timeframes\":1}}\n{packet}").as_bytes())
+            .unwrap();
+        let reply = session.call(b"composer-step\n1024").unwrap();
+        let result = engine_json::parse(&reply).unwrap();
+        let rows = result.field("results").unwrap().array().unwrap();
+        let starts: Vec<usize> = rows
+            .iter()
+            .map(|r| {
+                r.field("window")
+                    .unwrap()
+                    .field("start")
+                    .unwrap()
+                    .number()
+                    .unwrap()
+            })
+            .collect();
+        assert_eq!(starts, (0..12).map(|i| 798 - i * 2).collect::<Vec<_>>());
     }
 }
