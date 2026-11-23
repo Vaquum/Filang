@@ -1,30 +1,20 @@
 // The shape hand-off with the Composer bench, checked on the pinned recording without a browser.
 // A carried drawing must ask the engine exactly what the study page asks for the same drawing, the vocabulary must
 // keep it through text and back, and what is sent to Composer must be a packet the engine's own decoder accepts.
-// Run from the repository root, after study/prepare_recording.py: node query/verify/handoff.mjs
+// Run from the repository root, after study/prepare_recording.py and bindings/build.py: node query/verify/handoff.mjs
 import assert from 'node:assert/strict';
-import { register } from 'node:module';
-import { pathToFileURL } from 'node:url';
+import { install } from './site.mjs';
 
-// The bench's modules import by site path. Here those paths are the repository's folders.
-register('data:text/javascript,' + encodeURIComponent(`
-  const root = ${JSON.stringify(pathToFileURL(process.cwd() + '/').href)};
-  export function resolve(spec, context, next) {
-    if (spec.startsWith('/study/')) return { url: new URL(spec.slice(1), root).href, shortCircuit: true };
-    if (spec.startsWith('/shared/') || spec.startsWith('/bench/')) return { url: new URL('query' + spec, root).href, shortCircuit: true };
-    return next(spec, context);
-  }`), import.meta.url);
-
+// The bench's modules import by site path and ask the shared engine, as they do in the page.
+await install();
+const { engine, load, run, rec: recording, drawingRevision } = await import('/shared/filang.js');
 const { make, clone, toText, fromText, clauseText, phraseText, drawingBars, drawingHeld, drawingRecorded } = await import('/shared/vocab.js');
-const { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } = await import('/shared/handoff.js');
-const { encodeDrawing, COMPOSER_REVISION } = await import('/study/composer/drawing.js');
-const { loadEnvironment } = await import('/study/verify/node-env.js');
-const { analyze } = await import('/study/src/check.js');
-const { runAnalysis } = await import('/study/src/engine.js');
-const { g1FromRecording, chainedG1FromRecording } = await import('/study/src/g1.js');
+const { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, drawingG1, pinnedExpression } = await import('/shared/handoff.js');
 
-const e = loadEnvironment();
-const answer = (text) => { const a = analyze(text, e.env); assert.equal(a.ok, true, `${text}\n${JSON.stringify(a.errors)}`); return runAnalysis(e.ctx, a, { digestVerified: e.digestVerified }).results[0].matches; };
+await load();
+const COMPOSER_REVISION = drawingRevision();
+const encodeDrawing = (p) => engine.encodeDrawing(p);
+const answer = (text) => { const a = run(text); assert.equal(a.ok, true, `${text}\n${JSON.stringify(a.errors)}`); return a.results[0].matches; };
 const matches = (text) => answer(text).length;
 const slotsOf = (text) => new Set(answer(text).map((r) => r.i));
 const packet = (bars, pins = [], extra = {}) => ({ version: 1, revision: COMPOSER_REVISION, oriented: true, bars, pins, skeleton: 0, stretch: 0, next: { dir: 0, measure: 'any', bps: 10, atr: 1 }, limit: 12, ...extra });
@@ -64,22 +54,8 @@ assert.equal(drawingRecorded(question(asRecorded(shape)).find.items[0]), true);
 // a drawing that holds nothing cannot be asked as held relations, whatever the link says
 assert.equal(readLink(link(one, true)).held, false);
 
-if (process.argv.includes('--engine')) {
-  const {FilangEngine} = await import('../../target/engine-dist/browser/index.mjs');
-  const {readFile} = await import('node:fs/promises');
-  const {DATA_FILES} = await import('/study/src/boot.js');
-  const {readBytes} = await import('/study/verify/node-env.js');
-  const engine = await FilangEngine.create(await readFile(
-    new URL('../../target/engine-dist/browser/filang_engine.wasm', import.meta.url)));
-  try {
-    engine.loadCsv(new TextDecoder().decode(readBytes(DATA_FILES.bars)), e.rec.barMs);
-    const questions = [exact, held, shape, asRecorded(shape)].map(r => toText(question(r)));
-    assert.deepEqual(engine.studyCounts(questions),
-      [324, 4828, 1463, 772].map(count => ({count, error: null})));
-  } finally {
-    engine.close();
-  }
-}
+// the same four questions in one batch, as the bench counts what a change would leave
+assert.deepEqual(engine.studyCounts([exact, held, shape, asRecorded(shape)].map((r) => toText(question(r)))), [324, 4828, 1463, 772].map((count) => ({ count, error: null })));
 
 // ---- a link that cannot be read says so and names nothing
 for (const bad of ['?drawing=' + encodeURIComponent('{"version":1,"revision":"nope"}'), '?drawing=not-json', link(two, true).replace('g1%3Ao%3A0', 'g1%3Ao%3A9'), '?g1=g2:x']) assert.ok(readLink(bad).error, bad);
@@ -125,7 +101,7 @@ assert.ok(composerLink('http://x/bench/', rebuilt).startsWith('http://x/bench/?d
 // later bar opening at the close before it. So for every window sent, whether or not a recorded open differs from
 // that close, the drawing's g1 is the window's chained code and the window is a match of the shape drawn from it.
 // Where no open differs, it is also the recording's own candles and the code the as-recorded reading gives.
-const rec = e.rec; let sent = 0; let whole = 0; let moved = 0;
+const rec = recording(); let sent = 0; let whole = 0; let moved = 0;
 const found = new Map();   // the closes that match a chained code, asked of the engine once per code
 const chainedAt = (code) => { if (!found.has(code)) found.set(code, slotsOf(`on BTCUSDT 15m\nfind chained_g1(${JSON.stringify(code)})`)); return found.get(code); };
 const cents = (b) => b.v.map((x) => Math.round(x * 100));
@@ -141,31 +117,35 @@ for (let i = 40; i < rec.n && sent < 1200; i += 7) for (const n of [2, 3, 5]) {
   const offs = []; for (let s = i - n + 2; s <= i; s++) if (rec.O[s] !== rec.C[s - 1]) offs.push(Math.abs(rec.O[s] - rec.C[s - 1]));
   assert.equal(r.joined, offs.length); assert.equal(Math.round(r.far * 100), Math.max(0, ...offs));
   const code = drawingG1(r.packet);
-  assert.equal(code, chainedG1FromRecording(rec, i, n), `the chained code of the ${n} candles ending at slot ${i}`);
+  assert.equal(code, engine.at(i, n, { reading: 'chained' }).code, `the chained code of the ${n} candles ending at slot ${i}`);
   assert.ok(chainedAt(code).has(i), `the ${n} candles ending at slot ${i} match the shape drawn from them`);
   if (r.joined) { moved++; continue; }
   whole++;
-  assert.equal(code, g1FromRecording(rec, i, n), `as recorded, the same code for the ${n} candles ending at slot ${i}`);
+  assert.equal(code, engine.at(i, n, { reading: 'recorded' }).code, `as recorded, the same code for the ${n} candles ending at slot ${i}`);
 }
 assert.ok(whole >= 200 && moved >= 200, `${whole} whole, ${moved} joined`);
 assert.ok(casePacket(rec, 0, 2).why);
 const gap = Array.from(rec.present).findIndex((x, k) => k > 5 && !x);
 if (gap > 5) assert.equal(casePacket(rec, gap + 1 < rec.n ? gap + 1 : gap, 3).why, 'a candle is missing from the recording');
 
-// ---- a one-bar drawing with several relations held prints a bare conjunction, which text gives back as several
-// find items: the packet must still find its place again, or a reload would lose the drawing
+// ---- a one-bar drawing with several relations held prints a bare conjunction. The vocabulary has no clause for
+// its relations, so text gives the find back as one formal line in the engine's wording: the packet must still find
+// its place again, or a reload would lose the drawing
 {
   const p = packet([{ v: [15, 50, 85, 90], d: 'u' }], [{ a: { bar: 0, part: 'H' }, b: { bar: 0, part: 'T' } }, { bar: 0, color: true }]);
   const q = question({ g1: drawingG1(p), packet: p, held: true }); const text = toText(q);
+  assert.ok(pinnedExpression(p).includes(' and '), 'a bare conjunction');
   const back = fromText(text).model;
-  assert.ok(back.find.items.length > 1, 'text splits the conjunction into several items');
+  assert.deepEqual([back.find.items.length, back.find.items[0].type], [1, 'raw']);
   attach(back, p);
   assert.equal(back.find.items.length, 1); assert.equal(back.find.items[0].type, 'drawing'); assert.equal(drawingHeld(back.find.items[0]), true);
   assert.equal(toText(back), text);
-  // and with a condition beside it, only the drawing's own relations are gathered
-  const more = fromText(text.replace(/\)\)\n/, ') and candle_relation(price(low, bars_ago: 0), is: below, right: price(low, bars_ago: 1)))\n')).model;
-  const before = more.find.items.length; attach(more, p);
-  assert.equal(more.find.items.length, before - 1); assert.equal(more.find.items.filter((c) => c.type === 'drawing').length, 1);
+  // with a condition typed beside it the find is one formal line that is no longer the drawing's own: the question
+  // is kept word for word, and the drawing is not put back on a part of it
+  const edited = text + ' and candle_relation(price(low, bars_ago: 0), is: below, right: price(low, bars_ago: 1))';
+  const more = fromText(edited).model; attach(more, p);
+  assert.deepEqual([more.find.items.length, more.find.items[0].type], [1, 'raw']);
+  assert.equal(matches(toText(more)), matches(edited));
 }
 
 console.log(`Hand-off: 324, 1,463 chained and 772 as recorded, and 4,828 pinned, as the engine's own checks count them; all three forms round-trip; ${sent} recorded windows drawn, each the chained code of its candles and a match of it (${whole} with every open on the close before it, ${moved} without).`);

@@ -52,6 +52,9 @@
     </span>
     <span id="status"></span>
   </footer>
-  <script type="module" src="/bench/bench.js"></script>
+  <script type="module">
+    // The bench answers nothing without the engine: a page that cannot load it says so.
+    import('/bench/bench.js').catch((e) => { console.error(e); const s = document.getElementById('status'); s.textContent = 'The bench could not start: ' + e.message; s.className = 'err'; });
+  </script>
 </body>
 </html>

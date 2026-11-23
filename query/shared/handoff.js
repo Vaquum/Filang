@@ -1,14 +1,13 @@
 // The shape hand-off between this bench and the Composer bench.
-// One interchange, the engine's own: the drawing packet of study/composer/drawing.js, under the parameter names the
-// study page already uses (drawing, g1, pin-relations). Only the shape and what is held on it are carried. Each
-// bench counts on its own history, so a count never crosses.
-import { decodeDrawing, drawingG1, pinnedExpression, COMPOSER_REVISION } from '/study/composer/drawing.js';
-import { parseG1 } from '/study/src/g1.js';
+// One interchange, the engine's own: its drawing packet, under the parameter names the study page already uses
+// (drawing, g1, pin-relations). The engine reads every packet and every g1. Only the shape and what is held on it are
+// carried. Each bench counts on its own history, so a count never crosses.
+import { decodeDrawing, drawingG1, pinnedExpression, drawingRevision, shapeOf } from '/shared/filang.js';
 import { make, clauseText } from '/shared/vocab.js';
 
 export { decodeDrawing, drawingG1, pinnedExpression };
 
-const blank = (bars, extra = {}) => ({ version: 1, revision: COMPOSER_REVISION, oriented: true, bars, pins: [], skeleton: 0, stretch: 0,
+const blank = (bars, extra = {}) => ({ version: 1, revision: drawingRevision(), oriented: true, bars, pins: [], skeleton: 0, stretch: 0,
   next: { dir: 0, measure: 'any', bps: 10, atr: 1 }, limit: 12, ...extra });
 
 /**
@@ -23,7 +22,7 @@ export function readLink(search) {
       const packet = decodeDrawing(p.get('drawing'), p.get('g1') ?? undefined);
       return { packet, g1: drawingG1(packet), held: p.has('pin-relations') && pinnedExpression(packet) !== null };
     }
-    parseG1(p.get('g1'));
+    shapeOf(p.get('g1'));
     return { packet: null, g1: p.get('g1'), held: false };
   } catch (e) { return { error: String(e.message || e) }; }
 }
@@ -34,9 +33,9 @@ export function readLink(search) {
  */
 export function packetFromG1(code) {
   try {
-    const pattern = parseG1(code);
-    if (!pattern.oriented || pattern.rows.length > 20) return null;
-    const bars = pattern.rows.map((row) => ({ v: row.ranks.map((r) => (pattern.rankCount === 1 ? 50 : 15 + (70 * r) / (pattern.rankCount - 1))), d: row.direction === 'd' ? 'd' : 'u' }));
+    const shape = shapeOf(code);
+    if (!shape.directions || shape.ranks.length > 20) return null;
+    const bars = shape.ranks.map((ranks, k) => ({ v: ranks.map((r) => (shape.rank_count === 1 ? 50 : 15 + (70 * r) / (shape.rank_count - 1))), d: shape.directions[k] === 'd' ? 'd' : 'u' }));
     const packet = blank(bars, { coordinates: 'ordinal' });
     return decodeDrawing(JSON.stringify(packet), code);   // refuses an opening gap: a drawn bar opens at the previous close
   } catch { return null; }

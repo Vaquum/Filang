@@ -1,7 +1,7 @@
 // The cube as the bench's bar source, checked without the cube: a stand-in for Cube's bridge serves the pinned
 // recording in the bridge's own protocol (/cube/pack, /cube/bars with MSCB blocks, its limits and refusals), and
 // what the Query server builds from it must be the pinned recording again, bar for bar, window by window.
-// Run from the repository root, after study/prepare_recording.py: node query/verify/cube-source.mjs
+// Run from the repository root, after study/prepare_recording.py and bindings/build.py: node query/verify/cube-source.mjs
 // To see the bench on a cube without one, keep the stand-in up and point the server at it:
 //   node query/verify/cube-source.mjs --serve 8799   then   CUBE_URL=http://127.0.0.1:8799 node query/serve.mjs
 import assert from 'node:assert/strict';
@@ -11,14 +11,17 @@ import { readFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { cubeSource, CubeError, decodeMscb, windowRange, WINDOWS, MAX_COLUMNS } from '../cube.mjs';
-import { readBytes } from '../../study/verify/node-env.js';
-import { buildEnvironment, DATA_FILES } from '../../study/src/boot.js';
-import { analyze } from '../../study/src/check.js';
-import { runAnalysis } from '../../study/src/engine.js';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { readRecording } from '../shared/recording.js';
+import { ROOT, engineDir, recordingFile } from './site.mjs';
 
 const T0 = 1609459200; const BASE = 56.25; const N = 4; const STEP = 2 ** N;
-const pinnedCsv = Buffer.from(readBytes(DATA_FILES.bars)).toString('utf8');
-const pinned = JSON.parse(Buffer.from(readBytes(DATA_FILES.provenance)).toString('utf8'));
+const pinnedCsv = await readFile(recordingFile(), 'utf8');
+const pinned = JSON.parse(await readFile(join(ROOT, 'study/data-provenance.json'), 'utf8'));
+// The shared engine, as the bench loads it in the page.
+const { FilangEngine } = await import(pathToFileURL(join(engineDir(), 'index.mjs')).href);
+const engine = await FilangEngine.create(await readFile(join(engineDir(), 'filang_engine.wasm')));
 // The pinned file writes a price as its source did (96733.0); the cube's bars are written in cents (96733.00).
 // The same bar, so the pinned rows are compared in the second form.
 const rows = pinnedCsv.trimEnd().split('\n').slice(1).map((text) => {
@@ -95,31 +98,16 @@ const ok = (name) => { checks++; console.log(`ok  ${name}`); };
   for (const a of asks) { const q = new URL(a, CUBE_URL).searchParams; assert.ok((Number(q.get('b1')) - Number(q.get('b0'))) / STEP <= MAX_COLUMNS); }
   ok(`all history is the pinned recording bar for bar, in ${asks.length} requests of at most ${MAX_COLUMNS} bars`);
 
-  // The engine takes it as it takes the pinned file, and answers the same.
-  const enc = new TextEncoder();
-  const built = buildEnvironment({ csvBytes: enc.encode(all.csv), provenanceBytes: enc.encode(JSON.stringify(all.provenance)), sessionsBytes: readBytes(DATA_FILES.sessions) });
-  assert.equal(built.digestVerified, true);
-  // Bar for bar in the engine's own terms: the same slots, present or missing, with the same cents.
-  const own = buildEnvironment({ csvBytes: readBytes(DATA_FILES.bars), provenanceBytes: readBytes(DATA_FILES.provenance), sessionsBytes: readBytes(DATA_FILES.sessions) }).rec;
-  assert.equal(built.rec.n, own.n); assert.equal(built.rec.t0, own.t0);
-  for (const k of ['O', 'H', 'L', 'C', 'present']) assert.deepEqual(built.rec[k], own[k], `${k} differs from the pinned recording`);
-  const count = (text) => { const a = analyze(text, built.env); assert.equal(a.ok, true, JSON.stringify(a.errors)); return runAnalysis(built.ctx, a, { digestVerified: true }).results[0].matches.length; };
+  // The charts read it as they read the pinned file: the same slots, present or missing, with the same cents.
+  const built = readRecording(all.csv, all.provenance); const own = readRecording(pinnedCsv, pinned);
+  assert.equal(built.n, own.n); assert.equal(built.t0, own.t0);
+  for (const k of ['O', 'H', 'L', 'C', 'present']) assert.deepEqual(built[k], own[k], `${k} differs from the pinned recording`);
+  // And the engine takes it as it takes the pinned file, and answers the same.
   const questions = ['chained_g1', 'exact_g1'].map(op =>
     `on BTCUSDT 15m\nfind ${op}("g1:o:0,1,3,4,u;2,3,5,6,u")`);
-  assert.deepEqual(questions.map(count), [1463, 772]);
-  if (process.argv.includes('--engine')) {
-    const {FilangEngine} = await import('../../target/engine-dist/browser/index.mjs');
-    const engine = await FilangEngine.create(await readFile(
-      new URL('../../target/engine-dist/browser/filang_engine.wasm', import.meta.url)));
-    try {
-      engine.loadCsv(all.csv, built.rec.barMs);
-      assert.deepEqual(engine.studyCounts(questions), [1463, 772].map(count => ({count, error: null})));
-      assert.equal(engine.describeStudy(questions[0]).manifest.pins.source.csv_sha256,
-        all.provenance.csv_sha256);
-    } finally {
-      engine.close();
-    }
-  }
+  assert.equal(engine.loadCsv(all.csv, built.barMs).slots, built.n);
+  assert.deepEqual(engine.studyCounts(questions), [1463, 772].map(count => ({count, error: null})));
+  assert.equal(engine.describeStudy(questions[0]).manifest.pins.source.csv_sha256, all.provenance.csv_sha256);
   ok('the engine verifies its digest and counts 1,463 and 772 on it, as on the pinned file');
 }
 
@@ -176,8 +164,9 @@ const ok = (name) => { checks++; console.log(`ok  ${name}`); };
   bridge.drop = new Set([lastCol - 3, lastCol - 4]);
   const gap = await fresh().bars('24h');
   assert.equal(gap.provenance.row_count, 94);
-  const env = buildEnvironment({ csvBytes: new TextEncoder().encode(gap.csv), provenanceBytes: new TextEncoder().encode(JSON.stringify(gap.provenance)), sessionsBytes: readBytes(DATA_FILES.sessions) });
-  assert.equal(env.rec.n, 96); assert.equal(env.rec.presentCount, 94);
+  const holed = readRecording(gap.csv, gap.provenance);
+  assert.equal(holed.n, 96); assert.equal(holed.presentCount, 94);
+  assert.equal(engine.loadCsv(gap.csv, holed.barMs).slots, 96);
   bridge.drop = new Set();
   ok('a column without trades is a gap the engine sees as a gap');
 
@@ -203,7 +192,7 @@ const ok = (name) => { checks++; console.log(`ok  ${name}`); };
 const children = new Set();
 process.on('exit', () => { for (const child of children) child.kill('SIGKILL'); });
 async function serve(env) {
-  const child = spawn(process.execPath, ['query/serve.mjs'], { env: { ...process.env, HOST: '127.0.0.1', PORT: '0', ...env }, stdio: ['ignore', 'pipe', 'inherit'] });
+  const child = spawn(process.execPath, [join(ROOT, 'query/serve.mjs')], { env: { ...process.env, HOST: '127.0.0.1', PORT: '0', FILANG_QUERY_ENGINE_DIR: engineDir(), ...env }, stdio: ['ignore', 'pipe', 'inherit'] });
   children.add(child); child.once('exit', () => children.delete(child));
   const line = await new Promise((resolve, reject) => { child.stdout.once('data', (d) => resolve(String(d))); child.once('exit', (c) => reject(Error(`server exited ${c}`))); });
   const port = /http:\/\/127\.0\.0\.1:(\d+)\//.exec(line)?.[1];
@@ -222,9 +211,13 @@ async function serve(env) {
   assert.equal((await withCube.get('/bars?w=fortnight')).status, 400);
   assert.equal((await withCube.get('/bars?w=lastyear')).status, 502);
   assert.deepEqual(await (await withCube.get('/healthz')).json(), { service: 'filang-query', ok: true });
-  // The browser still gets the pinned recording where it always did, and never the server's own module.
-  assert.equal(sha(await (await withCube.get('/study/recorded-bars.csv')).text()), pinned.csv_sha256);
-  assert.equal((await withCube.get('/cube.mjs')).status, 404);
+  // The browser gets the pinned recording, its provenance and the engine's package; never the server's own module,
+  // and nothing of the engine the bench used to carry.
+  assert.equal(sha(await (await withCube.get('/recording/bars.csv')).text()), pinned.csv_sha256);
+  assert.deepEqual(await (await withCube.get('/recording/provenance.json')).json(), pinned);
+  for (const asset of ['index.mjs', 'worker-client.mjs', 'worker.mjs', 'filang_engine.wasm']) assert.equal((await withCube.get('/engine/' + asset)).status, 200, asset);
+  assert.equal((await withCube.get('/engine/filang_engine.wasm')).headers.get('content-type'), 'application/wasm');
+  for (const gone of ['/cube.mjs', '/study/src/engine.js', '/study/recorded-bars.csv', '/study/composer/drawing.js']) assert.equal((await withCube.get(gone)).status, 404, gone);
   await withCube.stop();
   ok('the server offers the windows, serves one, and maps refusals to 400 and 502');
 
@@ -234,6 +227,13 @@ async function serve(env) {
   assert.equal((await without.get('/bars?w=7d')).status, 404);
   await without.stop();
   ok('without a cube the server offers the pinned recording only');
+
+  // The bench answers nothing without the engine, so a server that has no engine package is not healthy.
+  const bare = await serve({ CUBE_URL: '', FILANG_QUERY_ENGINE_DIR: '/nonexistent' });
+  assert.match(bare.line, /MISSING/);
+  assert.deepEqual([(await bare.get('/healthz')).status, (await bare.get('/engine/index.mjs')).status], [503, 404]);
+  await bare.stop();
+  ok('a server without the engine package fails its health check');
 
   // A bridge that is down is a 502 with its reason, and the health answer does not depend on it.
   const down = await serve({ CUBE_URL: 'http://127.0.0.1:9' });
@@ -245,4 +245,5 @@ async function serve(env) {
 }
 
 fake.close();
+engine.close();
 console.log(`${checks} checks passed`);

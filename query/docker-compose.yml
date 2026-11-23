@@ -1,6 +1,7 @@
 # Query on the Origo host: host network, serving on 127.0.0.1:8493 only, for the host's Caddy (deployed from
 # Vaquum/Portal) to put query.vaquum.fi in front of it behind the Portal login. It has no login of its own and
-# keeps no state: the recording is built into the image and every query runs in the reader's browser.
+# keeps no state: the recording and the shared Filang engine are built into the image and every query runs in the
+# reader's browser, on that engine.
 # Its bars come from the market-state cube through Cube's bridge on this host's loopback (Vaquum/Cube serves it
 # on 127.0.0.1:8487), read only. If the bridge does not answer, the bench shows the built-in recording and says so.
 # The port is 8493, not 8491: on this host 8491 is Cube's field-data service.
@@ -10,6 +11,9 @@ services:
     build:
       context: ..
       dockerfile: query/Dockerfile
+      args:
+        # The published Filang release whose browser package the bench runs on (github.com/Vaquum/Filang/releases).
+        FILANG_ENGINE_VERSION: "0.10.0.post21"
     image: query:latest
     network_mode: host
     environment:
