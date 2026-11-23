@@ -502,10 +502,20 @@ impl MatchLists<'_> {
     fn matches(&self) -> impl Iterator<Item = u32> + '_ {
         let mut lists = self.slots;
         lists[..self.len].sort_unstable_by_key(|list| list.len());
-        lists[0].iter().copied().filter(move |slot| {
-            lists[1..self.len]
-                .iter()
-                .all(|list| list.binary_search(slot).is_ok())
+        let shortest = lists[0];
+        shortest.iter().copied().filter(move |slot| {
+            lists[1..self.len].iter_mut().all(|list| {
+                if list.first().map_or(false, |first| first < slot) {
+                    let offset = list.partition_point(|entry| entry < slot);
+                    *list = &list[offset..];
+                }
+                if list.first() == Some(slot) {
+                    *list = &list[1..];
+                    true
+                } else {
+                    false
+                }
+            })
         })
     }
 }
