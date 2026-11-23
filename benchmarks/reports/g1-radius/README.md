@@ -31,3 +31,32 @@ Use the [protocol](protocol.md) and
 [radius-zero-bench.mjs](../../../bindings/verify/radius-zero-bench.mjs)
 with the baseline and candidate browser build directories, the pinned
 CSV, and the corresponding `base` or `candidate` mode.
+
+## Integrated replications
+
+A2 and A3 retained all exact fingerprints. Relative to the original
+baseline, the one-bar median was 5.11% higher in A2 and 5.21% higher in
+A3, above the 5% limit. The other keys remained in band. The
+[A2](zero-a2.jsonl) and [A3](zero-a3.jsonl) samples retain those misses.
+
+A4 uses the same Query, Composer and adaptive-postings source as the
+radius build, with radius absent from baseline commit
+`9f82b48b0bb3244ccf9c5b3bedb6eac46549930b`. This isolates the change.
+All fingerprints agreed and all four medians met the planned band.
+
+| Prepared key | Baseline median, µs | Radius-zero median, µs | Change |
+| --- | ---: | ---: | ---: |
+| One bar | 1.541 | 1.614 | +4.75% |
+| Two chained bars | 1.571 | 1.618 | +2.97% |
+| Two recorded bars, all axes | 3.193 | 3.234 | +1.26% |
+| Eleven chained bars, delta | 3.270 | 3.325 | +1.67% |
+
+See the retained [A4 samples](zero-a4.jsonl). The real-browser [Query
+receipt](query-chromium.json) widened a pinned two-bar pattern from 1,463
+to 2,666 occurrences at radius two and showed the distance bins.
+[Composer's existing worker workload](composer-chromium.json) also
+passed with radius available. Its longest search took 1.298 s, its
+largest progress gap was 9.8 ms, and both replacements cancelled in
+under 11 ms. The shared vectors check dimension-aware Composer and
+the native CLI, browser and Python bindings. Limen's offline wheel
+reproduced 126 features across 14,496 real bars on Python 3.10–3.13.
