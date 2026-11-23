@@ -1,6 +1,6 @@
 // Filang query bench. One locked canvas shows the pattern; the question is written in its row labels.
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
-import { load, loaded, geometryRadiusAvailable, geometryRadiusReceipt, sources, PINNED, run, count, rec, env, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
+import { load, loaded, geometryRadiusReceipt, sources, PINNED, run, count, rec, env, definition, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
 import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, make, clone, toText, bodyText, fromText, clauseText, phraseText, drawingBars, drawingHeld, drawingRecorded } from '/shared/vocab.js';
 import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
@@ -93,7 +93,7 @@ function drawnParts(c) {
   const loose = n > 1 && !p ? h('span', { class: 'from', title: drawingRecorded(c) ? 'This code has a later bar opening away from the close before it, or keeps no directions, so it cannot be drawn as a chain. It is counted with opens as recorded.' : 'This code cannot be drawn as a chain, and it is asked as one: a window read as a chain always opens each later bar at the close before it, so nothing can match.' }, drawingRecorded(c) ? 'opens as recorded · not a chain' : 'read as a chain · not a chain') : null;
   const radius = Number(c.args.radius) || 0;
   let radiusControl = null;
-  if (geometryRadiusAvailable() && !drawingHeld(c)) {
+  if (!drawingHeld(c)) {
     const stepRadius = h('input', {type: 'number', min: 0, max: 4294967295, step: 1,
       value: Array.isArray(c.args.radius) ? '' : radius, placeholder: 'sweep', 'aria-label': 'Comparison radius',
       onchange: (event) => {
@@ -215,7 +215,7 @@ function renderBars() {
   const { res, r, answer } = ctx; const m = state.model; const R = rec(); const n = answer.rows.length;
   const prov = env().provenance; const fromCube = prov.source === 'cube';
   // Bars after the cube's canonical mark can still change: Cube shows them too, and says how far the mark has come.
-  $('#chip').textContent = `${R.instrument} ${R.barText} · ${R.venue || 'Binance spot'} · ${env().env.recording.rangeText} · ${int(R.presentCount)} ${R.presentCount === 1 ? 'close' : 'closes'} · `
+  $('#chip').textContent = `${R.instrument} ${R.barText} · ${R.venue || 'Binance spot'} · ${env().rangeText} · ${int(R.presentCount)} ${R.presentCount === 1 ? 'close' : 'closes'} · `
     + (fromCube ? `cube, through ${isoUTC(Date.parse(prov.through)).slice(0, 16)} UTC${prov.provisional_rows ? ` · last ${int(prov.provisional_rows)} provisional` : ''}` : 'pinned recording');
   $('#chip').title = fromCube ? `Read from the market-state cube through Cube's bridge${prov.canonical_through ? `. Canonical through ${isoUTC(Date.parse(prov.canonical_through)).slice(0, 16)} UTC; later bars are provisional` : ''}.` : 'The pinned BTCUSDT 15m recording built into this server.';
   mount($('#readout'), h('b', null, int(n)), note(n === 1 ? 'close in the answer' : 'closes in the answer'), r.columns.length ? h('span', { class: 'sep' }) : null,
@@ -491,7 +491,7 @@ function definitionOf(c) {
       formula: [...(held ? rel.map(cap) : [c.args.g1]), ...(c.args.packet ? ['Composer’s skeleton, stretch, next-bar term, timeframes and picks are not part of this question.', OWN_COUNT] : [])] };
   }
   if (c.type === 'pattern') { const p = PATTERNS.find((x) => x.id === c.args.p); return { title: `${p.name} · ${p.ja}`, summary: p.rule, formula: [] }; }
-  const d = CLAUSES[c.type].def && env().registry.get(CLAUSES[c.type].def);
+  const d = CLAUSES[c.type].def && definition(CLAUSES[c.type].def);
   return d ? { title: d.title, summary: d.summary, formula: (d.formula || []).filter((f) => f !== d.summary) } : null;
 }
 
@@ -512,7 +512,7 @@ function renderRight() {
   if (state.slot !== null) {
     const i = state.slot; const ar = ctx.answer.r; const row = ar.rowsBySlot.get(i) || null; const drawing = h('div', { class: 'dist' });
     const inQuery = new Map([...m.find.items.map((c, k) => [clauseText(c), 'f' + k]), ...m.wheres.map((c, k) => [clauseText(c), 'w' + k])]);
-    const facts = factsAt(i); const rows = inspectRows(); const at = rows.findIndex((x) => x.i === i);
+    const facts = factsAt(i); const rows = inspectRows(); const at = rows.findIndex((x) => x.i === i); const applied = m.wheres.filter((c) => !c.off);
     const fact = (f) => {
       const text = clauseText(f.c); const on = inQuery.has(text); const path = inQuery.get(text);
       const left = on ? null : (() => { const x = clone(m); x.wheres.push(f.c); return count(bodyText(x)); })();
@@ -532,8 +532,8 @@ function renderRight() {
         h('div', { class: 'carry' }, candlesLink(i, 'link'))),
       h('section', { class: 'block' }, h('div', { class: 'sec' }, label('Why this close')),
         row ? h('ul', { class: 'why' },
-          h('li', null, mark(row.detector), h('span', null, cap(ar.event.label || ar.event.text)), h('small', null, ar.event.series.why(i))),
-          row.results.map((x, k) => h('li', null, mark(x.v), h('span', null, cap(ar.clauses[k].label || ar.clauses[k].text)), h('small', null, x.why))),
+          h('li', null, mark(row.detector), h('span', null, cap(m.find.items.length === 1 ? phraseText(m.find.items[0]) : ar.event.text)), h('small', null, ar.event.series.why(i))),
+          row.results.map((x, k) => h('li', null, mark(x.v), h('span', null, cap(applied[k] ? phraseText(applied[k]) : ar.clauses[k].text)), h('small', null, x.why))),
           row.out.map((o, k) => h('li', null, h('span', { class: 'v' }, '→'), h('span', null, `After ${ar.columns[k].text}: `, h('b', { class: 'fig' }, o.status === 'observed' ? pct(o.value) : o.status)), h('small', null, o.why))))
           : h('p', { class: 'empty' }, 'The pattern does not occur at this close. ' + r.event.series.why(i))),
       h('section', { class: 'block' }, h('div', { class: 'sec' }, label('Facts at this close'), note('Tick to add')), group('What happened', 'event'), group('Anatomy', 'anatomy'), group('Context', 'context')));

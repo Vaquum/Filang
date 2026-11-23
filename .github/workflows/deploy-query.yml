@@ -6,12 +6,8 @@ on:
     branches: [main]
     paths:
       - 'query/**'
-      - 'study/src/**'
-      - 'study/composer/patterns.js'
-      - 'study/composer/drawing.js'
-      - 'study/extensions/**'
+      - 'bindings/fetch_browser.py'
       - 'study/data-provenance.json'
-      - 'study/nyse-sessions.json'
       - 'study/recording-lock.json'
       - 'study/prepare_recording.py'
       - '.github/workflows/deploy-query.yml'
@@ -95,8 +91,8 @@ jobs:
           # shellcheck disable=SC2029
           ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_DIR'"
           rsync -az --delete --relative \
-            query study/src study/composer/patterns.js study/composer/drawing.js study/extensions \
-            study/data-provenance.json study/nyse-sessions.json study/recording-lock.json study/prepare_recording.py \
+            query bindings/fetch_browser.py \
+            study/data-provenance.json study/recording-lock.json study/prepare_recording.py \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/"
       - name: Build and start
         run: |

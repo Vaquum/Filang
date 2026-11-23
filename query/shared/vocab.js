@@ -1,10 +1,8 @@
 // The trader vocabulary: plain-English clauses with typed slots, each mapped to exact Filang text.
 // All three directions edit this one model and print the same query.
-import { parse, printExpr } from '/study/src/lang.js';
-import { CANDLE_PATTERNS } from '/study/src/registry.js';
-import { pinnedExpression } from '/study/composer/drawing.js';
+import { CANDLES, candleNamed, describe, pinnedExpression } from '/shared/filang.js';
 
-export const PATTERNS = CANDLE_PATTERNS.patterns.map((p) => ({
+export const PATTERNS = CANDLES.map((p) => ({
   id: p.id.replaceAll('-', '_'), name: p.name, ja: p.ja, bars: p.bars, rule: p.rule, aliases: p.aliases || [],
 }));
 const patternById = new Map(PATTERNS.map((p) => [p.id, p]));
@@ -187,7 +185,8 @@ export function splitText(c) {
 }
 
 export function bodyText(m, { upTo = Infinity, without = -1 } = {}) {
-  const lines = ['find ' + m.find.items.map((c) => wrap(clauseText(c))).join(` ${m.find.join} `)];
+  // one item stands as it is written; several are joined, each in brackets when it is itself a join
+  const lines = ['find ' + (m.find.items.length === 1 ? clauseText(m.find.items[0]) : m.find.items.map((c) => wrap(clauseText(c))).join(` ${m.find.join} `))];
   m.wheres.forEach((c, i) => { if (!c.off && i < upTo && i !== without) lines.push('where ' + clauseText(c)); });
   if (m.split) lines.push('group by ' + splitText(m.split));
   if (m.horizons.length) lines.push(`measure close_return(after: ${m.horizons.length > 1 ? '[' + m.horizons.join(', ') + ']' : m.horizons[0]})`);
@@ -225,6 +224,8 @@ export function step(slot, v, dir) {
 
 // ---------------------------------------------------------------- Filang text → model
 
+// An expression the vocabulary has no clause for gives null. The caller then keeps the whole line it stands in as
+// formal text, in the engine's own canonical wording: the engine's syntax tree carries no text for its parts.
 function fromExpr(node, lets) {
   const val = (n) => {
     if (!n) return null;
@@ -236,22 +237,23 @@ function fromExpr(node, lets) {
     return null;
   };
   const arg = (call, name, pos) => call.args.find((a) => a.name === name)?.value ?? (pos !== undefined ? call.args.filter((a) => a.name === null)[pos]?.value : undefined);
-  const raw = () => ({ type: 'raw', args: { text: printExpr(node) } });
+  const raw = () => null;
   const ok = (type, args) => (Object.values(args).every((v) => v !== null && v !== undefined) ? { type, args } : raw());
   const prior = (n) => (n?.k === 'call' && /^prior_(low|high)$/.test(n.name) ? { side: n.name.slice(6), over: val(arg(n, 'over')) ?? '4h' } : null);
 
-  if (node.k === 'not') { const inner = fromExpr(node.item, lets); return inner.not ? raw() : { ...inner, not: true }; }
+  if (node.k === 'not') { const inner = fromExpr(node.item, lets); return !inner || inner.not ? raw() : { ...inner, not: true }; }
   if (node.k === 'id' && patternById.has(node.name)) return { type: 'pattern', args: { p: node.name } };
   if (node.k === 'str') {
     if (node.value === 'Wick rejection') return make('wickrej');
-    const hit = CANDLE_PATTERNS.resolve?.(node.value);
-    if (hit) return { type: 'pattern', args: { p: hit.id.replaceAll('-', '_') } };
+    const hit = candleNamed(node.value);
+    if (hit) return { type: 'pattern', args: { p: hit.replaceAll('-', '_') } };
     return raw();
   }
   if (node.k === 'cmp' && (node.op === '=' || node.op === '!=') && node.left.k === 'call') {
     const not = node.op === '!=';
-    if (node.left.name === 'weekday') return { ...ok('weekday', { day: val(node.right) }), ...(not ? { not } : {}) };
-    if (node.left.name === 'completed_trend') return { ...ok('trend', { frame: val(arg(node.left, 'frame')), dir: val(node.right) }), ...(not ? { not } : {}) };
+    const cat = node.left.name === 'weekday' ? ok('weekday', { day: val(node.right) })
+      : node.left.name === 'completed_trend' ? ok('trend', { frame: val(arg(node.left, 'frame')), dir: val(node.right) }) : null;
+    if (cat) return { ...cat, ...(not ? { not } : {}) };
     return raw();
   }
   if (node.k !== 'call') return raw();
@@ -310,20 +312,26 @@ function fromExpr(node, lets) {
 }
 
 export function fromText(text) {
-  const { ast, error } = parse(text);
-  if (error) return { model: null, error };
+  const d = describe(text);
+  if (!d.ok) { const e = d.errors[0]; return { model: null, error: { message: e.message + (e.hint ? ` (${e.hint})` : '') } }; }
+  const { ast } = d;
+  // The engine's canonical text holds one line per clause, in the order of the tree.
+  const lines = d.canonical.split('\n');
+  const line = (word) => lines.filter((l) => l.startsWith(word + ' ')).map((l) => ({ type: 'raw', args: { text: l.slice(word.length + 1) } }));
   const lets = new Map(ast.lets.map((b) => [b.name, b.value]));
   const top = ast.find.k === 'or' || ast.find.k === 'and' ? ast.find : { k: 'or', items: [ast.find] };
-  const model = { find: { join: top.k, items: top.items.map((n) => fromExpr(n, lets)) }, wheres: [], split: null, horizons: [] };
-  for (const w of ast.wheres) {
-    if (w.k === 'and') w.items.forEach((n) => model.wheres.push(fromExpr(n, lets)));
-    else model.wheres.push(fromExpr(w, lets));
-  }
+  const found = top.items.map((n) => fromExpr(n, lets));
+  const model = { find: found.every(Boolean) ? { join: top.k, items: found } : { join: 'or', items: line('find') }, wheres: [], split: null, horizons: [] };
+  const formal = line('where');
+  ast.wheres.forEach((w, i) => {
+    const parts = (w.k === 'and' ? w.items : [w]).map((n) => fromExpr(n, lets));
+    if (parts.every(Boolean)) model.wheres.push(...parts); else model.wheres.push(formal[i]);
+  });
   if (ast.group) {
     const g = ast.group;
     if (g.k === 'call' && g.name === 'weekday') model.split = make('weekday');
     else if (g.k === 'call' && g.name === 'completed_trend') model.split = make('trend', { frame: g.args[0]?.value?.text ?? '4h' });
-    else model.split = fromExpr(g, lets);
+    else model.split = fromExpr(g, lets) ?? line('group by')[0];
   }
   for (const m of ast.measures) {
     if (m.name !== 'close_return') continue;

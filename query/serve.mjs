@@ -1,7 +1,7 @@
 // Server for the Filang query bench.
-// It serves this folder, plus the study engine and its pinned recording read-only, so the bench runs real
-// Filang queries in the browser. It has no login of its own: in production it listens on 127.0.0.1 only,
-// behind the host's Caddy and the Portal login.
+// It serves this folder, the shared Filang engine's browser package and the pinned recording, read-only, so the
+// bench asks the engine real Filang queries in the browser. It has no login of its own: in production it listens on
+// 127.0.0.1 only, behind the host's Caddy and the Portal login.
 // With CUBE_URL set to Cube's bridge it also serves the cube's bars for Cube's time windows (/bars); without it,
 // or when the bridge cannot answer, the bench reads the pinned recording.
 import { createServer } from 'node:http';
@@ -11,8 +11,10 @@ import { fileURLToPath } from 'node:url';
 import { cubeSource, CubeError, INTERVALS, WINDOWS } from './cube.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
-const STUDY = resolve(process.env.FILANG_STUDY || join(HERE, '../study'));
-const DATA = resolve(process.env.FILANG_STUDY_DATA || join(STUDY, '../data/study'));
+// The pinned recording and the provenance that names its digest. The recording is built by study/prepare_recording.py.
+const RECORDING = resolve(process.env.FILANG_STUDY_DATA || join(HERE, '../data/study'), 'recorded-bars.csv');
+const PROVENANCE = resolve(process.env.FILANG_QUERY_PROVENANCE || join(HERE, '../study/data-provenance.json'));
+// The engine's browser package: a pinned release in the image, a local build (bindings/build.py) in a checkout.
 const ENGINE = resolve(process.env.FILANG_QUERY_ENGINE_DIR || join(HERE, '../target/engine-dist/browser'));
 const engineAssets = new Set(['index.mjs', 'worker-client.mjs', 'worker.mjs', 'filang_engine.wasm']);
 const host = process.env.HOST || '127.0.0.1';
@@ -27,23 +29,17 @@ const mime = new Map([
   ['.json', 'application/json; charset=utf-8'], ['.csv', 'text/csv; charset=utf-8'],
   ['.svg', 'image/svg+xml'], ['.wasm', 'application/wasm'],
 ]);
-// Only what the browser engine imports is exposed from the study folder.
-const studyAsset = /^(?:(?:src|composer|extensions)\/(?:[\w.-]+\/)*[\w.-]+\.(?:js|json)|[\w-]+\.json)$/;
 const pageAsset = /^(?:index\.html|(?:bench|shared)\/[\w.-]+\.(?:js|css))$/;
 // The bench cannot answer without these, so their absence is a failed health check, not a blank page.
-const required = [join(DATA, 'recorded-bars.csv'), join(STUDY, 'data-provenance.json'), join(STUDY, 'nyse-sessions.json'), join(STUDY, 'src/engine.js'), join(STUDY, 'composer/patterns.js'),
-  join(STUDY, 'composer/drawing.js')];   // the bench's vocabulary imports it: without it the page is blank
+const required = [RECORDING, PROVENANCE, ...[...engineAssets].map((asset) => join(ENGINE, asset))];
 
 function locate(path) {
   if (path.startsWith('engine/')) {
     const asset = path.slice(7);
     return engineAssets.has(asset) ? join(ENGINE, asset) : null;
   }
-  if (path === 'study/recorded-bars.csv') return join(DATA, 'recorded-bars.csv');
-  if (path.startsWith('study/')) {
-    const rest = path.slice(6);
-    return studyAsset.test(rest) ? join(STUDY, rest) : null;
-  }
+  if (path === 'recording/bars.csv') return RECORDING;
+  if (path === 'recording/provenance.json') return PROVENANCE;
   const name = path === '' ? 'index.html' : path;
   if (!pageAsset.test(name)) return null;
   const file = resolve(HERE, name);
@@ -91,5 +87,5 @@ for (const sig of ['SIGTERM', 'SIGINT']) process.once(sig, () => server.close(()
 server.listen(port, host, async () => {
   const gone = await missing();
   // The port it bound, which is the port asked for unless that was 0: a check that starts its own server asks for any.
-  console.log(`Filang query bench on http://${host}:${server.address().port}/ · engine ${STUDY} · bars ${cube ? `cube at ${process.env.CUBE_URL}` : 'pinned recording'}${gone.length ? ` · MISSING ${gone.join(', ')}` : ''}`);
+  console.log(`Filang query bench on http://${host}:${server.address().port}/ · engine ${ENGINE} · bars ${cube ? `cube at ${process.env.CUBE_URL}` : 'pinned recording'}${gone.length ? ` · MISSING ${gone.join(', ')}` : ''}`);
 });

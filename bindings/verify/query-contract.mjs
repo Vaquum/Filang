@@ -2,7 +2,6 @@
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
 import {readFile} from "node:fs/promises";
-import {register} from "node:module";
 import {loadInputs} from "../../study/native/inputs.mjs";
 import {analyze} from "../../study/src/check.js";
 import {manifestFor, runCandidate} from "../../study/src/engine.js";
@@ -10,16 +9,11 @@ import {parseG1} from "../../study/src/g1.js";
 import {stripSpans} from "../../study/src/lang.js";
 import {FUNCTIONS} from "../../study/src/registry.js";
 import {FilangEngine} from "../../target/engine-dist/browser/index.mjs";
+import {install} from "../../query/verify/site.mjs";
 
-const root = new URL("../../", import.meta.url).href;
-register("data:text/javascript," + encodeURIComponent(`
-  const root = ${JSON.stringify(root)};
-  export function resolve(spec, context, next) {
-    if (spec.startsWith("/study/")) return {url: new URL(spec.slice(1), root).href, shortCircuit: true};
-    if (spec.startsWith("/shared/")) return {url: new URL("query" + spec, root).href, shortCircuit: true};
-    return next(spec, context);
-  }
-`), import.meta.url);
+// The bench's vocabulary imports by site path and asks the shared engine, as it does in the page.
+await install();
+await (await import("/shared/filang.js")).load();
 const {PRESETS, OFFERS, clone, fromText, toText} = await import("/shared/vocab.js");
 
 const {bundle, assets} = loadInputs();

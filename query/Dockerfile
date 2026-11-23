@@ -12,19 +12,17 @@ WORKDIR /work/study
 COPY study/prepare_recording.py study/data-provenance.json study/recording-lock.json ./
 RUN FILANG_STUDY_DATA=/work/data python prepare_recording.py --parquet /work/source.parquet --encoder /work/bars.py
 
-ARG FILANG_ENGINE_VERSION=""
+# The shared Filang engine the bench asks everything of: the browser package of one published release, checked
+# against that release's checksums. The bench has no engine of its own, so an image without it is not built.
+ARG FILANG_ENGINE_VERSION
 COPY bindings/fetch_browser.py /work/fetch_browser.py
-RUN mkdir -p /work/engine && if [ -n "$FILANG_ENGINE_VERSION" ]; then python /work/fetch_browser.py "$FILANG_ENGINE_VERSION" --out /work/engine; fi
+RUN test -n "$FILANG_ENGINE_VERSION" || { echo "set FILANG_ENGINE_VERSION to the Filang release the bench runs on" >&2; exit 1; }; \
+    python /work/fetch_browser.py "$FILANG_ENGINE_VERSION" --out /work/engine
 
-# Stage two holds only what a browser asks for: the bench, the engine modules it imports, and the recording.
+# Stage two holds only what a browser asks for: the bench, the engine's browser package, and the recording.
 FROM node:22-slim
 WORKDIR /app
-COPY study/src study/src
-COPY study/composer/patterns.js study/composer/patterns.js
-# The drawing packet a shape is carried in to and from the Composer bench.
-COPY study/composer/drawing.js study/composer/drawing.js
-COPY study/extensions study/extensions
-COPY study/data-provenance.json study/nyse-sessions.json study/
+COPY study/data-provenance.json study/
 # cube.mjs is the server's own: it reads Cube's bridge when CUBE_URL names one, and is never served.
 COPY query/index.html query/serve.mjs query/cube.mjs query/
 COPY query/bench query/bench
