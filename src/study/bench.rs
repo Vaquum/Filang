@@ -1,6 +1,7 @@
 //! Paged occurrence receipts for the Query workbench.
 use super::{
     compute::{Eval, Series},
+    explanation::{self, Explain},
     plan::{Node, Query},
     quote,
     tape::{Calendar, DAYS, TRENDS},
@@ -102,7 +103,13 @@ impl Study {
         let plan = self.compile(text, Some(candidate))?;
         let empty = Calendar::empty();
         let calendar = self.calendar.as_ref().map_or(&empty, |(_, cal)| cal);
-        let series = Eval::new(&self.tape, calendar).series(&plan.nodes)?;
+        let mut eval = Eval::new(&self.tape, calendar);
+        let series = eval.series(&plan.nodes)?;
+        let explain = Explain {
+            eval: &eval,
+            nodes: &plan.nodes,
+            series: &series,
+        };
         let query = &plan.queries[0];
         let answers = query
             .filters
@@ -116,11 +123,35 @@ impl Study {
             answers.join(","),
             group_at(query, &series, i)
         );
+        write!(
+            out,
+            ",\"event_why\":{},\"where_why\":[",
+            quote(&explain.at(query.find, i)?)
+        )
+        .expect("format string");
+        for (position, &filter) in query.filters.iter().enumerate() {
+            if position > 0 {
+                out.push(',');
+            }
+            out.push_str(&quote(&explain.at(filter, i)?));
+        }
+        out.push(']');
+        if let Some(group) = query.group {
+            write!(out, ",\"group_why\":{}", quote(&explain.at(group, i)?)).expect("format string");
+        }
         if self.tape.bars[i].is_some() {
             write_outcomes(&mut out, &self.tape, i, &query.horizons);
             write_reclaim(&mut out, &self.tape, &series, query, i)?;
+            out.push_str(",\"outcome_why\":[");
+            for (position, &horizon) in query.horizons.iter().enumerate() {
+                if position > 0 {
+                    out.push(',');
+                }
+                out.push_str(&quote(&explanation::outcome(&self.tape, i, horizon)));
+            }
+            out.push(']');
         } else {
-            out.push_str(",\"out\":null");
+            out.push_str(",\"out\":null,\"outcome_why\":null");
         }
         out.push('}');
         Ok(out)

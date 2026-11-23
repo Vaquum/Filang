@@ -7,6 +7,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { cubeSource, CubeError, decodeMscb, windowRange, WINDOWS, MAX_COLUMNS } from '../cube.mjs';
@@ -103,8 +104,22 @@ const ok = (name) => { checks++; console.log(`ok  ${name}`); };
   assert.equal(built.rec.n, own.n); assert.equal(built.rec.t0, own.t0);
   for (const k of ['O', 'H', 'L', 'C', 'present']) assert.deepEqual(built.rec[k], own[k], `${k} differs from the pinned recording`);
   const count = (text) => { const a = analyze(text, built.env); assert.equal(a.ok, true, JSON.stringify(a.errors)); return runAnalysis(built.ctx, a, { digestVerified: true }).results[0].matches.length; };
-  assert.equal(count('on BTCUSDT 15m\nfind chained_g1("g1:o:0,1,3,4,u;2,3,5,6,u")'), 1463);
-  assert.equal(count('on BTCUSDT 15m\nfind exact_g1("g1:o:0,1,3,4,u;2,3,5,6,u")'), 772);
+  const questions = ['chained_g1', 'exact_g1'].map(op =>
+    `on BTCUSDT 15m\nfind ${op}("g1:o:0,1,3,4,u;2,3,5,6,u")`);
+  assert.deepEqual(questions.map(count), [1463, 772]);
+  if (process.argv.includes('--engine')) {
+    const {FilangEngine} = await import('../../target/engine-dist/browser/index.mjs');
+    const engine = await FilangEngine.create(await readFile(
+      new URL('../../target/engine-dist/browser/filang_engine.wasm', import.meta.url)));
+    try {
+      engine.loadCsv(all.csv, built.rec.barMs);
+      assert.deepEqual(engine.studyCounts(questions), [1463, 772].map(count => ({count, error: null})));
+      assert.equal(engine.describeStudy(questions[0]).manifest.pins.source.csv_sha256,
+        all.provenance.csv_sha256);
+    } finally {
+      engine.close();
+    }
+  }
   ok('the engine verifies its digest and counts 1,463 and 772 on it, as on the pinned file');
 }
 

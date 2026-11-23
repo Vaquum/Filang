@@ -1,0 +1,823 @@
+{
+  "schema": "filang-study-terms-v1",
+  "terms": [
+    {
+      "name": "exact_g1",
+      "id": "exact_g1",
+      "version": 1,
+      "title": "Exact G1 twins",
+      "summary": "The contiguous bars have the same global price ordering and ties as the selected Composer drawing.",
+      "formula": [
+        "Rank all low, body low, body high and high endpoints across the window together.",
+        "Every corresponding rank matches, including ties. In oriented mode every body direction also matches."
+      ],
+      "positional": "pattern",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "chained_g1",
+      "id": "chained_g1",
+      "version": 1,
+      "title": "Chained G1 twins",
+      "summary": "The contiguous bars, read as a chain, have the same global price ordering and ties as the selected Composer drawing.",
+      "formula": [
+        "Read the first bar of the window as recorded.",
+        "Read every later bar as opening at the close of the recorded bar just before it; its low and high widen to include that open, and its direction follows from that open.",
+        "Rank all low, body low, body high and high endpoints across the window together.",
+        "Every corresponding rank matches, including ties. In oriented mode every body direction also matches.",
+        "A one-bar window has no later bar, so it reads exactly as exact_g1 reads it."
+      ],
+      "positional": "pattern",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "wick_rejection",
+      "id": "wick_rejection",
+      "version": 1,
+      "title": "Wick rejection",
+      "summary": "A bar whose small body sits at the top of its range after a long lower wick (rejection of lower prices).",
+      "formula": [
+        "range = high − low; the event needs range > 0",
+        "body = |close − open|",
+        "lower_wick = min(open, close) − low",
+        "event ⇔ range > 0 ∧ body ≤ body_max × range ∧ lower_wick ≥ wick_min × range"
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": [
+        "Wick rejection"
+      ]
+    },
+    {
+      "name": "channel_breakout",
+      "id": "channel_breakout",
+      "version": 1,
+      "title": "Channel breakout",
+      "summary": "The trigger bar closes above the highest high of the preceding lookback; the trigger bar is excluded from the channel.",
+      "formula": [
+        "channel = bars with opens in [t − 15m − L, t − 15m) (the L/15m bars before the trigger)",
+        "prior_high = max(high over channel)",
+        "event ⇔ close(trigger) > prior_high (strict)"
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "quiet_range",
+      "id": "quiet_range",
+      "version": 1,
+      "title": "Quiet range",
+      "summary": "Rolling state sampled at every 15m close: the trailing window range is small relative to the close.",
+      "formula": [
+        "at each 15m close s: W = bars with opens in [s − window, s)",
+        "width = max(high over W) − min(low over W)",
+        "state(s) ⇔ width ≤ width_max × close(s)"
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": [
+        "Quiet range"
+      ]
+    },
+    {
+      "name": "held",
+      "id": "held",
+      "version": 1,
+      "title": "Held for",
+      "summary": "Duration operator on a state: the state was true at every 15m sample from t − D through t.",
+      "formula": [
+        "samples s = t − D, t − D + 15m, …, t on the UTC 15m grid (D/15m + 1 samples; 48h → 193)",
+        "held ⇔ state(s) is true at every sample",
+        "any known false sample → false; otherwise any absent or unknown sample → unknown",
+        "grid coverage is checked by timestamp, never by adjacent array elements"
+      ],
+      "positional": "state",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "range_contained",
+      "id": "range_contained",
+      "version": 1,
+      "title": "Single-window containment",
+      "summary": "One trailing window envelope; no held timer. A contrast to held(quiet_range(…), for: …).",
+      "formula": [
+        "W = bars with opens in [t − over, t)",
+        "envelope = max(high over W) − min(low over W)",
+        "true ⇔ envelope ≤ width_max × close(t)"
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "weekday",
+      "id": "weekday",
+      "version": 1,
+      "title": "Session weekday",
+      "summary": "The stored weekday of the calendar session on the anchor’s New York date; closed when that date has no session.",
+      "formula": [
+        "New York date of the anchor instant, using the pinned session table (local day = [open − 9h30m, open + 14h30m) of that session)",
+        "value = stored weekday of that date’s session (mon … fri); closed if the date is covered but has no session"
+      ],
+      "positional": "calendar",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "session_tail",
+      "id": "session_tail",
+      "version": 1,
+      "title": "Session tail",
+      "summary": "The anchor (bar close) falls in the half-open tail (session_end − D, session_end] of a session.",
+      "formula": [
+        "true ⇔ some session close c satisfies c − D < t ≤ c",
+        "with 15m bars and a 16:00 close: last: 30m admits closes 15:45 and 16:00, not 15:30; last: 1h admits 15:15–16:00",
+        "a 30–60 minute band is session_tail(cal, last: 1h) and not session_tail(cal, last: 30m)"
+      ],
+      "positional": "calendar",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "completed_trend",
+      "id": "completed_trend",
+      "version": 1,
+      "title": "Completed higher-timeframe trend",
+      "summary": "Close versus open of the most recent expected UTC-aligned bar of the frame that ended by t.",
+      "formula": [
+        "E = floor(t / frame) × frame (UTC-aligned end ≤ t); the frame bar covers [E − frame, E)",
+        "up if close(last constituent) > open(first constituent); down if <; flat if =",
+        "every constituent 15m bar must be present; no fallback to an older frame bar"
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "close_return",
+      "id": "close_return",
+      "version": 1,
+      "title": "Close return",
+      "summary": "Observed return from the anchor close to the close exactly h later. Each horizon is a column.",
+      "formula": [
+        "r(h) = C(t + h) / C(t) − 1, where C(x) is the close of the bar that closes exactly at x",
+        "t + h after the recording end → censored; bar absent inside the recording → unknown",
+        "occurrences stay in the table when an outcome is missing; summaries use observed values only"
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "relative_volume",
+      "id": "relative_volume",
+      "version": 0,
+      "title": "Relative-volume threshold (planned)",
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "price",
+      "id": "price",
+      "version": 1,
+      "title": "Candle price",
+      "summary": "Read an endpoint of a completed candle by its lag on the bar grid.",
+      "formula": [
+        "Read an endpoint of a completed candle by its lag on the bar grid."
+      ],
+      "positional": "point",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "prior_low",
+      "id": "prior_low",
+      "version": 1,
+      "title": "Prior range low",
+      "summary": "The lowest low of the preceding complete window. The candle being tested is excluded.",
+      "formula": [
+        "The lowest low of the preceding complete window. The candle being tested is excluded."
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "prior_high",
+      "id": "prior_high",
+      "version": 1,
+      "title": "Prior range high",
+      "summary": "The highest high of the preceding complete window. The candle being tested is excluded.",
+      "formula": [
+        "The highest high of the preceding complete window. The candle being tested is excluded."
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "breach_reclaim",
+      "id": "breach_reclaim",
+      "version": 1,
+      "title": "Prior range reclaim",
+      "summary": "Pierce a prior range boundary and record the first close strictly back inside, using the level at the breach.",
+      "formula": [
+        "Pierce a prior range boundary and record the first close strictly back inside, using the level at the breach."
+      ],
+      "positional": "reference",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "candle_relation",
+      "id": "candle_relation",
+      "version": 1,
+      "title": "Compare candle prices",
+      "summary": "Test an exact price relationship between two chosen endpoints or prior range levels.",
+      "formula": [
+        "Test an exact price relationship between two chosen endpoints or prior range levels."
+      ],
+      "positional": "left",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "candle_window",
+      "id": "candle_window",
+      "version": 1,
+      "title": "Consecutive candle pattern",
+      "summary": "Require a fully recorded consecutive window ending at the event close.",
+      "formula": [
+        "Require a fully recorded consecutive window ending at the event close."
+      ],
+      "positional": "event",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "candle_share",
+      "id": "candle_share",
+      "version": 1,
+      "title": "Wick or body share",
+      "summary": "The selected wick or body, divided by the high–low range, is between the chosen bounds.",
+      "formula": [
+        "The selected wick or body, divided by the high–low range, is between the chosen bounds."
+      ],
+      "positional": "part",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "range_multiple",
+      "id": "range_multiple",
+      "version": 1,
+      "title": "Range versus recent median",
+      "summary": "The current high–low range is measured against the median of the preceding completed candles.",
+      "formula": [
+        "The current high–low range is measured against the median of the preceding completed candles."
+      ],
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "near_level",
+      "id": "near_level",
+      "version": 1,
+      "title": "Price near a level",
+      "summary": "The absolute difference between two prices is at most the given percentage of the reference.",
+      "formula": [
+        "The absolute difference between two prices is at most the given percentage of the reference."
+      ],
+      "positional": "reference",
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "prior_utc_day_low",
+      "id": "prior_utc_day_low",
+      "version": 0,
+      "title": "Prior UTC day low (planned)",
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "value_area_reclaim",
+      "id": "value_area_reclaim",
+      "version": 0,
+      "title": "Value-area reclaim (planned, needs trades)",
+      "positional": null,
+      "candle": null,
+      "aliases": []
+    },
+    {
+      "name": "marubozu",
+      "id": "composer.marubozu",
+      "version": 1,
+      "title": "Marubozu",
+      "summary": "Nonzero body with neither an upper nor a lower wick.",
+      "formula": [
+        "Nonzero body with neither an upper nor a lower wick."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "marubozu",
+        "version": 1,
+        "sha256": "c5414e2450d3a5ad739db8bb2a41a1b191cdbab2f22d0e77a325336952b895a9"
+      },
+      "aliases": [
+        "Marubozu",
+        "丸坊主",
+        "寄引坊主"
+      ]
+    },
+    {
+      "name": "doji",
+      "id": "composer.doji",
+      "version": 1,
+      "title": "Doji",
+      "summary": "Open equals close, with a wick strictly above and below. Composer names the one-sided and four-price cases separately.",
+      "formula": [
+        "Open equals close, with a wick strictly above and below. Composer names the one-sided and four-price cases separately."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "doji",
+        "version": 1,
+        "sha256": "ee5b0fd74dd3ea719bce4d869311b128f1402161f71e7126f93dabd758b4364f"
+      },
+      "aliases": [
+        "Doji",
+        "十字線"
+      ]
+    },
+    {
+      "name": "dragonfly_doji",
+      "id": "composer.dragonfly_doji",
+      "version": 1,
+      "title": "Dragonfly doji",
+      "summary": "Open, high and close are equal. The low is strictly lower.",
+      "formula": [
+        "Open, high and close are equal. The low is strictly lower."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "dragonfly-doji",
+        "version": 1,
+        "sha256": "10d6701db20d5610ebae7ed68eb8e53ad1424ee8c4c4779903eedf15627a0cfc"
+      },
+      "aliases": [
+        "Dragonfly doji",
+        "トンボ",
+        "トンボ線",
+        "Tonbo"
+      ]
+    },
+    {
+      "name": "gravestone_doji",
+      "id": "composer.gravestone_doji",
+      "version": 1,
+      "title": "Gravestone doji",
+      "summary": "Open, low and close are equal. The high is strictly higher.",
+      "formula": [
+        "Open, low and close are equal. The high is strictly higher."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "gravestone-doji",
+        "version": 1,
+        "sha256": "c052409b42d8b5a86f31a6351bae6de560f8a0c6521203db85ad28f98d266bf8"
+      },
+      "aliases": [
+        "Gravestone doji",
+        "塔婆",
+        "塔婆線"
+      ]
+    },
+    {
+      "name": "opening_marubozu",
+      "id": "composer.opening_marubozu",
+      "version": 1,
+      "title": "Opening marubozu",
+      "summary": "The opening end has no wick and the closing end has a wick. Either body direction qualifies.",
+      "formula": [
+        "The opening end has no wick and the closing end has a wick. Either body direction qualifies."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "opening-marubozu",
+        "version": 1,
+        "sha256": "5b1b071ceee2ca1fecd2a1347cfdbdd08f9a151cdf91b29b68c7909df39442f4"
+      },
+      "aliases": [
+        "Opening marubozu",
+        "寄付坊主"
+      ]
+    },
+    {
+      "name": "closing_marubozu",
+      "id": "composer.closing_marubozu",
+      "version": 1,
+      "title": "Closing marubozu",
+      "summary": "The closing end has no wick and the opening end has a wick. Either body direction qualifies.",
+      "formula": [
+        "The closing end has no wick and the opening end has a wick. Either body direction qualifies."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "closing-marubozu",
+        "version": 1,
+        "sha256": "e128ad3fb3fa8d7e47c5229f4e0071c5096763bcd54a1239f15251254627bd3e"
+      },
+      "aliases": [
+        "Closing marubozu",
+        "大引坊主"
+      ]
+    },
+    {
+      "name": "engulfing",
+      "id": "composer.engulfing",
+      "version": 1,
+      "title": "Engulfing",
+      "summary": "Opposite-colored nonzero bodies. The second body covers the first, extending strictly beyond at least one end.",
+      "formula": [
+        "Opposite-colored nonzero bodies. The second body covers the first, extending strictly beyond at least one end."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "engulfing",
+        "version": 1,
+        "sha256": "608a941bf299408a85b23d1fb83afa80c1520e56acb84c9ae4f0870478fa5436"
+      },
+      "aliases": [
+        "Engulfing",
+        "包み線",
+        "抱き線",
+        "Tsutsumi",
+        "Tsutsumi-sen",
+        "Tsutsumi sen"
+      ]
+    },
+    {
+      "name": "bullish_engulfing",
+      "id": "composer.bullish_engulfing",
+      "version": 1,
+      "title": "Bullish engulfing",
+      "summary": "A rising body covers a falling body, extending strictly beyond at least one end.",
+      "formula": [
+        "A rising body covers a falling body, extending strictly beyond at least one end."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "bullish-engulfing",
+        "version": 1,
+        "sha256": "c22545a6c7f96b505d0ce0727a4a2f9abfc81bccf671b22978c95a5587ce5def"
+      },
+      "aliases": [
+        "Bullish engulfing",
+        "陽の包み線"
+      ]
+    },
+    {
+      "name": "bearish_engulfing",
+      "id": "composer.bearish_engulfing",
+      "version": 1,
+      "title": "Bearish engulfing",
+      "summary": "A falling body covers a rising body, extending strictly beyond at least one end.",
+      "formula": [
+        "A falling body covers a rising body, extending strictly beyond at least one end."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "bearish-engulfing",
+        "version": 1,
+        "sha256": "e5dbabfbb13fcc9e356d2c1bd175a8a067309112930f76959daf4af7348725a2"
+      },
+      "aliases": [
+        "Bearish engulfing",
+        "陰の包み線"
+      ]
+    },
+    {
+      "name": "harami",
+      "id": "composer.harami",
+      "version": 1,
+      "title": "Harami",
+      "summary": "The second nonzero body lies strictly inside the first body. Body colors and wicks are unrestricted.",
+      "formula": [
+        "The second nonzero body lies strictly inside the first body. Body colors and wicks are unrestricted."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "harami",
+        "version": 1,
+        "sha256": "b3b2415c70538167463edf0bfea925d239f5d768bfb3c6ad7f0ab37a3a768dcb"
+      },
+      "aliases": [
+        "Harami",
+        "はらみ線"
+      ]
+    },
+    {
+      "name": "harami_cross",
+      "id": "composer.harami_cross",
+      "version": 1,
+      "title": "Harami cross",
+      "summary": "The second open equals its close strictly inside the first body. Wicks are unrestricted.",
+      "formula": [
+        "The second open equals its close strictly inside the first body. Wicks are unrestricted."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "harami-cross",
+        "version": 1,
+        "sha256": "b54bc75f3f998b5aea8621cf5bc8bf60c8fdf50ddb4a9164ae0ef9dc7062f1de"
+      },
+      "aliases": [
+        "Harami cross",
+        "はらみ寄せ線"
+      ]
+    },
+    {
+      "name": "window",
+      "id": "composer.window",
+      "version": 1,
+      "title": "Window",
+      "summary": "The two complete high–low ranges are strictly separated by a gap in either direction.",
+      "formula": [
+        "The two complete high–low ranges are strictly separated by a gap in either direction."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "window",
+        "version": 1,
+        "sha256": "ff3f32c02d353222801df049ca2691d24e2f3c7828f849d6c2eaaf2e7e4fc403"
+      },
+      "aliases": [
+        "Window",
+        "窓"
+      ]
+    },
+    {
+      "name": "rising_window",
+      "id": "composer.rising_window",
+      "version": 1,
+      "title": "Rising window",
+      "summary": "The second low is strictly above the first high.",
+      "formula": [
+        "The second low is strictly above the first high."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "rising-window",
+        "version": 1,
+        "sha256": "7cc74b5c69a2d56cd5cbc024989c9593ad4e08e8a36bd3b6a0383307ae563fbc"
+      },
+      "aliases": [
+        "Rising window",
+        "上窓",
+        "Gap up",
+        "Window up",
+        "窓開け上昇"
+      ]
+    },
+    {
+      "name": "falling_window",
+      "id": "composer.falling_window",
+      "version": 1,
+      "title": "Falling window",
+      "summary": "The second high is strictly below the first low.",
+      "formula": [
+        "The second high is strictly below the first low."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "falling-window",
+        "version": 1,
+        "sha256": "d6d22383b516d0aba488a3b201ba7597b469d8d14715280853b10c3cc7c74baa"
+      },
+      "aliases": [
+        "Falling window",
+        "下窓",
+        "Gap down",
+        "Window down",
+        "窓開け下落"
+      ]
+    },
+    {
+      "name": "tweezer_top",
+      "id": "composer.tweezer_top",
+      "version": 1,
+      "title": "Tweezer top",
+      "summary": "The highs of the two bars are exactly equal.",
+      "formula": [
+        "The highs of the two bars are exactly equal."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "tweezer-top",
+        "version": 1,
+        "sha256": "0794cc6575f4054f7d1d3dd2ab61814f0b91915a38e0874f9067676e6f8571b4"
+      },
+      "aliases": [
+        "Tweezer top",
+        "毛抜き天井"
+      ]
+    },
+    {
+      "name": "tweezer_bottom",
+      "id": "composer.tweezer_bottom",
+      "version": 1,
+      "title": "Tweezer bottom",
+      "summary": "The lows of the two bars are exactly equal.",
+      "formula": [
+        "The lows of the two bars are exactly equal."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "tweezer-bottom",
+        "version": 1,
+        "sha256": "fc5dbfe2ddb3fca0843c30381610053f5ea12b4f46d9dfa99f2cb98c7c124fd0"
+      },
+      "aliases": [
+        "Tweezer bottom",
+        "毛抜き底"
+      ]
+    },
+    {
+      "name": "meeting_lines",
+      "id": "composer.meeting_lines",
+      "version": 1,
+      "title": "Meeting lines",
+      "summary": "Opposite-colored nonzero bodies close at the same price.",
+      "formula": [
+        "Opposite-colored nonzero bodies close at the same price."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "meeting-lines",
+        "version": 1,
+        "sha256": "bbd1c72fe6ee2f6691d7f0dc597038172cd51af35fa668bc7f5f635c294efd2c"
+      },
+      "aliases": [
+        "Meeting lines",
+        "出会い線"
+      ]
+    },
+    {
+      "name": "separating_lines",
+      "id": "composer.separating_lines",
+      "version": 1,
+      "title": "Separating lines",
+      "summary": "Opposite-colored nonzero bodies open at the same price.",
+      "formula": [
+        "Opposite-colored nonzero bodies open at the same price."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "separating-lines",
+        "version": 1,
+        "sha256": "68e6070233103d3489a65e72492985019c7b5d5ed98aef80e17992f827fd3a83"
+      },
+      "aliases": [
+        "Separating lines",
+        "行き違い線"
+      ]
+    },
+    {
+      "name": "hammer",
+      "id": "composer.hammer",
+      "version": 1,
+      "title": "Hammer",
+      "summary": "Shape only. The body is nonzero, the lower wick is at least twice the body, and the upper wick is at most half the body. Prior decline and reversal confirmation are outside this rule.",
+      "formula": [
+        "Shape only. The body is nonzero, the lower wick is at least twice the body, and the upper wick is at most half the body. Prior decline and reversal confirmation are outside this rule."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "hammer",
+        "version": 1,
+        "sha256": "3c3e47afcb496b65d06db753a1307569e9eaaa5fda03b79aed326dc25630cda7"
+      },
+      "aliases": [
+        "Hammer",
+        "ハンマー",
+        "カラカサ",
+        "Karakasa",
+        "Hammer shape"
+      ]
+    },
+    {
+      "name": "inverted_hammer",
+      "id": "composer.inverted_hammer",
+      "version": 1,
+      "title": "Inverted hammer",
+      "summary": "Shape only. The body is nonzero, the upper wick is at least twice the body, and the lower wick is at most half the body. Prior decline and reversal confirmation are outside this rule.",
+      "formula": [
+        "Shape only. The body is nonzero, the upper wick is at least twice the body, and the lower wick is at most half the body. Prior decline and reversal confirmation are outside this rule."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "inverted-hammer",
+        "version": 1,
+        "sha256": "f9d0fe0b4457942ed62d02f58ff2a75638e1b8673295ec38efd56c202218eeb0"
+      },
+      "aliases": [
+        "Inverted hammer",
+        "逆ハンマー",
+        "トンカチ",
+        "Tonkachi",
+        "Inverted hammer shape"
+      ]
+    },
+    {
+      "name": "spinning_top",
+      "id": "composer.spinning_top",
+      "version": 1,
+      "title": "Spinning top",
+      "summary": "Both wicks are strictly longer than the nonzero body. Either body direction qualifies.",
+      "formula": [
+        "Both wicks are strictly longer than the nonzero body. Either body direction qualifies."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "spinning-top",
+        "version": 1,
+        "sha256": "6e7a6b10e9b777331ce417698392a9ff3e4ca666ac563637f9fc1f0fa3b90967"
+      },
+      "aliases": [
+        "Spinning top",
+        "コマ",
+        "Koma"
+      ]
+    },
+    {
+      "name": "inside_bar",
+      "id": "composer.inside_bar",
+      "version": 1,
+      "title": "Inside bar",
+      "summary": "The second complete range lies inside the first. One equal endpoint is allowed, but identical ranges are excluded.",
+      "formula": [
+        "The second complete range lies inside the first. One equal endpoint is allowed, but identical ranges are excluded."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "inside-bar",
+        "version": 1,
+        "sha256": "d7ebd96d23a36c24a6f1872cc5bc58f446eb7b49f3950c14b5c2d9024aee00fa"
+      },
+      "aliases": [
+        "Inside bar",
+        "インサイドバー"
+      ]
+    },
+    {
+      "name": "outside_bar",
+      "id": "composer.outside_bar",
+      "version": 1,
+      "title": "Outside bar",
+      "summary": "The second complete range contains the first. One equal endpoint is allowed, but identical ranges are excluded.",
+      "formula": [
+        "The second complete range contains the first. One equal endpoint is allowed, but identical ranges are excluded."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "outside-bar",
+        "version": 1,
+        "sha256": "3ffc27c3fb209c6d401bcf2e09557f98d751b2b28fdd39e1983e659cf306d342"
+      },
+      "aliases": [
+        "Outside bar",
+        "アウトサイドバー"
+      ]
+    },
+    {
+      "name": "four_price_doji",
+      "id": "composer.four_price_doji",
+      "version": 1,
+      "title": "Four-price doji",
+      "summary": "Open, high, low and close are all equal.",
+      "formula": [
+        "Open, high, low and close are all equal."
+      ],
+      "positional": null,
+      "candle": {
+        "id": "four-price-doji",
+        "version": 1,
+        "sha256": "c30349efdac5c4cde29256a7d87cdc2936069fd0872e4899aa208778280de059"
+      },
+      "aliases": [
+        "Four-price doji",
+        "四値同時線",
+        "一本線",
+        "Four price doji"
+      ]
+    }
+  ]
+}

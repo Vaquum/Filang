@@ -4,6 +4,8 @@ mod bench;
 mod candles;
 mod compiler;
 mod compute;
+mod description;
+mod explanation;
 mod extension;
 mod plan;
 mod predicate;
@@ -54,7 +56,9 @@ pub fn serve(bars: impl AsRef<Path>, calendar: impl AsRef<Path>, interval_ms: i6
 pub struct Study {
     tape: Tape,
     calendar: Option<(String, Calendar)>,
+    calendar_sha256: Option<String>,
     instrument: String,
+    source_sha256: String,
     registry: compiler::Registry,
 }
 
@@ -70,7 +74,9 @@ impl Study {
         Ok(Self {
             tape: Tape::parse(csv, interval)?,
             calendar: None,
+            calendar_sha256: None,
             instrument: instrument.to_owned(),
+            source_sha256: crate::hash::sha256(csv.as_bytes()),
             registry: compiler::Registry::new()?,
         })
     }
@@ -80,7 +86,11 @@ impl Study {
     }
 
     pub fn set_pinned_calendar(&mut self) -> Result<()> {
-        self.set_calendar(include_str!("../../study/catalogue/nyse.tsv"))
+        self.set_calendar(include_str!("../../study/catalogue/nyse.tsv"))?;
+        self.calendar_sha256 = Some(crate::hash::sha256(include_bytes!(
+            "../../study/nyse-sessions.json"
+        )));
+        Ok(())
     }
 
     pub fn set_calendar_named(&mut self, table: &str, tsv: &str) -> Result<()> {
@@ -88,6 +98,7 @@ impl Study {
             return Err("invalid calendar table id".into());
         }
         self.calendar = Some((table.to_owned(), Calendar::parse(tsv)?));
+        self.calendar_sha256 = Some(crate::hash::sha256(tsv.as_bytes()));
         Ok(())
     }
 

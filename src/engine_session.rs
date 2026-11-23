@@ -12,6 +12,10 @@ use crate::{
 use std::{collections::HashMap, str};
 
 pub const ABI_VERSION: u32 = 1;
+pub(crate) const VERSION: &str = match option_env!("FILANG_RELEASE_VERSION") {
+    Some(version) => version,
+    None => env!("CARGO_PKG_VERSION"),
+};
 pub const MAX_PAYLOAD: usize = 256 * 1024 * 1024;
 const MAX_PAGE: usize = 4096;
 const MAX_STUDY_BATCH: usize = 64;
@@ -57,10 +61,17 @@ impl Session {
         let text = utf8(payload)?;
         match operation {
             b"version" if text.is_empty() => Ok(format!(
-                "{{\"abi\":{ABI_VERSION},\"version\":\"{}\"}}",
-                option_env!("FILANG_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))
+                "{{\"abi\":{ABI_VERSION},\"version\":\"{VERSION}\"}}"
             )),
             b"catalogue" if text.is_empty() => Ok(study::Study::catalogue().into()),
+            b"study-terms" if text.is_empty() => Ok(study::Study::terms().into()),
+            b"resolve-candle" => {
+                let id = self
+                    .study()?
+                    .resolve_candle(text)
+                    .map_or_else(|| "null".into(), study::quote);
+                Ok(format!("{{\"id\":{id}}}"))
+            }
             b"calendar" => {
                 let study = self
                     .study
@@ -142,6 +153,8 @@ impl Session {
                     .close_facts(query, number(candidate)?, number(t)?)
             }
             b"session-clock" => Ok(self.study()?.session_clock(number(text)?)),
+            b"study-describe" => self.study()?.describe(text),
+            b"study-diagnostics" => Ok(self.study()?.diagnostics(text)),
             b"inspect" => inspect(&text.parse()?),
             b"geometry-shape" => Ok(geometry_shape(&text.parse()?)),
             b"distance" => {

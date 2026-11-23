@@ -37,6 +37,8 @@ export class FilangEngine {
   memoryBytes() { return this.#wasm.memory.buffer.byteLength; }
   version() { return this.#call("version"); }
   catalogue() { return this.#call("catalogue"); }
+  studyTerms() { return this.#call("study-terms"); }
+  resolveCandle(name) { return this.#call("resolve-candle", name); }
   inspect(code) { return this.#call("inspect", code); }
   geometryShape(code) { return this.#call("geometry-shape", code); }
   distance(left, right) { return this.#call("distance", fields(left, right)); }
@@ -91,6 +93,8 @@ export class FilangEngine {
   }
 
   sessionClock(t) { return this.#call("session-clock", String(t)); }
+  describeStudy(query) { return this.#call("study-describe", query); }
+  studyDiagnostics(query) { return this.#call("study-diagnostics", query); }
 
   prepare(width, {oriented = true, reading = "recorded", dimensions = []} = {}) {
     return this.#call("prepare", fields(width, mode(oriented), reading, names(dimensions)));

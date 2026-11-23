@@ -53,8 +53,6 @@ jobs:
           npm --prefix study run verify
           node study/verify/native.mjs
           node study/verify/candle-native.mjs
-          node query/verify/handoff.mjs
-          node query/verify/cube-source.mjs
 
       - name: Build and verify the shared engine bindings
         run: |
@@ -72,6 +70,9 @@ jobs:
           "$RUNNER_TEMP/filang-study-python/bin/python" bindings/verify/prepare_limen.py "$RUNNER_TEMP/filang-study.parquet" "$RUNNER_TEMP/filang-limen.csv"
           "$RUNNER_TEMP/filang-binding-test/bin/python" bindings/verify/limen.py "$RUNNER_TEMP/filang-limen.csv"
           node bindings/verify/query.mjs
+          node bindings/verify/query-contract.mjs
+          node query/verify/handoff.mjs --engine
+          node query/verify/cube-source.mjs --engine
           node bindings/verify/chromium.mjs "$(command -v google-chrome)" data/study/recorded-bars.csv "$RUNNER_TEMP/filang-limen.csv"
       - name: Export the integration packages
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -79,6 +79,12 @@ class Engine:
     def catalogue(self):
         return self._call("catalogue")
 
+    def study_terms(self):
+        return self._call("study-terms")
+
+    def resolve_candle(self, name):
+        return self._call("resolve-candle", name)
+
     def inspect(self, code):
         return self._call("inspect", code)
 
@@ -136,6 +142,12 @@ class Engine:
 
     def session_clock(self, t):
         return self._call("session-clock", str(t))
+
+    def describe_study(self, query):
+        return self._call("study-describe", query)
+
+    def study_diagnostics(self, query):
+        return self._call("study-diagnostics", query)
 
     def prepare(self, width, *, oriented=True, reading="recorded", dimensions=()):
         return self._call(

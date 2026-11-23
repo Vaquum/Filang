@@ -164,14 +164,21 @@ impl Tape {
     }
 
     pub(super) fn geometry_recording(&self) -> Result<crate::geometry::explore::Recording> {
+        self.geometry_window(0, self.bars.len())
+    }
+
+    pub(super) fn geometry_window(
+        &self,
+        start: usize,
+        end: usize,
+    ) -> Result<crate::geometry::explore::Recording> {
         use crate::geometry::explore::{Bar as GeometryBar, Recording};
-        let bars = self
-            .bars
+        let bars = self.bars[start..end]
             .iter()
             .enumerate()
             .map(|(slot, bar)| {
                 bar.map(|bar| {
-                    let counters = self.counters.as_ref().and_then(|rows| rows[slot]);
+                    let counters = self.counters.as_ref().and_then(|rows| rows[start + slot]);
                     GeometryBar::new(bar.prices(), counters)
                 })
                 .transpose()
