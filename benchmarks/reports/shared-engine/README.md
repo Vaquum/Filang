@@ -70,6 +70,14 @@ archived level-4 MSCB blocks yielded 66,000 rows from 2025-01-04 12:00 UTC
 through 2026-11-23 00:00 UTC. Query's existing MSCB decoder preserved the
 delivered binary64 counters. [Capture and CSV digests](cube-source.json)
 
+Chromium evaluated 1,500 input events over five fresh profiles. Independent
+scans and the unobserved-key control agreed. The varied-arrival trace
+reached 7.9 ms p50, 16.2 ms p95 and 17.3 ms p99 input-to-frame. Worker plus
+DOM was 1.6 ms p95. Median cold CSV load was 40.8 ms and final linear
+memory was 162,529,280 bytes. The preregistered real-source criterion was
+**supported** for this trace.
+[Raw Cube trials](browser-a2.json)
+
 ## A3. Retained klines with frame-aligned edits
 
 The retained BTCUSDT parquet through 2026-11-21 had SHA-256
@@ -171,3 +179,24 @@ The live Cube and retained Limen recordings agreed on all 65,901
 complete common four-bar chained windows in a direct source
 comparison. This held for price and for the combined key with all
 five axes. [Price keys](cube-limen-price.json) · [All axes](cube-limen-dimensions.json)
+
+## Repeat the real-Cube trace
+
+The capture command uses the authorized host's existing loopback bridge.
+The capture and CSV stay local. The two hashes identify the exact input.
+
+```sh
+ssh "$CUBE_HOST" 'python3 -' \
+  < benchmarks/reports/shared-engine/capture_cube.py > cube.mscb.json
+node benchmarks/reports/shared-engine/cube_csv.mjs cube.mscb.json cube.csv
+FILANG_STUDY_DATA="$PINNED_STUDY" \
+  node benchmarks/reports/shared-engine/corpus.mjs > price-corpus.json
+FILANG_BENCH_CORPUS="$PWD/price-corpus.json" FILANG_BENCH_ARRIVAL=varied \
+  node bindings/verify/chromium.mjs "$CHROMIUM" \
+  "$PINNED_STUDY/recorded-bars.csv" cube.csv performance.html
+```
+
+Use five fresh profiles and set `FILANG_BENCH_FIRST=candidate` on runs two
+and four. The reproduction scripts record every latency sample. The same
+entry point takes the retained kline CSV for A3 or A5. Omit the arrival
+setting for the A3 frame-aligned route.
