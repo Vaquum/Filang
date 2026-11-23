@@ -1,0 +1,71 @@
+{
+  "site": "https://query.vaquum.fi/",
+  "date": "2026-11-23",
+  "authenticated": true,
+  "throttle": "none",
+  "network_cache": "disabled",
+  "timeframe": "15m",
+  "window": "180d",
+  "answer_label": "177 closes in the answer",
+  "last_frame_without_answer_ms": 2327.1,
+  "first_frame_with_answer_ms": 3743.3,
+  "first_rows_visible_ms": 3744.2,
+  "requests": [
+    {
+      "path": "/",
+      "request_ms": 526.8,
+      "response_ms": 526.9,
+      "status": 200,
+      "mime_type": "text/html",
+      "from_cache": false,
+      "finish_ms": 533.8,
+      "encoded_data_bytes": 1857,
+      "decoded_body_bytes": 4049
+    },
+    {
+      "path": "/engine/index.mjs",
+      "request_ms": 825.7,
+      "response_ms": 879.8,
+      "status": 200,
+      "mime_type": "text/javascript",
+      "from_cache": false,
+      "finish_ms": 879.9,
+      "encoded_data_bytes": 2874,
+      "decoded_body_bytes": 8013
+    },
+    {
+      "path": "/engine/filang_engine.wasm",
+      "request_ms": 911.6,
+      "response_ms": 957.9,
+      "status": 200,
+      "mime_type": "application/wasm",
+      "from_cache": false,
+      "finish_ms": 1279.7,
+      "encoded_data_bytes": 323971,
+      "decoded_body_bytes": 944551
+    },
+    {
+      "path": "/bars/windows",
+      "request_ms": 1286.4,
+      "response_ms": 1332.9,
+      "status": 200,
+      "mime_type": "application/json",
+      "from_cache": false,
+      "finish_ms": 1333.2,
+      "encoded_data_bytes": 560,
+      "decoded_body_bytes": 663
+    },
+    {
+      "path": "/bars",
+      "request_ms": 1333.5,
+      "response_ms": 3410.0,
+      "status": 200,
+      "mime_type": "application/json",
+      "from_cache": false,
+      "finish_ms": 3624.3,
+      "encoded_data_bytes": 385126,
+      "decoded_body_bytes": 1046062
+    }
+  ],
+  "browser": "Google Chrome 157.0.8103.79 DevTools"
+}
