@@ -147,8 +147,18 @@ application can use the same methods on `await FilangEngine.create()` from
 
 ### Composer search
 
-Load each required timeframe with `await filang.ask("loadComposerFrame", csv,
-intervalMs)`. Search a validated drawing packet with
+Load each required timeframe from typed columns with
+`await filang.ask("loadComposerFrameTicks", intervalMs, {times, open, high, low, close})`.
+Use integer cents for the four price columns and integer milliseconds for the
+open times, or set `timeUnit: "s"` for integer seconds. The five nonempty
+numeric typed arrays have the same length. Times must increase strictly and
+align with the timeframe. Omit missing bars from every column and the engine
+will retain their grid slots. The result is `{slots}`, including gaps.
+The same method is available directly on `FilangEngine`. The CSV method
+`await filang.ask("loadComposerFrame", csv, intervalMs)` also accepts
+recordings with activity counters.
+
+Search a validated drawing packet with
 `await filang.searchComposer(packet, {timeframes, onProgress})`. The
 timeframe mask uses bits 0–4 for 15m, 30m, 1h, 2h and 4h. Starting another
 search supersedes the old search and rejects it with `AbortError`.

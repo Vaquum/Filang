@@ -73,6 +73,37 @@ export class FilangEngine {
     return this.#call("composer-load", `${intervalMs}\n${csv}`);
   }
 
+  /** Timestamp and OHLC columns in recording order, with prices in integer cents. */
+  loadComposerFrameTicks(intervalMs, {times, open, high, low, close, timeUnit = "ms"}) {
+    if (!Number.isInteger(intervalMs) || intervalMs <= 0 || intervalMs > 0xffffffff) {
+      throw new RangeError("invalid Composer interval");
+    }
+    if (timeUnit !== "ms" && timeUnit !== "s") {
+      throw new RangeError("Composer tick times must use ms or s");
+    }
+    const columns = [times, open, high, low, close];
+    const length = times?.length;
+    if (!(length > 0 && length <= 1_000_000)
+      || !columns.every(column => ArrayBuffer.isView(column) && column.length === length)) {
+      throw new TypeError("expected five equally sized Composer tick columns");
+    }
+    const buffer = new ArrayBuffer(8 + 5 * 8 * length);
+    const header = new DataView(buffer);
+    header.setUint32(0, intervalMs, true);
+    header.setUint32(4, timeUnit === "s" ? 1000 : 1, true);
+    if (littleEndian) {
+      const values = new Float64Array(buffer, 8);
+      columns.forEach((column, i) => values.set(column, i * length));
+    } else {
+      columns.forEach((column, i) => {
+        for (let row = 0; row < length; row++) {
+          header.setFloat64(8 + 8 * (i * length + row), column[row], true);
+        }
+      });
+    }
+    return this.#call("composer-load-ticks", new Uint8Array(buffer));
+  }
+
   composerStart(packet, {timeframes = 31, endMasks, radius = 0} = {}) {
     const options = JSON.stringify({timeframes, end_masks: endMasks, radius});
     const drawing = typeof packet === "string" ? packet : JSON.stringify(packet);

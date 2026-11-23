@@ -13,6 +13,7 @@ mod syntax;
 mod tape;
 
 pub(crate) use compiler::DrawingCatalogue;
+pub(crate) use tape::{recording_slot, valid_open_time, MAX_EXACT_INTEGER};
 
 pub(crate) fn geometry_frame(
     csv: &str,
