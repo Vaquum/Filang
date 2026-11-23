@@ -192,6 +192,10 @@ enum Expression {
 }
 
 impl CandleRule {
+    pub(super) fn width(&self) -> usize {
+        self.bars
+    }
+
     pub fn parse(bars: usize, words: &mut Words<'_>) -> Result<Self> {
         if !(1..=2).contains(&bars) {
             return Err("named rule requires one or two bars".into());

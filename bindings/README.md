@@ -105,6 +105,26 @@ bundled NYSE table. Pass TSV and `{table: id}` for a different pinned table.
 recorded conformance cases before adding the definition to the recording's registry. `catalogue()`
 returns the generated named candle definitions.
 
+Query workbench calls use the same compiler and recording:
+
+- `studyCounts(queries)` returns `{count, error}` for each question's first
+  candidate, in order, in one call of at most 64 questions.
+- `studyRows(query, {candidate, start, limit})` pages the event's occurrences
+  including those filtered out. Each row includes its close, filter truth
+  values, first non-passing filter index, group, outcomes and any reclaim
+  witness. Clause totals are ordered true, false, unknown. Resume at
+  `next`, a recording slot, until it is null.
+- `studyClose(query, closeMs, {candidate})` supplies the event, filters,
+  group, outcome values and explanations at a close, even outside matches.
+- `describeStudy(query)` supplies canonical text, the AST, sweep axes,
+  ordered candidates and the run manifest. `studyDiagnostics(query)` returns
+  diagnostic kinds, messages, hints and half-open UTF-16 source ranges.
+- `studyTerms()` returns term titles, summaries and formulas.
+  `resolveCandle(name)` returns a candle id by name, alias or translation.
+  `sessionClock(timeMs)` returns the pinned day's local clock.
+  `geometryShape(code)` returns ranks, directions and ordinal OHLC for an
+  oriented g1.
+
 `release(width)` releases that width's preparation. `close()` terminates
 the browser worker. Direct calls in a browser test or single-threaded
 application can use the same methods on `await FilangEngine.create()` from

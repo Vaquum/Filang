@@ -79,8 +79,17 @@ class Engine:
     def catalogue(self):
         return self._call("catalogue")
 
+    def study_terms(self):
+        return self._call("study-terms")
+
+    def resolve_candle(self, name):
+        return self._call("resolve-candle", name)
+
     def inspect(self, code):
         return self._call("inspect", code)
+
+    def geometry_shape(self, code):
+        return self._call("geometry-shape", code)
 
     def distance(self, left, right):
         return self._call("distance", _fields(left, right))
@@ -121,6 +130,24 @@ class Engine:
     def study(self, query, *, candidate=None):
         index = "-" if candidate is None else str(candidate)
         return self._call("study", f"{index}\n{query}")
+
+    def study_counts(self, queries):
+        return self._call("study-counts", json.dumps(queries))
+
+    def study_rows(self, query, *, candidate=0, start=0, limit=4096):
+        return self._call("study-rows", f"{_fields(candidate, start, limit)}\n{query}")
+
+    def study_close(self, query, t, *, candidate=0):
+        return self._call("study-close", f"{_fields(candidate, t)}\n{query}")
+
+    def session_clock(self, t):
+        return self._call("session-clock", str(t))
+
+    def describe_study(self, query):
+        return self._call("study-describe", query)
+
+    def study_diagnostics(self, query):
+        return self._call("study-diagnostics", query)
 
     def prepare(self, width, *, oriented=True, reading="recorded", dimensions=()):
         return self._call(

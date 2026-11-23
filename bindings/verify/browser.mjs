@@ -54,8 +54,28 @@ async function verify() {
       const study = (await worker.ask("study", query)).results[0];
       equal(study.counts.matches, want, "same result via Query study text");
     }
-    const held = (await worker.ask("study", find + carried.pinned_expression)).results[0];
+    const heldQuery = find + carried.pinned_expression;
+    const held = (await worker.ask("study", heldQuery)).results[0];
     equal(held.counts.matches, 4828, "Composer pins evaluated by Query");
+    const one = find + 'chained_g1("g1:o:0,1,2,2,u")';
+    equal(await worker.ask("studyCounts", [one, heldQuery]),
+      [324, 4828].map(count => ({count, error: null})), "Query workbench counts");
+    const {rows, next} = await worker.ask("studyRows", one, {limit: 1});
+    equal(rows.length, 1, "occurrence page");
+    if (next <= rows[0].slot) throw new Error("occurrence cursor did not advance");
+    const facts = await worker.ask("studyClose", one, rows[0].t);
+    equal(facts.event, true, "event detail");
+    if (!facts.event_why.includes("matches")) throw new Error("event explanation missing");
+    equal((await worker.ask("describeStudy", one)).canonical, one, "canonical question");
+    equal((await worker.ask("studyDiagnostics", one)).ok, true, "grammar diagnostics");
+    equal((await worker.ask("resolveCandle", "カラカサ")).id, "hammer", "candle alias");
+    equal((await worker.ask("geometryShape", shape)).rows, [[1, 4, 0, 3], [3, 6, 2, 5]], "g1 ranks");
+    if (!(await worker.ask("studyTerms")).terms.some(term => term.name === "close_return")) {
+      throw new Error("missing outcome term");
+    }
+    await worker.ask("setCalendar");
+    equal((await worker.ask("sessionClock", Date.parse("2025-03-28T19:30:00Z"))).text,
+      "FRI 15:30 EDT", "pinned NY clock");
     equal((await worker.ask("distance", shape, shape)).half_flips, 0, "zero comparison radius");
     const revised = await worker.ask("encodeDrawing", {...packet, dimensions: ["volume:0,1", "delta:0,2/1"]});
     const expected = shape + "|volume:0,1|delta:0,2/1";
