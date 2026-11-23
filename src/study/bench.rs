@@ -1,9 +1,11 @@
 //! Paged occurrence receipts for the Query workbench.
 use super::{
+    compiler,
     compute::{Eval, Series},
+    description,
     explanation::{self, Explain},
     plan::{Node, Query},
-    quote,
+    quote, syntax,
     tape::{Calendar, DAYS, TRENDS},
     write_outcomes, write_reclaim, Study, OUTPUT_CELLS,
 };
@@ -23,7 +25,13 @@ impl Study {
         if limit > MAX_RECEIPT_PAGE {
             return Err(format!("occurrence page exceeds {MAX_RECEIPT_PAGE} rows"));
         }
-        let plan = self.compile(text, Some(candidate))?;
+        let question = syntax::question(text)?;
+        let plan = compiler::compile_question(
+            &question,
+            self.environment(),
+            &self.registry,
+            Some(candidate),
+        )?;
         let empty = Calendar::empty();
         let calendar = self.calendar.as_ref().map_or(&empty, |(_, cal)| cal);
         let series = Eval::new(&self.tape, calendar).series(&plan.nodes)?;
@@ -33,16 +41,27 @@ impl Study {
             .iter()
             .map(|&id| series[id].mask())
             .collect::<Result<Vec<_>>>()?;
-        let mut present_events = series[query.find].mask()?.bits.clone();
+        let event = series[query.find].mask()?;
+        let mut present_events = event.bits.clone();
+        let mut event_unknown = 0;
         for (i, bar) in self.tape.bars.iter().enumerate() {
             if bar.is_none() {
                 present_events[i / 64] &= !(1 << (i % 64));
+            } else {
+                event_unknown += usize::from(!event.at(i).1);
             }
         }
         let occurrences = popcount(&present_events);
         let (clause_stats, survivors) = filter_totals(&present_events, occurrences, &filters);
+        let columns = query
+            .column_labels
+            .iter()
+            .map(|label| quote(label))
+            .collect::<Vec<_>>()
+            .join(",");
+        let lines = description::receipt_lines(&question, candidate);
         let mut out = format!(
-            "{{\"event_count\":{occurrences},\"clause_stats\":{clause_stats:?},\"survivors\":{survivors:?},\"group_labels\":{},\"rows\":[",
+            "{{\"event_count\":{occurrences},\"event_unknown\":{event_unknown},\"columns\":[{columns}],\"lines\":{lines},\"clause_stats\":{clause_stats:?},\"survivors\":{survivors:?},\"group_labels\":{},\"rows\":[",
             format_group_labels(query, &plan.nodes)
         );
         let mut next = None;
@@ -109,6 +128,8 @@ impl Study {
             eval: &eval,
             nodes: &plan.nodes,
             series: &series,
+            notes: &plan.notes,
+            calendar,
         };
         let query = &plan.queries[0];
         let answers = query

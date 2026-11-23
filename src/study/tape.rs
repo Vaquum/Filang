@@ -284,6 +284,10 @@ impl Calendar {
         Some(Some((wd, (t - day) / 60_000, day % 86_400_000)))
     }
 
+    pub(super) fn bounds(&self) -> (i64, i64) {
+        (self.start, self.end)
+    }
+
     pub fn tail(&self, t: i64, last: i64) -> Option<bool> {
         let i = self.sessions.partition_point(|s| s.1 < t);
         if self.sessions.get(i).map_or(false, |s| s.1 - last < t) {

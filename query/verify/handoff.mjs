@@ -129,23 +129,21 @@ const gap = Array.from(rec.present).findIndex((x, k) => k > 5 && !x);
 if (gap > 5) assert.equal(casePacket(rec, gap + 1 < rec.n ? gap + 1 : gap, 3).why, 'a candle is missing from the recording');
 
 // ---- a one-bar drawing with several relations held prints a bare conjunction. The vocabulary has no clause for
-// its relations, so text gives the find back as one formal line in the engine's wording: the packet must still find
-// its place again, or a reload would lose the drawing
+// its relations. The packet must find its place again, even with another expression beside it
 {
   const p = packet([{ v: [15, 50, 85, 90], d: 'u' }], [{ a: { bar: 0, part: 'H' }, b: { bar: 0, part: 'T' } }, { bar: 0, color: true }]);
   const q = question({ g1: drawingG1(p), packet: p, held: true }); const text = toText(q);
   assert.ok(pinnedExpression(p).includes(' and '), 'a bare conjunction');
   const back = fromText(text).model;
-  assert.deepEqual([back.find.items.length, back.find.items[0].type], [1, 'raw']);
+  const hasText = Boolean(engine.describeStudy(text).ast.find.items[0].text);
+  assert.deepEqual(back.find.items.map(c => c.type), hasText ? ['raw', 'raw'] : ['raw']);
   attach(back, p);
   assert.equal(back.find.items.length, 1); assert.equal(back.find.items[0].type, 'drawing'); assert.equal(drawingHeld(back.find.items[0]), true);
   assert.equal(toText(back), text);
-  // with a condition typed beside it the find is one formal line that is no longer the drawing's own: the question
-  // is kept word for word, and the drawing is not put back on a part of it
   const edited = text + ' and candle_relation(price(low, bars_ago: 0), is: below, right: price(low, bars_ago: 1))';
   const more = fromText(edited).model; attach(more, p);
-  assert.deepEqual([more.find.items.length, more.find.items[0].type], [1, 'raw']);
-  assert.equal(matches(toText(more)), matches(edited));
+  assert.deepEqual(more.find.items.map(c => c.type), hasText ? ['drawing', 'raw'] : ['raw']);
+  assert.deepEqual(slotsOf(toText(more)), slotsOf(edited));
 }
 
 console.log(`Hand-off: 324, 1,463 chained and 772 as recorded, and 4,828 pinned, as the engine's own checks count them; all three forms round-trip; ${sent} recorded windows drawn, each the chained code of its candles and a match of it (${whole} with every open on the close before it, ${moved} without).`);

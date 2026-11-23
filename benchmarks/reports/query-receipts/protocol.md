@@ -1,0 +1,5 @@
+# Query engine receipts and browser package (#91)
+
+A1. The upgraded Query adapter should get event unknowns, selected line text and horizon labels on its occurrence page, without a second study evaluation or a second description call for those fields. The four starting questions should preserve counts, rows, threshold truth, pinned drawing placement and outcome columns. Compare the old published 0.10.0.post21 package and the candidate using the same adapter and recorded BTCUSDT 15-minute input. Account for cold describe and first page together, use five fresh Node processes per build, and require a lower median plus equivalent relevant fields. Confirm the canonical subexpressions and added explanation information against independent contract checks.
+
+A2. Test whether stripping compiler symbols from the browser WASM package reduces its gzip bytes by at least 5% with identical public API smoke and Query parity. Build the same sources with and without the Rust symbol strip option and compare byte counts with deterministic gzip. The wheel build is outside this change. Record a missed threshold or incompatibility rather than attributing it to the engine.

@@ -136,13 +136,19 @@ class Outcome {
 
 /** One run of a question: one candidate of its compared values. Its rows are read from the engine when first asked for. */
 class Result {
-  #text; #timed; #head; #rows; #bySlot; #matches; #groups; #summary; #whole; #vals; #columns; #closes = new Map();
+  #text; #timed; #head; #rows; #bySlot; #matches; #groups; #summary; #whole; #vals; #columns; #lines; #closes = new Map();
 
   constructor(text, cand, timed) {
     this.#text = text; this.#timed = timed; this.cand = cand;
-    const lines = cand.resolvedText.split('\n');
+  }
+
+  get lines() {
+    if (this.#lines) return this.#lines;
+    const received = this.#first().lines;
+    if (received) return this.#lines = received;
+    const lines = this.cand.resolvedText.split('\n');
     const of = (word) => lines.filter((l) => l.startsWith(word + ' ')).map((l) => l.slice(word.length + 1));
-    this.lines = { find: of('find')[0], wheres: of('where'), group: of('group by')[0] ?? null };
+    return this.#lines = { find: of('find')[0], wheres: of('where'), group: of('group by')[0] ?? null };
   }
 
   #page(start) { return this.#timed(() => engine.studyRows(this.#text, { candidate: this.cand.index, start, limit: PAGE })); }
@@ -178,8 +184,9 @@ class Result {
 
   /** T: closes where the pattern occurs. U: recorded closes where the engine cannot say. */
   get counts() {
+    const {event_count, event_unknown} = this.#first();
     const study = () => this.#study();
-    return { T: this.#first().event_count, get U() { return study().unknown.event.length; } };
+    return { T: event_count, get U() { return event_unknown ?? study().unknown.event.length; } };
   }
   get survivors() { return this.#first().survivors; }
   get clauseStats() { return this.#first().clause_stats.map(([t, f, u]) => ({ T: t, F: f, U: u })); }
@@ -207,6 +214,8 @@ class Result {
   /** One column per measured horizon, named by its duration. */
   get columns() {
     if (this.#columns) return this.#columns;
+    const received = this.#first().columns;
+    if (received) return this.#columns = received.map(text => ({ text }));
     const measures = this.#timed(() => engine.describeStudy(this.cand.resolvedText)).ast.measures;
     const texts = measures.flatMap((m) => { const v = (m.args.find((a) => a.name === 'after') ?? m.args[0])?.value; return (v?.k === 'vec' ? v.items : [v]).map((x) => x?.text ?? m.name); });
     return this.#columns = texts.map((text) => ({ text }));
@@ -227,10 +236,9 @@ class Result {
   }
 }
 
-const errorsOf = (text, e) => {
-  let errors = [];
-  try { errors = engine.studyDiagnostics(text).errors; } catch { /* the engine's own message stands */ }
-  return errors.length ? errors : [{ kind: 'engine', message: String(e.message || e) }];
+const diagnosticsOf = (text, e) => {
+  try { const d = engine.studyDiagnostics(text); if (d.errors.length) return d; } catch { /* the engine's own message stands */ }
+  return { ok: false, errors: [{ kind: 'engine', message: String(e.message || e) }] };
 };
 
 /**
@@ -249,7 +257,7 @@ export function run(text) {
     const source = { ...d.manifest.pins.source, verified: bundle.digestVerified };
     out = { ok: true, text, errors: [], analysis: { axes: d.axes }, results, manifest: { ...d.manifest, pins: { ...d.manifest.pins, source } }, get ms() { return spent; } };
   } catch (e) {
-    out = { ok: false, text, errors: errorsOf(text, e), results: [] };
+    out = { ok: false, text, errors: diagnosticsOf(text, e).errors, results: [] };
   }
   if (runs.size > 600) runs.delete(runs.keys().next().value);
   runs.set(text, out);
@@ -258,7 +266,7 @@ export function run(text) {
 
 /** What the engine makes of a text before it is run: its canonical form and syntax tree, or the errors it found. */
 export function describe(text) {
-  try { const d = engine.describeStudy(text); return { ok: true, canonical: d.canonical, ast: d.ast, errors: [] }; } catch (e) { return { ok: false, errors: errorsOf(text, e) }; }
+  try { const d = engine.describeStudy(text); return { ok: true, canonical: d.canonical, ast: d.ast, errors: [] }; } catch (e) { return diagnosticsOf(text, e); }
 }
 
 /** Matching closes for a query body (everything after the `on` line); null when it does not check. */

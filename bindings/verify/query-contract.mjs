@@ -16,6 +16,15 @@ await install();
 await (await import("/shared/filang.js")).load();
 const {PRESETS, OFFERS, clone, fromText, toText} = await import("/shared/vocab.js");
 
+const atomText = new Set(["num", "pct", "dur"]);
+function olderAst(node) {
+  if (Array.isArray(node)) return node.map(olderAst);
+  if (!node || typeof node !== "object") return node;
+  return Object.fromEntries(Object.entries(node).filter(([key]) =>
+    key !== "canonical_text" && (key !== "text" || atomText.has(node.k)))
+    .map(([key, value]) => [key, olderAst(value)]));
+}
+
 const {bundle, assets} = loadInputs();
 const engine = await FilangEngine.create(await readFile(
   new URL("../../target/engine-dist/browser/filang_engine.wasm", import.meta.url),
@@ -59,8 +68,10 @@ for (const question of receipts) {
   if (!process.argv[2]) {
     const description = engine.describeStudy(question);
     assert.equal(description.canonical, oracle.canonical, question);
-    assert.deepEqual(description.ast, stripSpans(oracle.ast), question);
-    assert.deepEqual(description.axes.map(a => [a.label, a.values]),
+    assert.deepEqual(olderAst(description.ast), stripSpans(oracle.ast), question);
+    assert.equal(description.ast.find.text, description.canonical.split("\n")
+      .find(line => line.startsWith("find ")).slice(5), question);
+    assert.deepEqual(description.axes.map(a => [a.label, olderAst(a.values)]),
       oracle.axes.map(a => [a.label, stripSpans(a.values)]), question);
     assert.deepEqual(description.candidates, oracle.candidates.map(({index, label, assignment, resolvedText}) =>
       ({index, label, assignment, resolvedText})), question);
@@ -81,6 +92,12 @@ for (const question of receipts) {
     assert.deepEqual(answers[i].anchors, expected.matches.map(row => row.t), question);
     const page = engine.studyRows(question, {candidate: i, limit: 8});
     assert.equal(page.event_count, expected.rows.length, question);
+    assert.equal(page.event_unknown, answers[i].unknown.event.length, question);
+    assert.deepEqual(page.columns, expected.columns.map(column => column.text), question);
+    const lines = (keyword) => candidate.resolvedText.split("\n")
+      .filter(line => line.startsWith(keyword + " ")).map(line => line.slice(keyword.length + 1));
+    assert.deepEqual(page.lines, {on: lines("on")[0], find: lines("find")[0],
+      wheres: lines("where"), group: lines("group by")[0] ?? null, measures: lines("measure")}, question);
     assert.deepEqual(page.survivors, expected.survivors, question);
     assert.deepEqual(page.clause_stats, expected.clauseStats.map(s => [s.T, s.F, s.U]), question);
     assert.deepEqual(page.group_labels, expected.group?.keys.map(key => ({
@@ -126,6 +143,39 @@ for (const question of receipts) {
     }), question);
   }
 }
+const t = Date.parse("2025-03-25T03:00:00Z");
+const explain = head + "wick_rejection(body_max: 35%, wick_min: 45%)" +
+  "\nwhere near_level(prior_high(over: 4h), point: price(close), within: 0.25%)" +
+  "\nwhere candle_share(lower_wick, min: 50%)" +
+  "\nwhere range_multiple(over: 24h, min: 1.5)" +
+  "\nwhere weekday(nyse_regular) = mon";
+const facts = engine.studyClose(explain, t);
+assert.match(facts.event_why, /35%/);
+assert.match(facts.event_why, /45%/);
+assert.match(facts.where_why[0], /0\.25%/);
+assert.match(facts.where_why[1], /50%/);
+assert.match(facts.where_why[2], /preceding 24h median/);
+assert.match(facts.where_why[3], /New York date 2025-03-24/);
+const unknownDay = engine.studyClose(explain, bundle.rec.closeTime(0));
+assert.match(unknownDay.where_why[3], /New York dates 2025-01-01 … 2025-06-01/);
+assert.ok(engine.studyClose(head + "hammer", t).event_why.includes(engine.catalogue().patterns
+  .find(pattern => pattern.id === "hammer").rule));
+const heldQuestion = head + relation + "\nwhere held(quiet_range(width_max: 2.5%), for: 48h)";
+assert.match(engine.studyClose(heldQuestion, t).where_why[0], /true since .*48h/);
+
+const unavailable = head + "candle_relation(delta(), is: above, right: 0)";
+const refused = engine.studyDiagnostics(unavailable);
+assert.equal(refused.errors[0].kind, "capability");
+assert.equal(refused.canonical, unavailable);
+assert.equal(refused.ast.find.text, unavailable.slice(head.length));
+
+const mixed = head + "hammer or candle_relation(price(high, bars_ago: 1), is: above, right: price(close))" +
+  "\nwhere candle_share(lower_wick, min: 50%) and range_multiple(over: 4h, min: 1, max: 2)";
+const model = fromText(mixed).model;
+assert.deepEqual(model.find.items.map(item => item.type), ["pattern", "raw"]);
+assert.deepEqual(model.wheres.map(item => item.type), ["share", "raw"]);
+assert.deepEqual(engine.study(toText(model)).results[0].anchors, engine.study(mixed).results[0].anchors);
+
 const expected = receipts.map(query => ({count: engine.study(query, {candidate: 0}).results[0].counts.matches, error: null}));
 assert.deepEqual(engine.studyCounts(receipts), expected);
 const broken = head + "missing_term_here";

@@ -7,7 +7,7 @@ use crate::{
     rules::Cmp,
     Result,
 };
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 pub(super) const MAX_BATCH: usize = 64;
 
@@ -60,11 +60,13 @@ pub(super) struct Query {
     pub filters: Vec<usize>,
     pub group: Option<usize>,
     pub horizons: Vec<usize>,
+    pub column_labels: Vec<String>,
 }
 
 pub(super) struct Plan {
     pub nodes: Vec<Node>,
     pub queries: Vec<Query>,
+    pub notes: HashMap<usize, String>,
 }
 
 fn steps(ms: i64, frame: i64) -> Result<usize> {
@@ -388,11 +390,16 @@ impl Plan {
                 filters: Vec::new(),
                 group,
                 horizons,
+                column_labels: Vec::new(),
             });
         }
         if queries.is_empty() {
             return Err("study batch is empty".into());
         }
-        Ok(Self { nodes, queries })
+        Ok(Self {
+            nodes,
+            queries,
+            notes: HashMap::new(),
+        })
     }
 }
