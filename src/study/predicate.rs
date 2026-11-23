@@ -138,6 +138,22 @@ impl Field {
             Self::Direction => (b.c - b.o).signum(),
         }
     }
+
+    fn drawing_value(self, [o, h, l, c]: [f64; 4]) -> f64 {
+        match self {
+            Self::Open => o,
+            Self::High => h,
+            Self::Low => l,
+            Self::Close => c,
+            Self::BodyLow => o.min(c),
+            Self::BodyHigh => o.max(c),
+            Self::Body => (c - o).abs(),
+            Self::Range => h - l,
+            Self::Lower => o.min(c) - l,
+            Self::Upper => h - o.max(c),
+            Self::Direction => f64::from(u8::from(c > o)) - f64::from(u8::from(c < o)),
+        }
+    }
 }
 
 enum Operand {
@@ -208,7 +224,18 @@ impl CandleRule {
 
     pub fn eval(&self, current: Bar, previous: Option<Bar>) -> Option<bool> {
         let previous = if self.bars == 2 { previous? } else { current };
-        Some(self.expr.eval(current, previous))
+        Some(self.expr.eval(|operand| operand.value(current, previous)))
+    }
+
+    pub fn matches_drawing(&self, rows: &[[f64; 4]]) -> bool {
+        let current = rows[rows.len() - 1];
+        let previous = rows[rows.len() - self.bars];
+        self.expr.eval(|operand| match *operand {
+            Operand::Constant(n) => n as f64,
+            Operand::Price(prior, field, mul) => {
+                field.drawing_value(if prior { previous } else { current }) * mul as f64
+            }
+        })
     }
 }
 
@@ -239,14 +266,14 @@ impl Expression {
         }
     }
 
-    fn eval(&self, current: Bar, previous: Bar) -> bool {
+    fn eval<T: PartialOrd>(&self, value: impl Fn(&Operand) -> T + Copy) -> bool {
         match self {
-            Self::Compound(true, items) => items.iter().all(|x| x.eval(current, previous)),
-            Self::Compound(false, items) => items.iter().any(|x| x.eval(current, previous)),
+            Self::Compound(true, items) => items.iter().all(|x| x.eval(value)),
+            Self::Compound(false, items) => items.iter().any(|x| x.eval(value)),
             Self::Compare(op, a, b) => {
                 use crate::rules::Cmp::*;
-                let a = a.value(current, previous);
-                let b = b.value(current, previous);
+                let a = value(a);
+                let b = value(b);
                 match op {
                     Lt => a < b,
                     Le => a <= b,

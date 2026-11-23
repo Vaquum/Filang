@@ -4,7 +4,7 @@ use crate::{
     engine_json::Value,
     geometry::{
         explore::{Reading, Recording},
-        matching::{boundaries, holds, AxisDistance, Difference, Exact, Hold, Shape},
+        matching::{boundaries, AxisDistance, Difference, Exact, Hold, Shape},
     },
     study, Result,
 };
@@ -105,12 +105,16 @@ impl Window {
         })
     }
 
-    fn write(self, out: &mut String, frame: &Frame) {
+    fn write(self, out: &mut String, frame: &Frame, include_timeframe: bool) {
         let start = self.start as usize;
         let span = self.span();
         let start_ms = frame.time(start);
         let end_ms = frame.time(start + span);
-        write!(out, "{{\"start\":{start},\"span\":{span},\"start_ms\":{start_ms},\"end_ms\":{end_ms},\"picks\":[")
+        out.push('{');
+        if include_timeframe {
+            write!(out, "\"timeframe\":{},", frame.interval_ms).expect("write timeframe");
+        }
+        write!(out, "\"start\":{start},\"span\":{span},\"start_ms\":{start_ms},\"end_ms\":{end_ms},\"picks\":[")
             .expect("write position");
         for (i, position) in self.offsets().enumerate() {
             if i != 0 {
@@ -169,22 +173,56 @@ struct FrameMatches {
     within: Vec<Window>,
 }
 
+enum Positions<'a> {
+    Frame(usize, &'a [Window]),
+    Ranked(Option<usize>, &'a [Ranked]),
+}
+
+impl Positions<'_> {
+    fn len(&self) -> usize {
+        match self {
+            Self::Frame(_, windows) => windows.len(),
+            Self::Ranked(None, ranks) => ranks.len(),
+            Self::Ranked(Some(frame), ranks) => ranks.iter().filter(|r| r.frame == *frame).count(),
+        }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = (usize, Window)> + '_ {
+        let (frame, windows, ranks) = match *self {
+            Self::Frame(frame, windows) => (Some(frame), windows, &[][..]),
+            Self::Ranked(frame, ranks) => (frame, &[][..], ranks),
+        };
+        windows
+            .iter()
+            .map(move |&w| (frame.expect("window frame"), w))
+            .chain(ranks.iter().filter_map(move |r| {
+                frame
+                    .map_or(true, |frame| r.frame == frame)
+                    .then_some((r.frame, r.window))
+            }))
+    }
+}
+
 struct Placement {
     depth: usize,
     offsets: [usize; MAX_BARS],
     choices: [usize; MAX_BARS],
     colours: [usize; MAX_BARS],
+    end_choices: [u8; MAX_BARS],
+    last_skip: [usize; MAX_BARS],
     best: Option<(f64, Window, usize, f64)>,
     first: Option<Window>,
 }
 
 impl Placement {
-    fn new() -> Self {
+    fn new(extra: usize) -> Self {
         Self {
             depth: 0,
             offsets: [0; MAX_BARS],
             choices: [0; MAX_BARS],
             colours: [0; MAX_BARS],
+            end_choices: [u8::MAX; MAX_BARS],
+            last_skip: [extra; MAX_BARS],
             best: None,
             first: None,
         }
@@ -330,6 +368,7 @@ pub(crate) struct Search {
     stretch: usize,
     limit: usize,
     best: BinaryHeap<Ranked>,
+    ranked: Vec<Ranked>,
     away: HashMap<Difference, Bucket>,
     positions: [FrameMatches; 5],
     scratch: [[f64; 4]; MAX_BARS],
@@ -379,18 +418,24 @@ impl Search {
             }
         }
         let span = drawing.rows.len();
-        let mode = drawing.pattern.mode();
         let shape = Shape::new(&drawing.rows, &drawing.pattern)?;
-        let holds = holds(&drawing.rows, &drawing.pins, drawing.skeleton, mode);
+        let holds: Vec<_> = drawing
+            .holding()
+            .rules
+            .into_iter()
+            .map(|(rule, _)| rule)
+            .collect();
         let mut by_bar = vec![Vec::new(); span];
         let mut local = vec![Vec::new(); span];
         let mut ending_at = vec![Vec::new(); span];
         for &hold in &holds {
-            by_bar[hold.last()].push(hold);
             if hold.is_local() {
                 local[hold.last()].push(hold);
-            } else if hold.last() + 1 == span {
+            }
+            if !hold.is_local() && hold.last() + 1 == span {
                 ending_at[hold.first()].push(hold);
+            } else {
+                by_bar[hold.last()].push(hold);
             }
         }
         let has_ending_rules = ending_at.iter().any(|rules| !rules.is_empty());
@@ -418,6 +463,7 @@ impl Search {
             stretch,
             limit: drawing.limit,
             best: BinaryHeap::new(),
+            ranked: Vec::new(),
             away: HashMap::new(),
             positions: Default::default(),
             scratch: [[0.0; 4]; MAX_BARS],
@@ -471,65 +517,66 @@ impl Search {
                     self.contiguous(frame);
                     let window = Window::consecutive(self.start, self.span);
                     if let Some(axes) = self.axes(frame, window) {
-                        let colours = self.values();
-                        let ends = &self.endpoints[..4 * self.span];
-                        if let Some((score, flips, off)) =
-                            self.shape.rank(ends, colours, axes, self.bound())
-                        {
-                            self.record_rank(score, flips, off, window);
-                        }
+                        let colours = self.colour_flips();
+                        self.fill_endpoints();
+                        self.rank_window(window, colours, axes);
                     }
                 }
                 self.next_start();
+            } else if self.extra == 0 {
+                self.contiguous(frame);
+                let qualifies = self.qualifies(self.frame, self.start + self.span - 1);
+                let held = self.observe_consecutive(frame, selected, qualifies);
+                if self.holds.is_empty() || (self.first_only && !held) {
+                    self.next_start();
+                } else {
+                    self.next_span();
+                }
+            } else if self.span == 2 {
+                self.observe_stretched_pair(frame, selected);
+                self.next_span();
             } else {
-                if self.extra == 0 && self.placement.is_none() {
-                    self.contiguous(frame);
-                    self.observe_consecutive(frame, selected);
-                    if self.holds.is_empty()
-                        || self.first_only
-                            && self.by_bar[0]
-                                .iter()
-                                .any(|hold| !hold.matches(&self.scratch))
-                    {
-                        self.next_start();
+                let mut placement = match self
+                    .placement
+                    .take()
+                    .or_else(|| self.begin_placement(frame))
+                {
+                    Some(placement) => placement,
+                    None => {
+                        self.next_span();
                         remaining -= 1;
                         continue;
                     }
-                }
-                let mut placement = self.placement.take().unwrap_or_else(|| {
-                    let mut placement = Placement::new();
-                    if self.first_only {
-                        let mut first = Window::consecutive(self.start, self.span);
-                        first.picks &= !(1 << (self.span - 1));
-                        first.picks |= 1 << (self.span + self.extra - 1);
-                        placement.first = Some(first);
-                    }
-                    placement
-                });
+                };
                 let qualified = self.qualifies(self.frame, self.start + self.span + self.extra - 1);
                 let rank = selected && qualified;
-                if (rank || placement.first.is_none()) && self.place(frame, &mut placement, rank) {
-                    self.placement = Some(placement);
-                } else {
-                    if let Some(window) = placement.first {
-                        let matches = &mut self.positions[self.frame];
-                        matches.held.push(window);
-                        if qualified && self.end_masks[self.frame].is_some() {
-                            matches.qualified_held.push(window);
+                if rank || placement.first.is_none() {
+                    while self.place(frame, &mut placement, rank) {
+                        remaining -= 1;
+                        if remaining == 0 {
+                            self.placement = Some(placement);
+                            return false;
                         }
                     }
-                    if let Some((score, window, flips, off)) = placement.best {
-                        self.record_rank(score, flips, off, window);
-                    }
-                    self.extra += 1;
-                    if self.extra > self.stretch {
-                        self.next_start();
-                    }
                 }
+                if let Some(window) = placement.first {
+                    self.record_hold(window, qualified);
+                }
+                if let Some((score, window, flips, off)) = placement.best {
+                    self.record_rank(score, flips, off, window);
+                }
+                self.next_span();
             }
             remaining -= 1;
         }
         false
+    }
+
+    fn next_span(&mut self) {
+        self.extra += 1;
+        if self.extra > self.stretch {
+            self.next_start();
+        }
     }
 
     fn next_start(&mut self) {
@@ -544,10 +591,13 @@ impl Search {
         }
     }
 
-    fn values(&mut self) -> usize {
+    fn fill_endpoints(&mut self) {
         for (i, &row) in self.scratch[..self.span].iter().enumerate() {
             self.endpoints[4 * i..4 * i + 4].copy_from_slice(&boundaries(row));
         }
+    }
+
+    fn colour_flips(&self) -> usize {
         self.shape.colour_flips(&self.scratch[..self.span])
     }
 
@@ -563,14 +613,26 @@ impl Search {
             .axis_distance(|i, axis| frame.recording.dimension_at(slots[i], axis))
     }
 
-    fn observe_consecutive(&mut self, frame: &Frame, selected: bool) {
+    fn observe_consecutive(&mut self, frame: &Frame, selected: bool, qualified: bool) -> bool {
         let window = Window::consecutive(self.start, self.span);
         let axes = match self.axes(frame, window) {
             Some(axes) => axes,
-            None => return,
+            None => return false,
         };
-        let qualified = self.qualifies(self.frame, self.start + self.span - 1);
-        let colours = self.values();
+        let held =
+            !self.holds.is_empty() && self.holds.iter().all(|hold| hold.matches(&self.scratch));
+        let colours = self.colour_flips();
+        let rank = (self.holds.is_empty() || held)
+            && selected
+            && qualified
+            && colours as f64 / 2.0 <= self.bound();
+        if held {
+            self.record_hold(window, qualified);
+        }
+        if colours > self.radius && !rank {
+            return held;
+        }
+        self.fill_endpoints();
         let ends = &self.endpoints[..4 * self.span];
         if self.radius > 0 && self.shape.within(ends, colours, axes, self.radius) {
             self.positions[self.frame].within.push(window);
@@ -600,11 +662,82 @@ impl Search {
             }
             _ => {}
         }
-        if self.holds.is_empty() && selected && qualified {
-            if let Some((score, flips, off)) = self.shape.rank(ends, colours, axes, self.bound()) {
-                self.record_rank(score, flips, off, window);
+        if rank {
+            self.rank_window(window, colours, axes);
+        }
+        held
+    }
+
+    fn observe_stretched_pair(&mut self, frame: &Frame, selected: bool) {
+        let offset = self.extra + 1;
+        let end = self.start + offset;
+        let window = Window {
+            start: self.start as u32,
+            picks: 1 | (1 << offset),
+        };
+        self.scratch[1] = frame.candle(end, 1);
+        if self.first_only || self.holds.iter().all(|hold| hold.matches(&self.scratch)) {
+            if let Some(axes) = self.axes(frame, window) {
+                let qualified = self.qualifies(self.frame, end);
+                self.record_hold(window, qualified);
+                if selected && qualified {
+                    let colours = self.colour_flips();
+                    if colours as f64 / 2.0 <= self.bound() {
+                        self.fill_endpoints();
+                        self.rank_window(window, colours, axes);
+                    }
+                }
             }
         }
+    }
+
+    fn rank_window(&mut self, window: Window, colours: usize, axes: AxisDistance) {
+        let ends = &self.endpoints[..4 * self.span];
+        if let Some((score, flips, off)) = self.shape.rank(ends, colours, axes, self.bound()) {
+            self.record_rank(score, flips, off, window);
+        }
+    }
+
+    fn record_hold(&mut self, window: Window, qualified: bool) {
+        let matches = &mut self.positions[self.frame];
+        matches.held.push(window);
+        if qualified && self.end_masks[self.frame].is_some() {
+            matches.qualified_held.push(window);
+        }
+    }
+
+    fn begin_placement(&mut self, frame: &Frame) -> Option<Placement> {
+        let mut placement = Placement::new(self.extra);
+        if self.first_only {
+            let mut first = Window::consecutive(self.start, self.span);
+            first.picks &= !(1 << (self.span - 1));
+            first.picks |= 1 << (self.span + self.extra - 1);
+            placement.first = Some(first);
+        }
+        if self.has_ending_rules {
+            let last = self.span - 1;
+            self.scratch[last] = frame.candle(self.start + last + self.extra, last);
+            let mut latest = self.extra;
+            for (depth, rules) in self.ending_at[..last].iter().enumerate().rev() {
+                if !rules.is_empty() {
+                    let mut choices = 0;
+                    for skip in 0..=if depth == 0 { 0 } else { latest } {
+                        self.scratch[depth] = frame.candle(self.start + depth + skip, depth);
+                        if rules.iter().all(|hold| hold.matches(&self.scratch)) {
+                            choices |= 1u8 << skip;
+                        }
+                    }
+                    if choices == 0 {
+                        return None;
+                    }
+                    // Skips cannot be undone before reaching a later bound endpoint.
+                    latest = (u8::BITS - 1 - choices.leading_zeros()) as usize;
+                    placement.end_choices[depth] = choices;
+                }
+                placement.last_skip[depth] = latest;
+            }
+        }
+        Some(placement)
     }
 
     /// Advance one placement node. The first and last pick are fixed, and
@@ -613,7 +746,11 @@ impl Search {
         let depth = placement.depth;
         let end = self.span + self.extra - 1;
         let offset = placement.choices[depth];
-        let last = if depth == 0 { 0 } else { depth + self.extra };
+        let last = if depth == 0 {
+            0
+        } else {
+            depth + placement.last_skip[depth]
+        };
         if offset > last {
             if depth == 0 {
                 return false;
@@ -622,6 +759,9 @@ impl Search {
             return true;
         }
         placement.choices[depth] += 1;
+        if placement.end_choices[depth] & (1 << (offset - depth)) == 0 {
+            return true;
+        }
         let mut bound = f64::INFINITY;
         let prefix = placement.colours[depth];
         if placement.first.is_some() {
@@ -637,13 +777,9 @@ impl Search {
             }
         }
         placement.offsets[depth] = offset;
-        if depth == 0 && self.has_ending_rules {
-            self.scratch[self.span - 1] = frame.candle(self.start + end, self.span - 1);
-        }
         self.scratch[depth] = frame.candle(self.start + offset, depth);
         if self.by_bar[depth]
             .iter()
-            .chain(&self.ending_at[depth])
             .any(|hold| !hold.matches(&self.scratch))
         {
             return true;
@@ -677,7 +813,8 @@ impl Search {
         let bound = placement
             .best
             .map_or(self.bound(), |(score, ..)| score.min(self.bound()));
-        let colours = self.values();
+        let colours = self.colour_flips();
+        self.fill_endpoints();
         let ends = &self.endpoints[..4 * self.span];
         if let Some((score, flips, off)) = self.shape.rank(ends, colours, axes, bound) {
             if placement.best.map_or(true, |(current, ..)| score < current) {
@@ -762,13 +899,20 @@ impl Search {
         buckets
     }
 
-    pub fn positions(&self, frame: usize, kind: &str, from: usize, limit: usize) -> Result<String> {
-        if from > u32::MAX as usize || limit > 4096 {
-            return Err("invalid Composer position page".into());
+    pub fn finish(&mut self) {
+        self.ranked = std::mem::take(&mut self.best).into_sorted_vec();
+    }
+
+    fn position_list(&self, frame: Option<usize>, kind: &str) -> Result<Positions<'_>> {
+        if let Some(frame) = frame {
+            self.frames[frame]
+                .as_ref()
+                .ok_or("load the requested timeframe first")?;
         }
-        let tape = self.frames[frame]
-            .as_ref()
-            .ok_or("load the requested timeframe first")?;
+        if kind == "ranked" {
+            return Ok(Positions::Ranked(frame, &self.ranked));
+        }
+        let frame = frame.ok_or("only ranked Composer positions can span timeframes")?;
         let positions = match kind {
             "exact" => &self.positions[frame].exact,
             "held" => &self.positions[frame].held,
@@ -788,22 +932,54 @@ impl Search {
                     .positions[frame]
             }
         };
-        let first = from.min(positions.len());
-        let end = (first + limit).min(positions.len());
+        Ok(Positions::Frame(frame, positions))
+    }
+
+    pub fn positions(
+        &self,
+        frame: Option<usize>,
+        kind: &str,
+        from: usize,
+        limit: usize,
+    ) -> Result<String> {
+        if from > u32::MAX as usize || limit > 4096 {
+            return Err("invalid Composer position page".into());
+        }
+        let positions = self.position_list(frame, kind)?;
+        let total = positions.len();
+        let first = from.min(total);
+        let end = (first + limit).min(total);
         let mut out = String::from("{\"positions\":[");
-        for (i, window) in positions[first..end].iter().enumerate() {
+        for (i, (index, window)) in positions.iter().skip(first).take(limit).enumerate() {
             if i != 0 {
                 out.push(',');
             }
-            window.write(&mut out, tape);
+            let tape = self.frames[index].as_ref().expect("position frame");
+            window.write(&mut out, tape, frame.is_none());
         }
-        let next = if end < positions.len() {
+        let next = if end < total {
             end.to_string()
         } else {
             "null".into()
         };
-        write!(out, "],\"next\":{next},\"total\":{}}}", positions.len())
-            .expect("write position page");
+        write!(out, "],\"next\":{next},\"total\":{total}}}").expect("write position page");
+        Ok(out)
+    }
+
+    pub fn packed_positions(&self, frame: Option<usize>, kind: &str) -> Result<Vec<u8>> {
+        let positions = self.position_list(frame, kind)?;
+        let stride = 9 + usize::from(frame.is_none());
+        let mut out = Vec::with_capacity(positions.len() * stride);
+        for (_, window) in positions.iter() {
+            out.extend_from_slice(&window.start.to_le_bytes());
+        }
+        for (_, window) in positions.iter() {
+            out.extend_from_slice(&window.picks.to_le_bytes());
+        }
+        out.extend(positions.iter().map(|(_, window)| window.span() as u8));
+        if frame.is_none() {
+            out.extend(positions.iter().map(|(index, _)| index as u8));
+        }
         Ok(out)
     }
 
@@ -834,10 +1010,8 @@ impl Search {
         let mut out = format!(
             "{{\"done\":true,\"mode\":\"{mode}\",\"exact\":{exact:?},\"held\":{held:?},\"qualified_exact\":{qualified_exact:?},\"qualified_held\":{qualified_held:?}{band},\"results\":["
         );
-        let mut ranked: Vec<_> = self.best.iter().collect();
-        ranked.sort_unstable();
         let mut times = Vec::<(i64, i64)>::new();
-        for r in ranked {
+        for r in &self.ranked {
             let frame = self.frames[r.frame].as_ref().expect("ranked frame");
             let first = r.window.start as usize;
             let a = frame.time(first);
@@ -866,7 +1040,7 @@ impl Search {
             }
             write!(out, "{{\"timeframe\":{},\"score\":{},\"half_flips\":{},\"off\":{},\"broken\":{broken:?},\"window\":",
                 frame.interval_ms, r.score, r.half_flips, r.off).expect("write ranked window");
-            r.window.write(&mut out, frame);
+            r.window.write(&mut out, frame, false);
             out.push('}');
             if times.len() == self.limit {
                 break;
@@ -884,7 +1058,7 @@ impl Search {
                 .map_or_else(String::new, |name| format!("\"axis\":\"{name}\","));
             write!(out, "{{{axis}\"a\":{},\"b\":{},\"was\":{},\"relation\":{},\"count\":{n},\"timeframe\":{},\"example\":",
                 diff.left, diff.right, diff.expected, diff.observed, frame.interval_ms).expect("write neighbour");
-            w.write(&mut out, frame);
+            w.write(&mut out, frame, false);
             out.push('}');
         }
         out.push_str("]}");

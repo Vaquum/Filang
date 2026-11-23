@@ -12,6 +12,8 @@ mod predicate;
 mod syntax;
 mod tape;
 
+pub(crate) use compiler::DrawingCatalogue;
+
 pub(crate) fn geometry_frame(
     csv: &str,
     interval: i64,

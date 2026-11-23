@@ -5,11 +5,12 @@ use crate::{
     engine_json::{self, Value},
     geometry::{
         explore::{encode_drawing, Reading},
-        matching::{Pin, Price},
+        matching::{holds, Holding, Pin, Price},
         GeometryMode, GeometryPattern,
     },
     Result,
 };
+use std::fmt::Write;
 
 const PLAIN_REVISION: &str = "133e3017ba9143f7dc255df7218ff7bfe46d9d06";
 const DIMENSIONS_REVISION: &str = "bd6a0ba32e18548b641267418491bfb5f011a274";
@@ -21,19 +22,56 @@ pub(crate) fn protocol() -> String {
 pub(crate) struct Drawing {
     pub pattern: GeometryPattern,
     pub rows: Vec<[f64; 4]>,
-    pub pins: Vec<Pin>,
-    pub skeleton: usize,
+    pins: Vec<(usize, Pin)>,
+    skeleton: usize,
     pub stretch: usize,
     pub limit: usize,
-    expression: Option<String>,
+    pub expression: Option<String>,
 }
 
-pub(crate) fn read(
-    text: &str,
-    expected: Option<&str>,
-) -> Result<(GeometryPattern, Option<String>)> {
-    let drawing = parse(text, expected)?;
-    Ok((drawing.pattern, drawing.expression))
+impl Drawing {
+    pub fn holding(&self) -> Holding {
+        holds(&self.rows, &self.pins, self.skeleton, self.pattern.mode())
+    }
+
+    pub fn write_holding(&self, out: &mut String) {
+        let holding = self.holding();
+        write!(
+            out,
+            ",\"skeleton_levels\":{},\"skeleton_marks\":[",
+            holding.levels
+        )
+        .expect("write skeleton levels");
+        for (i, &((bar, price), strength)) in holding.marks.iter().enumerate() {
+            if i != 0 {
+                out.push(',');
+            }
+            write!(
+                out,
+                r#"{{"bar":{bar},"price":"{}","strength":{strength}}}"#,
+                price.name()
+            )
+            .expect("write skeleton mark");
+        }
+        out.push_str("],\"held_rules\":[");
+        for (i, (rule, pin)) in holding.rules.into_iter().enumerate() {
+            if i != 0 {
+                out.push(',');
+            }
+            match rule.pin {
+                Pin::Colour(bar) => write!(out, r#"{{"bar":{bar},"colour":{}"#, rule.relation),
+                Pin::Relation((a, left), (b, right)) => write!(out,
+                    r#"{{"a":{{"bar":{a},"price":"{}"}},"b":{{"bar":{b},"price":"{}"}},"relation":{}"#,
+                    left.name(), right.name(), rule.relation),
+            }.expect("write held rule");
+            if let Some(pin) = pin {
+                write!(out, r#","source":"pin","pin":{pin}}}"#).expect("write pin source");
+            } else {
+                out.push_str(r#","source":"skeleton"}"#);
+            }
+        }
+        out.push(']');
+    }
 }
 
 pub(crate) fn parse(text: &str, expected: Option<&str>) -> Result<Drawing> {
@@ -102,10 +140,10 @@ pub(crate) fn parse(text: &str, expected: Option<&str>) -> Result<Drawing> {
     }
     let mut rules = Vec::new();
     let mut search_pins = Vec::with_capacity(pins.len());
-    for pin in pins {
+    for (index, pin) in pins.iter().enumerate() {
         if matches!(pin.object()?.get("color"), Some(Value::Bool(true))) {
             let bar = integer(pin.field("bar")?, 0, width - 1)?;
-            search_pins.push(Pin::Colour(bar));
+            search_pins.push((index, Pin::Colour(bar)));
             if mode == GeometryMode::Oriented {
                 let [open, _, _, close] = rows[bar];
                 let op = relation(close, open);
@@ -118,7 +156,7 @@ pub(crate) fn parse(text: &str, expected: Option<&str>) -> Result<Drawing> {
             if a != b {
                 let ap = Price::endpoint(a.1, rows[a.0], mode);
                 let bp = Price::endpoint(b.1, rows[b.0], mode);
-                search_pins.push(Pin::Relation((a.0, ap), (b.0, bp)));
+                search_pins.push((index, Pin::Relation((a.0, ap), (b.0, bp))));
                 let op = relation(ap.value(rows[a.0]), bp.value(rows[b.0]));
                 let lags = (width - 1 - a.0, width - 1 - b.0);
                 push_rule(

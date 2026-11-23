@@ -86,7 +86,22 @@ Drawings use OHLC and mark coordinates. Signed marks use zero as their
 reference. Use `drawCounts` for live changes, `at` for the identity of a
 recorded window, and `positions` for a bounded page of matching slots.
 `decodeDrawing(packetText, expectedCode)` returns the validated packet,
-its canonical shape and its optional pinned expression. `encodeDrawing`
+its canonical shape and its optional pinned expression. It also returns:
+
+- `held_rules` in the order indexed by Composer's `broken` array. Price
+  relations use endpoints `{bar, price}` as `a` and `b` with `relation`
+  equal to -1, 0 or 1. Colour rules use `{bar, colour}` with the same
+  values for down, flat or up. A rule has `source: "pin"` and its original
+  zero-based `pin` index, or `source: "skeleton"`.
+- `skeleton_levels`, the number of levels available, and `skeleton_marks`,
+  the selected level's swings as `{bar, price, strength}`. Level zero
+  selects no swings.
+- `names`, named candle catalogue IDs and their zero-based half-open
+  bar ranges as `{id, start, end}`. Grouped names and, for an unoriented
+  drawing, direction-dependent names are omitted.
+
+All bar indices are zero-based. `price` is `open`, `high`, `low`, `close`,
+`body_low` or `body_high`. `encodeDrawing`
 selects the packet revision from the supplied parts. `drawingProtocol`
 returns both compatible revisions. `distance` returns comparison
 differences in half-flips for a pair of complete patterns.
@@ -144,9 +159,20 @@ rules on fallback, and the six most frequent one-comparison changes.
 Each window has the frame, times and selected bar offsets needed to
 describe it from Composer's recording. Read large match sets with
 `ask("composerPositions", intervalMs, {kind, start, limit})`. The kinds
-are `exact`, `held`, `qualified-exact`, `qualified-held` and
-`near:N` for a zero-based one-away result. Resume at the returned
+are `exact`, `held`, `qualified-exact`, `qualified-held`, `within`,
+`near:N` for a zero-based one-away result, and `ranked` for the full
+retained ranking, including overlapping windows. Pass `null` for
+`intervalMs` with `ranked` to keep the global order across timeframes,
+with a `timeframe` in milliseconds on each row. Resume at the returned
 `next` index.
+
+`ask("composerPositionsPacked", intervalMs, {kind})` reads a whole cohort
+in the same order in one call. It returns parallel `starts` and `picks`
+as `Uint32Array` and `spans` as `Uint8Array`. Starts are grid slots.
+Bit `n` of a picks mask selects the bar at offset `n` from the start.
+For a global ranked read, `frames` is a `Uint8Array` of indices in the
+same timeframe order as the search mask. The views share one independent
+buffer, transferred by the worker and usable after later engine calls.
 
 A drawing with selected dimension parts uses the same g1 distance as
 Study. Supply `radius` to include the per-frame `within` cohort and use the

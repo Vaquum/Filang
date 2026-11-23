@@ -9,7 +9,8 @@ const [oracle, fixture, selected] = process.argv.slice(2);
 if (!oracle || !fixture) throw new Error("usage: composer.mjs COMPOSER_CHECKOUT FIXTURES [SCENARIO]");
 const matcher = new Function("self", "window", await readFile(resolve(oracle, "matcher.js"), "utf8") +
   ";return {decode, search, setTables: t => { BARS = t; }, setId: id => { latest = id; }};")(undefined, undefined);
-const {heldOf} = await import(pathToFileURL(resolve(oracle, "bench/model.js")));
+const {heldOf, namesOf, skelLevels, skelMarks} = await import(pathToFileURL(resolve(oracle, "bench/model.js")));
+await import(pathToFileURL(resolve(oracle, "patterns.js")));
 const packed = await readFile(resolve(fixture, "bars"));
 const history = matcher.decode(packed.buffer.slice(packed.byteOffset, packed.byteOffset + packed.byteLength));
 matcher.setTables(history);
@@ -67,6 +68,32 @@ function endMasks(next) {
   });
 }
 
+function checkPacked(interval, kind, label) {
+  const packed = engine.composerPositionsPacked(interval, {kind});
+  const length = packed.starts.length;
+  assert.equal(packed.picks.length, length, label);
+  assert.equal(packed.spans.length, length, label);
+  if (interval === null) assert.equal(packed.frames.length, length, label);
+  let i = 0;
+  let next = 0;
+  do {
+    const page = engine.composerPositions(interval, {kind, start: next});
+    assert.equal(page.total, length, label);
+    for (const w of page.positions) {
+      let mask = 0;
+      for (const offset of w.picks) mask |= 1 << offset;
+      if (packed.starts[i] !== w.start || packed.spans[i] !== w.span || packed.picks[i] !== mask
+        || (interval === null && intervals[packed.frames[i]] !== w.timeframe)) {
+        throw new Error(`${label}: window ${i} differs from its JSON row`);
+      }
+      i++;
+    }
+    next = page.next;
+  } while (next !== null);
+  assert.equal(i, length, label);
+  return packed;
+}
+
 const cases = [
   ["default", 2, [], 0, 31, true],
   ["default-repeat", 2, [], 0, 31, true],
@@ -95,7 +122,23 @@ try {
       bars: bars.map(([o, h, l, c]) => ({v: [l, Math.min(o, c), Math.max(o, c), h], d: c >= o ? "u" : "d"})),
       pins, skeleton, stretch, limit: 12, next: {dir: 0, measure: "any", bps: 10, atr: 1},
     };
-    const holds = heldOf(bars, {pins, skel: skeleton, oriented}).map(({h}) => h);
+    const holdsWithSources = heldOf(bars, {pins, skel: skeleton, oriented});
+    const holds = holdsWithSources.map(({h}) => h);
+    const decoded = engine.decodeDrawing(JSON.stringify(packet));
+    const prices = ["open", "high", "low", "close", "body_low", "body_high"];
+    assert.deepEqual(decoded.held_rules.map(rule => ({
+      from: rule.source, pin: rule.pin ?? -1,
+      h: rule.a
+        ? {a: [rule.a.bar, prices.indexOf(rule.a.price)], b: [rule.b.bar, prices.indexOf(rule.b.price)], rel: rule.relation}
+        : {color: true, bar: rule.bar, dir: rule.colour},
+    })), holdsWithSources.map(({from, pin, h}) => ({from, pin, h})), name + " hold ledger");
+    assert.equal(decoded.skeleton_levels, skelLevels(bars).length, name + " skeleton levels");
+    assert.deepEqual(decoded.skeleton_marks.map(({bar, price, strength}) => ({
+      bar, part: price === "high" ? "H" : "L", k: strength,
+    })), skelMarks(bars, skeleton), name + " selected skeleton swings");
+    assert.deepEqual(decoded.names.map(({id, start, end}) => [id,
+      end - start === 1 ? `Bar ${end}` : `Bars ${start + 1}–${end}`,
+    ]), namesOf(packet.bars, oriented).map(({who, p}) => [p.id, who]), name + " names");
     const query = {bars, holds, stretch, x: 12, tfs: timeframes.map((_, i) => Boolean(tf & (1 << i))), oriented, next};
     const start = performance.now();
     engine.composerStart(packet, {timeframes: tf, endMasks: next ? endMasks(next) : undefined});
@@ -140,6 +183,16 @@ try {
         kind: "near:" + i, limit: 0,
       }).total, 0);
       assert.equal(total, near.count);
+    }
+    const ranked = checkPacked(null, "ranked", name + " global ranked");
+    for (const [frame, interval] of intervals.entries()) {
+      for (const kind of ["exact", "held", "qualified-exact", "qualified-held", "within",
+        ...actual.near.map((_, i) => "near:" + i)]) {
+        checkPacked(interval, kind, name + " " + kind + " " + interval);
+      }
+      const local = checkPacked(interval, "ranked", name + " ranked " + interval);
+      const ordered = [...ranked.starts].filter((_, i) => ranked.frames[i] === frame);
+      assert.deepEqual([...local.starts], ordered, name + " ranked subsequence");
     }
   }
 } finally {

@@ -1,6 +1,7 @@
 use super::{
     extension::{Case, Definition, Param, ParamKind, BUNDLED},
     plan::{Plan, MAX_BATCH},
+    predicate::CandleRule,
     syntax::{self, Argument, Comparison, Expr, Literal, Question},
     tape::{DAYS, TRENDS},
 };
@@ -19,6 +20,53 @@ const DAY: i64 = 86_400_000;
 const WEEK: i64 = 7 * DAY;
 const QUARTER_HOUR: i64 = 900_000;
 const CATALOGUE: &str = include_str!("../../study/catalogue/candles.json");
+
+pub(crate) struct DrawingCatalogue(Vec<(String, bool, CandleRule)>);
+
+impl DrawingCatalogue {
+    pub fn new() -> Result<Self> {
+        let document = engine_json::parse(CATALOGUE)?;
+        let mut rules = Vec::new();
+        for pattern in document.field("patterns")?.array()? {
+            if matches!(
+                pattern.object()?.get("group"),
+                Some(engine_json::Value::Bool(true))
+            ) {
+                continue;
+            }
+            let id = pattern.field("id")?.text()?.to_owned();
+            let oriented = pattern.field("oriented")?.bool()?;
+            let width = pattern.field("bars")?.number()?;
+            let mut words = pattern.field("instruction")?.text()?.split_whitespace();
+            if words.next() != Some("pattern")
+                || words.next().and_then(|s| s.parse().ok()) != Some(width)
+            {
+                return Err("invalid catalogue pattern instruction".into());
+            }
+            let rule = CandleRule::parse(width, &mut words)?;
+            rules.push((id, oriented, rule));
+        }
+        Ok(Self(rules))
+    }
+
+    pub fn names<'a>(
+        &'a self,
+        rows: &'a [[f64; 4]],
+        oriented: bool,
+    ) -> impl Iterator<Item = (&'a str, Range<usize>)> {
+        (1..=rows.len()).flat_map(move |end| {
+            self.0
+                .iter()
+                .filter_map(move |(id, needs_direction, rule)| {
+                    let width = rule.width();
+                    (width <= end
+                        && (oriented || !needs_direction)
+                        && rule.matches_drawing(&rows[..end]))
+                    .then(|| (id.as_str(), end - width..end))
+                })
+        })
+    }
+}
 
 const FUNCTIONS: &[&str] = &[
     "exact_g1",

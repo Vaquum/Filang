@@ -43,6 +43,33 @@ async function verify() {
     const source = JSON.stringify(packet);
     const carried = await worker.ask("decodeDrawing", source, shape);
     equal(carried.packet, packet, "Composer packet retained");
+    const endpoint = (bar, price) => ({bar, price});
+    const rule = (a, b, relation, pin) => pin === undefined
+      ? {a, b, relation, source: "skeleton"}
+      : {a, b, relation, source: "pin", pin};
+    const opening = {
+      ...packet,
+      bars: [{v: [30, 42, 56, 68], d: "u"}, {v: [18, 36, 56, 80], d: "d"}],
+      skeleton: 1,
+    };
+    const {held_rules, skeleton_marks, skeleton_levels, names} =
+      await worker.ask("decodeDrawing", JSON.stringify(opening));
+    const o = endpoint(0, "open"), h = endpoint(1, "high"), l = endpoint(1, "low"), c = endpoint(1, "close");
+    equal(held_rules, [
+      rule(endpoint(0, "high"), h, -1, 0), {bar: 1, colour: -1, source: "pin", pin: 1},
+      rule(o, h, -1), rule(o, l, 1), rule(o, c, 1), rule(h, l, 1), rule(h, c, 1),
+      rule(l, c, -1), rule(l, endpoint(0, "low"), -1),
+    ], "Composer fallback ledger order and provenance");
+    equal(skeleton_levels, 1, "Composer number of skeleton levels");
+    equal(skeleton_marks, [{...h, strength: 2}, {...l, strength: 2}], "Composer selected swings");
+    equal(names, [{id: "bearish-engulfing", start: 0, end: 2}, {id: "outside-bar", start: 0, end: 2}],
+      "Composer excludes grouped names and retains named ranges");
+    const unoriented = await worker.ask("decodeDrawing", JSON.stringify({
+      ...opening, oriented: false, skeleton: 0,
+    }));
+    equal(unoriented.names, [{id: "outside-bar", start: 0, end: 2}], "Composer hides direction-dependent names");
+    equal(unoriented.skeleton_marks, [], "Composer level zero keeps no swings");
+    equal(unoriented.skeleton_levels, 1, "Composer reports levels with skeleton disabled");
     equal(await worker.ask("encodeDrawing", packet), source, "legacy packet bytes");
     equal(carried.shape.code, shape, "canonical handoff code");
     const counts = [];
@@ -96,6 +123,21 @@ async function verify() {
     equal(page.positions.length, 2, "Composer positions");
     equal(page.next, 2, "Composer positions cursor");
     equal(page.positions[0].picks, [0, 1], "Composer consecutive picks");
+    const packed = await worker.ask("composerPositionsPacked", interval);
+    equal([packed.starts.constructor.name, packed.picks.constructor.name, packed.spans.constructor.name],
+      ["Uint32Array", "Uint32Array", "Uint8Array"], "Composer packed typed columns across worker");
+    equal([packed.starts.length, packed.picks.length, packed.spans.length], [page.total, page.total, page.total],
+      "Composer packed read is complete");
+    equal([...packed.starts.subarray(0, 2)], page.positions.map(p => p.start), "Composer packed starts");
+    equal([...packed.picks.subarray(0, 2)], [3, 3], "Composer packed picks masks");
+    equal([...packed.spans.subarray(0, 2)], [2, 2], "Composer packed spans");
+    const allRanked = await worker.ask("composerPositions", null, {kind: "ranked", limit: 3});
+    const ranked = await worker.ask("composerPositionsPacked", null, {kind: "ranked"});
+    equal(ranked.starts.length, 480, "Composer retains the full heap, including overlaps");
+    equal([...ranked.starts.subarray(0, 3)], allRanked.positions.map(p => p.start), "Composer ranking order");
+    equal([...ranked.frames.subarray(0, 3)], [0, 0, 0], "Composer packed timeframe indices");
+    equal(allRanked.positions.map(p => p.timeframe), [interval, interval, interval], "Composer JSON timeframe");
+    equal([...packed.starts.subarray(0, 2)], page.positions.map(p => p.start), "Composer keeps earlier packed reads");
     await worker.ask("loadCsv", counters, interval);
     const g1 = await worker.ask("counts", expected, {reading: "chained"});
     const query = find + `chained_g1(${JSON.stringify(expected)})`;

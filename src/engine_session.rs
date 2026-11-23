@@ -10,7 +10,7 @@ use crate::{
     },
     study, Result,
 };
-use std::{collections::HashMap, str};
+use std::{collections::HashMap, fmt::Write, str};
 
 pub const ABI_VERSION: u32 = 1;
 pub(crate) const VERSION: &str = match option_env!("FILANG_RELEASE_VERSION") {
@@ -30,9 +30,26 @@ pub struct Session {
     domains: HashMap<(usize, GeometryMode), DeclaredDomain>,
     composer_frames: [Option<Frame>; 5],
     composer_search: Option<(Search, bool)>,
+    drawing_catalogue: Option<study::DrawingCatalogue>,
 }
 
 impl Session {
+    /// Packed Composer positions for the native binding. The payload is the
+    /// timeframe and kind, separated by a tab.
+    pub fn composer_positions_packed(&self, payload: &[u8]) -> Result<Vec<u8>> {
+        let [interval, kind] = fields(utf8(payload)?)?;
+        self.finished_composer()?
+            .packed_positions(composer_position_frame(interval)?, kind)
+    }
+
+    fn finished_composer(&self) -> Result<&Search> {
+        self.composer_search
+            .as_ref()
+            .filter(|(_, done)| *done)
+            .map(|(search, _)| search)
+            .ok_or_else(|| "finish the Composer search first".into())
+    }
+
     /// An ASCII operation and LF, followed by that operation's payload.
     /// Responses are UTF-8 JSON. Errors are reported out of band by the binding.
     pub fn call(&mut self, request: &[u8]) -> Result<String> {
@@ -103,18 +120,20 @@ impl Session {
                     .composer_search
                     .as_mut()
                     .ok_or("start a Composer search first")?;
-                *done = *done || search.step(work);
+                if !*done && search.step(work) {
+                    search.finish();
+                    *done = true;
+                }
                 Ok(search.reply(*done))
             }
             b"composer-positions" => {
                 let [interval, kind, start, limit] = fields(text)?;
-                let index = composer_timeframe(number(interval)?)?;
-                let (search, _) = self
-                    .composer_search
-                    .as_ref()
-                    .filter(|(_, done)| *done)
-                    .ok_or("finish the Composer search first")?;
-                search.positions(index, kind, number(start)?, number(limit)?)
+                self.finished_composer()?.positions(
+                    composer_position_frame(interval)?,
+                    kind,
+                    number(start)?,
+                    number(limit)?,
+                )
             }
             b"composer-cancel" if text.is_empty() => {
                 self.composer_search = None;
@@ -239,14 +258,37 @@ impl Session {
             b"read-drawing" => {
                 let (expected, packet) = text.split_once('\n').ok_or("missing drawing packet")?;
                 let expected = (!expected.is_empty()).then_some(expected);
-                let (shape, pins) = engine_drawing::read(packet, expected)?;
-                let shape = inspect(&shape)?;
-                let pinned = pins
+                let drawing = engine_drawing::parse(packet, expected)?;
+                let shape = inspect(&drawing.pattern)?;
+                let pinned = drawing
+                    .expression
                     .as_ref()
                     .map_or_else(|| "null".into(), |s| study::quote(s));
-                Ok(format!(
-                    "{{\"shape\":{shape},\"packet\":{packet},\"pinned_expression\":{pinned}}}"
-                ))
+                let mut out = format!(
+                    "{{\"shape\":{shape},\"packet\":{packet},\"pinned_expression\":{pinned}"
+                );
+                drawing.write_holding(&mut out);
+                if self.drawing_catalogue.is_none() {
+                    self.drawing_catalogue = Some(study::DrawingCatalogue::new()?);
+                }
+                let catalogue = self.drawing_catalogue.as_ref().expect("drawing catalogue");
+                out.push_str(",\"names\":[");
+                let oriented = drawing.pattern.mode() == GeometryMode::Oriented;
+                for (i, (id, range)) in catalogue.names(&drawing.rows, oriented).enumerate() {
+                    if i != 0 {
+                        out.push(',');
+                    }
+                    write!(
+                        out,
+                        r#"{{"id":{},"start":{},"end":{}}}"#,
+                        study::quote(id),
+                        range.start,
+                        range.end
+                    )
+                    .expect("write drawing name");
+                }
+                out.push_str("]}");
+                Ok(out)
             }
             b"draw" => inspect(&draw(text)?.0),
             b"draw-counts" => {
@@ -422,7 +464,6 @@ fn inspect(pattern: &GeometryPattern) -> Result<String> {
         let price = key.price().words();
         let mut words = String::new();
         for word in price.iter().chain(key.dimension_words()) {
-            use std::fmt::Write;
             if !words.is_empty() {
                 words.push(',');
             }
@@ -546,6 +587,14 @@ fn composer_timeframe(interval: i64) -> Result<usize> {
         .iter()
         .position(|&candidate| candidate == interval)
         .ok_or_else(|| "Composer timeframe must be 15m, 30m, 1h, 2h or 4h".into())
+}
+
+fn composer_position_frame(interval: &str) -> Result<Option<usize>> {
+    if interval == "-" {
+        Ok(None)
+    } else {
+        composer_timeframe(number(interval)?).map(Some)
+    }
 }
 
 fn fields<const N: usize>(text: &str) -> Result<[&str; N]> {
