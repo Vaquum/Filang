@@ -180,6 +180,18 @@ complete common four-bar chained windows in a direct source
 comparison. This held for price and for the combined key with all
 five axes. [Price keys](cube-limen-price.json) · [All axes](cube-limen-dimensions.json)
 
+## A9. Independent native replication
+
+Fifteen alternating pairs used the same binaries, recording and stage
+boundaries as A8. Every preregistered latency and peak RSS gate passed.
+All captured artifacts remained byte-identical. Geometry preparation
+medians were 152.1 and 139.1 ms on the base and candidate, respectively.
+Peak memory for that stage fell from 8.01 MB to 5.64 MB. Warm study fell
+from 837.2 to 704.4 ms. Cold study was 6.27 ms against a base median
+of 5.85 ms and a base p75 gate of 6.37 ms. The paired claim was
+**supported** on the measured host and inputs.
+[Raw native A9 trials](native-a9.json)
+
 ## Repeat the real-Cube trace
 
 The capture command uses the authorized host's existing loopback bridge.
