@@ -106,10 +106,10 @@ price axis and selected counter dimensions have independent orders.
 ### Exact exploration
 
 A prepared width indexes observed keys on each axis separately. Exact
-counts intersect occurrence lists and use a separate validity count for
-the requested axis set. Costs depend on the recording's observed keys and
-matching positions. Repeated drawing edits reuse one preparation. A width
-or axis added for the first time prepares in the worker.
+counts intersect sparse offset lists or packed bitmaps. A separate
+validity count covers the requested axis set. Costs depend on the
+recording's observed keys and matching positions. Repeated drawing edits
+reuse one preparation. A new width or axis prepares in the worker.
 
 Interactive windows support 1–256 contiguous bars and recordings up to one
 million slots. Compact keys retain their existing four price words and
