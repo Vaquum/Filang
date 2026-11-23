@@ -1,8 +1,11 @@
 //! Bounded, close-anchored research studies over a checked Filang plan.
 //! This path shares the native geometry and packed mask representations.
+mod bench;
 mod candles;
 mod compiler;
 mod compute;
+mod description;
+mod explanation;
 mod extension;
 mod plan;
 mod predicate;
@@ -53,7 +56,9 @@ pub fn serve(bars: impl AsRef<Path>, calendar: impl AsRef<Path>, interval_ms: i6
 pub struct Study {
     tape: Tape,
     calendar: Option<(String, Calendar)>,
+    calendar_sha256: Option<String>,
     instrument: String,
+    source_sha256: String,
     registry: compiler::Registry,
 }
 
@@ -69,7 +74,9 @@ impl Study {
         Ok(Self {
             tape: Tape::parse(csv, interval)?,
             calendar: None,
+            calendar_sha256: None,
             instrument: instrument.to_owned(),
+            source_sha256: crate::hash::sha256(csv.as_bytes()),
             registry: compiler::Registry::new()?,
         })
     }
@@ -79,7 +86,11 @@ impl Study {
     }
 
     pub fn set_pinned_calendar(&mut self) -> Result<()> {
-        self.set_calendar(include_str!("../../study/catalogue/nyse.tsv"))
+        self.set_calendar(include_str!("../../study/catalogue/nyse.tsv"))?;
+        self.calendar_sha256 = Some(crate::hash::sha256(include_bytes!(
+            "../../study/nyse-sessions.json"
+        )));
+        Ok(())
     }
 
     pub fn set_calendar_named(&mut self, table: &str, tsv: &str) -> Result<()> {
@@ -87,6 +98,7 @@ impl Study {
             return Err("invalid calendar table id".into());
         }
         self.calendar = Some((table.to_owned(), Calendar::parse(tsv)?));
+        self.calendar_sha256 = Some(crate::hash::sha256(tsv.as_bytes()));
         Ok(())
     }
 
@@ -191,6 +203,31 @@ impl Study {
                 .as_ref()
                 .map_or(&empty, |(_, calendar)| calendar),
         )
+    }
+
+    /// Count the first candidate without materializing closes or outcomes.
+    /// A batch consumer can return an error for one query and keep the others.
+    pub fn first_count(&self, text: &str) -> Result<usize> {
+        let plan = self.compile(text, Some(0))?;
+        let empty = Calendar::empty();
+        let calendar = self
+            .calendar
+            .as_ref()
+            .map_or(&empty, |(_, calendar)| calendar);
+        let mut eval = Eval::new(&self.tape, calendar);
+        let series = eval.series(&plan.nodes)?;
+        let query = &plan.queries[0];
+        let event = series[query.find].mask()?;
+        let context = query.context.map(|id| series[id].mask()).transpose()?;
+        Ok(self
+            .tape
+            .bars
+            .iter()
+            .enumerate()
+            .filter(|&(i, bar)| {
+                bar.is_some() && event.at(i).0 && context.map_or(true, |mask| mask.at(i).0)
+            })
+            .count())
     }
 }
 
@@ -338,36 +375,53 @@ fn write_result(
         } else {
             out.push_str("null");
         }
-        out.push_str(",\"out\":[");
-        let start = tape.bars[i].expect("present occurrence").c;
-        for (k, &h) in query.horizons.iter().enumerate() {
-            if k > 0 {
-                out.push(',');
-            }
-            match tape.bars.get(i + h) {
-                None => out.push_str("{\"status\":\"censored\",\"value\":null}"),
-                Some(None) => out.push_str("{\"status\":\"unknown\",\"value\":null}"),
-                Some(Some(bar)) => write!(
-                    out,
-                    "{{\"status\":\"observed\",\"value\":{}}}",
-                    (bar.c - start) as f64 / start as f64
-                )
-                .expect("format string"),
-            }
-        }
-        out.push(']');
-        if let Some((breach, level)) = series[query.find].reclaim(i, series)? {
-            write!(
-                out,
-                ",\"reclaim\":{{\"breach\":{},\"reclaim\":{},\"level\":{level}}}",
-                tape.close(breach),
-                tape.close(i)
-            )
-            .expect("format string");
-        }
+        write_outcomes(out, tape, i, &query.horizons);
+        write_reclaim(out, tape, series, query, i)?;
         out.push('}');
     }
     out.push_str("]}");
+    Ok(())
+}
+
+fn write_outcomes(out: &mut String, tape: &Tape, i: usize, horizons: &[usize]) {
+    use std::fmt::Write;
+    out.push_str(",\"out\":[");
+    let start = tape.bars[i].expect("present occurrence").c;
+    for (k, &h) in horizons.iter().enumerate() {
+        if k > 0 {
+            out.push(',');
+        }
+        match tape.bars.get(i + h) {
+            None => out.push_str("{\"status\":\"censored\",\"value\":null}"),
+            Some(None) => out.push_str("{\"status\":\"unknown\",\"value\":null}"),
+            Some(Some(bar)) => write!(
+                out,
+                "{{\"status\":\"observed\",\"value\":{}}}",
+                (bar.c - start) as f64 / start as f64
+            )
+            .expect("format string"),
+        }
+    }
+    out.push(']');
+}
+
+fn write_reclaim(
+    out: &mut String,
+    tape: &Tape,
+    series: &[Series],
+    query: &Query,
+    i: usize,
+) -> Result<()> {
+    use std::fmt::Write;
+    if let Some((breach, level)) = series[query.find].reclaim(i, series)? {
+        write!(
+            out,
+            ",\"reclaim\":{{\"breach\":{},\"reclaim\":{},\"level\":{level}}}",
+            tape.close(breach),
+            tape.close(i)
+        )
+        .expect("format string");
+    }
     Ok(())
 }
 

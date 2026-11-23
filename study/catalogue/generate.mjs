@@ -1,5 +1,6 @@
 // Lower Composer's pinned declarative rules into the native study instruction set.
 import fs from "node:fs";
+import {createHash} from "node:crypto";
 import "../composer/patterns.js";
 import {FUNCTIONS, NAMED} from "../src/registry.js";
 
@@ -29,6 +30,28 @@ if (process.argv.includes("--check")) {
   if (fs.readFileSync(path, "utf8") !== text) throw new Error("Filang candle catalogue is stale");
 } else {
   fs.writeFileSync(path, text);
+}
+
+const terms = FUNCTIONS.map((fn) => {
+  const pattern = patterns.find((entry) => entry.id === fn.patternId);
+  const pin = pattern ? {
+    id: pattern.id, version: pattern.version,
+    sha256: createHash("sha256").update(JSON.stringify([pattern.id, pattern.version, pattern.bars, pattern.spec])).digest("hex"),
+  } : null;
+  return {
+    name: fn.name, id: fn.id || fn.name, version: fn.version,
+    title: fn.title, summary: fn.summary, formula: fn.formula,
+    positional: fn.positional || null, candle: pin,
+    aliases: named.filter(([, value]) => value.def === fn.name).map(([label]) => label),
+  };
+});
+const termPath = new URL("./terms.json", import.meta.url);
+const termText = '{\n  "schema": "filang-study-terms-v1",\n  "terms": [\n' +
+  terms.map(term => '    ' + JSON.stringify(term)).join(',\n') + '\n  ]\n}\n';
+if (process.argv.includes("--check")) {
+  if (fs.readFileSync(termPath, "utf8") !== termText) throw new Error("Filang terms catalogue is stale");
+} else {
+  fs.writeFileSync(termPath, termText);
 }
 
 const {SessionCalendar} = await import("../src/data.js");
