@@ -4,7 +4,7 @@ use std::{ptr, slice};
 #[derive(Default)]
 pub struct Handle {
     session: Session,
-    output: String,
+    output: Vec<u8>,
 }
 
 #[no_mangle]
@@ -56,16 +56,22 @@ pub unsafe extern "C" fn filang_call(handle: *mut Handle, data: *const u8, len: 
         None => return 1,
     };
     if len == 0 || len > MAX_PAYLOAD || data.is_null() {
-        handle.output = "invalid Filang engine request buffer".to_string();
+        handle.output = b"invalid Filang engine request buffer".to_vec();
         return 1;
     }
-    match handle.session.call(slice::from_raw_parts(data, len)) {
+    let request = slice::from_raw_parts(data, len);
+    let reply = if let Some(payload) = request.strip_prefix(b"composer-positions-packed\n") {
+        handle.session.composer_positions_packed(payload)
+    } else {
+        handle.session.call(request).map(String::into_bytes)
+    };
+    match reply {
         Ok(value) => {
             handle.output = value;
             0
         }
         Err(error) => {
-            handle.output = error;
+            handle.output = error.into_bytes();
             1
         }
     }

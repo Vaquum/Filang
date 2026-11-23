@@ -3,7 +3,7 @@ import {FilangEngine} from "./index.mjs";
 const engine = FilangEngine.create();
 const methods = new Set([
   "version", "memoryBytes", "inspect", "geometryShape", "distance", "domain", "load", "loadCsv", "prepare", "release",
-  "drawingProtocol", "decodeDrawing", "encodeDrawing", "composerPositions",
+  "drawingProtocol", "decodeDrawing", "encodeDrawing", "composerPositions", "composerPositionsPacked",
   "at", "draw", "drawCounts", "counts", "neighbourhood", "radiusSeries", "positions", "classify", "catalogue", "setCalendar", "installDefinition", "check", "study", "studyCounts",
   "studyRows", "studyClose", "sessionClock", "studyTerms", "resolveCandle", "describeStudy", "studyDiagnostics",
 ]);
@@ -52,7 +52,11 @@ self.addEventListener("message", async ({data: {id, method, args = []}}) => {
       if (!methods.has(method)) throw new Error("unknown Filang worker method");
       value = session[method](...args);
     }
-    self.postMessage({id, value});
+    if (method === "composerPositionsPacked") {
+      self.postMessage({id, value}, [value.starts.buffer]);
+    } else {
+      self.postMessage({id, value});
+    }
   } catch (error) {
     self.postMessage({id, error: error.message, errorName: error.name});
   }

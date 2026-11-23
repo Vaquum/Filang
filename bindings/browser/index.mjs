@@ -2,6 +2,7 @@ const ABI = 1;
 const BAR_SIZE = 57;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+const littleEndian = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
 
 const mode = (oriented) => oriented ? "oriented" : "unoriented";
 const names = (dimensions) => dimensions.join(",");
@@ -83,7 +84,27 @@ export class FilangEngine {
   composerCancel() { return this.#call("composer-cancel"); }
 
   composerPositions(intervalMs, {kind = "exact", start = 0, limit = 4096} = {}) {
-    return this.#call("composer-positions", fields(intervalMs, kind, start, limit));
+    return this.#call("composer-positions", fields(intervalMs === null ? "-" : intervalMs, kind, start, limit));
+  }
+
+  composerPositionsPacked(intervalMs, {kind = "exact"} = {}) {
+    const all = intervalMs === null;
+    const bytes = this.#call("composer-positions-packed", fields(all ? "-" : intervalMs, kind), true);
+    const length = bytes.length / (all ? 10 : 9);
+    if (!Number.isInteger(length)) throw new Error("invalid packed Composer positions");
+    if (!littleEndian) {
+      const words = new DataView(bytes.buffer);
+      for (let offset = 0; offset < 8 * length; offset += 4) {
+        words.setUint32(offset, words.getUint32(offset, true));
+      }
+    }
+    const result = {
+      starts: new Uint32Array(bytes.buffer, 0, length),
+      picks: new Uint32Array(bytes.buffer, 4 * length, length),
+      spans: new Uint8Array(bytes.buffer, 8 * length, length),
+    };
+    if (all) result.frames = new Uint8Array(bytes.buffer, 9 * length, length);
+    return result;
   }
 
   setCalendar(tsv = "", {table} = {}) {
@@ -173,7 +194,7 @@ export class FilangEngine {
       : this.#call("classify-within", fields(reading, start, limit, radius, code));
   }
 
-  #call(operation, payload = "") {
+  #call(operation, payload = "", packed = false) {
     if (!this.#handle) throw new Error("Filang engine is closed");
     const wasm = this.#wasm;
     const head = encoder.encode(operation + "\n");
@@ -188,9 +209,10 @@ export class FilangEngine {
       const status = wasm.filang_call(this.#handle, ptr, len);
       const out = wasm.filang_output(this.#handle);
       const outLen = wasm.filang_output_len(this.#handle);
-      const value = decoder.decode(new Uint8Array(wasm.memory.buffer, out, outLen));
-      if (status !== 0) throw new Error(value);
-      return JSON.parse(value);
+      const bytes = new Uint8Array(wasm.memory.buffer, out, outLen);
+      if (status !== 0) throw new Error(decoder.decode(bytes));
+      if (packed) return bytes.slice();
+      return JSON.parse(decoder.decode(bytes));
     } finally {
       wasm.filang_free(ptr, len);
     }

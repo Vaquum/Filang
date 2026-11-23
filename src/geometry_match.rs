@@ -363,8 +363,8 @@ pub(crate) enum Pin {
 
 #[derive(Clone, Copy)]
 pub(crate) struct Hold {
-    pin: Pin,
-    relation: i8,
+    pub pin: Pin,
+    pub relation: i8,
 }
 
 impl Hold {
@@ -401,43 +401,52 @@ fn pin_relation(pin: Pin, rows: &[[f64; 4]]) -> i8 {
     }
 }
 
+pub(crate) struct Holding {
+    pub rules: Vec<(Hold, Option<usize>)>,
+    pub levels: usize,
+    pub marks: Vec<((usize, Price), usize)>,
+}
+
 pub(crate) fn holds(
     rows: &[[f64; 4]],
-    pins: &[Pin],
+    pins: &[(usize, Pin)],
     skeleton: usize,
     mode: GeometryMode,
-) -> Vec<Hold> {
+) -> Holding {
     let mut colours = HashSet::new();
     let mut relations = HashSet::new();
     let mut out = Vec::new();
-    let mut push = |pin| {
+    let mut push = |pin, source| {
         let distinct = match pin {
             Pin::Colour(bar) => mode == GeometryMode::Oriented && colours.insert(bar),
             Pin::Relation(a, b) => a != b && relations.insert((a.min(b), a.max(b))),
         };
         if distinct {
-            out.push(Hold {
-                pin,
-                relation: pin_relation(pin, rows),
-            });
+            out.push((
+                Hold {
+                    pin,
+                    relation: pin_relation(pin, rows),
+                },
+                source,
+            ));
         }
     };
-    for &pin in pins {
-        push(pin);
+    for &(index, pin) in pins {
+        push(pin, Some(index));
     }
-    let marks = landmarks(rows, skeleton);
+    let (levels, marks) = landmarks(rows, skeleton);
     if !marks.is_empty() {
-        let mut points: Vec<_> = marks.clone();
+        let mut points: Vec<_> = marks.iter().map(|&(point, _)| point).collect();
         if mode == GeometryMode::Oriented {
             points.insert(0, (0, Price::Open));
             points.push((rows.len() - 1, Price::Close));
         }
         for (i, &a) in points.iter().enumerate() {
             for &b in &points[i + 1..] {
-                push(Pin::Relation(a, b));
+                push(Pin::Relation(a, b), None);
             }
         }
-        for &(bar, price) in &marks {
+        for &((bar, price), _) in &marks {
             for neighbor in [
                 bar.checked_sub(1),
                 (bar + 1 < rows.len()).then_some(bar + 1),
@@ -445,17 +454,20 @@ pub(crate) fn holds(
             .into_iter()
             .flatten()
             {
-                push(Pin::Relation((bar, price), (neighbor, price)));
+                push(Pin::Relation((bar, price), (neighbor, price)), None);
             }
         }
     }
-    out
+    Holding {
+        rules: out,
+        levels,
+        marks,
+    }
 }
 
-fn landmarks(rows: &[[f64; 4]], level: usize) -> Vec<(usize, Price)> {
-    if level == 0 {
-        return Vec::new();
-    }
+type Landmark = ((usize, Price), usize);
+
+fn landmarks(rows: &[[f64; 4]], level: usize) -> (usize, Vec<Landmark>) {
     let mut marks = Vec::new();
     let n = rows.len();
     let mut strengths = Vec::new();
@@ -489,11 +501,12 @@ fn landmarks(rows: &[[f64; 4]], level: usize) -> Vec<(usize, Price)> {
     }
     strengths.sort_unstable_by(|a, b| b.cmp(a));
     strengths.dedup();
-    let minimum = strengths.get(level.min(strengths.len()).saturating_sub(1));
-    marks
-        .into_iter()
-        .filter_map(|(point, strength)| minimum.filter(|&&x| strength >= x).map(|_| point))
-        .collect()
+    let minimum = level
+        .min(strengths.len())
+        .checked_sub(1)
+        .map(|i| strengths[i]);
+    marks.retain(|&(_, strength)| minimum.map_or(false, |x| strength >= x));
+    (strengths.len(), marks)
 }
 
 #[cfg(test)]
