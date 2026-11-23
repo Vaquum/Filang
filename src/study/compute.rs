@@ -5,7 +5,8 @@ use super::{
 };
 use crate::{
     geometry::{
-        explore::Reading, Dimension, GeometryEncoder, GeometryKey, GeometryMode, GeometryPattern,
+        explore::{PreparedGeometry, Reading, Recording},
+        Dimension, GeometryEncoder, GeometryKey, GeometryMode, GeometryPattern,
         GEOMETRY_KEY_MAX_BARS,
     },
     rules::Mask,
@@ -110,6 +111,8 @@ pub(super) struct Eval<'a> {
     windows: HashMap<usize, Rc<Vec<Envelope>>>,
     // by window length, orientation and reading (as recorded or chained): the two readings never share keys
     keys: HashMap<(usize, bool, bool), Rc<Vec<Key>>>,
+    radius_indexes: HashMap<usize, PreparedGeometry>,
+    radius_recording: Option<Recording>,
     // one value per slot on a dimension, NaN where the bar or the value is absent
     dimensions: HashMap<Dimension, Rc<Vec<f64>>>,
     medians: HashMap<usize, Rc<Vec<i64>>>,
@@ -126,6 +129,8 @@ impl<'a> Eval<'a> {
             calendar,
             windows: HashMap::new(),
             keys: HashMap::new(),
+            radius_indexes: HashMap::new(),
+            radius_recording: None,
             dimensions: HashMap::new(),
             medians: HashMap::new(),
             axis_medians: HashMap::new(),
@@ -184,6 +189,9 @@ impl<'a> Eval<'a> {
                 self.mask(|i| rule.eval(tape.bars[i]?, i.checked_sub(1).and_then(|j| tape.bars[j])))
             }
             Node::Geometry(pattern, chained) => self.geometry(pattern, *chained)?,
+            Node::GeometryWithin(pattern, chained, radius) => {
+                self.geometry_within(pattern, *chained, *radius)?
+            }
             Node::Price(field, lag) => Series::Prices(
                 (0..n)
                     .map(|i| {
@@ -482,6 +490,37 @@ impl<'a> Eval<'a> {
                             part.matches_values(&values[window.clone()], &mut levels)
                         }),
             )
+        }))
+    }
+
+    fn geometry_within(
+        &mut self,
+        pattern: &GeometryPattern,
+        chained: bool,
+        radius: u32,
+    ) -> Result<Series> {
+        if self.radius_recording.is_none() {
+            self.radius_recording = Some(self.tape.geometry_recording()?);
+        }
+        let width = pattern.len();
+        let prepared = match self.radius_indexes.entry(width) {
+            std::collections::hash_map::Entry::Occupied(entry) => entry.into_mut(),
+            std::collections::hash_map::Entry::Vacant(entry) => {
+                let recording = self.radius_recording.as_ref().expect("prepared recording");
+                self.geometry_windows += 1;
+                entry.insert(recording.prepare(width)?)
+            }
+        };
+        let reading = if chained {
+            Reading::Chained
+        } else {
+            Reading::Recorded
+        };
+        let (bits, valid) = prepared.within_masks(pattern, reading, radius)?;
+        Ok(Series::Bool(Mask {
+            bits,
+            valid,
+            len: self.tape.bars.len(),
         }))
     }
 

@@ -462,6 +462,15 @@ impl<'a> Compiler<'a> {
     }
 
     fn whole(&mut self, arg: Option<&'a Expr>, default: usize) -> Result<usize> {
+        self.bounded_whole(arg, default, 64)
+    }
+
+    fn bounded_whole(
+        &mut self,
+        arg: Option<&'a Expr>,
+        default: usize,
+        max: usize,
+    ) -> Result<usize> {
         match arg {
             None => Ok(default),
             Some(expr) => match self.literal(expr)? {
@@ -470,8 +479,8 @@ impl<'a> Compiler<'a> {
                     ratio
                         .strip_suffix("/1")
                         .and_then(|n| n.parse::<usize>().ok())
-                        .filter(|&n| n <= 64)
-                        .ok_or_else(|| "expected a whole number in 0..=64".into())
+                        .filter(|&n| n <= max)
+                        .ok_or_else(|| format!("expected a whole number in 0..={max}"))
                 }
                 _ => Err("expected a whole number".into()),
             },
@@ -730,7 +739,13 @@ impl<'a> Compiler<'a> {
                     self.counters()?;
                 }
                 let op = if name == "exact_g1" { "g1" } else { "g1c" };
-                (Kind::Event, format!("{op} {pattern}"))
+                let radius = self.bounded_whole(a.take("radius"), 0, u32::MAX as usize)?;
+                let wire = if radius == 0 {
+                    format!("{op} {pattern}")
+                } else {
+                    format!("{op}r {pattern} {radius}")
+                };
+                (Kind::Event, wire)
             }
             "wick_rejection" => {
                 let body = self.ratio(a.take("body_max"), "35/100", true, false)?;

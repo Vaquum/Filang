@@ -338,6 +338,32 @@ The execution CSV must end exactly at the configured end-exclusive boundary and
 contain the configured start at an exact bar boundary. Future rows are rejected,
 even if a caller intended to leave them unscored.
 
+### Radius over comparisons
+
+A radius widens a submitted pattern to observed windows whose total
+comparison distance is at most that radius. The unit is a half-flip.
+For each pair of labelled points on the same axis, take the absolute
+difference between its two relations encoded as below `−1`, equal `0`,
+and above `+1`. An orientation contributes the absolute difference
+between down `−1`, flat `0`, and up `+1`. Sum these differences without
+weights or comparisons between axes. Signed delta and imbalance include
+their zero point. Chained reading changes price points and direction.
+
+Radius zero is exact g1 and leaves its text, keys and results unchanged.
+Positive radii never change the key. Windows with a missing candle or
+selected dimension value remain unknown at every radius. A larger
+radius contains every window admitted by a smaller one. Projecting bars,
+dropping orientation, or dropping dimensions removes terms from the
+sum and can only reduce distance. A projection's radius can therefore
+also admit windows that its more constrained form excluded.
+
+Study accepts `exact_g1("g1:o:0,1,2,3,u", radius: 2)` and
+`chained_g1("g1:o:0,1,2,3,u", radius: {0 | 1 | 2})`. Other numeric
+thresholds retain their own units. Counts and distance bins are over
+the recording's observed keys. The engine never enumerates the full
+space of possible g1 patterns to answer this question.
+
+
 ## 9. Exhaustive domain, observed states and symbolic complement
 
 The exhaustive geometry domain consists of every complete legal pattern for a

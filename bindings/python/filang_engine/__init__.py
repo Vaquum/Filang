@@ -163,14 +163,23 @@ class Engine:
         self.decode_drawing(text)
         return text
 
-    def counts(self, code, *, reading="recorded"):
-        return self._call("counts", _fields(reading, code))
+    def counts(self, code, *, reading="recorded", radius=0):
+        if radius == 0:
+            return self._call("counts", _fields(reading, code))
+        return self._call("counts-within", _fields(reading, radius, code))
 
-    def positions(self, code, *, reading="recorded", start=0, limit=100):
-        return self._call("positions", _fields(reading, start, limit, code))
+    def neighbourhood(self, code, *, reading="recorded", radius=0):
+        return self._call("neighbourhood", _fields(reading, radius, code))
 
-    def classify(self, code, *, reading="recorded", start=0, limit=4096):
-        return self._call("classify", _fields(reading, start, limit, code))
+    def positions(self, code, *, reading="recorded", start=0, limit=100, radius=0):
+        if radius == 0:
+            return self._call("positions", _fields(reading, start, limit, code))
+        return self._call("positions-within", _fields(reading, start, limit, radius, code))
+
+    def classify(self, code, *, reading="recorded", start=0, limit=4096, radius=0):
+        if radius == 0:
+            return self._call("classify", _fields(reading, start, limit, code))
+        return self._call("classify-within", _fields(reading, start, limit, radius, code))
 
     def _call(self, operation, payload=b""):
         with self._lock:

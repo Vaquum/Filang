@@ -9,6 +9,10 @@ use super::{
 use crate::Result;
 use std::{collections::HashMap, hash::Hash, ops::Range, sync::Arc};
 
+#[path = "geometry_radius.rs"]
+mod radius;
+pub use radius::RadiusCounts;
+
 /// A recording contains grid slots, including missing bars.
 pub const MAX_SLOTS: usize = 1_000_000;
 /// Bound storage and preparation work independently of the compact key width.
@@ -722,44 +726,7 @@ pub fn distance(left: &GeometryPattern, right: &GeometryPattern) -> Result<usize
     {
         return Err("distance needs a common width, orientation and dimension set".into());
     }
-    let price_left: Vec<_> = left.ranks().iter().flatten().copied().collect();
-    let price_right: Vec<_> = right.ranks().iter().flatten().copied().collect();
-    let mut total = order_distance(&price_left, &price_right);
-    if let (Some(a), Some(b)) = (left.directions(), right.directions()) {
-        let code = |direction| match direction {
-            BodyDirection::Down => -1i8,
-            BodyDirection::Flat => 0,
-            BodyDirection::Up => 1,
-        };
-        total += a
-            .iter()
-            .zip(b)
-            .map(|(&a, &b)| usize::from((code(a) - code(b)).unsigned_abs()))
-            .sum::<usize>();
-    }
-    for (a, b) in left.dimensions().iter().zip(right.dimensions()) {
-        let levels = |part: &DimensionPart| {
-            part.ranks()
-                .iter()
-                .copied()
-                .chain(part.reference())
-                .collect::<Vec<_>>()
-        };
-        total += order_distance(&levels(a), &levels(b));
-    }
-    Ok(total)
-}
-
-fn order_distance(left: &[usize], right: &[usize]) -> usize {
-    let mut total = 0;
-    for j in 1..left.len() {
-        for i in 0..j {
-            let a = left[i].cmp(&left[j]) as i8;
-            let b = right[i].cmp(&right[j]) as i8;
-            total += usize::from((a - b).unsigned_abs());
-        }
-    }
-    total
+    Ok(radius::distance(left, right))
 }
 
 fn index_axis(recording: &Recording, width: usize, axis: Dimension) -> AxisKeys {

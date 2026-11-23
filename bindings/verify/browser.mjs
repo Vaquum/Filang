@@ -1,6 +1,7 @@
 import {FilangEngine} from "../../target/engine-dist/browser/index.mjs";
 import {openFilangWorker} from "../../target/engine-dist/browser/worker-client.mjs";
 import {verifyVectors} from "./vectors.mjs";
+import {verifyRadiusVectors} from "./radius-vectors.mjs";
 
 const interval = 900000;
 const find = "on BTCUSDT 15m\nfind ";
@@ -28,13 +29,15 @@ async function verify() {
   const first = await FilangEngine.create();
   const worker = openFilangWorker();
   try {
-    const [chained, dims, csv, counters] = await Promise.all([
+    const [chained, dims, radius, csv, counters] = await Promise.all([
       fetchFixture("/study/verify/chained-vectors.json", "json"),
       fetchFixture("/study/verify/dimension-vectors.json", "json"),
+      fetchFixture("/study/verify/radius-vectors.json", "json"),
       fetchFixture("/fixture/pinned.csv"),
       fetchFixture("/fixture/counters.csv"),
     ]);
     const cases = verifyVectors(first, chained, dims);
+    const radiusCases = verifyRadiusVectors(first, radius.vectors);
     equal(await worker.ask("version"), first.version(), "page and worker ABI");
     await worker.ask("loadCsv", csv, interval);
     const source = JSON.stringify(packet);
@@ -72,7 +75,11 @@ async function verify() {
     const dimensionedStudy = (await worker.ask("study", query)).results[0];
     equal(dimensionedStudy.counts.matches, g1.matched, "dimensioned Query and Composer counts");
     equal(dimensionedStudy.unknown.event.length, g1.unknown, "dimensioned unknowns");
-    return {cases, counts, pinned: held.counts.matches, dimensioned: g1};
+    const d = radius.vectors[0];
+    await worker.ask("load", d.bars);
+    equal((await worker.ask("counts", d.code, {radius: 2})).matched,
+      d.distances.filter(x => x !== null && x <= 2).length, "worker radius");
+    return {cases, radiusCases, counts, pinned: held.counts.matches, dimensioned: g1};
   } finally {
     worker.close();
     first.close();

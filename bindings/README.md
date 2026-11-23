@@ -90,6 +90,11 @@ its canonical shape and its optional pinned expression. `encodeDrawing`
 selects the packet revision from the supplied parts. `drawingProtocol`
 returns both compatible revisions. `distance` returns comparison
 differences in half-flips for a pair of complete patterns.
+Pass `radius` to `counts`, `positions` or `classify` to include
+patterns within that many half-flips over their selected axes and
+orientations. `neighbourhood` returns counts plus observed window counts
+by distance. The default radius is zero. Study's `exact_g1` and
+`chained_g1` accept an optional `radius` and sweep lists.
 
 Use `study(query, {candidate})` for Query's Filang text and its close-anchored
 counts, eligible closes, unknowns, groups and outcomes. Candidate indices
