@@ -138,6 +138,39 @@ async function verify() {
     equal([...ranked.frames.subarray(0, 3)], [0, 0, 0], "Composer packed timeframe indices");
     equal(allRanked.positions.map(p => p.timeframe), [interval, interval, interval], "Composer JSON timeframe");
     equal([...packed.starts.subarray(0, 2)], page.positions.map(p => p.start), "Composer keeps earlier packed reads");
+    const ticks = {
+      times: Float64Array.of(900, 1800, 3600, 4500), timeUnit: "s",
+      open: Int32Array.of(20, 40, 20, 40),
+      high: Int32Array.of(50, 85, 50, 85),
+      low: Int32Array.of(15, 30, 15, 30),
+      close: Int32Array.of(40, 60, 40, 60),
+    };
+    const drawing = {...packet, pins: []};
+    const sparse = "open_ms,open,high,low,close,volume\n" +
+      Array.from(ticks.times, (t, i) =>
+        [t * 1000, ...["open", "high", "low", "close"].map(k => ticks[k][i] / 100), 0].join(",")).join("\n");
+    equal(await worker.ask("loadComposerFrame", sparse, interval), {slots: 5}, "Composer CSV sparse grid");
+    const csvResult = await worker.searchComposer(drawing, {timeframes: 1});
+    const csvPage = await worker.ask("composerPositions", interval);
+    equal(csvPage.positions.map(pos => [pos.start, pos.start_ms, pos.end_ms]),
+      [[0, 900000, 2700000], [3, 3600000, 5400000]], "Composer excludes windows over gaps");
+    equal(await worker.ask("loadComposerFrameTicks", interval, ticks), {slots: 5}, "Composer tick sparse grid");
+    equal(await worker.searchComposer(drawing, {timeframes: 1}), csvResult, "Composer tick search matches CSV");
+    equal(await worker.ask("composerPositions", interval), csvPage, "Composer tick times and positions match CSV");
+    equal(await worker.ask("loadComposerFrameTicks", interval, {
+      ...ticks, times: ticks.times.map(t => t * 1000), timeUnit: "ms",
+    }), {slots: 5}, "Composer tick milliseconds");
+    for (const invalid of [
+      {...ticks, times: Float64Array.of(900, 900, 3600, 4500)},
+      {...ticks, times: Float64Array.of(900, 1801, 3600, 4500)},
+      {...ticks, high: Int32Array.of(19, 85, 50, 85)},
+      {...ticks, close: Float64Array.of(40.5, 60, 40, 60)},
+      {...ticks, close: Int32Array.of(40, 60)},
+    ]) {
+      const accepted = await worker.ask("loadComposerFrameTicks", interval, invalid).then(() => true, () => false);
+      equal(accepted, false, "Composer rejects malformed tick columns");
+    }
+    equal(await worker.searchComposer(drawing, {timeframes: 1}), csvResult, "invalid tick loads preserve the frame");
     await worker.ask("loadCsv", counters, interval);
     const g1 = await worker.ask("counts", expected, {reading: "chained"});
     const query = find + `chained_g1(${JSON.stringify(expected)})`;

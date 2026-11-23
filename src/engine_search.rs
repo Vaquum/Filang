@@ -3,7 +3,7 @@ use crate::{
     engine_drawing::Drawing,
     engine_json::Value,
     geometry::{
-        explore::{Reading, Recording},
+        explore::{Bar, Reading, Recording, MAX_SLOTS},
         matching::{boundaries, AxisDistance, Difference, Exact, Hold, Shape},
     },
     study, Result,
@@ -29,6 +29,59 @@ pub(crate) struct Frame {
 impl Frame {
     pub fn load(csv: &str, interval_ms: i64) -> Result<Self> {
         let (start_ms, recording) = study::geometry_frame(csv, interval_ms)?;
+        Ok(Self::new(start_ms, interval_ms, recording))
+    }
+
+    /// Five little-endian f64 columns: timestamps, then open, high, low and close in cents.
+    pub fn load_ticks(data: &[u8], interval_ms: i64, time_scale: f64) -> Result<Self> {
+        const ROW_BYTES: usize = 5 * 8;
+        let rows = data.len() / ROW_BYTES;
+        if data.len() % ROW_BYTES != 0 || !(1..=MAX_SLOTS).contains(&rows) {
+            return Err("invalid Composer tick column length".into());
+        }
+        let read = |column, row| {
+            let offset = (column * rows + row) * 8;
+            f64::from_le_bytes(data[offset..offset + 8].try_into().unwrap())
+        };
+        let time_at = |row| {
+            let value = read(0, row);
+            let millis = value * time_scale;
+            let time = millis as i64;
+            if value.fract() != 0.0
+                || !(0.0..=study::MAX_EXACT_INTEGER as f64).contains(&millis)
+                || !study::valid_open_time(time, interval_ms)
+            {
+                return Err(format!("invalid Composer open timestamp at row {row}"));
+            }
+            Ok(time)
+        };
+        let start_ms = time_at(0)?;
+        let last_ms = time_at(rows - 1)?;
+        let slots = study::recording_slot(last_ms, start_ms, interval_ms, 0)? + 1;
+        if rows > slots {
+            return Err("Composer ticks have duplicate or reordered bars".into());
+        }
+        let mut bars = Vec::with_capacity(slots);
+        for row in 0..rows {
+            let slot = study::recording_slot(time_at(row)?, start_ms, interval_ms, bars.len())?;
+            if slot >= slots {
+                return Err("reordered Composer tick bars".into());
+            }
+            let ohlc = std::array::from_fn(|column| read(column + 1, row));
+            if !ohlc.iter().all(|&price| {
+                price.fract() == 0.0 && (1.0..=study::MAX_EXACT_INTEGER as f64).contains(&price)
+            }) {
+                return Err(format!("invalid Composer integer cents at row {row}"));
+            }
+            let bar =
+                Bar::new(ohlc, None).map_err(|err| format!("Composer tick row {row}: {err}"))?;
+            bars.resize(slot, None);
+            bars.push(Some(bar));
+        }
+        Ok(Self::new(start_ms, interval_ms, Recording::new(bars)?))
+    }
+
+    fn new(start_ms: i64, interval_ms: i64, recording: Recording) -> Self {
         let mut run = 0u8;
         let complete = (0..recording.len())
             .map(|slot| {
@@ -41,12 +94,12 @@ impl Frame {
             })
             .collect::<Vec<_>>()
             .into();
-        Ok(Self {
+        Self {
             start_ms,
             interval_ms,
             recording,
             complete,
-        })
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -1068,7 +1121,34 @@ impl Search {
 
 #[cfg(test)]
 mod tests {
+    use super::Frame;
     use crate::{engine_json, engine_session::Session};
+
+    #[test]
+    fn composer_ticks_preserve_exact_cents_above_u32() {
+        let prices = [
+            4_294_967_295.0f64,
+            9_007_199_254_740_991.0,
+            1.0,
+            4_294_967_296.0,
+        ];
+        let mut body: Vec<u8> = [0.0]
+            .into_iter()
+            .chain(prices)
+            .flat_map(f64::to_le_bytes)
+            .collect();
+        let interval = 900_000;
+        let ticks = Frame::load_ticks(&body, interval, 1.0).unwrap();
+        let csv = Frame::load(
+            "open_ms,open,high,low,close,volume\n0,42949672.95,90071992547409.91,0.01,42949672.96,0",
+            interval,
+        )
+        .unwrap();
+        assert_eq!(ticks.candle(0, 0), prices);
+        assert_eq!(ticks.candle(0, 0), csv.candle(0, 0));
+        body.push(0);
+        assert!(Frame::load_ticks(&body, interval, 1.0).is_err());
+    }
 
     #[test]
     fn equal_scores_retain_the_latest_distinct_windows_beyond_heap_capacity() {

@@ -1,0 +1,23 @@
+┌─────────┬──────────────────────────┬────────────┬───────────┬─────────┬───────┬───────┐
+│ (index) │ name                     │ mode       │ cohort    │ windows │ oldMs │ newMs │
+├─────────┼──────────────────────────┼────────────┼───────────┼─────────┼───────┼───────┤
+│ 0       │ 'default'                │ 'nearest'  │ 'twins'   │ 113     │ 101   │ 63    │
+│ 1       │ '2-bars-only-4h'         │ 'nearest'  │ 'closest' │ 480     │ 120   │ 24    │
+│ 2       │ '3-bars'                 │ 'nearest'  │ 'closest' │ 480     │ 118   │ 38    │
+│ 3       │ '10-bars'                │ 'nearest'  │ 'closest' │ 480     │ 166   │ 45    │
+│ 4       │ '20-bars'                │ 'nearest'  │ 'closest' │ 480     │ 312   │ 93    │
+│ 5       │ '20-bars-shape-only'     │ 'nearest'  │ 'closest' │ 480     │ 904   │ 612   │
+│ 6       │ '2-bars-pin'             │ 'held'     │ 'hold'    │ 235963  │ 273   │ 137   │
+│ 7       │ '2-bars-pin-stretch-4'   │ 'held'     │ 'hold'    │ 1179515 │ 784   │ 435   │
+│ 8       │ '5-bars-pin-stretch-0'   │ 'held'     │ 'hold'    │ 235874  │ 332   │ 159   │
+│ 9       │ '5-bars-pin-stretch-4'   │ 'held'     │ 'hold'    │ 1179076 │ 2953  │ 2326  │
+│ 10      │ '10-bars-pin-stretch-4'  │ 'held'     │ 'hold'    │ 1178300 │ 4335  │ 1932  │
+│ 11      │ '5-bars-skeleton'        │ 'held'     │ 'hold'    │ 104513  │ 568   │ 246   │
+│ 12      │ '5-bars-cross-pin'       │ 'held'     │ 'hold'    │ 684291  │ 1006  │ 538   │
+│ 13      │ '10-bars-17-pins'        │ 'held'     │ 'hold'    │ 2689    │ 915   │ 349   │
+│ 14      │ '10-bars-17-pins-filter' │ 'fallback' │ 'closest' │ 42      │ 232   │ 67    │
+│ 15      │ '2-bars-pin-filter'      │ 'held'     │ 'hold'    │ 45313   │ 338   │ 184   │
+│ 16      │ '2-bars-filter-up'       │ 'nearest'  │ 'twins'   │ 57      │ 78    │ 56    │
+│ 17      │ '3-bars-skeleton-bps'    │ 'nearest'  │ 'closest' │ 480     │ 63    │ 55    │
+└─────────┴──────────────────────────┴────────────┴───────────┴─────────┴───────┴───────┘
+Composer on the engine agrees with the matcher at bd6a0ba on every figure of 18 questions and on 120 candle counts.

@@ -45,9 +45,9 @@ self.addEventListener("message", async ({data: {id, method, args = []}}) => {
     } else if (method === "cancelComposerSearch") {
       ++latestComposer;
       value = session.composerCancel();
-    } else if (method === "loadComposerFrame") {
+    } else if (method === "loadComposerFrame" || method === "loadComposerFrameTicks") {
       ++latestComposer;
-      value = session.loadComposerFrame(...args);
+      value = session[method](...args);
     } else {
       if (!methods.has(method)) throw new Error("unknown Filang worker method");
       value = session[method](...args);

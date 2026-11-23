@@ -1,11 +1,22 @@
 use crate::{
-    geometry::{Counters, Dimension, COUNTER_COLUMNS},
+    geometry::{explore::MAX_SLOTS, Counters, Dimension, COUNTER_COLUMNS},
     Result,
 };
 use std::{fs, path::Path};
 
-const MAX_PRICE: i64 = 9_007_199_254_740_991;
-const MAX_SLOTS: usize = 1_000_000;
+pub(crate) const MAX_EXACT_INTEGER: i64 = 9_007_199_254_740_991;
+
+pub(crate) fn valid_open_time(t: i64, interval: i64) -> bool {
+    (0..=MAX_EXACT_INTEGER - interval).contains(&t) && t % interval == 0
+}
+
+pub(crate) fn recording_slot(t: i64, start: i64, interval: i64, next: usize) -> Result<usize> {
+    let slot = usize::try_from((t - start) / interval).map_err(|_| "reordered bars")?;
+    if slot < next || slot >= MAX_SLOTS {
+        return Err("reordered or duplicate bar, or study grid exceeds 1,000,000 slots".into());
+    }
+    Ok(slot)
+}
 
 #[derive(Clone, Copy)]
 pub(super) struct Bar {
@@ -62,7 +73,7 @@ fn price(text: Option<&str>) -> Result<i64> {
     whole
         .checked_mul(100)
         .and_then(|p| p.checked_add(cents))
-        .filter(|p| (1..=MAX_PRICE).contains(p))
+        .filter(|p| (1..=MAX_EXACT_INTEGER).contains(p))
         .ok_or_else(|| "price is outside the exact tick range".into())
 }
 
@@ -109,7 +120,7 @@ impl Tape {
             } else {
                 None
             };
-            let valid_timestamp = (0..=MAX_PRICE - interval).contains(&t) && t % interval == 0;
+            let valid_timestamp = valid_open_time(t, interval);
             let valid_bar = l <= o.min(c) && o.max(c) <= h && volume.is_finite() && volume >= 0.0;
             if !(valid_timestamp && valid_bar && cells.next().is_none()) {
                 return Err(format!("invalid recording row {}", row + 2));
@@ -117,12 +128,7 @@ impl Tape {
             if row == 0 {
                 start = t;
             }
-            let slot = usize::try_from((t - start) / interval).map_err(|_| "reordered bars")?;
-            if slot < bars.len() || slot >= MAX_SLOTS {
-                return Err(
-                    "reordered or duplicate bar, or study grid exceeds 1,000,000 slots".into(),
-                );
-            }
+            let slot = recording_slot(t, start, interval, bars.len())?;
             for _ in bars.len()..slot {
                 gaps += 1;
                 absent.push(gaps);
@@ -227,7 +233,7 @@ impl Calendar {
         let mut header = lines.next().ok_or("empty calendar")?.split_whitespace();
         let start = number(header.next(), "calendar coverage start")?;
         let end = number(header.next(), "calendar coverage end")?;
-        if !(0..end).contains(&start) || end > MAX_PRICE || header.next().is_some() {
+        if !(0..end).contains(&start) || end > MAX_EXACT_INTEGER || header.next().is_some() {
             return Err("invalid calendar coverage".into());
         }
         let mut sessions = Vec::new();

@@ -68,6 +68,18 @@ impl Session {
                 return self.count(&pattern, Reading::parse(reading)?);
             }
             b"load" => return self.set_recording(decode_bars(payload)?),
+            b"composer-load-ticks" => {
+                let header = payload.get(..8).ok_or("missing Composer tick header")?;
+                let interval = i64::from(u32::from_le_bytes(header[..4].try_into().unwrap()));
+                let scale = match u32::from_le_bytes(header[4..].try_into().unwrap()) {
+                    1 => 1.0,
+                    1000 => 1000.0,
+                    _ => return Err("Composer tick times must use milliseconds or seconds".into()),
+                };
+                let index = composer_timeframe(interval)?;
+                let frame = Frame::load_ticks(&payload[8..], interval, scale)?;
+                return Ok(self.set_composer_frame(index, frame));
+            }
             b"load-csv" => {
                 let (interval, csv) = utf8(payload)?
                     .split_once('\n')
@@ -93,10 +105,7 @@ impl Session {
                 let interval = number(interval)?;
                 let index = composer_timeframe(interval)?;
                 let frame = Frame::load(csv, interval)?;
-                let slots = frame.len();
-                self.composer_frames[index] = Some(frame);
-                self.composer_search = None;
-                Ok(format!("{{\"slots\":{slots}}}"))
+                Ok(self.set_composer_frame(index, frame))
             }
             b"composer-start" => {
                 let (options, drawing) = text
@@ -412,6 +421,13 @@ impl Session {
             self.recording = Some(self.study()?.geometry_recording()?);
         }
         Ok(self.recording.as_ref().expect("loaded recording"))
+    }
+
+    fn set_composer_frame(&mut self, index: usize, frame: Frame) -> String {
+        let slots = frame.len();
+        self.composer_frames[index] = Some(frame);
+        self.composer_search = None;
+        format!("{{\"slots\":{slots}}}")
     }
 
     fn window(&mut self, width: usize) -> Result<&mut PreparedGeometry> {
