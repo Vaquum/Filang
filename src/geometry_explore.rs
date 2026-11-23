@@ -7,7 +7,7 @@ use super::{
     GeometryMode, GeometryPattern, GEOMETRY_KEY_MAX_BARS,
 };
 use crate::Result;
-use std::{collections::HashMap, hash::Hash, sync::Arc};
+use std::{collections::HashMap, hash::Hash, ops::Range, sync::Arc};
 
 /// A recording contains grid slots, including missing bars.
 pub const MAX_SLOTS: usize = 1_000_000;
@@ -259,7 +259,7 @@ pub struct Counts {
 }
 
 struct Postings<K> {
-    slots: HashMap<K, Vec<u32>>,
+    slots: HashMap<K, Posting>,
     validity: Vec<u64>,
     valid_count: usize,
 }
@@ -274,14 +274,75 @@ impl<K: Eq + Hash> Postings<K> {
     }
 
     fn insert(&mut self, key: K, end: usize) {
-        self.slots.entry(key).or_default().push(end as u32);
+        self.slots
+            .entry(key)
+            .or_default()
+            .insert(end as u32, self.validity.len());
         self.validity[end / 64] |= 1 << (end % 64);
         self.valid_count += 1;
     }
 
-    fn get(&self, key: &K) -> &[u32] {
-        self.slots.get(key).map_or(&[], Vec::as_slice)
+    fn get(&self, key: &K) -> PostingRef<'_> {
+        match self.slots.get(key) {
+            Some(Posting::Offsets(slots)) => PostingRef::Offsets(slots),
+            Some(Posting::Bitmap(bitmap)) => PostingRef::Bitmap(bitmap),
+            None => PostingRef::Offsets(&[]),
+        }
     }
+}
+
+enum Posting {
+    Offsets(Vec<u32>),
+    Bitmap(Box<Bitmap>),
+}
+
+impl Default for Posting {
+    fn default() -> Self {
+        Self::Offsets(Vec::new())
+    }
+}
+
+impl Posting {
+    fn insert(&mut self, slot: u32, words: usize) {
+        match self {
+            Self::Offsets(slots) if slots.len() == 2 * words => {
+                // A bitmap now holds the same offsets in fewer payload bytes.
+                let mut bitmap = Bitmap {
+                    words: vec![0; words].into_boxed_slice(),
+                    count: slots.len(),
+                };
+                for &slot in slots.iter() {
+                    set_bit(&mut bitmap.words, slot);
+                }
+                bitmap.insert(slot);
+                *self = Self::Bitmap(Box::new(bitmap));
+            }
+            Self::Offsets(slots) => slots.push(slot),
+            Self::Bitmap(bitmap) => bitmap.insert(slot),
+        }
+    }
+}
+
+struct Bitmap {
+    words: Box<[u64]>,
+    count: usize,
+}
+
+impl Bitmap {
+    fn insert(&mut self, slot: u32) {
+        set_bit(&mut self.words, slot);
+        self.count += 1;
+    }
+}
+
+fn set_bit(words: &mut [u64], slot: u32) {
+    words[(slot / 64) as usize] |= 1 << (slot % 64);
+}
+
+#[derive(Clone, Copy)]
+enum PostingRef<'a> {
+    Offsets(&'a [u32]),
+    Bitmap(&'a Bitmap),
 }
 
 enum Keys<Compact, Wide> {
@@ -398,16 +459,12 @@ impl PreparedGeometry {
         Ok(())
     }
 
-    /// Count without collecting rows. Warm work visits the smallest
-    /// matching posting list, and a price-only count is a key lookup.
+    /// Count without collecting rows. Dense bitmaps intersect by word.
+    /// Sparse matches visit the smallest offset list. A price-only count
+    /// is a key lookup in either representation.
     pub fn counts(&mut self, pattern: &GeometryPattern, reading: Reading) -> Result<Counts> {
         self.prepare_pattern(pattern, reading)?;
-        let lists = self.lists(pattern, reading)?;
-        let matched = if lists.len == 1 {
-            lists.slots[0].len()
-        } else {
-            lists.matches().count()
-        };
+        let matched = self.lists(pattern, reading)?.count();
         let valid = self.valid_counts[&pattern.dimension_set()];
         Ok(Counts {
             matched,
@@ -426,9 +483,12 @@ impl PreparedGeometry {
         limit: usize,
     ) -> Result<Vec<u32>> {
         self.prepare_pattern(pattern, reading)?;
-        let mut lists = self.lists(pattern, reading)?;
-        lists.restrict(start_slot, self.recording.len());
-        Ok(lists.matches().take(limit).collect())
+        let lists = self.lists(pattern, reading)?;
+        let len = self.recording.len();
+        Ok(lists
+            .matches(start_slot.min(len)..len)
+            .take(limit)
+            .collect())
     }
 
     /// Classify a page on the recording grid in chronological order.
@@ -440,7 +500,9 @@ impl PreparedGeometry {
         limit: usize,
     ) -> Result<Vec<Option<bool>>> {
         self.prepare_pattern(pattern, reading)?;
-        let end = self.recording.len().min(start.saturating_add(limit));
+        let len = self.recording.len();
+        let start = start.min(len);
+        let end = len.min(start.saturating_add(limit));
         let price = &self.prices[&(pattern.mode(), reading)];
         let axes: Vec<_> = pattern
             .dimensions()
@@ -459,9 +521,8 @@ impl PreparedGeometry {
                     .then_some(false)
             })
             .collect();
-        let mut lists = self.lists(pattern, reading)?;
-        lists.restrict(start, end);
-        for slot in lists.matches() {
+        let lists = self.lists(pattern, reading)?;
+        for slot in lists.matches(start..end) {
             result[slot as usize - start] = Some(true);
         }
         Ok(result)
@@ -476,7 +537,7 @@ impl PreparedGeometry {
 
     fn lists(&self, pattern: &GeometryPattern, reading: Reading) -> Result<MatchLists<'_>> {
         let price = &self.prices[&(pattern.mode(), reading)];
-        let mut slots = [&[][..]; 6];
+        let mut slots = [PostingRef::Offsets(&[]); 6];
         slots[0] = match price {
             Keys::Compact(postings) => postings.get(&GeometryKey::from_price(pattern)?),
             Keys::Wide(postings) => postings.get(&WideKey::price(pattern)),
@@ -495,38 +556,130 @@ impl PreparedGeometry {
 }
 
 struct MatchLists<'a> {
-    slots: [&'a [u32]; 6],
+    slots: [PostingRef<'a>; 6],
     len: usize,
 }
 
 impl MatchLists<'_> {
-    fn restrict(&mut self, start: usize, end: usize) {
-        for slots in &mut self.slots[..self.len] {
-            let from = slots.partition_point(|&slot| (slot as usize) < start);
-            let to = slots.partition_point(|&slot| (slot as usize) < end);
-            *slots = if from < to { &slots[from..to] } else { &[] };
+    fn count(&self) -> usize {
+        if self.len == 1 {
+            return match self.slots[0] {
+                PostingRef::Offsets(slots) => slots.len(),
+                PostingRef::Bitmap(bitmap) => bitmap.count,
+            };
         }
+        if let Some(words) = self.bitmaps() {
+            return intersect(words)
+                .map(|word| word.count_ones() as usize)
+                .sum();
+        }
+        self.sparse_matches(None).count()
     }
 
-    fn matches(&self) -> impl Iterator<Item = u32> + '_ {
-        let mut lists = self.slots;
-        lists[..self.len].sort_unstable_by_key(|list| list.len());
+    fn bitmaps(&self) -> Option<[&[u64]; 6]> {
+        let first = match self.slots[0] {
+            PostingRef::Bitmap(bitmap) => bitmap.words.as_ref(),
+            PostingRef::Offsets(_) => return None,
+        };
+        // Repeating the first operand lets the intersection use one fixed
+        // loop for every dimension set.
+        let mut words = [first; 6];
+        for (out, posting) in words.iter_mut().zip(&self.slots[..self.len]).skip(1) {
+            match posting {
+                PostingRef::Bitmap(bitmap) => *out = &bitmap.words,
+                PostingRef::Offsets(_) => return None,
+            }
+        }
+        Some(words)
+    }
+
+    fn matches(&self, span: Range<usize>) -> impl Iterator<Item = u32> + '_ {
+        let bitmaps = self.bitmaps();
+        let sparse = bitmaps
+            .is_none()
+            .then(|| self.sparse_matches(Some(span.clone())));
+        sparse.into_iter().flatten().chain(
+            bitmaps
+                .into_iter()
+                .flat_map(move |words| bitmap_positions(words, span.clone())),
+        )
+    }
+
+    fn sparse_matches(&self, span: Option<Range<usize>>) -> impl Iterator<Item = u32> + '_ {
+        let mut lists = [&[][..]; 6];
+        let mut bitmaps = [&[][..]; 5];
+        let (mut list_count, mut bitmap_count) = (0, 0);
+        for posting in &self.slots[..self.len] {
+            match posting {
+                PostingRef::Offsets(slots) => {
+                    lists[list_count] = match &span {
+                        Some(span) => {
+                            let from = slots.partition_point(|&slot| (slot as usize) < span.start);
+                            let to = slots.partition_point(|&slot| (slot as usize) < span.end);
+                            &slots[from..to]
+                        }
+                        None => slots,
+                    };
+                    list_count += 1;
+                }
+                PostingRef::Bitmap(bitmap) => {
+                    bitmaps[bitmap_count] = &bitmap.words;
+                    bitmap_count += 1;
+                }
+            }
+        }
+        lists[..list_count].sort_unstable_by_key(|list| list.len());
         let shortest = lists[0];
         shortest.iter().copied().filter(move |slot| {
-            lists[1..self.len].iter_mut().all(|list| {
-                if list.first().map_or(false, |first| first < slot) {
-                    let offset = list.partition_point(|entry| entry < slot);
-                    *list = &list[offset..];
-                }
-                if list.first() == Some(slot) {
-                    *list = &list[1..];
-                    true
-                } else {
-                    false
-                }
-            })
+            bitmaps[..bitmap_count]
+                .iter()
+                .all(|words| words[(*slot / 64) as usize] & (1 << (*slot % 64)) != 0)
+                && lists[1..list_count].iter_mut().all(|list| {
+                    if list.first().map_or(false, |first| first < slot) {
+                        let offset = list.partition_point(|entry| entry < slot);
+                        *list = &list[offset..];
+                    }
+                    if list.first() == Some(slot) {
+                        *list = &list[1..];
+                        true
+                    } else {
+                        false
+                    }
+                })
         })
     }
+}
+
+fn intersect(words: [&[u64]; 6]) -> impl Iterator<Item = u64> + '_ {
+    let [a, b, c, d, e, f] = words;
+    a.iter()
+        .zip(b)
+        .zip(c)
+        .zip(d)
+        .zip(e)
+        .zip(f)
+        .map(|(((((a, b), c), d), e), f)| a & b & c & d & e & f)
+}
+
+fn bitmap_positions(words: [&[u64]; 6], span: Range<usize>) -> impl Iterator<Item = u32> + '_ {
+    let first = span.start / 64;
+    let last = (span.end + 63) / 64;
+    intersect(words.map(|words| &words[first..last]))
+        .enumerate()
+        .flat_map(move |(index, word)| {
+            let base = (first + index) * 64;
+            let lo = span.start.saturating_sub(base);
+            let hi = (span.end - base).min(64);
+            let mut word = word & (u64::MAX << lo) & (u64::MAX >> (64 - hi));
+            std::iter::from_fn(move || {
+                if word == 0 {
+                    return None;
+                }
+                let slot = base as u32 + word.trailing_zeros();
+                word &= word - 1;
+                Some(slot)
+            })
+        })
 }
 
 fn index_prices(

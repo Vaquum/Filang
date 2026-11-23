@@ -93,6 +93,90 @@ fn observed_postings_equal_direct_windows_with_every_set_of_dimensions() {
 }
 
 #[test]
+fn dense_and_mixed_postings_preserve_counts_and_page_boundaries() {
+    let tape = Recording::new(
+        (0..259)
+            .map(|slot| {
+                if slot == 127 {
+                    return None;
+                }
+                let price = if slot == 192 {
+                    [10.0, 13.0, 9.0, 12.0]
+                } else {
+                    [10.0, 11.0, 9.0, 10.0]
+                };
+                let counters = (slot != 64).then(|| Counters::new(16.0, 8.0, 4.0).unwrap());
+                Some(Bar::new(price, counters).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap();
+    let mode = GeometryMode::Oriented;
+    for width in [2, 24] {
+        let mut prepared = tape.prepare(width).unwrap();
+        for reading in [Reading::Recorded, Reading::Chained] {
+            for dimensions in [DimensionSet::NONE, DimensionSet::all()] {
+                let patterns: Vec<_> = (0..tape.len())
+                    .map(|end| {
+                        tape.pattern_at(end, width, mode, reading, dimensions)
+                            .unwrap()
+                    })
+                    .collect();
+                // The common key is dense. The outlier price key is sparse
+                // even though every dimension key in its window is dense.
+                for key in [width - 1, 192] {
+                    let selected = patterns[key].as_ref().unwrap();
+                    let expected: Vec<_> = patterns
+                        .iter()
+                        .map(|pattern| pattern.as_ref().map(|p| p == selected))
+                        .collect();
+                    let matched = expected.iter().filter(|&&flag| flag == Some(true)).count();
+                    let unknown = expected.iter().filter(|flag| flag.is_none()).count();
+                    assert_eq!(
+                        prepared.counts(selected, reading).unwrap(),
+                        Counts {
+                            matched,
+                            false_count: tape.len() - matched - unknown,
+                            unknown,
+                        }
+                    );
+                    for (start, limit) in [
+                        (0, 0),
+                        (31, 2),
+                        (63, 65),
+                        (64, 64),
+                        (65, 7),
+                        (127, 66),
+                        (192, 2),
+                        (256, 100),
+                        (259, usize::MAX),
+                        (usize::MAX, 10),
+                    ] {
+                        let start_clipped = start.min(tape.len());
+                        let end = start_clipped.saturating_add(limit).min(tape.len());
+                        assert_eq!(
+                            prepared.classify(selected, reading, start, limit).unwrap(),
+                            expected[start_clipped..end],
+                        );
+                        let positions: Vec<_> = expected
+                            .iter()
+                            .enumerate()
+                            .skip(start_clipped)
+                            .filter_map(|(slot, &flag)| (flag == Some(true)).then_some(slot as u32))
+                            .take(limit)
+                            .collect();
+                        assert_eq!(
+                            prepared.positions(selected, reading, start, limit).unwrap(),
+                            positions,
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn declared_domain_multiplies_exact_counts_and_supports_wide_windows() {
     for mode in [GeometryMode::Unoriented, GeometryMode::Oriented] {
         for n in 1..=10 {
