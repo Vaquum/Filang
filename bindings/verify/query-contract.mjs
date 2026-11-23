@@ -14,7 +14,7 @@ import {install} from "../../query/verify/site.mjs";
 // The bench's vocabulary imports by site path and asks the shared engine, as it does in the page.
 await install();
 await (await import("/shared/filang.js")).load();
-const {PRESETS, OFFERS, clone, fromText, toText} = await import("/shared/vocab.js");
+const {PRESETS, OFFERS, offered, clone, fromText, toText} = await import("/shared/vocab.js");
 
 const atomText = new Set(["num", "pct", "dur"]);
 function olderAst(node) {
@@ -35,7 +35,7 @@ engine.setCalendar();
 
 const presets = PRESETS.map(preset => preset.text);
 const starting = fromText(presets[3]).model;
-const suggestions = OFFERS.map(offer => {
+const suggestions = OFFERS.filter(offer => offered(offer.type, false)).map(offer => {
   const model = clone(starting);
   model.wheres.push(clone(offer));
   return toText(model);

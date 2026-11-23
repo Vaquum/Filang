@@ -70,10 +70,11 @@ export function closePopover() { if (open) { open.close(); open = null; } }
 /**
  * Options for one slot. countFor(value) returns the matches that value would leave, or null.
  * A sweepable slot can hold several values at once: each becomes its own candidate run.
+ * With multi the options are switches; with empty as well, every one of them can be off.
  * onChange(value, closing) is told when the choice also closes the popover: a caller that redraws the anchor
  * must then put the focus back on the redrawn slot itself, since the anchor it replaced can no longer take it.
  */
-export function slotPopover(anchor, { slot, value, onChange, countFor, allowCompare = false, multi = false, title = null }) {
+export function slotPopover(anchor, { slot, value, onChange, countFor, allowCompare = false, multi = false, empty = false, title = null }) {
   closePopover();
   const selected = new Set(Array.isArray(value) ? value : [value]);
   const isPattern = slot.kind === 'pattern';
@@ -87,10 +88,14 @@ export function slotPopover(anchor, { slot, value, onChange, countFor, allowComp
   let rows = []; let active = 0;
   const pick = (v, compare) => {
     if (multi || (compare && allowCompare && slot.sweep)) {
-      if (selected.has(v)) { if (selected.size > 1) selected.delete(v); } else selected.add(v);
+      if (selected.has(v)) { if (selected.size > 1 || (multi && empty)) selected.delete(v); } else selected.add(v);
       const ordered = slot.options.filter((o) => selected.has(o)).concat([...selected].filter((o) => !slot.options.includes(o)));
       onChange(multi || ordered.length > 1 ? ordered : ordered[0]);
       render();
+      // Switches are thrown one after another: the one just thrown keeps the keyboard and its place in the redrawn
+      // list, so the arrows carry on from it and Escape still closes.
+      const at = multi && empty ? rows.findIndex((r) => r.v === v) : -1;
+      if (at >= 0) { active = at; mark(); rows[at].el.firstChild.focus({ preventScroll: true }); }
     } else { onChange(v, true); close(); }
   };
   function render() {

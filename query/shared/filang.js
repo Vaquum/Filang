@@ -62,9 +62,14 @@ export const drawingG1 = (packet) => reading(packet).shape.code;
 /** The relations held on a drawing, as one Filang expression; null when it holds none. */
 export const pinnedExpression = (packet) => reading(packet).pinned_expression ?? null;
 /** The revision a plain drawing packet is marked with. */
-export const drawingRevision = () => engine.drawingProtocol().plain;
+export const drawingRevision = (dimensions = []) => {
+  const revisions = engine.drawingProtocol();
+  return dimensions.length ? revisions.dimensioned : revisions.plain;
+};
 /** A g1's ranks per bar as [low, body low, body high, high], how many ranks there are, and its directions. Throws on a bad code. */
 export const shapeOf = (code) => engine.geometryShape(code);
+export const recordedShape = (end, width, dimensions) =>
+  engine.at(end, width, {reading: 'chained', dimensions});
 
 // ---------------------------------------------------------------- bars
 
@@ -255,9 +260,10 @@ export function run(text) {
     const results = d.candidates.map((cand) => new Result(text, cand, timed));
     void results[0].counts.T;   // a question these bars cannot answer fails here, not while the bench is drawing
     const source = { ...d.manifest.pins.source, verified: bundle.digestVerified };
-    out = { ok: true, text, errors: [], analysis: { axes: d.axes }, results, manifest: { ...d.manifest, pins: { ...d.manifest.pins, source } }, get ms() { return spent; } };
+    out = { ok: true, text, errors: [], analysis: { axes: d.axes, ast: d.ast }, results, manifest: { ...d.manifest, pins: { ...d.manifest.pins, source } }, get ms() { return spent; } };
   } catch (e) {
-    out = { ok: false, text, errors: diagnosticsOf(text, e).errors, results: [] };
+    const { errors, ast } = diagnosticsOf(text, e);
+    out = { ok: false, text, errors, analysis: { ast }, results: [] };
   }
   if (runs.size > 600) runs.delete(runs.keys().next().value);
   runs.set(text, out);

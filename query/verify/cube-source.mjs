@@ -23,25 +23,29 @@ const pinned = JSON.parse(await readFile(join(ROOT, 'study/data-provenance.json'
 const { FilangEngine } = await import(pathToFileURL(join(engineDir(), 'index.mjs')).href);
 const engine = await FilangEngine.create(await readFile(join(engineDir(), 'filang_engine.wasm')));
 // The pinned file writes a price as its source did (96733.0); the cube's bars are written in cents (96733.00).
-// The same bar, so the pinned rows are compared in the second form.
+// The same bar, so the pinned rows are compared in the second form. The pinned file has no counters, so the stand-in
+// bridge makes them up from each bar's BTC volume and close: USDT traded, a taker-buy share that cycles from 30% to
+// 70% (so every fifth bar is in exact balance), and a trade count that cycles too. A fixture, not market data.
+const counters = (v, col) => { const traded = v[4] * v[3]; return [traded, traded * [0.3, 0.4, 0.5, 0.6, 0.7][col % 5], 10 + (col % 7) * 5]; };
 const rows = pinnedCsv.trimEnd().split('\n').slice(1).map((text) => {
-  const f = text.split(',');
-  return { col: (Number(f[0]) / 1000 - T0) / (BASE * STEP), line: [f[0], ...f.slice(1, 5).map((x) => Number(x).toFixed(2)), f[5]].join(','), v: f.slice(1).map(Number) };
+  const f = text.split(','); const v = f.slice(1).map(Number); const col = (Number(f[0]) / 1000 - T0) / (BASE * STEP);
+  return { col, line: [f[0], ...f.slice(1, 5).map((x) => Number(x).toFixed(2)), f[5], ...counters(v, col).map(String)].join(','), v };
 });
-const HEADER = 'open_ms,open,high,low,close,volume\n';
+const HEADER = 'open_ms,open,high,low,close,base_volume,volume,taker_buy_volume,trade_count\n';
 const pinnedInCents = HEADER + rows.map((r) => r.line).join('\n') + '\n';
 const lastCol = rows[rows.length - 1].col;
 
 // ---------------------------------------------------------------- the stand-in bridge
 
-const bridge = { token: 'pack-1', cutoff: (lastCol + 1) * STEP + 5.37, canonical: null, measuredEnd: Infinity, drop: new Set(), spoil: null, changeOnce: false, asks: [] };
+const bridge = { token: 'pack-1', cutoff: (lastCol + 1) * STEP + 5.37, canonical: null, measuredEnd: Infinity, drop: new Set(), spoil: null, overbought: null, halfTrade: null, changeOnce: false, asks: [] };
 function mscb(n, col0, col1, bars) {
   const head = Buffer.alloc(32); head.write('MSCB', 0, 'latin1'); head.writeUInt8(n, 4); head.writeUInt8(20, 5);
   head.writeUInt32LE(col0, 8); head.writeUInt32LE(col1, 12); head.writeUInt32LE(bars.length, 16);
   const body = Buffer.alloc(bars.length * 68);
   // open, high, low, close, USDT volume, taker-buy volume, BTC volume, trades, then the column
   bars.forEach((b, i) => {
-    const [o, h, l, c, vol] = b.v; const fields = [bridge.spoil === b.col ? o + 0.004 : o, h, l, c, vol * c, vol * c / 2, vol, 10];
+    const [o, h, l, c, vol] = b.v; const [traded, takerBuy, trades] = counters(b.v, b.col);
+    const fields = [bridge.spoil === b.col ? o + 0.004 : o, h, l, c, traded, bridge.overbought === b.col ? traded * 2 : takerBuy, vol, bridge.halfTrade === b.col ? 10.5 : trades];
     fields.forEach((x, k) => body.writeDoubleLE(x, (k * bars.length + i) * 8));
     body.writeUInt32LE(b.col, bars.length * 64 + i * 4);
   });
@@ -109,6 +113,28 @@ const ok = (name) => { checks++; console.log(`ok  ${name}`); };
   assert.deepEqual(engine.studyCounts(questions), [1463, 772].map(count => ({count, error: null})));
   assert.equal(engine.describeStudy(questions[0]).manifest.pins.source.csv_sha256, all.provenance.csv_sha256);
   ok('the engine verifies its digest and counts 1,463 and 772 on it, as on the pinned file');
+
+  // The counters arrive as the floats the bridge sent, and the dimensions read from them.
+  assert.equal(built.hasCounters, true);
+  const volume = built.dimension('volume'); const trades = built.dimension('trades'); const delta = built.dimension('delta');
+  rows.forEach((r) => {
+    const i = (Number(r.line.split(',')[0]) - built.t0) / built.barMs;
+    const [traded, takerBuy, count] = counters(r.v, r.col);
+    assert.equal(volume[i], traded);
+    assert.equal(trades[i], count);
+    assert.equal(delta[i], 2 * takerBuy - traded);
+  });
+  const count = (text) => {
+    const answer = engine.studyCounts([text])[0];
+    assert.equal(answer.error, null, text);
+    return answer.count;
+  };
+  assert.equal(count('on BTCUSDT 15m\nfind candle_relation(delta(), is: equal, right: 0)'), rows.filter((r) => r.col % 5 === 2).length);
+  assert.equal(count('on BTCUSDT 15m\nfind candle_relation(delta(), is: above, right: 0)'), rows.filter((r) => r.col % 5 > 2).length);
+  const rising = count('on BTCUSDT 15m\nfind candle_relation(volume(), is: above, right: volume(bars_ago: 1))');
+  assert.equal(rising, rows.filter((r, k) => k && r.col === rows[k - 1].col + 1 && counters(r.v, r.col)[0] > counters(rows[k - 1].v, rows[k - 1].col)[0]).length);
+  assert.equal(count('on BTCUSDT 15m\nfind chained_g1("g1:o:0,1,3,4,u;2,3,5,6,u|volume:0,1")') <= 1463, true);
+  ok(`the counters read back as the floats the bridge sent, and volume rose on ${rising.toLocaleString('en-US')} bars as it does in the bridge's own numbers`);
 }
 
 {
@@ -175,6 +201,13 @@ const ok = (name) => { checks++; console.log(`ok  ${name}`); };
   await assert.rejects(fresh().bars('24h'), /not a whole number of cents/);
   bridge.spoil = null;
   ok('a price off the cent grid is refused');
+  // counters that cannot be right are refused too, as the engine would refuse them
+  bridge.overbought = lastCol - 1;
+  await assert.rejects(fresh().bars('1h'), (e) => e instanceof CubeError && /taker-buy volume/.test(e.message));
+  bridge.overbought = null; bridge.halfTrade = lastCol - 1;
+  await assert.rejects(fresh().bars('1h'), (e) => e instanceof CubeError && /trade count/.test(e.message));
+  bridge.halfTrade = null;
+  ok('a bar whose taker-buy amount exceeds its volume, or whose trade count is not whole, is refused');
 
   // Bars past the canonical mark are counted as provisional.
   bridge.canonical = new Date((T0 + (lastCol + 1 - 6) * STEP * BASE) * 1000).toISOString();

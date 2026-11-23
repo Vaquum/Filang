@@ -1,6 +1,6 @@
 // The trader vocabulary: plain-English clauses with typed slots, each mapped to exact Filang text.
 // All three directions edit this one model and print the same query.
-import { CANDLES, candleNamed, describe, pinnedExpression } from '/shared/filang.js';
+import { CANDLES, candleNamed, describe, pinnedExpression, shapeOf } from '/shared/filang.js';
 
 export const PATTERNS = CANDLES.map((p) => ({
   id: p.id.replaceAll('-', '_'), name: p.name, ja: p.ja, bars: p.bars, rule: p.rule, aliases: p.aliases || [],
@@ -16,11 +16,30 @@ const BACK = { 1: 'one candle back', 2: 'two candles back', 3: 'three candles ba
 const WITHIN = { 0: 'on the same candle', 3: 'one to three candles later', 8: 'one to eight candles later' };
 const PCT10 = ['10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%'];
 
+// The dimensions a candle is read on beside its prices: one number per candle, from the counters the cube delivers.
+// Keys, order and labels are the engine's, which are Cube's. A signed one has zero as its reference point: below it
+// is net selling, above it net buying.
+export const DIMENSIONS = [
+  { key: 'volume', label: 'Volume', what: 'USDT traded', signed: false },
+  { key: 'trades', label: 'Trades', what: 'number of trades', signed: false },
+  { key: 'delta', label: 'Delta', what: 'taker-buy USDT minus taker-sell USDT', signed: true },
+  { key: 'size', label: 'Trade size', what: 'USDT traded per trade', signed: false },
+  { key: 'imbalance', label: 'Net taker imbalance', what: 'delta as a share of the USDT traded, from −1 to +1', signed: true },
+];
+const DIM_KEYS = DIMENSIONS.map((d) => d.key);
+const DIM = new Set(DIM_KEYS);
+const NOUN = Object.fromEntries(DIMENSIONS.map((d) => [d.key, d.label.toLowerCase()]));
+const DREL = { ...REL, equal: 'equal to' };
+const AT = { 0: 'this candle', 1: 'the candle one back', 2: 'the candle two back', 3: 'the candle three back', 4: 'the candle four back' };
+const SIDE = { above: 'net buying', below: 'net selling', equal: 'balanced' };
+
 const S = {
   pattern: { key: 'p', kind: 'pattern', options: PATTERNS.map((p) => p.id), sweep: false,
     labels: Object.fromEntries(PATTERNS.map((p) => [p.id, (/^[aeiou]/i.test(p.name) ? 'an ' : 'a ') + p.name.toLowerCase()])) },
   over: (def) => opt('over', 'dur', ['1h', '2h', '4h', '8h', '12h', '24h', '48h'], { def }),
   side: opt('side', 'enum', ['low', 'high'], { labels: { low: 'low', high: 'high' }, sweep: false }),
+  // A dimension named as a function cannot be compared across runs; one passed as a value can.
+  dim: (keys, sweep) => opt('dim', 'enum', keys, { labels: NOUN, sweep }),
 };
 
 // role: event → usable in find and where. cond → where only. cat → where, and usable as a split.
@@ -129,6 +148,54 @@ export const CLAUSES = {
     text: (a) => `held(quiet_range(width_max: ${a.width}), for: ${a.for})`,
     keywords: 'quiet range consolidation compression tight calm held',
   },
+  // The dimensions. They are read from the cube's counters, so each clause names the engine functions it needs:
+  // on a recording the engine does not offer them for, the clause is not offered either (see `offered`).
+  dimback: {
+    role: 'event', group: 'Dimension', title: 'Compare a dimension with an earlier candle', def: 'candle_relation', needs: DIM_KEYS,
+    slots: [S.dim(DIM_KEYS, false), opt('rel', 'enum', Object.keys(DREL), { labels: DREL }), opt('back', 'enum', ['1', '2', '3', '4'], { labels: BACK })],
+    defaults: { dim: 'volume', rel: 'above', back: '1' },
+    phrase: ['the candle closes with ', '$dim', ' ', '$rel', ' ', '$back'],
+    notPhrase: ['the candle does not close with ', '$dim', ' ', '$rel', ' ', '$back'],
+    text: (a) => `candle_relation(${a.dim}(), is: ${a.rel}, right: ${a.dim}(bars_ago: ${a.back}))`,
+    keywords: 'more less higher lower rising falling than the previous candle',
+  },
+  taker: {
+    role: 'event', group: 'Dimension', title: 'Taker side', def: 'candle_relation', needs: ['delta', 'imbalance'],
+    slots: [opt('side', 'enum', Object.keys(SIDE), { labels: SIDE }), opt('at', 'enum', Object.keys(AT), { labels: AT }),
+      opt('by', 'enum', ['delta', 'imbalance'], { labels: NOUN, sweep: false })],
+    defaults: { side: 'above', at: '0', by: 'delta' },
+    phrase: ['takers are ', '$side', ' on ', '$at', ', by ', '$by'],
+    notPhrase: ['takers are not ', '$side', ' on ', '$at', ', by ', '$by'],
+    text: (a) => `candle_relation(${a.by}(${a.at === '0' ? '' : `bars_ago: ${a.at}`}), is: ${a.side}, right: 0)`,
+    keywords: 'taker side flow aggressor buyers sellers buy sell pressure tape',
+  },
+  dimx: {
+    role: 'cond', group: 'Dimension', title: 'Dimension versus recent median, at least', def: 'dimension_multiple', needs: ['dimension_multiple'],
+    slots: [S.dim(['volume', 'trades', 'size'], true), opt('min', 'num', ['1.25', '1.5', '2', '2.5', '3']), S.over('4h')],
+    defaults: { dim: 'volume', min: '1.5', over: '4h' },
+    phrase: ['the candle closes with ', '$dim', ' at least ', '$min', ' × the prior ', '$over', ' median'],
+    notPhrase: ['the candle does not close with ', '$dim', ' at least ', '$min', ' × the prior ', '$over', ' median'],
+    text: (a) => `dimension_multiple(${a.dim}, over: ${a.over}, min: ${a.min})`,
+    keywords: 'heavy high busy active large surge spike expansion median',
+  },
+  dimxmax: {
+    role: 'cond', group: 'Dimension', title: 'Dimension versus recent median, at most', def: 'dimension_multiple', needs: ['dimension_multiple'],
+    slots: [S.dim(['volume', 'trades', 'size'], true), opt('max', 'num', ['0.25', '0.5', '0.75', '1']), S.over('4h')],
+    defaults: { dim: 'volume', max: '0.5', over: '4h' },
+    phrase: ['the candle closes with ', '$dim', ' at most ', '$max', ' × the prior ', '$over', ' median'],
+    notPhrase: ['the candle does not close with ', '$dim', ' at most ', '$max', ' × the prior ', '$over', ' median'],
+    text: (a) => `dimension_multiple(${a.dim}, over: ${a.over}, min: 0, max: ${a.max})`,
+    keywords: 'light low thin quiet small dry median',
+  },
+  dimlevel: {
+    role: 'event', group: 'Dimension', title: 'New high or low in a dimension', def: 'candle_relation', needs: DIM_KEYS,
+    slots: [S.over('4h'), S.side, S.dim(DIM_KEYS, false)],
+    defaults: { over: '4h', side: 'high', dim: 'volume' },
+    phrase: ['the candle sets a new ', '$over', ' ', '$side', ' in ', '$dim'],
+    notPhrase: ['the candle sets no new ', '$over', ' ', '$side', ' in ', '$dim'],
+    text: (a) => `candle_relation(${a.dim}(), is: ${a.side === 'high' ? 'above' : 'below'}, right: prior_${a.side}(over: ${a.over}, of: ${a.dim}))`,
+    keywords: 'highest lowest record extreme peak trough prior range',
+  },
   // A shape drawn in Composer. It holds the engine's drawing packet when one came with it, or the g1 alone, and is
   // asked one of three ways. The shape: a drawn shape is a chain, every later bar opening where the previous one
   // closed, so the recording is read the same way (chained_g1). The shape as recorded: later opens as the recording
@@ -164,7 +231,32 @@ export const drawingBars = (c) => (c.args.packet ? c.args.packet.bars.length : c
 export const drawingHeld = (c) => !!(c.args.held && c.args.packet && pinnedExpression(c.args.packet));
 /** Whether a drawn shape is asked with its opens as recorded. A one-bar shape has no later open, so the two readings agree. */
 export const drawingRecorded = (c) => !drawingHeld(c) && !!c.args.recorded && drawingBars(c) > 1;
-const drawingPhrase = (c) => { const n = drawingBars(c); return `${drawingHeld(c) ? 'relations held on ' : ''}a drawn shape of ${n} ${n === 1 ? 'bar' : 'bars'}${drawingRecorded(c) ? ', opens as recorded' : ''}`; };
+/** A g1 code without its dimension parts: the price shape, which is all a drawing holds. */
+export const g1Price = (code) => code.split('|')[0];
+/**
+ * The dimension parts of a g1 code, in written order: each with its exact text, its ranks, and its candles from lowest
+ * to highest with ties joined and zero in its place when the dimension has one. Empty when the code switches none on.
+ */
+export function g1Parts(code) {
+  if (!code.includes('|')) return [];
+  try { shapeOf(code); } catch { return []; }
+  return code.split('|').slice(1).map(text => {
+    const [key, range] = text.split(':'); const [body, zero] = range.split('/');
+    const ranks = body.split(',').map(Number); const reference = zero === undefined ? null : Number(zero);
+    const count = Math.max(...ranks, reference ?? 0) + 1;
+    const groups = Array.from({ length: count }, () => []);
+    ranks.forEach((rank, i) => groups[rank].push(`bar ${i + 1}`));
+    if (reference !== null) groups[reference].push('zero');
+    return { key, text, ranks, reference, order: groups.map(group => group.join(' = ')).join(' < ') };
+  });
+}
+const listed = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0]);
+/** The dimensions of a clause's g1 code as a phrase: "volume and delta". Empty when it switches none on. */
+export const drawingDimensions = (c) => { const parts = g1Parts(c.args.g1); return parts.length ? listed(parts.map((p) => NOUN[p.key])) : ''; };
+const drawingPhrase = (c) => {
+  const n = drawingBars(c); const dims = drawingHeld(c) ? '' : drawingDimensions(c);
+  return `${drawingHeld(c) ? 'relations held on ' : ''}a drawn shape of ${n} ${n === 1 ? 'bar' : 'bars'}${dims ? ` with ${dims}` : ''}${drawingRecorded(c) ? ', opens as recorded' : ''}`;
+};
 const lit = (v) => (Array.isArray(v) ? (v.length > 1 ? `{${v.join(' | ')}}` : v[0]) : v);
 const wrap = (t) => (/ (or|and) /.test(t) ? `(${t})` : t);
 
@@ -193,6 +285,34 @@ export function bodyText(m, { upTo = Infinity, without = -1 } = {}) {
   return lines.join('\n');
 }
 export const toText = (m, o) => 'on BTCUSDT 15m\n' + bodyText(m, o);
+
+export const offered = (type, hasCounters) => !CLAUSES[type].needs || hasCounters;
+
+/**
+ * The dimensions a query refers to, in their written order: a reading of one, a prior level or a median of one, and
+ * the parts of a g1 code. Read from the parsed text, so a typed expression counts as much as a clause.
+ */
+export function dimensionsIn(text, ast = null) {
+  if (!/\b(?:volume|trades|delta|size|imbalance|dimension_multiple)\b/.test(text)) return [];
+  ast ??= describe(text).ast;
+  if (!ast) return [];
+  const lets = new Map(ast.lets.map((b) => [b.name, b.value]));
+  const found = new Set();
+  const names = (n) => (!n ? [] : n.k === 'id' ? (lets.has(n.name) ? names(lets.get(n.name)) : [n.name]) : n.k === 'choices' ? n.items.flatMap(names) : n.k === 'str' ? [n.value] : []);
+  const arg = (call, name, pos) => call.args.find((a) => a.name === name)?.value ?? call.args.filter((a) => a.name === null)[pos]?.value;
+  const walk = (n) => {
+    if (!n || typeof n !== 'object') return;
+    if (n.k === 'call') {
+      if (DIM.has(n.name)) found.add(n.name);
+      else if (/^prior_(low|high)$/.test(n.name)) for (const d of names(arg(n, 'of'))) found.add(d);
+      else if (n.name === 'dimension_multiple') { const d = names(arg(n, 'dimension', 0)); for (const x of d.length ? d : ['volume']) found.add(x); }
+      else if (n.name === 'chained_g1' || n.name === 'exact_g1') for (const code of names(arg(n, 'pattern', 0))) for (const p of g1Parts(code)) found.add(p.key);
+    }
+    for (const v of Array.isArray(n) ? n : Object.values(n)) walk(v);
+  };
+  walk([ast.find, ast.wheres, ast.group, ast.measures]);
+  return DIM_KEYS.filter((d) => found.has(d));
+}
 
 export function slotLabel(slot, v) {
   if (Array.isArray(v)) return v.map((x) => slotLabel(slot, x)).join(' | ');
@@ -239,6 +359,14 @@ function fromExpr(node, lets) {
   const raw = () => null;
   const ok = (type, args) => (Object.values(args).every((v) => v !== null && v !== undefined) ? { type, args } : raw());
   const prior = (n) => (n?.k === 'call' && /^prior_(low|high)$/.test(n.name) ? { side: n.name.slice(6), over: val(arg(n, 'over')) ?? '4h' } : null);
+  // A dimension clause is read back only when every chosen value is one its slot offers; anything else stays formal text.
+  const fit = (type, args) => {
+    const clause = ok(type, args);
+    return clause && CLAUSES[type].slots.every(sl => sl.kind !== 'enum'
+      || [].concat(args[sl.key]).every(v => sl.options.includes(v))) ? clause : raw();
+  };
+  // The candle a reading is taken from: '0' when it names none, null when it is written any other way than bars_ago.
+  const lag = (call) => (!call.args.length ? '0' : call.args.length === 1 && call.args[0].name === 'bars_ago' ? val(call.args[0].value) : null);
 
   if (node.k === 'not') { const inner = fromExpr(node.item, lets); return !inner || inner.not ? raw() : { ...inner, not: true }; }
   if (node.k === 'id' && patternById.has(node.name)) return { type: 'pattern', args: { p: node.name } };
@@ -270,6 +398,16 @@ function fromExpr(node, lets) {
     case 'wick_rejection': return ok('wickrej', { body: val(arg(node, 'body_max')) ?? '35%', wick: val(arg(node, 'wick_min')) ?? '45%' });
     case 'candle_relation': {
       const l = arg(node, 'left', 0); const r = arg(node, 'right', 1);
+      if (l?.k === 'call' && DIM.has(l.name)) {
+        // a reading of a dimension: against zero, against the same reading of an earlier candle, or against its own prior range
+        const rel = val(arg(node, 'is')) ?? 'above'; const at = lag(l);
+        if (r?.k === 'num' && Number(r.text) === 0) return fit('taker', { side: rel, at, by: l.name });
+        if (r?.k !== 'call' || at !== '0') return raw();
+        if (r.name === l.name) return fit('dimback', { dim: l.name, rel, back: lag(r) });
+        const level = /^prior_(low|high)$/.exec(r.name);
+        if (!level || !r.args.every((a) => a.name === 'over' || a.name === 'of') || val(arg(r, 'of')) !== l.name || rel !== (level[1] === 'high' ? 'above' : 'below')) return raw();
+        return fit('dimlevel', { over: val(arg(r, 'over')) ?? '4h', side: level[1], dim: l.name });
+      }
       if (l?.k !== 'call' || l.name !== 'price' || r?.k !== 'call' || r.name !== 'price' || arg(l, 'bars_ago')) return raw();
       return ok('relation', { a: val(arg(l, 'point', 0)) ?? 'close', rel: val(arg(node, 'is')) ?? 'above', b: val(arg(r, 'point', 0)) ?? 'close', back: val(arg(r, 'bars_ago')) });
     }
@@ -281,6 +419,13 @@ function fromExpr(node, lets) {
       return ok('share', { part, min: min ?? '50%' });
     }
     case 'range_multiple': return only('over', 'min') ? ok('rangex', { min: val(arg(node, 'min')) ?? '1.5', over: val(arg(node, 'over')) ?? '4h' }) : raw();
+    case 'dimension_multiple': {
+      if (!only('dimension', 'over', 'min', 'max')) return raw();
+      const dim = val(arg(node, 'dimension', 0)) ?? 'volume'; const over = val(arg(node, 'over')) ?? '4h';
+      const min = val(arg(node, 'min')); const max = val(arg(node, 'max'));
+      if (max) return min === '0' ? fit('dimxmax', { dim, max, over }) : raw();
+      return fit('dimx', { dim, min: min ?? '1.5', over });
+    }
     case 'near_level': {
       const p = prior(arg(node, 'reference', 0)); const pt = arg(node, 'point', 1);
       if (!p || pt?.k !== 'call' || pt.name !== 'price' || (val(arg(pt, 'point', 0)) ?? 'close') !== 'close' || arg(pt, 'bars_ago')) return raw();
@@ -312,7 +457,7 @@ function fromExpr(node, lets) {
 
 export function fromText(text) {
   const d = describe(text);
-  if (!d.ok) { const e = d.errors[0]; return { model: null, error: { message: e.message + (e.hint ? ` (${e.hint})` : '') } }; }
+  if (!d.ast) { const e = d.errors[0]; return { model: null, error: { message: e.message + (e.hint ? ` (${e.hint})` : '') } }; }
   const { ast } = d;
   // The engine's canonical text holds one line per clause, in the order of the tree.
   const lines = d.canonical.split('\n');
@@ -355,9 +500,11 @@ export const PRESETS = [
     text: 'on BTCUSDT 15m\nfind channel_breakout(over: 12h)\nwhere completed_trend(frame: 4h) = up\nmeasure close_return(after: [1h, 4h])' },
 ];
 
-/** Conditions offered when adding a clause, each with its defaults. */
+/** Conditions offered when adding a clause, each with its defaults. A recording is offered the ones it can answer. */
 export const OFFERS = [
-  make('share'), make('rangex'), make('sharemax'), make('weekday'), make('tail'), make('trend'),
+  make('share'), make('rangex'), make('sharemax'),
+  make('dimx'), make('taker'), make('taker', { side: 'below' }), make('dimback'), make('dimlevel'),
+  make('weekday'), make('tail'), make('trend'),
   make('trend', { dir: 'down' }), make('quiet'), make('near'), make('near', { side: 'low' }),
   make('reclaim'), make('breakout'), make('pattern', { p: 'hammer' }), make('pattern', { p: 'engulfing' }),
   make('relation'), make('wickrej'),

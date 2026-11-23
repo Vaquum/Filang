@@ -2,13 +2,15 @@
 // One interchange, the engine's own: its drawing packet, under the parameter names the study page already uses
 // (drawing, g1, pin-relations). The engine reads every packet and every g1. Only the shape and what is held on it are
 // carried. Each bench counts on its own history, so a count never crosses.
-import { decodeDrawing, drawingG1, pinnedExpression, drawingRevision, shapeOf } from '/shared/filang.js';
+import { decodeDrawing, drawingG1, pinnedExpression, drawingRevision, shapeOf, recordedShape } from '/shared/filang.js';
 import { make, clauseText } from '/shared/vocab.js';
 
 export { decodeDrawing, drawingG1, pinnedExpression };
 
 const blank = (bars, extra = {}) => ({ version: 1, revision: drawingRevision(), oriented: true, bars, pins: [], skeleton: 0, stretch: 0,
   next: { dir: 0, measure: 'any', bps: 10, atr: 1 }, limit: 12, ...extra });
+const axesOf = code => code.split('|').slice(1);
+const marked = dimensions => dimensions.length ? { revision: drawingRevision(dimensions), dimensions } : {};
 
 /**
  * What a link carried in. Null when it names no drawing; { error } when it names one that cannot be read;
@@ -36,7 +38,7 @@ export function packetFromG1(code) {
     const shape = shapeOf(code);
     if (!shape.directions || shape.ranks.length > 20) return null;
     const bars = shape.ranks.map((ranks, k) => ({ v: ranks.map((r) => (shape.rank_count === 1 ? 50 : 15 + (70 * r) / (shape.rank_count - 1))), d: shape.directions[k] === 'd' ? 'd' : 'u' }));
-    const packet = blank(bars, { coordinates: 'ordinal' });
+    const packet = blank(bars, { coordinates: 'ordinal', ...marked(axesOf(code)) });
     return decodeDrawing(JSON.stringify(packet), code);   // refuses an opening gap: a drawn bar opens at the previous close
   } catch { return null; }
 }
@@ -48,7 +50,7 @@ export function packetFromG1(code) {
  * the window is a match of the shape drawn from it. Returns { packet, joined, far }: how many recorded opens differ
  * from the close before them, and the largest such difference in USDT. Or { why } when a candle is missing.
  */
-export function casePacket(rec, i, n) {
+export function casePacket(rec, i, n, dimensions = []) {
   const start = i - n + 1;
   if (start < 0) return { why: 'the recording begins inside these candles' };
   for (let k = start; k <= i; k++) if (!rec.present[k]) return { why: 'a candle is missing from the recording' };
@@ -59,7 +61,14 @@ export function casePacket(rec, i, n) {
     bars.push({ v: [Math.min(rec.L[k], lo), lo, hi, Math.max(rec.H[k], hi)].map((x) => x / 100), d: c > o ? 'u' : c < o ? 'd' : rec.C[k] >= rec.O[k] ? 'u' : 'd' });
     prev = c;
   }
-  try { return { packet: decodeDrawing(JSON.stringify(blank(bars))), joined, far: far / 100 }; } catch (e) { return { why: String(e.message || e).replace(/\.$/, '').toLowerCase() }; }
+  try {
+    const shape = dimensions.length ? recordedShape(i, n, dimensions) : null;
+    if (dimensions.length && !shape) return { why: 'a selected dimension is missing from the window' };
+    const packet = blank(bars, shape ? marked(axesOf(shape.code)) : {});
+    return { packet: decodeDrawing(JSON.stringify(packet), shape?.code), joined, far: far / 100 };
+  } catch (e) {
+    return { why: String(e.message || e).replace(/\.$/, '').toLowerCase() };
+  }
 }
 
 /** The link that opens a packet in the Composer bench. */

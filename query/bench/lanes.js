@@ -3,8 +3,11 @@
 import { rec, pct } from '/shared/filang.js';
 import { s } from '/shared/chart.js';
 import { sceneFor } from './motion.js';
+import { DIMENSIONS } from '/shared/vocab.js';
 
-const cache = new Map();
+// Medians are of one recording's bars. Another window is another recording, and starts from nothing.
+const caches = new WeakMap();
+const cacheFor = (R) => { if (!caches.has(R)) caches.set(R, new Map()); return caches.get(R); };
 const quant = (arr, m, f) => { if (!m) return null; const x = (m - 1) * f; const a = Math.floor(x); const b = Math.min(m - 1, a + 1); return arr[a] + (arr[b] - arr[a]) * (x - a); };
 export const barsOf = (text) => { const n = parseFloat(text); return Math.round(text.endsWith('d') ? n * 96 : text.endsWith('h') ? n * 4 : n / 15); };
 export const offsetLabel = (k) => { const m = Math.abs(k) * 15; const t = m % 60 === 0 ? m / 60 + 'H' : m + 'M'; return k === 0 ? 'CLOSE' : (k > 0 ? '+' : '−') + t; };
@@ -13,8 +16,8 @@ export const unitText = (v, unit) => (v === null || v === undefined ? '—' : un
 /** Per-column medians for a population of anchor slots. Values are measured from the anchor close. */
 export function aggregate(key, slots, lead, H, unit) {
   const id = `${key}|${lead}|${H}|${unit}`;
+  const R = rec(); const cache = cacheFor(R); const n = slots.length;
   if (cache.has(id)) return cache.get(id);
-  const R = rec(); const n = slots.length;
   const o = new Float64Array(n); const hi = new Float64Array(n); const lo = new Float64Array(n); const c = new Float64Array(n); const rg = new Float64Array(n);
   const cols = [];
   for (let k = -lead; k <= H; k++) {
@@ -201,6 +204,36 @@ export function drawColumnTrack(host, { agg, lead, H, pbars, horizons, measure, 
   sc.layers.text.replaceChildren(...text);
 }
 
+/**
+ * A dimension lane: one bar per column for one dimension of the selected row, on the candles' own columns and as
+ * wide as their bodies. A signed dimension is drawn around its zero line, above for net buying and below for net
+ * selling; any other rises from the foot of the lane. The scale is the lane's own and is printed at its edge.
+ */
+export function drawDimensionLane(host, { agg, lead, H, pbars, horizons, height = 43 }) {
+  const W = Math.max(120, Math.floor(host.clientWidth));
+  const sc = sceneFor(host, ['back', 'bars', 'text']); sc.size(W, height);
+  const g0 = geom(W, lead, H, pbars); const x = g0.x; const inBand = (k) => k > -pbars && k <= 0;
+  const live = agg.cols.filter((c) => c.n); const top = Math.max(0, ...live.map((c) => Math.abs(c.v)));
+  const padT = 5; const padB = 4; const mid = Math.round(height / 2); const text = [];
+  sc.begin();
+  sc.put('band', 'back', () => s('rect', { class: 'b-pattern' }), [g0.band[0], 0, g0.band[1] - g0.band[0], height], setRect);
+  for (const k of horizons) if (k <= H) sc.put('hz' + k, 'back', () => s('line', { class: 'b-horizon', y1: 0 }), [x(k), height], setLineX);
+  if (agg.signed && live.length) sc.put('zero', 'back', () => s('line', { class: 'b-zero' }), [0, W, mid], setLineY);
+  for (const c of live) {
+    const bw = Math.max(1.5, Math.min(inBand(c.k) ? 40 : 13, g0.w(c.k) * (inBand(c.k) ? 0.46 : 0.52)));
+    const span = agg.signed ? mid - padT : height - padT - padB; const hh = top > 0 ? Math.max(1, (Math.abs(c.v) / top) * span) : 1;
+    const y0 = agg.signed ? (c.v >= 0 ? mid - hh : mid) : height - padB - hh;
+    sc.put('b' + c.k, 'bars', () => s('rect'), [x(c.k) - bw / 2, y0, bw, hh], setRect,
+      'b-bar' + (agg.signed && c.v < 0 ? ' below' : '') + (c.k <= -pbars ? ' lead' : ''));
+  }
+  sc.end();
+  if (live.length) {
+    if (top > 0) text.push(s('text', { class: 'b-scale', x: W - 4, y: 10, 'text-anchor': 'end' }, dimensionText(agg.key, top)));
+    if (agg.signed) text.push(top > 0 ? s('text', { class: 'b-scale', x: W - 4, y: height - 3, 'text-anchor': 'end' }, dimensionText(agg.key, -top)) : null, s('text', { class: 'b-scale', x: 4, y: mid - 4 }, '0'));
+  } else text.push(s('text', { class: 'b-scale', x: (g0.band[0] + g0.band[1]) / 2, y: mid + 3, 'text-anchor': 'middle' }, agg.n ? 'NO VALUE' : 'NO CLOSES'));
+  sc.layers.text.replaceChildren(...text.filter(Boolean));
+}
+
 /** A small drawing of a pattern's median candles, in units of the last candle's range. */
 export function drawGlyph(host, agg, pbars, w = 30, height = 26) {
   const svg = s('svg', { class: 'glyph', viewBox: `0 0 ${w} ${height}`, width: w, height });
@@ -226,4 +259,83 @@ export function drawShape(host, bars, height = 26) {
     const cx = step * (idx + 1); const top = y(b.v[2]); const bot = y(b.v[1]);
     svg.append(s('g', { class: (b.d === 'u' ? 'b-up' : 'b-down') + ' b-in' }, s('line', { x1: cx, x2: cx, y1: y(b.v[3]), y2: y(b.v[0]) }), s('rect', { x: cx - bw / 2, y: top, width: bw, height: Math.max(1, bot - top) })));
   });
+}
+
+// Dimension switches, values and labels.
+const KEYS = DIMENSIONS.map((d) => d.key);
+const SIGNED = new Set(DIMENSIONS.filter((d) => d.signed).map((d) => d.key));
+
+/**
+ * The lanes on show, in the dimensions' written order. A dimension the question refers to is shown unless it was
+ * switched off; any other is shown once it was switched on. `set` holds only the switches that were thrown.
+ */
+export const lanesShown = (used, set) => KEYS.filter((d) => set[d] ?? used.includes(d));
+
+/** Throw one switch. A switch put back to where the question leaves it is no longer a choice of its own. */
+export function setLane(set, used, key, on) {
+  if (on === used.includes(key)) delete set[key]; else set[key] = on;
+  return set;
+}
+
+/**
+ * The lanes as the address keeps them: the names on show, comma-separated. Null when the question refers to no
+ * dimension and no lane is shown, which is every address written before there were lanes.
+ */
+export function lanesParam(used, set) {
+  const shown = lanesShown(used, set);
+  return shown.length || used.length ? shown.join(',') : null;
+}
+
+/** The switches an address asks for, given what its question refers to. Names it does not know are passed over. */
+export function lanesFromParam(param, used) {
+  const set = {};
+  if (param === null || param === undefined) return set;
+  const named = new Set(param.split(',').filter((d) => KEYS.includes(d)));
+  for (const d of KEYS) if (named.has(d) !== used.includes(d)) set[d] = named.has(d);
+  return set;
+}
+
+
+/**
+ * One dimension, column by column, for the candles around a set of closes: the median of the recorded values at each
+ * offset from the close, the middle half, and how many candles had a value. For a single close the median is that
+ * candle's own value. A candle that is absent, or has no such value, is left out; a column with none has n 0.
+ */
+export function dimensionColumns(rec, slots, lead, H, key) {
+  const x = rec.dimension(key); const n = slots.length; const held = new Float64Array(n); const cols = [];
+  for (let k = -lead; k <= H; k++) {
+    let m = 0;
+    for (let q = 0; q < n; q++) {
+      const j = slots[q] + k;
+      if (j < 0 || j >= rec.n || Number.isNaN(x[j])) continue;
+      held[m++] = x[j];
+    }
+    const sorted = held.subarray(0, m).slice().sort();
+    cols.push({ k, n: m, v: quant(sorted, m, 0.5), q1: quant(sorted, m, 0.25), q3: quant(sorted, m, 0.75) });
+  }
+  return { key, cols, n, single: n === 1, signed: SIGNED.has(key) };
+}
+
+/** What one unit of a dimension is, as a caption beside a figure. */
+export const UNIT = { volume: 'USDT', trades: 'trades', delta: 'USDT', size: 'USDT a trade', imbalance: 'of volume' };
+
+const short = (a) => (a >= 1e9 ? (a / 1e9).toFixed(2) + 'B' : a >= 1e6 ? (a / 1e6).toFixed(2) + 'M' : a >= 1e4 ? (a / 1e3).toFixed(1) + 'K' : a >= 100 ? Math.round(a).toLocaleString('en-US') : a.toFixed(2));
+/** A value as a figure: amounts shortened to three or four digits, counts whole, a signed dimension with its sign. */
+export function dimensionText(key, v) {
+  if (v === null || v === undefined || Number.isNaN(v)) return '—';
+  const sign = SIGNED.has(key) ? (v > 0 ? '+' : v < 0 ? '−' : '') : '';
+  const a = Math.abs(v);
+  if (a === 0) return '0';
+  if (key === 'imbalance') return sign + a.toFixed(3);
+  if (key === 'trades') return a >= 1e6 ? short(a) : (Number.isInteger(a) ? a : Math.round(a * 10) / 10).toLocaleString('en-US');
+  return sign + short(a);
+}
+/** A recorded value in full, for one candle: nothing shortened. */
+export function dimensionExact(key, v) {
+  if (v === null || v === undefined || Number.isNaN(v)) return '—';
+  const sign = SIGNED.has(key) ? (v > 0 ? '+' : v < 0 ? '−' : '') : '';
+  const a = Math.abs(v);
+  if (key === 'imbalance') return sign + a.toFixed(4);
+  if (key === 'trades') return a.toLocaleString('en-US');
+  return sign + a.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
