@@ -82,6 +82,9 @@ class Engine:
     def inspect(self, code):
         return self._call("inspect", code)
 
+    def geometry_shape(self, code):
+        return self._call("geometry-shape", code)
+
     def distance(self, left, right):
         return self._call("distance", _fields(left, right))
 
@@ -121,6 +124,9 @@ class Engine:
     def study(self, query, *, candidate=None):
         index = "-" if candidate is None else str(candidate)
         return self._call("study", f"{index}\n{query}")
+
+    def study_counts(self, queries):
+        return self._call("study-counts", json.dumps(queries))
 
     def prepare(self, width, *, oriented=True, reading="recorded", dimensions=()):
         return self._call(

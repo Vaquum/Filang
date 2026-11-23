@@ -1,11 +1,11 @@
 //! Versioned in-process interface for the browser, Python and CLI adapters.
 
 use crate::{
-    engine_drawing,
+    engine_drawing, engine_json,
     geometry::{
         explore::{self, Bar, DeclaredDomain, PreparedGeometry, Reading, Recording, MAX_SLOTS},
-        Counters, Dimension, DimensionSet, GeometryDimensionKey, GeometryMode, GeometryPattern,
-        GEOMETRY_KEY_MAX_BARS,
+        BodyDirection, Counters, Dimension, DimensionSet, GeometryDimensionKey, GeometryMode,
+        GeometryPattern, GEOMETRY_KEY_MAX_BARS,
     },
     study, Result,
 };
@@ -14,6 +14,7 @@ use std::{collections::HashMap, str};
 pub const ABI_VERSION: u32 = 1;
 pub const MAX_PAYLOAD: usize = 256 * 1024 * 1024;
 const MAX_PAGE: usize = 4096;
+const MAX_STUDY_BATCH: usize = 64;
 const BAR_SIZE: usize = 57;
 
 #[derive(Default)]
@@ -104,7 +105,28 @@ impl Session {
                 };
                 self.study()?.query(query, candidate)
             }
+            b"study-counts" => {
+                let questions = engine_json::parse(text)?;
+                let questions = questions.array()?;
+                if questions.len() > MAX_STUDY_BATCH {
+                    return Err(format!(
+                        "study count batch exceeds {MAX_STUDY_BATCH} questions"
+                    ));
+                }
+                let study = self.study()?;
+                let mut entries = Vec::with_capacity(questions.len());
+                for query in questions {
+                    entries.push(match study.first_count(query.text()?) {
+                        Ok(count) => format!("{{\"count\":{count},\"error\":null}}"),
+                        Err(error) => {
+                            format!("{{\"count\":null,\"error\":{}}}", study::quote(&error))
+                        }
+                    });
+                }
+                Ok(format!("[{}]", entries.join(",")))
+            }
             b"inspect" => inspect(&text.parse()?),
+            b"geometry-shape" => Ok(geometry_shape(&text.parse()?)),
             b"distance" => {
                 let [left, right] = fields(text)?;
                 let half_flips = explore::distance(&left.parse()?, &right.parse()?)?;
@@ -317,6 +339,37 @@ fn inspect(pattern: &GeometryPattern) -> Result<String> {
         pattern.mode() == GeometryMode::Oriented,
         pattern.dimension_set().json(),
     ))
+}
+
+fn geometry_shape(pattern: &GeometryPattern) -> String {
+    let ranks = pattern.ranks();
+    let rank_count = ranks.iter().flatten().copied().max().expect("nonempty g1") + 1;
+    let detail = match pattern.directions() {
+        Some(directions) => {
+            let labels: Vec<_> = directions
+                .iter()
+                .map(|direction| match direction {
+                    BodyDirection::Up => "u",
+                    BodyDirection::Down => "d",
+                    BodyDirection::Flat => "z",
+                })
+                .collect();
+            let rows: Vec<_> = ranks
+                .iter()
+                .zip(directions)
+                .map(
+                    |(&[low, body_low, body_high, high], direction)| match direction {
+                        BodyDirection::Down => [body_high, high, low, body_low],
+                        _ => [body_low, high, low, body_high],
+                    },
+                )
+                .collect();
+            let chained = rows.windows(2).all(|pair| pair[0][3] == pair[1][0]);
+            format!("\"directions\":{labels:?},\"rows\":{rows:?},\"chained\":{chained}")
+        }
+        None => "\"directions\":null,\"rows\":null,\"chained\":null".into(),
+    };
+    format!("{{\"ranks\":{ranks:?},\"rank_count\":{rank_count},{detail}}}")
 }
 
 fn draw(text: &str) -> Result<(GeometryPattern, Reading)> {

@@ -192,6 +192,31 @@ impl Study {
                 .map_or(&empty, |(_, calendar)| calendar),
         )
     }
+
+    /// Count the first candidate without materializing closes or outcomes.
+    /// A batch consumer can return an error for one query and keep the others.
+    pub fn first_count(&self, text: &str) -> Result<usize> {
+        let plan = self.compile(text, Some(0))?;
+        let empty = Calendar::empty();
+        let calendar = self
+            .calendar
+            .as_ref()
+            .map_or(&empty, |(_, calendar)| calendar);
+        let mut eval = Eval::new(&self.tape, calendar);
+        let series = eval.series(&plan.nodes)?;
+        let query = &plan.queries[0];
+        let event = series[query.find].mask()?;
+        let context = query.context.map(|id| series[id].mask()).transpose()?;
+        Ok(self
+            .tape
+            .bars
+            .iter()
+            .enumerate()
+            .filter(|&(i, bar)| {
+                bar.is_some() && event.at(i).0 && context.map_or(true, |mask| mask.at(i).0)
+            })
+            .count())
+    }
 }
 
 fn utc_millis(text: &str) -> Result<i64> {

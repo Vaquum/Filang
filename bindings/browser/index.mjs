@@ -38,6 +38,7 @@ export class FilangEngine {
   version() { return this.#call("version"); }
   catalogue() { return this.#call("catalogue"); }
   inspect(code) { return this.#call("inspect", code); }
+  geometryShape(code) { return this.#call("geometry-shape", code); }
   distance(left, right) { return this.#call("distance", fields(left, right)); }
 
   domain(width, {oriented = true, dimensions = []} = {}) {
@@ -78,6 +79,8 @@ export class FilangEngine {
   study(query, {candidate = null} = {}) {
     return this.#call("study", `${candidate ?? "-"}\n${query}`);
   }
+
+  studyCounts(queries) { return this.#call("study-counts", JSON.stringify(queries)); }
 
   prepare(width, {oriented = true, reading = "recorded", dimensions = []} = {}) {
     return this.#call("prepare", fields(width, mode(oriented), reading, names(dimensions)));
