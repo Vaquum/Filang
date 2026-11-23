@@ -128,3 +128,15 @@ recording width, marks, read mode, axes, independent count parity and
 cold preparation. The A3 retained-recording frame-aligned control stays
 in the record. Compare the Cube capture with Limen on common closes
 and record source differences separately from binding parity.
+
+## A8. Stream and reuse the native executable fingerprint
+
+**Hypothesis.** Hashing the executable through the existing fixed-size
+file hasher and reusing that fingerprint within a geometry run restores
+the native preparation budget. This removes the whole executable buffer
+and the second hashing pass without changing the receipt digest.
+
+**Method.** Start from A6's market parser and bank preparation. Retain A7's
+negative record and replace its broader changes with this narrower change.
+Repeat A6's fresh-process baseline, inputs, five alternating rounds,
+captured result and coverage parity, and unchanged p75 gates.
