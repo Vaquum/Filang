@@ -2,6 +2,7 @@
 
 use crate::{
     engine_drawing, engine_json,
+    engine_search::{Frame, Search, TIMEFRAMES},
     geometry::{
         explore::{self, Bar, DeclaredDomain, PreparedGeometry, Reading, Recording, MAX_SLOTS},
         BodyDirection, Counters, Dimension, DimensionSet, GeometryDimensionKey, GeometryMode,
@@ -27,6 +28,8 @@ pub struct Session {
     study: Option<study::Study>,
     prepared: HashMap<usize, PreparedGeometry>,
     domains: HashMap<(usize, GeometryMode), DeclaredDomain>,
+    composer_frames: [Option<Frame>; 5],
+    composer_search: Option<(Search, bool)>,
 }
 
 impl Session {
@@ -63,6 +66,55 @@ impl Session {
             b"version" if text.is_empty() => Ok(format!(
                 "{{\"abi\":{ABI_VERSION},\"version\":\"{VERSION}\"}}"
             )),
+            b"composer-load" => {
+                let (interval, csv) = text.split_once('\n').ok_or("expected interval and CSV")?;
+                let interval = number(interval)?;
+                let index = composer_timeframe(interval)?;
+                let frame = Frame::load(csv, interval)?;
+                let slots = frame.len();
+                self.composer_frames[index] = Some(frame);
+                self.composer_search = None;
+                Ok(format!("{{\"slots\":{slots}}}"))
+            }
+            b"composer-start" => {
+                let (options, drawing) = text
+                    .split_once('\n')
+                    .ok_or("expected Composer options and drawing")?;
+                let drawing = engine_drawing::parse(drawing, None)?;
+                let search = Search::new(
+                    drawing,
+                    &self.composer_frames,
+                    &engine_json::parse(options)?,
+                )?;
+                self.composer_search = Some((search, false));
+                Ok("null".into())
+            }
+            b"composer-step" => {
+                let work = number(text)?;
+                if !(1..=8192).contains(&work) {
+                    return Err("Composer search step needs 1–8192 work units".into());
+                }
+                let (search, done) = self
+                    .composer_search
+                    .as_mut()
+                    .ok_or("start a Composer search first")?;
+                *done = *done || search.step(work);
+                Ok(search.reply(*done))
+            }
+            b"composer-positions" => {
+                let [interval, kind, start, limit] = fields(text)?;
+                let index = composer_timeframe(number(interval)?)?;
+                let (search, _) = self
+                    .composer_search
+                    .as_ref()
+                    .filter(|(_, done)| *done)
+                    .ok_or("finish the Composer search first")?;
+                search.positions(index, kind, number(start)?, number(limit)?)
+            }
+            b"composer-cancel" if text.is_empty() => {
+                self.composer_search = None;
+                Ok("null".into())
+            }
             b"catalogue" if text.is_empty() => Ok(study::Study::catalogue().into()),
             b"study-terms" if text.is_empty() => Ok(study::Study::terms().into()),
             b"resolve-candle" => {
@@ -487,6 +539,13 @@ fn counts_json(counts: explore::Counts) -> String {
         "{{\"matched\":{},\"false_count\":{},\"unknown\":{}}}",
         counts.matched, counts.false_count, counts.unknown
     )
+}
+
+fn composer_timeframe(interval: i64) -> Result<usize> {
+    TIMEFRAMES
+        .iter()
+        .position(|&candidate| candidate == interval)
+        .ok_or_else(|| "Composer timeframe must be 15m, 30m, 1h, 2h or 4h".into())
 }
 
 fn fields<const N: usize>(text: &str) -> Result<[&str; N]> {

@@ -89,6 +89,13 @@ async function verify() {
     } catch (error) {
       if (error.message === "accepted unordered dimension parts") throw error;
     }
+    await worker.ask("loadComposerFrame", csv, interval);
+    const nearest = await worker.searchComposer({...packet, pins: []}, {timeframes: 1});
+    equal(nearest.exact, [1463, 0, 0, 0, 0], "Composer chained exact twins");
+    const page = await worker.ask("composerPositions", interval, {limit: 2});
+    equal(page.positions.length, 2, "Composer positions");
+    equal(page.next, 2, "Composer positions cursor");
+    equal(page.positions[0].picks, [0, 1], "Composer consecutive picks");
     await worker.ask("loadCsv", counters, interval);
     const g1 = await worker.ask("counts", expected, {reading: "chained"});
     const query = find + `chained_g1(${JSON.stringify(expected)})`;

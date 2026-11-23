@@ -24,6 +24,8 @@ use std::{
 mod dimensions;
 #[path = "geometry_explore.rs"]
 pub mod explore;
+#[path = "geometry_match.rs"]
+pub(crate) mod matching;
 
 pub use dimensions::{
     count_delta_imbalance_occurring, count_delta_imbalance_occurring_decimal,

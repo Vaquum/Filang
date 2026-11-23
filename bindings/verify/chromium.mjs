@@ -24,6 +24,11 @@ const fixtures = new Map([["/fixture/pinned.csv", priceFixture], ["/fixture/coun
 if (process.env.FILANG_BENCH_CORPUS) {
   fixtures.set("/fixture/corpus.json", process.env.FILANG_BENCH_CORPUS);
 }
+if (process.env.FILANG_COMPOSER_FIXTURES) {
+  for (const frame of ["15m", "30m", "1h", "2h", "4h"]) {
+    fixtures.set(`/fixture/tape-${frame}.csv`, path.join(process.env.FILANG_COMPOSER_FIXTURES, `tape-${frame}.csv`));
+  }
+}
 const allowed = ["/bindings/verify/", "/study/verify/", "/study/src/", "/target/engine-dist/browser/"];
 
 const server = createServer(async (req, res) => {

@@ -332,7 +332,7 @@ fn colour(direction: BodyDirection) -> i8 {
 }
 
 #[inline]
-fn half_flips(left: i8, right: i8) -> u32 {
+pub(crate) fn half_flips(left: i8, right: i8) -> u32 {
     u32::from((left - right).unsigned_abs())
 }
 

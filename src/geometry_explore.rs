@@ -11,6 +11,7 @@ use std::{collections::HashMap, hash::Hash, ops::Range, sync::Arc};
 
 #[path = "geometry_radius.rs"]
 mod radius;
+pub(crate) use radius::half_flips;
 pub use radius::RadiusCounts;
 
 /// A recording contains grid slots, including missing bars.
@@ -142,6 +143,19 @@ impl Recording {
             return Err(format!("geometry recording exceeds {MAX_SLOTS} grid slots"));
         }
         Ok(Self(bars.into()))
+    }
+
+    pub(crate) fn candle(&self, slot: usize, reading: Reading) -> Option<[f64; 4]> {
+        let bar = (*self.0.get(slot)?)?;
+        let previous_close = slot
+            .checked_sub(1)
+            .and_then(|i| self.0[i])
+            .map(|bar| bar.ohlc[3]);
+        Some(reading.candle(bar.ohlc, previous_close))
+    }
+
+    pub(crate) fn dimension_at(&self, slot: usize, dimension: Dimension) -> Option<f64> {
+        self.0.get(slot).copied().flatten()?.value(dimension)
     }
 
     pub fn len(&self) -> usize {

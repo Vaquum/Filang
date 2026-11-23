@@ -16,10 +16,16 @@ export function verifyRadiusVectors(engine, vectors) {
     const options = {reading, oriented, dimensions};
     engine.load(bars);
     equal(engine.at(anchor, width, options).code, code, name);
+    const dropAxes = {reading, oriented: false};
+    const projected = engine.at(anchor, width, dropAxes).code;
     for (const [slot, d] of distances.entries()) {
       if (d === null) continue;
       const observed = engine.at(slot, width, options);
       equal(engine.distance(code, observed.code).half_flips, d, name + " distance");
+      const projectedWindow = engine.at(slot, width, dropAxes).code;
+      if (engine.distance(projected, projectedWindow).half_flips > d) {
+        throw new Error(name + " projection increased distance");
+      }
     }
     const radii = [...new Set([0, 1, 2, 4, 8, 16, 64, ...distances.filter(d => d !== null)])].sort((a, b) => a - b);
     let previous = [];
@@ -60,5 +66,31 @@ export function verifyRadiusVectors(engine, vectors) {
     equal(engine.study(sweep).results.map(result => result.anchors),
       [0, 1, 2].map(radius => engine.study(query(radius)).results[0].anchors), name + " radius sweep");
   }
+  const two = vectors.find(v => v.reading === "chained" && v.dimensions.length === 5);
+  const bars = two.bars.slice(two.anchor + 1 - two.width, two.anchor + 1);
+  const packet = {
+    version: 1, revision: "bd6a0ba32e18548b641267418491bfb5f011a274", oriented: true,
+    bars: bars.map(([o, h, l, c], i) => {
+      if (i) o = bars[i - 1][3];
+      return {v: [Math.min(l, o), Math.min(o, c), Math.max(o, c), Math.max(h, o)], d: c >= o ? "u" : "d"};
+    }),
+    dimensions: two.code.split("|").slice(1),
+    pins: [], skeleton: 0, stretch: 0, limit: 12, next: {dir: 0, measure: "any", bps: 10, atr: 1},
+  };
+  engine.loadComposerFrame(csv(two.bars), interval);
+  const compare = radius => {
+    engine.composerStart(packet, {timeframes: 1, radius});
+    let result;
+    do { result = engine.composerStep(); } while (!result.done);
+    const want = two.distances.flatMap((d, i) => d !== null && d <= radius ? [i] : []);
+    equal(engine.composerPositions(interval, {kind: "within"}).positions.map(p => p.start + two.width - 1),
+      want, "Composer radius positions");
+    equal(radius ? result.within[0] : result.exact[0], want.length, "Composer radius count");
+    for (const resultWindow of result.results) {
+      const {window, half_flips} = resultWindow;
+      equal(half_flips, two.distances[window.start + window.span - 1], "Composer distance");
+    }
+  };
+  [0, 1, 2, 4, 8, 16, 64].forEach(compare);
   return checks;
 }
