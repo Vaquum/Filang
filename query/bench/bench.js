@@ -1,6 +1,6 @@
 // Filang query bench. One locked canvas shows the pattern; the question is written in its row labels.
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
-import { load, loaded, geometryRadiusReceipt, sources, PINNED, run, count, rec, env, definition, HEAD, ANY_CLOSE, T, F, U, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
+import { load, loaded, geometryRadiusReceipt, sources, PINNED, run, describe, count, rec, env, definition, HEAD, ANY_CLOSE, T, F, U, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
 import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, DIMENSIONS, make, clone, toText, bodyText, fromText, clauseText, splitText, phraseText, drawingBars, drawingHeld, drawingRecorded, drawingDimensions, g1Price, g1Parts, offered, dimensionsIn } from '/shared/vocab.js';
 import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
@@ -92,12 +92,56 @@ function summarize(rows, k) {
   const ups = v.filter((x) => x > 0).length;
   return { n, k: ups, up: share(ups, n), frac: ups / n, median: n % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2, mean: v.reduce((a, b) => a + b, 0) / n, values: v };
 }
-function update(fn, keep) { fn(state.model); state.focus = keep || null; state.notice = ''; render(); }
+// ---------------------------------------------------------------- undo
+// Every change to the question is a step back and forth: ⌘Z and ⇧⌘Z, and the Undo on a removal's notice.
+// Text typed in the Filang drawer is one step per pause, not one per key.
+const past = []; const future = []; let lastStep = { tag: null, at: 0 };
+const snap = () => ({ model: clone(state.model), preset: state.preset, rows: state.rows, splitBy: state.splitBy });
+const same = (a, b) => JSON.stringify(a.model) === JSON.stringify(b.model) && a.rows === b.rows && a.splitBy === b.splitBy;
+function record(was = state.model && snap(), tag = null) {
+  if (!was) return;
+  const now = performance.now(); if (tag && lastStep.tag === tag && now - lastStep.at < 1500) { lastStep.at = now; return; }
+  past.push(was); if (past.length > 200) past.shift(); future.length = 0; lastStep = { tag, at: now };
+}
+function travel(from, to) {
+  if (!from.length || !state.model) return false;
+  to.push(snap()); const s = from.pop(); lastStep = { tag: null, at: 0 };
+  Object.assign(state, { model: s.model, preset: s.preset, rows: s.rows, splitBy: s.splitBy, lane: null, slot: null, notice: '' });
+  toast(null); render(); return true;
+}
+const undo = () => travel(past, future); const redo = () => travel(future, past);
+/** A short notice on the canvas, with an action beside it: Undo after a removal, Release after an accidental pick. */
+let toastTimer = 0;
+function toast(text, action = null) {
+  const el = $('#toast'); clearTimeout(toastTimer);
+  if (!text) { el.hidden = true; return; }
+  mount(el, h('span', null, text), action ? h('button', { type: 'button', class: 'quiet', onclick: () => { action.run(); toast(null); } }, action.label) : null);
+  el.hidden = false; toastTimer = setTimeout(() => { el.hidden = true; }, 7000);
+}
+/**
+ * Change the question. A change the engine cannot read is not made: the canvas would go on showing the previous
+ * answer under a question that no longer asks it. The question stays as it was, and the notice says why.
+ */
+function update(fn, keep, tag = null) {
+  const was = snap(); fn(state.model);
+  if (state.rows !== 'split') state.model.split = null;
+  const res = run(toText(state.model));
+  if (!res.ok && !refusal(res)) {
+    Object.assign(state, { model: was.model, preset: was.preset });
+    toast(`Not changed: ${res.errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')).join(' · ')}`); render(); return;
+  }
+  if (!same(was, snap())) record(was, tag);
+  // the Question menu names a starting question only while the question still is it
+  const now = toText(state.model); state.preset = PRESETS.find((p) => toText(fromText(p.text).model) === now)?.id ?? null;
+  state.focus = keep || null; state.notice = ''; render();
+}
+/** Remove a line or a pattern, and offer it back. */
+const removal = (what, fn) => { update(fn); toast(`${what} removed`, { label: 'Undo · ⌘Z', run: undo }); };
 const target = (m, path) => (path[0] === 'f' ? m.find.items[+path.slice(1)] : m.wheres[+path.slice(1)]);
 const slotEdit = (path) => ({
   allowCompare: true, capital: true,
   // A stepped value, or one chosen in a popover that then closes, keeps the keyboard on the redrawn slot.
-  onChange: (key, value, refocus) => update((m) => { target(m, path).args[key] = value; if (Array.isArray(value)) state.rows = 'compare'; }, refocus ? { clause: path, slot: key } : null),
+  onChange: (key, value, refocus) => update((m) => { target(m, path).args[key] = value; if (Array.isArray(value)) state.rows = 'compare'; }, refocus ? { clause: path, slot: key } : null, `slot:${path}:${key}`),
   countFor: (key, value) => { const c = clone(state.model); const t = target(c, path); t.args[key] = value; t.off = false; return count(bodyText(c)); },
 });
 
@@ -184,20 +228,28 @@ function candlesLink(i, cls = 'quiet') {
 
 // ---------------------------------------------------------------- menus
 
-let popup = null;
-function closeMenu() { if (popup) { popup.remove(); popup = null; document.removeEventListener('mousedown', outsideMenu, true); } }
+let popup = null; let popupAnchor = null;
+function closeMenu() { if (popup) { popup.remove(); popup = null; document.removeEventListener('mousedown', outsideMenu, true); } popupAnchor?.setAttribute('aria-expanded', 'false'); popupAnchor = null; }
 function outsideMenu(e) { if (popup && !popup.contains(e.target) && !e.target.closest('[data-menu]')) closeMenu(); }
 function menu(anchor, { title, hint, options, value, onChange }) {
   closeMenu(); closePopover();
-  popup = h('div', { class: 'pop', role: 'menu', onkeydown: (e) => { if (e.key === 'Escape') { closeMenu(); anchor.focus(); } } },
+  // the menu takes the keys: arrows, Home and End move through its options, Enter picks, Esc and Tab leave it
+  const back = anchor.dataset.enc ? `[data-enc="${anchor.dataset.enc}"]` : null;
+  popup = h('div', { class: 'pop', role: 'menu', 'aria-label': title, onkeydown: (e) => {
+    const items = [...popup.querySelectorAll('button:not(:disabled)')]; const at = items.indexOf(document.activeElement);
+    if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); closeMenu(); anchor.focus(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus(); }
+    else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); items[e.key === 'Home' ? 0 : items.length - 1]?.focus(); }
+  } },
     h('header', null, label(title)), hint ? h('p', { class: 'note' }, hint) : null,
-    h('ul', null, options.map((o) => h('li', null, h('button', { type: 'button', role: 'menuitemradio', 'aria-checked': String(o.value === value), disabled: o.disabled,
-      onclick: () => { closeMenu(); onChange(o.value); } }, h('span', null, o.label, o.detail ? h('small', null, o.detail) : null))))));
-  document.body.append(popup);
+    h('ul', { role: 'none' }, options.map((o) => h('li', { role: 'none' }, h('button', { type: 'button', role: 'menuitemradio', 'aria-checked': String(o.value === value), disabled: o.disabled,
+      onclick: () => { closeMenu(); onChange(o.value); if (back) $(back)?.focus({ preventScroll: true }); } }, h('span', null, o.label, o.detail ? h('small', null, o.detail) : null))))));
+  document.body.append(popup); popupAnchor = anchor; anchor.setAttribute('aria-expanded', 'true');
   const r = anchor.getBoundingClientRect();
   popup.style.left = Math.max(8, Math.min(window.innerWidth - popup.offsetWidth - 8, r.left)) + 'px';
   popup.style.top = (r.bottom + popup.offsetHeight + 4 < window.innerHeight ? r.bottom + 1 : r.top - popup.offsetHeight - 1) + 'px';
   document.addEventListener('mousedown', outsideMenu, true);
+  (popup.querySelector('[aria-checked="true"]:not(:disabled)') || popup.querySelector('button:not(:disabled)'))?.focus({ preventScroll: true });
 }
 
 // ---------------------------------------------------------------- lanes
@@ -238,7 +290,19 @@ function buildLanes(res, r, text, H) {
 }
 const answerId = (lanes) => { const real = lanes.filter((l) => ['where', 'answer'].includes(l.kind)); return real.length ? real[real.length - 1].id : 'find'; };
 
+/** Where the keyboard is, as a selector that finds the same control once a redraw has replaced it. */
+function focusKey(el) {
+  if (!el || el === document.body) return null;
+  for (const a of ['data-enc', 'data-panel', 'data-keys']) if (el.hasAttribute?.(a)) return `[${a}="${CSS.escape(el.getAttribute(a))}"]`;
+  return null;
+}
 function render() {
+  const keep = focusKey(document.activeElement);
+  draw();
+  // a control the redraw replaced takes the keyboard back, so the keys go on where they were
+  if (keep && (!document.activeElement || document.activeElement === document.body)) $(keep)?.focus({ preventScroll: true });
+}
+function draw() {
   const m = state.model;
   // A split read from the query keeps its own arguments, such as a 1d trend frame.
   if (state.rows !== 'split') m.split = null; else if (m.split?.type !== state.splitBy) m.split = make(state.splitBy);
@@ -251,7 +315,8 @@ function render() {
   // are named in it too. What a link carried in the query string is spent.
   const address = () => {
     const dr = m.find.items.find((c) => c.type === 'drawing' && c.args.packet)?.args.packet; const ln = lanesParam(used, state.dims);
-    try { history.replaceState(null, '', location.pathname + '#q=' + encodeURIComponent(text) + (dr ? '&dr=' + encodeURIComponent(JSON.stringify(dr)) : '') + (state.source.cube ? '&w=' + encodeURIComponent(state.asked || loaded()) : '') + (ln === null ? '' : '&ln=' + ln)); } catch { /* the address is optional */ }
+    const view = viewParam();
+    try { history.replaceState(null, '', location.pathname + '#q=' + encodeURIComponent(text) + (dr ? '&dr=' + encodeURIComponent(JSON.stringify(dr)) : '') + (state.source.cube ? '&w=' + encodeURIComponent(state.asked || loaded()) : '') + (ln === null ? '' : '&ln=' + ln) + (view ? '&v=' + view : '')); } catch { /* the address is optional */ }
   };
   if (!res.ok) {
     // What these bars lack is the engine's to refuse and the bench's to show: the question stays, and so does its address.
@@ -276,10 +341,20 @@ function render() {
 
 // ---------------------------------------------------------------- bars
 
-const enc = (name, value, open) => { const b = h('button', { class: 'enc', type: 'button', 'data-menu': '1', onclick: () => open(b) }, label(name), h('span', { class: 'val' }, value), h('i', null, '▼')); return b; };
+const enc = (name, value, open) => { const b = h('button', { class: 'enc', type: 'button', 'data-menu': '1', 'data-enc': name, 'aria-haspopup': 'menu', 'aria-expanded': 'false', onclick: () => open(b) }, label(name), h('span', { class: 'val' }, value), h('i', { 'aria-hidden': 'true' }, '▼')); return b; };
 /** The bars the question is asked of, and the starting questions: the two choices that stand whether or not it can be answered. */
 const windowEnc = () => (state.source.cube ? enc('Window', state.loading ? 'Loading…' : env().provenance.source === 'cube' ? env().provenance.window_name : 'Pinned recording', (b) => menu(b, { title: 'Window', hint: 'The bars the question is asked of: Cube’s time windows, read from the cube. A window ends at the latest complete bar.', value: loaded(),
-  options: [...state.source.windows.map((w) => ({ value: w.key, label: w.name })), { value: PINNED, label: 'Pinned recording', detail: 'Jan to May 2025, the bars the verification suite counts' }], onChange: openWindow })) : null);
+  options: [...state.source.windows.map((w) => ({ value: w.key, label: w.name, detail: windowDetail(w) })), { value: PINNED, label: 'Pinned recording', detail: 'Jan to May 2025, the bars the verification suite counts' }], onChange: openWindow })) : null);
+/** What a window holds, beside its name: about how many 15m closes, or which calendar span, and when that is too few to measure. */
+function windowDetail(w) {
+  const y = new Date().getUTCFullYear(); const span = { m: 60, h: 3600, d: 86400 };
+  if (w.key === 'ytd') return `Since 1 January ${y}`;
+  if (w.key === 'lastyear') return `Calendar year ${y - 1}`;
+  if (w.key === 'all') return 'Every bar the cube holds; the slowest to read';
+  const m = /^(\d+)(m|h|d)$/.exec(w.key) || (w.key === '1y' ? ['', '365', 'd'] : null); if (!m) return null;
+  const closes = Math.round((+m[1] * span[m[2]]) / 900);
+  return closes < 96 ? `${int(closes)} ${closes === 1 ? 'close' : 'closes'}: too few to measure what follows` : `About ${int(closes)} closes`;
+}
 const questionEnc = () => enc('Question', PRESETS.find((p) => p.id === state.preset)?.title || 'Custom', (b) => menu(b, { title: 'Starting questions', value: state.preset, options: PRESETS.map((p) => ({ value: p.id, label: p.title })), onChange: (id) => open(PRESETS.find((p) => p.id === id)) }));
 
 function renderBars() {
@@ -304,8 +379,10 @@ function renderBars() {
   const unknowns = state.rows === 'ledger' ? ctx.lanes.map(unknownOf).filter(Boolean) : [];
   const unk = unknowns.reduce((a, u) => a + u.n, 0);
   const unkNote = unk && (n === 0 || unk >= n * 0.25) ? h('span', { class: 'sub unk', title: unknowns.map(unknownText).join('\n') }, h('b', { class: 'fig' }, int(unk)), ' unknown') : null;
-  mount($('#readout'), h('b', null, int(n)), note(n === 1 ? 'close in the answer' : 'closes in the answer'), unkNote, r.columns.length ? h('span', { class: 'sep' }) : null,
+  // the readout is a live region: it is rewritten only when what it says changes, so a reader hears each answer once
+  const said = h('div', null, h('b', null, int(n)), note(n === 1 ? 'close in the answer' : 'closes in the answer'), unkNote, r.columns.length ? h('span', { class: 'sep' }) : null,
     r.columns.slice(0, 3).map((c, k) => h('span', { class: 'sub' }, h('b', { class: 'fig' }, summarize(answer.rows, k).up), ` up after ${c.text}`)));
+  if ($('#readout').innerHTML !== said.innerHTML) mount($('#readout'), ...said.childNodes);
   const sweeps = res.results.length > 1;
   const first = m.find.items[0]; const pid = first.type === 'pattern' ? first.args.p.replaceAll('_', '-') : null;
   const frame = m.split?.type === 'trend' ? m.split.args.frame : '4h';
@@ -352,7 +429,7 @@ function laneHead(lane) {
     h('div', { class: 'texts' }, texts),
     receipt ? h('div', { class: 'foot-line' }, h('span', { class: 'receipt', title: receiptTitle }, receipt)) : null];
   if (lane.kind === 'off') return [h('span', { class: 'no' }, pad(lane.wi + 2)), h('span', { class: 'text' }, cap(phraseText(lane.c))),
-    quiet('Unmute', () => update(() => { lane.c.off = false; }), 'Apply this condition again'), quiet('Remove', () => update((x) => { x.wheres.splice(lane.wi, 1); }))];
+    quiet('Unmute', () => update(() => { lane.c.off = false; }), 'Apply this condition again'), quiet('Remove', () => removal(`Line ${pad(lane.wi + 2)}`, (x) => { x.wheres.splice(lane.wi, 1); }), 'Remove this line · ⌘Z brings it back')];
   if (lane.kind === 'find') {
     const multi = m.find.items.length > 1;
     return head('01', multi && state.rows === 'ledger' ? 'Find, combined' : 'Find',
@@ -364,7 +441,7 @@ function laneHead(lane) {
       r.counts.U ? `Unknown: recorded closes where the engine cannot say whether the pattern occurs, such as those whose look-back reaches before the first bar. They are not counted as ${multi ? 'matches' : 'occurrences'}.` : null);
   }
   if (lane.kind === 'alt') return head(null, m.find.join, h('div', { class: 'text' + (lane.c.type === 'drawing' ? ' shape-line' : ''), 'data-clause': 'f' + lane.idx }, findParts(lane.c, 'f' + lane.idx)), 'on its own',
-    [quiet('Remove', () => update((x) => { x.find.items.splice(lane.idx, 1); }), 'Remove this pattern')]);
+    [quiet('Remove', () => removal('The pattern', (x) => { x.find.items.splice(lane.idx, 1); }), 'Remove this pattern · ⌘Z brings it back')]);
   if (lane.kind === 'where') {
     const entering = lane.k === 0 ? r.counts.T : r.survivors[lane.k - 1]; const u = unknownOf(lane);
     return head(pad(lane.wi + 2), 'And', [h('div', { class: 'text', 'data-clause': 'w' + lane.wi }, phrase(lane.c, slotEdit('w' + lane.wi))),
@@ -372,7 +449,7 @@ function laneHead(lane) {
       `${int(entering)} → ${int(lane.rows.length)}${u ? ` · ${int(u.n)} unknown` : ''}`,
       [quiet(lane.c.not ? 'Affirm' : 'Negate', () => update(() => { lane.c.not = !lane.c.not; }), 'Turn this condition into its opposite'),
         quiet('Mute', () => update(() => { lane.c.off = true; }), 'Keep the line but stop applying it'),
-        quiet('Remove', () => update((x) => { x.wheres.splice(lane.wi, 1); state.lane = null; }))]);
+        quiet('Remove', () => removal(`Line ${pad(lane.wi + 2)}`, (x) => { x.wheres.splice(lane.wi, 1); state.lane = null; }), 'Remove this line · ⌘Z brings it back')]);
   }
   if (lane.kind === 'answer') return head(null, 'Answer, every condition', m.wheres.map((c, i) => (c.off ? null : h('div', { class: 'text small', 'data-clause': 'w' + i }, phrase(c, slotEdit('w' + i))))));
   if (lane.kind === 'group') return head(null, 'Split', h('div', { class: 'text' }, cap(lane.label)));
@@ -390,7 +467,9 @@ function laneTrack(lane, shown) {
   // A compared run keeps a share of its own detections, which differ between runs when a pattern value is compared.
   const n = lane.rows.length; const base = (lane.kind === 'run' ? lane.r : r).counts.T || 1;
   const centred = (frac) => { const d = (Math.max(-0.2, Math.min(0.2, frac - 0.5)) / 0.2) * 50; return h('div', { class: 'meter mid' }, h('i', { class: d < 0 ? 'below' : '', style: d >= 0 ? `left:50%;width:${d}%` : `left:${50 + d}%;width:${-d}%` })); };
-  return [h('div', null, h('b', null, int(n)), sub(null, lane.kind === 'find' ? 'found' : lane.kind === 'alt' ? 'alone' : share(n, base) + ' kept'),
+  // a few closes of many are not none: a share that rounds to 0 is said as under one per cent
+  const kept = n > 0 && n / base < 0.005 ? '<1%' : share(n, base);
+  return [h('div', null, h('b', null, int(n)), sub(null, lane.kind === 'find' ? 'found' : lane.kind === 'alt' ? 'alone' : kept + ' kept'),
     h('div', { class: 'meter' }, h('i', { style: `width:${Math.min(100, (n / base) * 100)}%` }))),
   ...shown.map((k) => {
     const s = summarize(lane.rows, k); const thin = s.n > 0 && s.n < 30;
@@ -553,10 +632,10 @@ function renderRefused(text, res) {
   const own = (body) => { const r = run(`${HEAD}\n${body}`); return r.ok ? [] : said(r.errors); };
   const rows = [
     ...m.find.items.map((c, k) => ({ id: 'x:f' + k, no: k ? '' : '01', role: k ? m.find.join : 'Find', c, why: own(`find ${clauseText(c)}`),
-      acts: m.find.items.length > 1 ? [quiet('Remove', () => update((x) => { x.find.items.splice(k, 1); }), 'Remove this pattern')] : [quiet('Change pattern', () => togglePanel('left', true), 'Open the pattern catalogue')] })),
+      acts: m.find.items.length > 1 ? [quiet('Remove', () => removal('The pattern', (x) => { x.find.items.splice(k, 1); }), 'Remove this pattern · ⌘Z brings it back')] : [quiet('Change pattern', () => togglePanel('left', true), 'Open the pattern catalogue')] })),
     ...m.wheres.map((c, i) => ({ id: 'x:w' + i, no: pad(i + 2), role: 'And', c, why: c.off ? [] : own(`find ${ANY_CLOSE}\nwhere ${clauseText(c)}`),
       acts: [c.off ? quiet('Unmute', () => update(() => { c.off = false; }), 'Apply this condition again') : quiet('Mute', () => update(() => { c.off = true; }), 'Keep the line but stop applying it'),
-        quiet('Remove', () => update((x) => { x.wheres.splice(i, 1); }))] })),
+        quiet('Remove', () => removal(`Line ${pad(i + 2)}`, (x) => { x.wheres.splice(i, 1); }), 'Remove this line · ⌘Z brings it back')] })),
     ...(m.split ? [{ id: 'x:g', no: '', role: 'Group by', c: m.split, why: own(`find ${ANY_CLOSE}\ngroup by ${splitText(m.split)}`),
       acts: [quiet('Remove', () => update(() => { state.rows = 'ledger'; }), 'Remove this grouping')] }] : []),
   ];
@@ -794,12 +873,31 @@ function renderRight() {
 
 // ---------------------------------------------------------------- drawer: cases, tape, query, limen
 
+// The names a question can call: the engine's terms, and every function the bench's own clauses write.
+let known = null;
+const knownName = (name) => {
+  if (!known) { known = new Set(); for (const type of Object.keys(CLAUSES)) { try { for (const m of clauseText(make(type)).matchAll(/([a-z_][a-z0-9_]*)\(/g)) known.add(m[1]); } catch { /* a clause that needs arguments to be written */ } } }
+  return known.has(name) || definition(name) !== null;
+};
+/**
+ * The engine's diagnostics for typed text, each on its line. An unknown name reaches the engine as a call it cannot
+ * type, and it says the call "needs named arguments": the bench says the name is not a term instead.
+ */
+function explain(text, errors) {
+  return errors.map((e) => {
+    const line = Number.isInteger(e.start) ? text.slice(0, e.start).split('\n').length : null;
+    const name = /^([a-z_][a-z0-9_]*) needs named arguments$/i.exec(e.message || '')?.[1];
+    const said = name && !knownName(name) ? `“${name}” is not a Filang term` : (e.message || String(e)) + (e.hint ? ` (${e.hint})` : '');
+    return (line ? `Line ${line}: ` : '') + said;
+  }).join(' · ');
+}
 const formal = plate({ label: 'Filang', onEdit: (text) => {
   const f = fromText(text);
-  if (!f.model) return formal.message(f.error.message);
+  if (!f.model) { const d = describe(text); return formal.message(explain(text, d.ok || !d.errors?.length ? [f.error] : d.errors)); }
   for (const c of state.model.find.items) if (c.type === 'drawing' && c.args.packet) attach(f.model, c.args.packet);
   const check = run(toText(f.model));
-  if (!check.ok && !refusal(check)) return formal.message(check.errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')).join(' · '));
+  if (!check.ok && !refusal(check)) { const d = describe(text); return formal.message(explain(text, d.ok || !d.errors?.length ? check.errors : d.errors)); }
+  record(snap(), 'formal');
   state.model = f.model; state.preset = null; state.lane = null; state.slot = null; state.notice = '';
   if (f.model.split) { state.rows = 'split'; state.splitBy = f.model.split.type; } else if (state.rows === 'split') state.rows = 'ledger';
   render();
@@ -943,12 +1041,12 @@ function suggestions(q) {
 const addInput = $('#add'); let addBox = null; let addList = []; let addPick = 0;
 function showAdd() {
   addList = suggestions(addInput.value); addPick = Math.min(addPick, Math.max(0, addList.length - 1));
-  if (!addBox) { addBox = h('div', { class: 'pop', role: 'listbox', style: 'max-height:356px' }); document.body.append(addBox); }
+  if (!addBox) { addBox = h('div', { id: 'add-list', class: 'pop', role: 'listbox', 'aria-label': 'Conditions to add', style: 'max-height:356px' }); document.body.append(addBox); }
   // an And line can only narrow the answer: when it is empty already, every count below is zero, and the list says why
   const none = ctx && !ctx.answer.rows.length;
   mount(addBox, h('header', null, label(addInput.value.trim() ? 'Matches' : 'Conditions to add'), label('Closes left')),
     none ? h('p', { class: 'note' }, 'The question leaves no close now, so every And line below leaves none either. Mute or remove the line that empties it first.') : null,
-    h('ul', null, addList.length ? addList.map((s, i) => h('li', null, h('button', { type: 'button', class: (i === addPick ? 'active' : '') + (s.n === 0 ? ' zero' : ''), onmousedown: (e) => e.preventDefault(), onclick: () => applyAdd(s),
+    h('ul', { role: 'none' }, addList.length ? addList.map((s, i) => h('li', { role: 'none' }, h('button', { type: 'button', role: 'option', id: `add-opt-${i}`, 'aria-selected': String(i === addPick), tabindex: '-1', class: (i === addPick ? 'active' : '') + (s.n === 0 ? ' zero' : ''), onmousedown: (e) => e.preventDefault(), onclick: () => applyAdd(s),
       title: s.unknown ? `Leaves no close: the engine cannot say for ${int(s.unknown.n)} of them. ${cap(s.unknown.why)}.` : s.n === 0 ? 'Leaves no close: false for every close that reaches it' : null },
       h('span', null, label(s.tag, 'tag'), cap(s.label)), h('span', { class: 'fig' + (s.unknown ? ' unk' : ''), 'data-count': s.defer ? i : null }, s.mode ? '' : s.defer ? '…' : s.unknown ? `? ${int(s.unknown.n)} unknown` : int(s.n))))) : h('li', { class: 'none' }, 'Nothing matches. Try wick, range, friday, session, trend, quiet, level, or a candle name.')),
     h('footer', null, 'Type to search. Add numbers to set values: wick 60%, quiet 48h. Begin with “or” for another pattern.'));
@@ -961,10 +1059,13 @@ function showAdd() {
       cell.textContent = n === null ? '—' : int(n);
     }
   }, 0));
+  // the field stays focused; the list says which option the keys are on
+  addInput.setAttribute('aria-expanded', 'true');
+  if (addList.length) addInput.setAttribute('aria-activedescendant', `add-opt-${addPick}`); else addInput.removeAttribute('aria-activedescendant');
   const r = addInput.closest('.cell').getBoundingClientRect();
   addBox.style.width = Math.max(440, r.width) + 'px'; addBox.style.maxWidth = '560px'; addBox.style.left = r.left + 'px'; addBox.style.top = Math.max(8, r.top - addBox.offsetHeight - 1) + 'px';
 }
-function hideAdd() { if (addBox) { addBox.remove(); addBox = null; } }
+function hideAdd() { if (addBox) { addBox.remove(); addBox = null; } addInput.setAttribute('aria-expanded', 'false'); addInput.removeAttribute('aria-activedescendant'); }
 function applyAdd(s) {
   addInput.value = ''; addPick = 0; hideAdd();
   if (s.mode) { s.mode(); state.lane = null; render(); } else { state.lane = null; state.slot = null; state.preset = null; if (state.rows !== 'ledger' && s.tag !== 'Measure') state.rows = 'ledger'; update(s.apply); }
@@ -983,8 +1084,31 @@ addInput.addEventListener('keydown', (e) => {
 
 // ---------------------------------------------------------------- panels, keys, start
 
+// ---------------------------------------------------------------- the keys, in one place
+const KEYS = [
+  ['/', 'Add a condition'], ['↑ ↓', 'The row above or below'], [', .', 'The previous or next close of the row, in Inspect'], ['Esc', 'Back from a close to its row'],
+  ['⌘Z ⇧⌘Z', 'Undo and redo a change to the question'], ['P I', 'The pattern catalogue; Inspect'], ['C T F L', 'The drawer: cases, tape, Filang text, Limen'],
+  ['↑ ↓ Enter', 'On a value in a line: step it; open its choices'], ['Alt-click', 'A second value, to compare the two runs'], ['?', 'This list'],
+];
+/** The keys sheet: every shortcut the bench answers to, opened with ? or from the dock. */
+function keysSheet() {
+  const open = $('#keys-sheet'); if (open) { open.remove(); return; }
+  const was = document.activeElement; let back = null;
+  const close = () => { back.remove(); if (was?.isConnected) was.focus({ preventScroll: true }); };
+  const shut = h('button', { class: 'quiet', type: 'button', onclick: () => close() }, 'Close · Esc');
+  back = h('div', { id: 'keys-sheet', class: 'sheet-back', onmousedown: (e) => { if (e.target === back) close(); },
+    onkeydown: (e) => { if (e.key === 'Escape' || e.key === '?') { e.preventDefault(); e.stopPropagation(); close(); } else if (e.key === 'Tab') { e.preventDefault(); shut.focus(); } } },
+  h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Keys' },
+    h('header', null, label('Keys'), shut),
+    h('dl', null, KEYS.map(([k, t]) => [h('dt', null, k.split(' ').map((x) => h('kbd', null, x))), h('dd', null, t)]))));
+  document.body.append(back); shut.focus();
+}
+$('[data-keys]').addEventListener('click', keysSheet);
+
 function togglePanel(p, force) {
   if (p === 'left' || p === 'right') ui[p] = force ?? !ui[p]; else ui.drawer = ui.drawer === p ? null : p;
+  // two side panels on a narrow window leave the candles a sliver: the one opened last stays, the other closes
+  if ((p === 'left' || p === 'right') && ui[p] && window.innerWidth < 1400) ui[p === 'left' ? 'right' : 'left'] = false;
   persist(); render();
   // Entrance motion plays only on a deliberate toggle, and never while the page is in the background.
   const el = p === 'left' || p === 'right' ? $('#' + p) : $('#drawer');
@@ -992,8 +1116,12 @@ function togglePanel(p, force) {
 }
 for (const b of document.querySelectorAll('button[data-panel]')) b.addEventListener('click', () => togglePanel(b.dataset.panel));
 document.addEventListener('keydown', (e) => {
-  // nothing to toggle or step through until the first question is open
-  if (!state.model || e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  // nothing to toggle or step through until the first question is open; a field keeps its own keys, undo included
+  if (!state.model || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  const k = e.key.toLowerCase();
+  if ((e.metaKey || e.ctrlKey) && !e.altKey && (k === 'z' || k === 'y')) { e.preventDefault(); if (k === 'y' || e.shiftKey) redo(); else undo(); return; }
+  if (e.key === '?' && !document.querySelector('.pop')) { e.preventDefault(); keysSheet(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
   // F names the Filang drawer on its tab; Q, its letter before, still opens it
   const map = { p: 'left', i: 'right', c: 'cases', t: 'tape', f: 'query', q: 'query', l: 'limen' };
   if (map[e.key] && (ctx || e.key === 'p' || map[e.key] === 'query')) { e.preventDefault(); togglePanel(map[e.key]); }
@@ -1007,6 +1135,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 function openModel(model, preset, lanes = null) {
+  record();
   Object.assign(state, { model, preset, candidate: 0, lane: null, slot: null, page: 0, side: 'kept' });
   // A new question shows the lanes it refers to and the ones a link names. A lane switched on by hand stays on; one switched off comes back.
   state.dims = lanes === null ? Object.fromEntries(Object.entries(state.dims).filter(([, on]) => on)) : lanesFromParam(lanes, dimensionsIn(toText(model)));
@@ -1017,6 +1146,16 @@ function openModel(model, preset, lanes = null) {
 const open = (p) => { state.notice = ''; openModel(fromText(p.text).model, p.id); };
 /** Whether a question can be opened: it runs, or the engine refuses it only for what these bars lack, and the bench then says so. */
 const opens = (model) => { const r = run(toText(model)); return r.ok || refusal(r); };
+// How the canvas shows the answer travels with a link too: what a link shows is what was on screen. Only what differs
+// from the bench's opening is written. A split is the question's own, in its text.
+const VIEW = { rows: ['ledger', 'cases', 'compare'], cells: ['candle', 'density'], unit: ['pct', 'range'], track: ['up', 'range'], lead: [8, 4, 16, 32] };
+const viewParam = () => Object.entries(VIEW).filter(([k, vals]) => state[k] !== vals[0] && vals.includes(state[k])).map(([k]) => `${k}.${state[k]}`).join(',');
+/** Apply what a link's view names; anything it does not know is left as the bench opens. */
+function readView(text) {
+  const out = {};
+  for (const part of String(text || '').split(',')) { const [k, v] = part.split('.'); const vals = VIEW[k]; if (!vals) continue; const val = k === 'lead' ? Number(v) : v; if (vals.includes(val)) out[k] = val; }
+  return out;
+}
 /** The question a link asks: a drawing carried from Composer, else the text in the address, else none. */
 function asked() {
   const link = readLink(location.search);
@@ -1029,7 +1168,7 @@ function asked() {
   if (!given || !opens(given)) return null;
   const preset = PRESETS.find((p) => toText(fromText(p.text).model) === toText(given))?.id ?? null;
   if (hash.get('dr')) try { attach(given, decodeDrawing(hash.get('dr'))); } catch { /* the text still asks the question; only the drawing is lost */ }
-  return { model: given, preset, lanes: hash.get('ln') };
+  return { model: given, preset, lanes: hash.get('ln'), view: readView(hash.get('v')) };
 }
 const fail = (what) => (e) => {
   console.error(e); $('#status').textContent = `${what}: ${e.message}`; $('#status').className = 'err';
@@ -1086,7 +1225,13 @@ firstLoad().then(async () => {
         state.notice = '';
       } catch (e) { state.notice = `The cube could not be read (${e.message}); this question needs its bars`; }
     }
-    if (a) openModel(a.model, a.preset, a.lanes ?? null); else openModel(fromText(PRESETS[0].text).model, PRESETS[0].id);
+    if (a) {
+      const { rows, ...look } = a.view || {}; Object.assign(state, look);
+      openModel(a.model, a.preset, a.lanes ?? null);
+      // a split comes with its question; cases and compared runs are a way of looking at it
+      if (rows && !state.model.split) { state.rows = rows; render(); }
+    } else openModel(fromText(PRESETS[0].text).model, PRESETS[0].id);
+    past.length = 0;   // the question the page opened on is where undo stops
   } catch (e) { fail('The bench could not be drawn')(e); }
 }, fail('The bars could not be loaded'));
 let timer; window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(() => state.model && render(), 120); });
