@@ -131,14 +131,15 @@ function update(fn, keep, tag = null) {
   if (state.rows !== 'split') state.model.split = null;
   const res = run(toText(state.model));
   if (!res.ok && !refusal(res)) {
-    Object.assign(state, { model: was.model, preset: was.preset });
+    Object.assign(state, { model: was.model, preset: was.preset, rows: was.rows, splitBy: was.splitBy });
     toast(`Not changed: ${res.errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')).join(' · ')}`); render(); return;
   }
   if (!same(was, snap())) record(was, tag);
-  // the Question menu names a starting question only while the question still is it
-  const now = toText(state.model); state.preset = PRESETS.find((p) => toText(fromText(p.text).model) === now)?.id ?? null;
+  state.preset = presetOf(state.model);
   state.focus = keep || null; state.notice = ''; render();
 }
+/** The starting question a question still is, by its text, whichever way it was edited; null once it differs. */
+function presetOf(model) { const now = toText(model); return PRESETS.find((p) => toText(fromText(p.text).model) === now)?.id ?? null; }
 /** Remove a line or a pattern, and offer it back. */
 const removal = (what, fn) => { update(fn); toast(`${what} removed`, { label: 'Undo · ⌘Z', run: undo }); };
 const target = (m, path) => (path[0] === 'f' ? m.find.items[+path.slice(1)] : m.wheres[+path.slice(1)]);
@@ -906,7 +907,7 @@ const formal = plate({ label: 'Filang', onEdit: (text) => {
   const check = run(toText(f.model));
   if (!check.ok && !refusal(check)) { const d = describe(text); return formal.message(explain(text, d.ok || !d.errors?.length ? check.errors : d.errors)); }
   record(snap(), 'formal');
-  state.model = f.model; state.preset = null; state.lane = null; state.slot = null; state.notice = '';
+  state.model = f.model; state.preset = presetOf(f.model); state.lane = null; state.slot = null; state.notice = '';
   if (f.model.split) { state.rows = 'split'; state.splitBy = f.model.split.type; } else if (state.rows === 'split') state.rows = 'ledger';
   render();
 } });
