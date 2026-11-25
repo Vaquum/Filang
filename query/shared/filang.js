@@ -100,22 +100,39 @@ async function fromCube(window) {
   return { csv: body.csv, provenance: body.provenance };
 }
 
+/** The nyse_regular table the server builds from field-data-api, or why there is none: { table, tsv, provenance } or { error }. */
+async function fieldCalendar() {
+  try {
+    const answer = await fetch('/calendar/nyse', { cache: 'no-store' });
+    const body = await answer.json().catch(() => null);
+    if (answer.ok && typeof body?.tsv === 'string' && typeof body?.table === 'string') return body;
+    return { error: body?.error || `calendar: ${answer.status}` };
+  } catch (e) { return { error: e.message }; }
+}
+
 /** Load the bars the bench reads: the pinned recording, or one of Cube's windows from the cube itself. */
 export async function load(window = PINNED) {
   if (bundle && held === window) return bundle;
-  const { csv, provenance } = window === PINNED ? await pinned() : await fromCube(window);
+  // The pinned recording is asked with the engine's pinned table, which covers it. A cube window is asked with the
+  // table built from field-data-api's NYSE calendar, or with the pinned table, and the reason, when there is none.
+  const [{ csv, provenance }, field] = await Promise.all(window === PINNED ? [pinned(), null] : [fromCube(window), fieldCalendar()]);
   const rec = readRecording(csv, provenance);
-  // The engine holds one recording, and its pinned calendar is set again for each. It keeps the bars it has when it
+  // The engine holds one recording, and its calendar is set again for each. It keeps the bars it has when it
   // refuses new ones; bars it took but the charts read differently are put out again for the ones on screen.
-  const give = (text, r) => { const { slots } = engine.loadCsv(text, r.barMs, { instrument: r.instrument }); engine.setCalendar(); return slots; };
-  const slots = give(csv, rec);
+  const give = (text, r, cal) => {
+    const { slots } = engine.loadCsv(text, r.barMs, { instrument: r.instrument });
+    if (!cal?.tsv) { engine.setCalendar(); return { slots, calendar: { pinned: true, error: cal?.error ?? null } }; }
+    try { engine.setCalendar(cal.tsv, { table: cal.table }); return { slots, calendar: { pinned: false, table: cal.table, tsv: cal.tsv, provenance: cal.provenance } }; }
+    catch (e) { engine.setCalendar(); return { slots, calendar: { pinned: true, error: `the engine refused ${cal.table}: ${e.message}` } }; }
+  };
+  const { slots, calendar } = give(csv, rec, field);
   if (slots !== rec.n) {
-    if (bundle) give(bundle.csv, bundle.rec);
+    if (bundle) give(bundle.csv, bundle.rec, bundle.calendar);
     throw Error(`the engine reads ${slots} slots where the charts read ${rec.n}`);
   }
   runs.clear(); tallies.clear(); receipts.clear();
   const digest = engine.describeStudy(`${HEAD}\nfind ${ANY_CLOSE}`).manifest.pins.source.csv_sha256;
-  bundle = { rec, csv, provenance, digest, digestVerified: digest === provenance.csv_sha256, rangeText: `${dateUTC(rec.t0)} → ${dateUTC(rec.lastClose - 1)} UTC` };
+  bundle = { rec, csv, provenance, calendar, digest, digestVerified: digest === provenance.csv_sha256, rangeText: `${dateUTC(rec.t0)} → ${dateUTC(rec.lastClose - 1)} UTC` };
   held = window;
   return bundle;
 }
@@ -308,7 +325,7 @@ export function pct(x, digits = 2) {
 }
 export const share = (a, b, digits = 0) => (b ? ((a / b) * 100).toFixed(digits) + '%' : '—');
 
-/** The New York session clock at a time, as the engine's pinned calendar has it. */
+/** The New York session clock at a time, as the engine's loaded nyse_regular table has it. */
 export const nyText = (t) => engine.sessionClock(t).text;
 
 /** Sorted observed outcome values for column k. */

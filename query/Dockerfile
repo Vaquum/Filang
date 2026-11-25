@@ -23,8 +23,9 @@ RUN test -n "$FILANG_ENGINE_VERSION" || { echo "set FILANG_ENGINE_VERSION to the
 FROM node:22-slim
 WORKDIR /app
 COPY study/data-provenance.json study/
-# cube.mjs is the server's own: it reads Cube's bridge when CUBE_URL names one, and is never served.
-COPY query/index.html query/serve.mjs query/cube.mjs query/
+# cube.mjs and calendar.mjs are the server's own: they read Cube's bridge and field-data-api when CUBE_URL and
+# FIELD_DATA_URL name them, and are never served.
+COPY query/index.html query/serve.mjs query/cube.mjs query/calendar.mjs query/
 COPY query/bench query/bench
 COPY query/shared query/shared
 COPY --from=recording /work/data/recorded-bars.csv data/study/recorded-bars.csv
