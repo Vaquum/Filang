@@ -1,10 +1,21 @@
 # Query's NYSE calendar from field-data-api
 
 Results record for the change that asks Query's cube windows with a `nyse_regular`
-table built from Vaquum's field-data-api instead of the engine's pinned table.
-Measured on 2026-11-25. The hypothesis was written before the code and the runs.
+table from Vaquum's field-data-api instead of the engine's pinned table. Two
+attempts, both measured on 2026-11-25:
 
-## What field-data-api holds
+- **A1** built the table in Query from field-data-api's NYSE closures and early
+  closes, with a weekday and 16:00 rule of Query's own. It resolved recent
+  windows but lost Jan–May 2025 and everything before 2026-10-23. Its hypothesis
+  was written before the code and the runs.
+- **A2** reads the sessions field-data-api now publishes itself, `nyse_sessions`
+  (Vaquum/field-data-api#23, merged in #24 as `a93386e`). Query keeps no rule.
+  Its criteria were set in that issue before the dataset existed. The A2 record
+  was written after the measurement. See [A2](#a2-sessions-published-by-field-data-api).
+
+## A1: exceptions from `/v1/calendar`, rule in Query
+
+### What field-data-api holds
 
 field-data-api (Vaquum/field-data-api, the service Cube reads its calendar from)
 serves one supplied calendar at `/v1/calendar`. Its NYSE content is exceptions
@@ -21,7 +32,7 @@ session, closing at 16:00 New York unless it lists an early close. Days outside
 the scope stay outside the table, so the engine answers `unknown` there with its
 own reason. No date is written in Query.
 
-## Protocol
+### Protocol
 
 1. **The table.** A local field-data-api at its current checkout
    (`bcfe9ee`, SQLite backend, every provider disabled, `config/calendar.supplied.json`,
@@ -51,7 +62,7 @@ own reason. No date is written in Query.
 No outcome or return was measured. The quantities are which closes the
 calendar conditions can decide, so no market outcome was exposed by this test.
 
-## Results
+### Results
 
 The NYSE check (step 2) agrees on every day: the same 12 closures and 3 early
 closes, and 16:00/09:30 as the regular close and open.
@@ -84,7 +95,10 @@ tallied.
 - `query/verify/*.mjs` pass on 0.10.0.post32 and on the local build. The pinned recording
   keeps the pinned table and its answers (`2,016 · 12,461 · 19` for Friday).
 
-## Reproduce
+### Reproduce
+
+A1's reader is the one at commit `e62e81a` (`git show e62e81a:query/calendar.mjs`,
+and its check `git show e62e81a:query/verify/calendar.mjs`); A2 replaced both.
 
 ```sh
 # field-data-api, locally, with its supplied calendar and no providers (see its docs/operations.md)
@@ -99,3 +113,64 @@ node query/verify/calendar.mjs
 
 Then paste [`measure.js`](measure.js) into the Query page and call
 `measure(tsv, table)`.
+
+## A2: sessions published by field-data-api
+
+### What changed
+
+field-data-api publishes `GET /v1/data/nyse_sessions` (projection
+`market_sessions/1`): one record per NYSE session day with its New York date,
+weekday, open and close, complete over New York dates 2021-01-01 to 2028-01-01
+(end exclusive). Its 69 closures and 13 early closes are dated assertions with
+NYSE or ICE sources. Its tests check every year against `exchange_calendars`
+4.13.3 XNYS, the 2025 rows against Filang's pinned table, and late 2026–2027
+against the supplied calendar. A disagreement fails publication.
+
+`query/calendar.mjs` pins one publication, reads every page under it and
+rewrites each record into the engine's row: New York midnight of the date, the
+record's close, the record's weekday. It refuses records outside coverage, out
+of order, on a weekday other than their date's, or closing outside their day.
+
+### Protocol
+
+1. **The table.** field-data-api at the merged head (PR #24 head `a036a6d`, the
+   same tree as `a93386e`) ran locally: SQLite, every provider disabled,
+   `worker --once`, `serve`. `node query/verify/calendar.mjs --print` gave table
+   `field-data-api.nyse_sessions.18f5b91391ce4ed4`: 1,757 sessions, 13 early
+   closes, 69 closures, revision `18f5b913…`, text SHA-256 `018cea35…eeafb0`.
+2. **Against the pinned table.** All 102 rows of `nyse-core-2025-01-05-v1`
+   (`study/catalogue/nyse.tsv`) appear byte for byte in the new text.
+3. **Production bars and engine.** Same as A1 step 3: the signed-in Query page,
+   engine 0.10.0.post32, production `/bars`, a fresh engine, the pinned table and
+   then the new one. The page rebuilt the text and its SHA-256 matched step 1.
+4. **Unchanged answers.** `query/verify/*.mjs` on the local build and on
+   0.10.0.post32. The calendar check covers the new contract against a stand-in.
+
+### Results
+
+`[true, false, unknown]` closes; "before" counts closes before 2021-01-01 00:00 New York.
+
+| Window | Bars | Before | Pinned table: Friday | nyse_sessions: Friday | Pinned table: last 1h | nyse_sessions: last 1h |
+| --- | --- | ---: | --- | --- | --- | --- |
+| Last 30 days | 2026-10-26 09:00 → 2026-11-25 09:00, 2,880 rows, sha256 `c697d82186d885d5…` | 0 | 0 · 0 · 2,880 | 384 · 2,496 · **0** | 0 · 0 · 2,880 | 88 · 2,792 · **0** |
+| Last 180 days | 2026-05-29 09:00 → 2026-11-25 09:00, 17,280 rows, sha256 `7ed3493535e3e3f0…` | 0 | 0 · 0 · 17,280 | 2,283 · 14,997 · **0** | 0 · 0 · 17,280 | 500 · 16,780 · **0** |
+| Last 12 months | 2025-11-25 09:00 → 2026-11-25 09:00, 35,040 rows | 0 | 0 · 0 · 35,040 | 4,704 · 30,336 · **0** | 0 · 0 · 35,040 | 1,004 · 34,036 · **0** |
+| This year | 2026-01-01 → 2026-11-25 09:00, 31,524 rows | 0 | 0 · 0 · 31,524 | 4,224 · 27,300 · **0** | 0 · 0 · 31,524 | 904 · 30,620 · **0** |
+| Last year | 2025-01-01 → 2026-01-01, 35,040 rows, sha256 `3ba3076031d29cf5…` | 0 | 2,016 · 12,476 · 20,548 | 4,800 · 30,240 · **0** | 408 · 14,081 · 20,551 | 1,000 · 34,040 · **0** |
+| All history | 2021-01-01 → 2026-11-25 09:00, 206,740 rows, sha256 `4be1656e5d7836a8…` | 19 | 2,016 · 12,476 · 192,248 | 28,485 · 178,236 · **19** | 408 · 14,081 · 192,251 | 5,924 · 200,797 · **19** |
+
+- Every window is decided at every close except All history's first 19, which
+  close before New York's 2021-01-01 begins, where the service declares nothing.
+- The counts follow the calendar: Last year has 50 Friday sessions × 96 closes
+  (4,800) and 250 sessions × 4 last-hour closes (1,000). Good Friday and 4 July
+  2025 fell on Fridays. Last 180 days starts at 09:00 UTC on a Friday, so that
+  day contributes 75 closes: 23 × 96 + 75 = 2,283.
+- On the stand-in cube (the pinned recording's bars) the new table decides all
+  14,496 closes. The pinned table left 19 unknown; both give 2,016 Friday closes.
+- `query/verify/*.mjs` pass on both engines.
+
+### Reproduce
+
+As for A1, with field-data-api at `a93386e` or later and `measure(tsv, table)`
+on the text `node query/verify/calendar.mjs --print` gives.
+
