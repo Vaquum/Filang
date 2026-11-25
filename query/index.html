@@ -15,28 +15,33 @@
     <span class="word">Filang</span>
     <nav class="tabs aspects" aria-label="Aspects of the tool"><a id="to-cube" target="_blank" rel="noopener">Cube ↗</a><a id="to-composer" target="_blank" rel="noopener">Composer ↗</a><span aria-current="page">Query</span></nav>
     <div id="readout" class="readout" aria-live="polite"></div>
-    <div class="tabs toggles" role="toolbar" aria-label="Panels">
-      <button type="button" data-panel="left" title="Pattern catalogue · P">Patterns</button>
-      <button type="button" data-panel="cases" title="Recorded closes of the selected row · C">Cases</button>
-      <button type="button" data-panel="tape" title="The recorded tape · T">Tape</button>
-      <button type="button" data-panel="query" title="The formal query · Q">Query</button>
-      <button type="button" data-panel="limen" title="Hand this question to Limen · L">Limen</button>
-      <button type="button" data-panel="right" title="Inspect the selected row or close · I">Inspect</button>
-    </div>
   </header>
-  <div id="encbar" class="encbar" role="toolbar" aria-label="What the canvas shows"></div>
+  <!-- Each panel's switch sits on the edge it opens from: the catalogue on the left, Inspect on the right, the drawer's tabs on the drawer. -->
+  <div class="encrow">
+    <button type="button" class="edge" data-panel="left" aria-label="Patterns" title="Pattern catalogue" aria-keyshortcuts="P" disabled><svg class="side-icon" width="14" height="10" aria-hidden="true"><rect x=".5" y=".5" width="13" height="9"/><rect class="fill" x=".5" y=".5" width="4.5" height="9"/></svg><span class="label-text">Patterns</span><kbd>P</kbd></button>
+    <div id="encbar" class="encbar" role="toolbar" aria-label="What the canvas shows"></div>
+    <button type="button" class="edge right" data-panel="right" aria-label="Inspect" title="Inspect the selected row or close" aria-keyshortcuts="I" disabled><span class="label-text">Inspect</span><kbd>I</kbd><svg class="side-icon" width="14" height="10" aria-hidden="true"><rect x=".5" y=".5" width="13" height="9"/><rect class="fill" x="9" y=".5" width="4.5" height="9"/></svg></button>
+  </div>
   <div class="work">
     <aside id="left" class="side" aria-label="Patterns" hidden></aside>
     <div class="main">
       <section id="canvas" class="canvas" aria-label="Pattern canvas">
         <div class="axis row3"><div class="lab"><span id="rowlabel" class="note"></span><span id="pager" class="pagerbar"></span></div><div id="axis"></div><div id="trackhead" class="cols label"></div></div>
-        <div id="lanes"><div class="cursor" id="cursor"></div><div class="tip" id="tip"></div></div>
+        <div id="lanes"><div class="cursor" id="cursor"></div><div class="tip" id="tip"></div>
+          <div id="boot" class="boot" role="status"><span class="label">Loading</span><span id="boot-text">Starting the Filang engine…</span></div></div>
+        <div id="busy" class="busy" role="status" hidden></div>
         <div class="band row3">
-          <label class="cell"><span class="plus" aria-hidden="true">+</span><input id="add" type="text" autocomplete="off" spellcheck="false" aria-label="Add a condition" placeholder="Add a condition"></label>
+          <label class="cell"><span class="plus" aria-hidden="true">+</span><input id="add" type="text" autocomplete="off" spellcheck="false" aria-label="Add a condition" placeholder="Add a condition" disabled></label>
           <div id="coltrack"></div>
           <div id="collabel" class="lab"></div>
         </div>
       </section>
+      <nav id="dock" class="dock" aria-label="Drawer">
+        <button type="button" data-panel="cases" title="Recorded closes of the selected row" aria-keyshortcuts="C" disabled>Cases<kbd>C</kbd></button>
+        <button type="button" data-panel="tape" title="The recorded tape" aria-keyshortcuts="T" disabled>Tape<kbd>T</kbd></button>
+        <button type="button" data-panel="query" title="The question as Filang text, editable" aria-keyshortcuts="F" disabled>Filang<kbd>F</kbd></button>
+        <button type="button" data-panel="limen" title="Hand this question to Limen" aria-keyshortcuts="L" disabled>Limen<kbd>L</kbd></button>
+      </nav>
       <section id="drawer" class="drawer" hidden></section>
     </div>
     <aside id="right" class="side right" aria-label="Inspect" hidden></aside>
@@ -54,7 +59,10 @@
   </footer>
   <script type="module">
     // The bench answers nothing without the engine: a page that cannot load it says so.
-    import('/bench/bench.js').catch((e) => { console.error(e); const s = document.getElementById('status'); s.textContent = 'The bench could not start: ' + e.message; s.className = 'err'; });
+    import('/bench/bench.js').catch((e) => {
+      console.error(e); const s = document.getElementById('status'); s.textContent = 'The bench could not start: ' + e.message; s.className = 'err';
+      const boot = document.getElementById('boot'); if (boot) { boot.classList.add('err'); boot.querySelector('.label').textContent = 'Stopped'; document.getElementById('boot-text').textContent = 'The bench could not start: ' + e.message + '. Reload the page to try again.'; }
+    });
   </script>
 </body>
 </html>
