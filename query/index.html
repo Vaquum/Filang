@@ -30,8 +30,9 @@
         <div id="lanes"><div class="cursor" id="cursor"></div><div class="tip" id="tip"></div>
           <div id="boot" class="boot" role="status"><span class="label">Loading</span><span id="boot-text">Starting the Filang engine…</span></div></div>
         <div id="busy" class="busy" role="status" hidden></div>
+        <div id="toast" class="toast" role="status" hidden></div>
         <div class="band row3">
-          <label class="cell"><span class="plus" aria-hidden="true">+</span><input id="add" type="text" autocomplete="off" spellcheck="false" aria-label="Add a condition" placeholder="Add a condition" disabled></label>
+          <label class="cell"><span class="plus" aria-hidden="true">+</span><input id="add" type="text" autocomplete="off" spellcheck="false" aria-label="Add a condition" placeholder="Add a condition" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="add-list" disabled></label>
           <div id="coltrack"></div>
           <div id="collabel" class="lab"></div>
         </div>
@@ -41,6 +42,7 @@
         <button type="button" data-panel="tape" title="The recorded tape" aria-keyshortcuts="T" disabled>Tape<kbd>T</kbd></button>
         <button type="button" data-panel="query" title="The question as Filang text, editable" aria-keyshortcuts="F" disabled>Filang<kbd>F</kbd></button>
         <button type="button" data-panel="limen" title="Hand this question to Limen" aria-keyshortcuts="L" disabled>Limen<kbd>L</kbd></button>
+        <button type="button" class="keys-hint" data-keys="sheet" title="Every key the bench answers to" aria-keyshortcuts="?">Keys<kbd>?</kbd></button>
       </nav>
       <section id="drawer" class="drawer" hidden></section>
     </div>
