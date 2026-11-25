@@ -153,7 +153,7 @@ jobs:
           # shellcheck disable=SC2029
           answer=$(ssh "$DEPLOY_USER@$DEPLOY_HOST" "curl -s --max-time 60 'http://127.0.0.1:$QUERY_PORT/calendar/nyse' | head -c 4000" || true)
           if printf '%s' "$answer" | grep -q '"source":"field-data-api"'; then
-            echo "NYSE calendar: $(printf '%s' "$answer" | grep -o '"table":"[^"]*"') $(printf '%s' "$answer" | grep -o '"scope":{[^}]*}') $(printf '%s' "$answer" | grep -o '"sessions":[0-9]*')"
+            echo "NYSE calendar: $(printf '%s' "$answer" | grep -o '"table":"[^"]*"') $(printf '%s' "$answer" | grep -o '"coverage":{[^}]*}') $(printf '%s' "$answer" | grep -o '"sessions":[0-9]*')"
           else
             echo "::warning::Query is up but is not getting its NYSE calendar from field-data-api: $(printf '%s' "$answer" | head -c 300)"
           fi

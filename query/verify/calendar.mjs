@@ -1,9 +1,10 @@
-// The NYSE calendar of the bench's cube windows, checked without field-data-api: a stand-in serves calendar pages in
-// the service's own protocol (/v1/snapshots/latest, then /v1/calendar pinned to that publication and paged), and the
-// table the Query server builds from them must be the one the rule gives, be refused when the records cannot be read,
-// and be what the engine answers session conditions with, pinned in the run's manifest.
-// The stand-in's records are invented in the service's shape, for twelve days in 2030 that cross New York's change to
-// summer time: a fixture of the derivation, never a calendar. The bench's calendar is only ever field-data-api's.
+// The NYSE sessions of the bench's cube windows, checked without field-data-api: a stand-in serves `nyse_sessions`
+// in the service's own protocol (/v1/snapshots/latest, then /v1/data/nyse_sessions pinned to that publication and
+// paged), and the table the Query server builds must be those sessions rewritten for the engine and nothing more,
+// be refused when a record does not read as a session in coverage, and be what the engine answers session
+// conditions with, pinned in the run's manifest.
+// The stand-in's sessions are invented in the service's shape, for twelve days in 2030 that cross New York's change
+// to summer time: a fixture of the rewriting, never a calendar. The bench's sessions are only ever field-data-api's.
 // Run from the repository root, after study/prepare_recording.py and bindings/build.py: node query/verify/calendar.mjs
 // To see the table a running service gives:  node query/verify/calendar.mjs --print http://127.0.0.1:8491
 import assert from 'node:assert/strict';
@@ -24,70 +25,62 @@ if (process.argv[2] === '--print') {
   process.exit(0);
 }
 
-// ---------------------------------------------------------------- the stand-in's records
-
-const SCOPE = { source_scope_start: '2030-03-04', source_scope_end: '2030-03-15' };
-const record = (id, category, title, schedule, more = {}) => ({
-  id, kind: 'calendar_event', event_at: schedule.date ?? schedule.at,
-  values: { category, title, schedule, status: 'scheduled', schedule_certainty: 'confirmed', origin: 'source',
-    context: { source_id: id.startsWith('nyse') ? 'NYSE' : 'JPX_HOL', source_timezone: id.startsWith('nyse') ? 'America/New_York' : 'Asia/Tokyo' }, ...more },
-  metadata: { provenance: { url: 'https://example.invalid/fixture' } },
-});
-const RECORDS = [
-  record('jpx-fixture-closed', 'market_holiday', 'Japan cash-market holiday — fixture', { kind: 'date', date: '2030-03-05' }),
-  record('nyse-fixture-closed', 'market_holiday', 'NYSE markets closed — fixture', { kind: 'date', date: '2030-03-06' }),
-  record('nyse-fixture-early', 'market_holiday', 'NYSE early close — fixture', { kind: 'instant', at: '2030-03-08T18:00:00Z' }),
-  record('nyse-fixture-withdrawn', 'market_holiday', 'NYSE markets closed — withdrawn fixture', { kind: 'date', date: '2030-03-13' }, { status: 'cancelled' }),
-];
-
-// ---------------------------------------------------------------- the rule
+// ---------------------------------------------------------------- the stand-in's sessions
 
 const z = (iso) => Date.parse(iso);
-const built = nyseTable(RECORDS, { input_metadata: SCOPE });
+// Wednesday 6 March is not a session and Friday 8 March closes early; New York moves to summer time on Sunday 10 March.
+const SESSIONS = [
+  ['2030-03-04', 'mon', '14:30', '21:00'], ['2030-03-05', 'tue', '14:30', '21:00'], ['2030-03-07', 'thu', '14:30', '21:00'],
+  ['2030-03-08', 'fri', '14:30', '18:00', 'early_close'], ['2030-03-11', 'mon', '13:30', '20:00'], ['2030-03-12', 'tue', '13:30', '20:00'],
+  ['2030-03-13', 'wed', '13:30', '20:00'], ['2030-03-14', 'thu', '13:30', '20:00'], ['2030-03-15', 'fri', '13:30', '20:00'],
+].map(([date, weekday, open, close, kind = 'regular']) => ({ date, weekday, open_at: `${date}T${open}:00Z`, close_at: `${date}T${close}:00Z`, kind,
+  ...(kind === 'early_close' ? { provenance: { url: 'https://example.invalid/fixture' } } : {}) }));
+const REVISION = 'c'.repeat(64);
+const META = { exchange: 'XNYS', timezone: 'America/New_York', coverage: { start: '2030-03-04', end: '2030-03-16' }, revision_id: REVISION,
+  regular_hours: { open: '09:30', close: '16:00' }, closures: [{ date: '2030-03-06', reason: 'fixture', provenance: { url: 'https://example.invalid/fixture' } }] };
+
+// ---------------------------------------------------------------- the rewriting
+
+const built = nyseTable(SESSIONS, META);
 const lines = built.tsv.trimEnd().split('\n');
 assert.equal(lines[0], `${z('2030-03-04T05:00:00Z')}\t${z('2030-03-16T04:00:00Z')}`);
-assert.deepEqual(lines.slice(1), [
-  ['2030-03-04T05:00:00Z', '2030-03-04T21:00:00Z', 'mon'], ['2030-03-05T05:00:00Z', '2030-03-05T21:00:00Z', 'tue'],
-  ['2030-03-07T05:00:00Z', '2030-03-07T21:00:00Z', 'thu'], ['2030-03-08T05:00:00Z', '2030-03-08T18:00:00Z', 'fri'],
-  ['2030-03-11T04:00:00Z', '2030-03-11T20:00:00Z', 'mon'], ['2030-03-12T04:00:00Z', '2030-03-12T20:00:00Z', 'tue'],
-  ['2030-03-13T04:00:00Z', '2030-03-13T20:00:00Z', 'wed'], ['2030-03-14T04:00:00Z', '2030-03-14T20:00:00Z', 'thu'],
-  ['2030-03-15T04:00:00Z', '2030-03-15T20:00:00Z', 'fri'],
-].map(([day, close, wd]) => `${z(day)}\t${z(close)}\t${wd}`));
-assert.equal(built.sessions, 9); assert.equal(built.cancelled, 1);
-assert.deepEqual(built.closed, ['2030-03-06']); assert.deepEqual(built.earlyCloses, [{ date: '2030-03-08', close: '2030-03-08T18:00:00.000Z' }]);
+assert.deepEqual(lines.slice(1), SESSIONS.map((s) => `${z(`${s.date}T${s.date < '2030-03-10' ? '05' : '04'}:00:00Z`)}\t${z(s.close_at)}\t${s.weekday}`));
+assert.equal(built.sessions, 9); assert.equal(built.earlyCloses, 1); assert.equal(built.closures, 1);
 assert.equal(built.tsvSha256, sha(built.tsv));
-ok('weekdays in scope are sessions, closing at 16:00 New York in either offset, except the days the service lists');
+ok('each published session becomes one row at its New York midnight with its own close, in either offset; nothing is added');
 
 const refuses = (records, meta, pattern, what) => { assert.throws(() => nyseTable(records, meta), (e) => e instanceof CalendarError && pattern.test(e.message), what); };
-const nyse = (over, values = {}) => ({ ...RECORDS[1], ...over, values: { ...RECORDS[1].values, ...values } });
-refuses(RECORDS, {}, /declares no civil-date scope/, 'no scope');
-refuses(RECORDS, { input_metadata: { ...SCOPE, source_scope_end: '2030-03-01' } }, /declares no civil-date scope/, 'a reversed scope');
-refuses([nyse({}, { schedule_certainty: 'tentative' })], { input_metadata: SCOPE }, /tentative, not confirmed/, 'a tentative closure');
-refuses([nyse({}, { schedule: { kind: 'date', date: '2030-03-09' } })], { input_metadata: SCOPE }, /weekend/, 'a closure on a Saturday');
-refuses([nyse({}, { schedule: { kind: 'date', date: '2030-03-18' } })], { input_metadata: SCOPE }, /outside the calendar’s scope/, 'a closure outside the scope');
-refuses([nyse({}, { title: 'NYSE reopens — fixture' })], { input_metadata: SCOPE }, /neither a closure nor an early close/, 'a record it cannot read');
-refuses([nyse({}, { schedule: { kind: 'date_range', start: '2030-03-06', end: '2030-03-08' } })], { input_metadata: SCOPE }, /neither a closure nor an early close/, 'a range');
-refuses([{ ...RECORDS[2], values: { ...RECORDS[2].values, schedule: { kind: 'instant', at: '2030-03-08T21:30:00Z' } } }], { input_metadata: SCOPE }, /outside the regular session/, 'an early close after 16:00');
-refuses([RECORDS[1], nyse({ id: 'nyse-again' })], { input_metadata: SCOPE }, /closed twice/, 'a day closed twice');
-refuses([nyse({}, { schedule: { kind: 'date', date: '2030-03-08' } }), RECORDS[2]], { input_metadata: SCOPE }, /both closed and closing early/, 'a day closed and closing early');
-refuses([nyse({}, { context: { source_id: 'NYSE', source_timezone: 'Europe/London' } })], { input_metadata: SCOPE }, /not on New York time/, 'another timezone');
-ok('records it cannot read as an NYSE closure or early close in scope are refused, not guessed');
+const at = (i, over) => SESSIONS.map((s, j) => (j === i ? { ...s, ...over } : s));
+refuses(SESSIONS, { ...META, exchange: 'XLON' }, /not XNYS/, 'another exchange');
+refuses(SESSIONS, { ...META, coverage: null }, /declares no coverage/, 'no coverage');
+refuses(SESSIONS, { ...META, coverage: { start: '2030-03-16', end: '2030-03-04' } }, /declares no coverage/, 'a reversed coverage');
+refuses(at(8, { date: '2030-03-18', weekday: 'mon', open_at: '2030-03-18T13:30:00Z', close_at: '2030-03-18T20:00:00Z' }), META, /outside the declared coverage/, 'a session outside coverage');
+refuses(at(1, { date: '2030-03-04' }), META, /one per date in order/, 'two sessions on one date');
+refuses(at(0, { weekday: 'tue' }), META, /names weekday tue/, 'a weekday that is not the date’s');
+refuses(at(2, { date: '2030-03-09', weekday: 'sat', open_at: '2030-03-09T14:30:00Z', close_at: '2030-03-09T21:00:00Z' }), META, /names weekday sat/, 'a Saturday');
+refuses(at(0, { close_at: '2030-03-05T06:00:00Z' }), META, /outside its New York day/, 'a close on the next New York day');
+refuses(at(0, { open_at: '2030-03-04T21:00:00Z' }), META, /outside its New York day/, 'an open after the close');
+refuses(at(0, { close_at: '2030-03-04 21:00' }), META, /outside its New York day/, 'a close with no zone');
+refuses(at(0, { kind: 'half_day' }), META, /of kind half_day/, 'an unknown kind');
+ok('records that do not read as one session in the declared coverage are refused, not repaired');
 
 // ---------------------------------------------------------------- the service's protocol
 
-const PIN = 'a'.repeat(64); const DATASET = 'b'.repeat(64); const REVISION = 'c'.repeat(64);
-const service = { pin: PIN, dataset: DATASET, status: 'ok', pageSize: 2, records: RECORDS, asks: [], spoil: null };
+const PIN = 'a'.repeat(64); const DATASET = 'b'.repeat(64);
+const service = { pin: PIN, dataset: DATASET, status: 'ok', pageSize: 4, records: SESSIONS, meta: META, projection: 'market_sessions/1', asks: [], spoil: null };
 const standIn = createServer((req, res) => {
   const url = new URL(req.url, 'http://x'); service.asks.push(url.pathname + url.search);
   const send = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
-  if (url.pathname === '/v1/snapshots/latest') return send(200, { snapshot_id: service.pin, published_at: '2030-03-01T00:00:00.000Z', datasets: {}, calendar: { dataset_id: service.dataset, status: service.status, record_count: RECORDS.length } });
-  if (url.pathname !== '/v1/calendar') return send(404, { error: 'not_found' });
+  if (url.pathname === '/v1/snapshots/latest') {
+    return send(200, { snapshot_id: service.pin, published_at: '2030-03-01T00:00:00.000Z', calendar: null,
+      datasets: service.status === 'absent' ? {} : { nyse_sessions: { dataset_id: service.dataset, status: service.status } } });
+  }
+  if (url.pathname !== '/v1/data/nyse_sessions') return send(404, { error: 'not_found' });
   if (url.searchParams.get('snapshot_id') !== service.pin) return send(400, { error: 'unknown_snapshot' });
-  const matched = service.records.filter((r) => r.values.category === url.searchParams.get('category'));
   const offset = Number(url.searchParams.get('offset') || 0); const limit = Math.min(Number(url.searchParams.get('limit')), service.pageSize);
-  const next = offset + limit < matched.length ? offset + limit : null;
-  const page = { snapshot_id: service.pin, source: 'calendar', dataset_id: service.dataset, page: { offset, limit, next_offset: next, total: matched.length },
-    data: { projection_version: 'calendar/1', records: matched.slice(offset, offset + limit), meta: { revision_id: REVISION, input_metadata: SCOPE } } };
+  const next = offset + limit < service.records.length ? offset + limit : null;
+  const page = { snapshot_id: service.pin, source: 'nyse_sessions', dataset_id: service.dataset, page: { offset, limit, next_offset: next, total: service.records.length },
+    data: { projection_version: service.projection, records: service.records.slice(offset, offset + limit), meta: service.meta } };
   if (service.spoil && offset > 0) service.spoil(page);
   send(200, page);
 });
@@ -97,20 +90,21 @@ const URL_ = `http://127.0.0.1:${standIn.address().port}`;
 let clock = 0;
 const reader = fieldDataCalendar({ url: URL_, now: () => clock, maxAgeMs: 1000 });
 const first = await reader.nyse();
-assert.equal(first.table, `field-data-api.nyse.${REVISION.slice(0, 16)}`);
+assert.equal(first.table, `field-data-api.nyse_sessions.${REVISION.slice(0, 16)}`);
 assert.equal(first.tsv, built.tsv);
+assert.deepEqual(Object.keys(first), ['table', 'provenance', 'tsv'], 'the text comes last, after the id and provenance');
 assert.equal(first.provenance.snapshot_id, PIN); assert.equal(first.provenance.dataset_id, DATASET); assert.equal(first.provenance.revision_id, REVISION);
-assert.deepEqual(first.provenance.scope, { start: '2030-03-04', end: '2030-03-15' }); assert.equal(first.provenance.tsv_sha256, sha(first.tsv));
-const pages = service.asks.filter((a) => a.startsWith('/v1/calendar'));
-assert.equal(pages.length, 2, 'four market holidays in pages of two');
-for (const a of pages) { assert.match(a, new RegExp(`snapshot_id=${PIN}`)); assert.match(a, /category=market_holiday/); }
-ok('one publication is pinned and every calendar page is read under it');
+assert.deepEqual(first.provenance.coverage, { start: '2030-03-04', end: '2030-03-16' }); assert.equal(first.provenance.tsv_sha256, sha(first.tsv));
+const pages = service.asks.filter((a) => a.startsWith('/v1/data/nyse_sessions'));
+assert.equal(pages.length, 3, 'nine sessions in pages of four');
+for (const a of pages) assert.match(a, new RegExp(`snapshot_id=${PIN}`));
+ok('one publication is pinned and every page of nyse_sessions is read under it');
 
 service.asks.length = 0; clock = 500;
 assert.equal(await reader.nyse(), first); assert.equal(service.asks.length, 0);
 clock = 2000; service.pin = 'd'.repeat(64);
 assert.equal(await reader.nyse(), first); assert.deepEqual(service.asks, ['/v1/snapshots/latest']);
-ok('the table is kept while the publication’s calendar is the same one, and the service is asked again only after a while');
+ok('the table is kept while the published sessions are the same dataset, and the service is asked again only after a while');
 
 service.status = 'error'; clock = 4000;
 assert.equal(await reader.nyse(), first, 'a table already read outlasts the service failing');
@@ -122,15 +116,21 @@ const failsWith = async (pattern, what) => { await assert.rejects(fresh().nyse()
 service.spoil = (page) => { page.snapshot_id = 'e'.repeat(64); };
 await failsWith(/another publication/, 'a page from another publication');
 service.spoil = (page) => { page.dataset_id = 'f'.repeat(64); };
-await failsWith(/another publication/, 'a page of another calendar');
+await failsWith(/another publication/, 'a page of another dataset');
 service.spoil = (page) => { page.page.next_offset = page.page.offset; page.page.total = 99; };
 await failsWith(/do not advance/, 'a cursor that stands still');
-service.spoil = null; service.status = 'error';
-await failsWith(/no published calendar \(status error\)/, 'an unusable calendar');
+service.spoil = null; service.projection = 'calendar/1';
+await failsWith(/not market_sessions\/1/, 'another projection');
+service.projection = 'market_sessions/1'; service.meta = { ...META, revision_id: 'x' };
+await failsWith(/no content revision/, 'no content revision');
+service.meta = META; service.status = 'error';
+await failsWith(/publishes no nyse_sessions \(status error\)/, 'an unusable dataset');
+service.status = 'absent';
+await failsWith(/publishes no nyse_sessions \(status none\)/, 'a service without the dataset');
 service.status = 'ok';
 await assert.rejects(fieldDataCalendar({ url: 'http://127.0.0.1:9' }).nyse(), /did not answer/);
 assert.throws(() => fieldDataCalendar({ url: 'http://user:pw@127.0.0.1:8491' }), /without credentials/);
-ok('pages of another publication, stalled cursors, an unusable calendar and a silent service are refused');
+ok('pages of another publication, stalled cursors, other projections, a missing dataset and a silent service are refused');
 
 // ---------------------------------------------------------------- the server
 
@@ -154,7 +154,7 @@ try {
   service.status = 'error';
   const failing = await serve({ FIELD_DATA_URL: URL_ });
   const refused = await failing.get('/calendar/nyse');
-  assert.equal(refused.status, 502); assert.match((await refused.json()).error, /no published calendar/);
+  assert.equal(refused.status, 502); assert.match((await refused.json()).error, /publishes no nyse_sessions/);
   await failing.stop();
   service.status = 'ok';
   const without = await serve({});
@@ -209,7 +209,7 @@ assert.equal(bench.nyText(z('2030-03-08T17:45:00Z')), 'FRI 12:45 EST');
 assert.equal(bench.nyText(z('2030-03-06T15:00:00Z')), 'no session');
 assert.equal(bench.nyText(z('2030-03-13T15:00:00Z')), 'WED 11:00 EDT');
 assert.equal(bench.nyText(z('2030-03-04T03:00:00Z')), 'outside calendar');
-ok('weekday and session_tail are known at every close the table covers, early close and withdrawn closure included');
+ok('weekday and session_tail are known at every close the table covers, early close and closed day included');
 
 calendarAnswer = () => Response.json({ error: 'field-data-api answered 503' }, { status: 502 });
 await bench.load('pinned');

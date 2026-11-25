@@ -4,7 +4,7 @@
 # reader's browser, on that engine.
 # Its bars come from the market-state cube through Cube's bridge on this host's loopback (Vaquum/Cube serves it
 # on 127.0.0.1:8487), read only. If the bridge does not answer, the bench shows the built-in recording and says so.
-# Its NYSE calendar for those bars comes from field-data-api on this host's loopback (Vaquum/field-data-api, the
+# Its NYSE sessions for those bars come from field-data-api on this host's loopback (Vaquum/field-data-api, the
 # service Cube reads its calendar from, on 127.0.0.1:8491), read only. If it does not answer, cube windows use the
 # engine's pinned table and the Limen drawer says why.
 # The port is 8493, not 8491: on this host 8491 is Cube's field-data service.

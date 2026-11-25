@@ -894,7 +894,7 @@ function renderDrawer() {
 function calendarSource(cal) {
   if (!cal || cal.pinned) return `the engine’s pinned table${cal?.error ? ` · field-data-api not read: ${cal.error}` : ''}`;
   const p = cal.provenance;
-  return `field-data-api snapshot ${p.snapshot_id.slice(0, 12)}… · calendar revision ${p.revision_id.slice(0, 12)}… · NYSE closures and early closes for New York dates ${p.scope.start} … ${p.scope.end} · ${int(p.sessions)} sessions`;
+  return `field-data-api ${p.route} · snapshot ${p.snapshot_id.slice(0, 12)}… · revision ${p.revision_id.slice(0, 12)}… · New York dates ${p.coverage.start} … ${p.coverage.end} (end exclusive) · ${int(p.sessions)} sessions, ${int(p.early_closes)} early closes`;
 }
 
 // ---------------------------------------------------------------- add a condition

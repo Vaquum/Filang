@@ -1,46 +1,39 @@
 // NYSE's regular sessions for the bench's cube windows, read from Vaquum's field-data-api: the service Cube reads
-// its calendar from (Vaquum/field-data-api, docs/calendar.md and docs/api.md). The bench keeps no calendar of its own.
+// its calendar from, and the one place calendar information comes from (Vaquum/field-data-api#23). The bench keeps
+// no calendar and no calendar rule of its own.
 //
-// The service publishes NYSE's exceptions, not its sessions: the New York dates NYSE is closed and the instants it
-// closes early, each with its source, inside the civil-date scope its supplied calendar declares. Within that scope
-// a New York weekday it does not list as closed is a regular session, closing at 16:00 New York unless it lists an
-// early close. Outside the scope it says nothing, so the table covers the scope only and the engine answers
-// "unknown" there, with its own reason. Nothing here writes a date: every exception and the scope are the service's.
-//
-// Like Cube, it pins one publication and reads every page under that pin, checked to be that publication's.
-// The table it builds is the engine's calendar text (`setCalendar(tsv, {table})`): a coverage line, then one row per
-// session (New York midnight, close, weekday), all in UTC milliseconds. The engine pins the table's id and the
-// SHA-256 of that text in each run's manifest.
+// The service publishes the sessions themselves as `nyse_sessions` (projection market_sessions/1): one record per
+// session day with its New York date, weekday, open and close, complete over a declared coverage of New York dates.
+// A date in coverage with no record is not a session; a date outside coverage the service says nothing about, so
+// the engine answers "unknown" there, with its own reason. This file only rewrites those records into the engine's
+// calendar text (`setCalendar(tsv, {table})`): a coverage line, then one row per session (New York midnight, close,
+// weekday), all in UTC milliseconds. The engine pins the table's id and the SHA-256 of that text in each run's
+// manifest. Like Cube, it pins one publication and reads every page under that pin, checked to be that publication's.
 import { createHash } from 'node:crypto';
 
 export class CalendarError extends Error {}
 
+const SOURCE = 'nyse_sessions';
+const PROJECTION = 'market_sessions/1';
 const ZONE = 'America/New_York';
-const DAY_MS = 86_400_000;
 const PAGE_LIMIT = 1000;
 const MAX_OFFSET = 100_000;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const HEX64 = /^[0-9a-f]{64}$/;
-// NYSE's regular session is 09:30 to 16:00 New York, Monday to Friday (nyse.com/trade/hours-calendars). The engine's
-// table needs the close only; the open bounds what an early close can be.
-const OPEN_MINUTE = 9 * 60 + 30;
-const CLOSE_MINUTE = 16 * 60;
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
-export const RULE = 'Regular sessions are the New York weekdays in the calendar’s scope that field-data-api does not list as NYSE closed; '
-  + 'each closes at 16:00 New York unless it lists an NYSE early close for that day.';
 
 const parts = new Intl.DateTimeFormat('en-US', {
   timeZone: ZONE, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
 });
-/** The New York civil date and minute of the day at a UTC instant. */
+/** The New York civil date and time of day at a UTC instant. */
 function newYork(ms) {
   const p = Object.fromEntries(parts.formatToParts(ms).map(({ type, value }) => [type, value]));
   return { date: `${p.year}-${p.month}-${p.day}`, minute: Number(p.hour) * 60 + Number(p.minute), second: Number(p.second) };
 }
-/** The UTC instant of a minute of a New York civil date. Throws where New York has no such minute. */
-function atNewYork(date, minute) {
+/** The UTC instant at which a New York civil date begins. */
+function newYorkMidnight(date) {
   const [y, m, d] = date.split('-').map(Number);
-  const wall = Date.UTC(y, m - 1, d, 0, minute);
+  const wall = Date.UTC(y, m - 1, d);
   let t = wall;
   for (let i = 0; i < 2; i++) {
     const seen = newYork(t);
@@ -48,76 +41,47 @@ function atNewYork(date, minute) {
     t -= Date.UTC(sy, sm - 1, sd, 0, seen.minute, seen.second) - wall;
   }
   const back = newYork(t);
-  if (back.date !== date || back.minute !== minute || back.second !== 0) throw new CalendarError(`New York has no ${date} minute ${minute}`);
+  if (back.date !== date || back.minute !== 0 || back.second !== 0) throw new CalendarError(`New York has no midnight on ${date}`);
   return t;
 }
-const civil = (date) => { const [y, m, d] = date.split('-').map(Number); return Date.UTC(y, m - 1, d); };
-const dateOf = (ms) => new Date(ms).toISOString().slice(0, 10);
-/** 0 for Monday … 6 for Sunday, of a civil date. */
-const weekday = (date) => (new Date(civil(date)).getUTCDay() + 6) % 7;
+const civilWeekday = (date) => { const [y, m, d] = date.split('-').map(Number); return (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7; };
+const instant = (text) => (typeof text === 'string' && /Z$|[+-]\d{2}:\d{2}$/.test(text) ? Date.parse(text) : NaN);
 
 /**
- * The engine's nyse_regular table from one pinned field-data-api calendar: its NYSE market-holiday records and the
- * meta of the page they came on. Refuses anything it cannot read as an NYSE closure or early close in scope.
+ * The engine's nyse_regular table from one pinned `nyse_sessions` dataset: its records and the meta of its pages.
+ * Nothing is inferred: a record that does not read as one session inside the declared coverage is refused.
  */
 export function nyseTable(records, meta) {
-  const input = meta?.input_metadata ?? {};
-  const start = input.source_scope_start; const end = input.source_scope_end;
-  if (!DATE.test(start ?? '') || !DATE.test(end ?? '') || civil(start) > civil(end)) {
-    throw new CalendarError('field-data-api’s calendar declares no civil-date scope, so it cannot say which days NYSE trades');
-  }
-  const closed = new Map(); const early = new Map(); let cancelled = 0;
-  const inScope = (date) => civil(start) <= civil(date) && civil(date) <= civil(end);
-  for (const r of records) {
-    const v = r?.values ?? {};
-    if (v.category !== 'market_holiday' || v.context?.source_id !== 'NYSE') continue;
-    const id = String(r.id);
-    if (v.status === 'cancelled') { cancelled++; continue; }
-    if (v.status !== 'scheduled') throw new CalendarError(`NYSE record ${id} has status ${v.status}`);
-    if (v.schedule_certainty !== 'confirmed') throw new CalendarError(`NYSE record ${id} is ${v.schedule_certainty ?? 'unspecified'}, not confirmed`);
-    if (v.context?.source_timezone !== ZONE) throw new CalendarError(`NYSE record ${id} is not on New York time`);
-    const s = v.schedule ?? {};
-    let date;
-    if (s.kind === 'date' && /^NYSE markets closed\b/.test(v.title ?? '') && DATE.test(s.date ?? '')) {
-      date = s.date;
-      if (closed.has(date)) throw new CalendarError(`field-data-api lists NYSE closed twice on ${date}`);
-      closed.set(date, id);
-    } else if (s.kind === 'instant' && /^NYSE early close\b/.test(v.title ?? '')) {
-      const at = Date.parse(s.at);
-      if (!Number.isFinite(at)) throw new CalendarError(`NYSE record ${id} has no readable instant`);
-      const local = newYork(at);
-      date = local.date;
-      if (local.minute <= OPEN_MINUTE || local.minute >= CLOSE_MINUTE) throw new CalendarError(`NYSE record ${id} closes early outside the regular session`);
-      if (early.has(date)) throw new CalendarError(`field-data-api lists two NYSE early closes on ${date}`);
-      early.set(date, { at, id });
-    } else {
-      throw new CalendarError(`NYSE record ${id} (“${v.title}”) is neither a closure nor an early close`);
-    }
-    if (!inScope(date)) throw new CalendarError(`NYSE record ${id} is on ${date}, outside the calendar’s scope ${start} … ${end}`);
-    if (weekday(date) > 4) throw new CalendarError(`NYSE record ${id} falls on a weekend`);
-  }
-  for (const date of early.keys()) if (closed.has(date)) throw new CalendarError(`field-data-api lists NYSE both closed and closing early on ${date}`);
-
-  const from = atNewYork(start, 0);
-  const to = atNewYork(dateOf(civil(end) + DAY_MS), 0);
+  const start = meta?.coverage?.start; const end = meta?.coverage?.end;
+  if (meta?.exchange !== 'XNYS' || meta?.timezone !== ZONE) throw new CalendarError('field-data-api’s nyse_sessions is not XNYS on New York time');
+  if (!DATE.test(start ?? '') || !DATE.test(end ?? '') || !(start < end)) throw new CalendarError('field-data-api’s nyse_sessions declares no coverage');
+  const from = newYorkMidnight(start); const to = newYorkMidnight(end);
   const lines = [`${from}\t${to}`];
-  let sessions = 0;
-  for (let day = civil(start); day <= civil(end); day += DAY_MS) {
-    const date = dateOf(day); const wd = weekday(date);
-    if (wd > 4 || closed.has(date)) continue;
-    lines.push(`${atNewYork(date, 0)}\t${early.get(date)?.at ?? atNewYork(date, CLOSE_MINUTE)}\t${WEEKDAYS[wd]}`);
-    sessions++;
+  let previous = ''; let early = 0;
+  for (const r of records) {
+    const date = r?.date;
+    if (!DATE.test(date ?? '') || date < start || date >= end) throw new CalendarError(`session ${date} is outside the declared coverage ${start} … ${end}`);
+    if (date <= previous) throw new CalendarError(`sessions are not one per date in order at ${date}`);
+    previous = date;
+    const wd = WEEKDAYS.indexOf(r.weekday);
+    if (wd < 0 || wd !== civilWeekday(date)) throw new CalendarError(`session ${date} names weekday ${r.weekday}`);
+    const day = newYorkMidnight(date);
+    const open = instant(r.open_at); const close = instant(r.close_at);
+    if (!(day <= open && open < close && newYork(close).date === date && close - day < 86_400_000)) {
+      throw new CalendarError(`session ${date} opens or closes outside its New York day`);
+    }
+    if (r.kind === 'early_close') early++;
+    else if (r.kind !== 'regular') throw new CalendarError(`session ${date} is of kind ${r.kind}`);
+    lines.push(`${day}\t${close}\t${WEEKDAYS[wd]}`);
   }
   const tsv = lines.join('\n') + '\n';
   return {
-    tsv, sessions, from, to, scope: { start, end },
-    closed: [...closed.keys()].sort(),
-    earlyCloses: [...early].map(([date, { at }]) => ({ date, close: new Date(at).toISOString() })).sort((a, b) => a.date.localeCompare(b.date)),
-    cancelled, tsvSha256: createHash('sha256').update(tsv).digest('hex'),
+    tsv, from, to, coverage: { start, end }, sessions: records.length, earlyCloses: early,
+    closures: Array.isArray(meta.closures) ? meta.closures.length : null, tsvSha256: createHash('sha256').update(tsv).digest('hex'),
   };
 }
 
-/** A reader of one field-data-api. It holds the calendar it built and reads again only when the publication's calendar changes. */
+/** A reader of one field-data-api. It holds the table it built and reads again only when the published sessions change. */
 export function fieldDataCalendar({ url, token = null, fetch: get = fetch, now = Date.now, maxAgeMs = 60_000 }) {
   const base = String(url).replace(/\/+$/, '');
   if (!/^https?:\/\/[^/?#@\s]+$/.test(base)) throw new CalendarError('FIELD_DATA_URL must be an HTTP(S) origin without credentials, path, query or fragment');
@@ -139,46 +103,43 @@ export function fieldDataCalendar({ url, token = null, fetch: get = fetch, now =
 
   async function read() {
     const snap = await ask('/v1/snapshots/latest');
-    const pin = snap.snapshot_id; const calendar = snap.calendar;
+    const pin = snap.snapshot_id; const listed = snap.datasets?.[SOURCE];
     if (!HEX64.test(pin ?? '')) throw new CalendarError('field-data-api answered no publication to pin');
-    if (!calendar?.dataset_id || !['ok', 'stale'].includes(calendar.status)) {
-      throw new CalendarError(`field-data-api has no published calendar (status ${calendar?.status ?? 'none'})`);
+    if (!listed?.dataset_id || !['ok', 'stale'].includes(listed.status)) {
+      throw new CalendarError(`field-data-api publishes no ${SOURCE} (status ${listed?.status ?? 'none'})`);
     }
-    if (held && held.provenance.dataset_id === calendar.dataset_id) return held;
+    if (held && held.provenance.dataset_id === listed.dataset_id) return held;
     const records = []; let first = null; let offset = 0;
     for (;;) {
-      const page = await ask('/v1/calendar', { snapshot_id: pin, category: 'market_holiday', limit: PAGE_LIMIT, offset });
-      if (page.snapshot_id !== pin || page.source !== 'calendar' || page.dataset_id !== calendar.dataset_id) {
-        throw new CalendarError('field-data-api answered a calendar page from another publication');
+      const page = await ask(`/v1/data/${SOURCE}`, { snapshot_id: pin, limit: PAGE_LIMIT, offset });
+      if (page.snapshot_id !== pin || page.source !== SOURCE || page.dataset_id !== listed.dataset_id) {
+        throw new CalendarError(`field-data-api answered a ${SOURCE} page from another publication`);
       }
-      if (page.data?.projection_version !== 'calendar/1' || !Array.isArray(page.data.records)) throw new CalendarError('field-data-api answered a calendar page it does not describe as calendar/1');
+      if (page.data?.projection_version !== PROJECTION || !Array.isArray(page.data.records)) throw new CalendarError(`field-data-api answered a ${SOURCE} page that is not ${PROJECTION}`);
       first ??= page;
       records.push(...page.data.records);
       const next = page.page?.next_offset;
       if (next === null || next === undefined) {
-        if (Number.isInteger(page.page?.total) && records.length !== page.page.total) throw new CalendarError('field-data-api’s calendar pages do not add up to its total');
+        if (Number.isInteger(page.page?.total) && records.length !== page.page.total) throw new CalendarError(`field-data-api’s ${SOURCE} pages do not add up to its total`);
         break;
       }
-      if (!Number.isInteger(next) || next <= offset || next > MAX_OFFSET) throw new CalendarError('field-data-api’s calendar pages do not advance');
+      if (!Number.isInteger(next) || next <= offset || next > MAX_OFFSET) throw new CalendarError(`field-data-api’s ${SOURCE} pages do not advance`);
       offset = next;
     }
     const meta = first.data.meta ?? {};
-    const revision = meta.revision_id;
-    if (!HEX64.test(revision ?? '')) throw new CalendarError('field-data-api’s calendar has no content revision to pin');
+    if (!HEX64.test(meta.revision_id ?? '')) throw new CalendarError(`field-data-api’s ${SOURCE} has no content revision to pin`);
     const table = nyseTable(records, meta);
-    const input = meta.input_metadata ?? {};
     return {
-      // The engine pins this id beside the SHA-256 of the text: the source, and the calendar content it was built from.
-      table: `field-data-api.nyse.${revision.slice(0, 16)}`,
-      tsv: table.tsv,
+      // The engine pins this id beside the SHA-256 of the text: the source, and the content revision it was built from.
+      // The text comes last, so a reader of the first few kilobytes (the deploy log) sees the id and provenance.
+      table: `field-data-api.${SOURCE}.${meta.revision_id.slice(0, 16)}`,
       provenance: {
-        source: 'field-data-api', route: '/v1/calendar?category=market_holiday', snapshot_id: pin, published_at: snap.published_at ?? null,
-        dataset_id: calendar.dataset_id, status: calendar.status, revision_id: revision,
-        input: { source_sha256: input.source_sha256 ?? null, source_as_of: input.source_as_of ?? null, imported_at: input.imported_at ?? null, import_format: input.import_format ?? null },
-        scope: table.scope, coverage: { from: new Date(table.from).toISOString(), to: new Date(table.to).toISOString(), end: 'exclusive' },
-        sessions: table.sessions, closed: table.closed, early_closes: table.earlyCloses, cancelled: table.cancelled,
-        rule: RULE, tsv_sha256: table.tsvSha256,
+        source: 'field-data-api', route: `/v1/data/${SOURCE}`, projection: PROJECTION, snapshot_id: pin, published_at: snap.published_at ?? null,
+        dataset_id: listed.dataset_id, status: listed.status, revision_id: meta.revision_id, exchange: meta.exchange,
+        coverage: table.coverage, sessions: table.sessions, early_closes: table.earlyCloses, closures: table.closures,
+        tsv_sha256: table.tsvSha256,
       },
+      tsv: table.tsv,
     };
   }
 

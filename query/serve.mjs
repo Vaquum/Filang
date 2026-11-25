@@ -5,8 +5,8 @@
 // With CUBE_URL set to Cube's bridge it also serves the cube's bars for Cube's time windows (/bars); without it,
 // or when the bridge cannot answer, the bench reads the pinned recording.
 // With FIELD_DATA_URL set to Vaquum's field-data-api, the service Cube reads its calendar from, it also serves the
-// nyse_regular table the cube windows are asked with (/calendar/nyse), built from that service's NYSE closures and
-// early closes. Without it, or when the service cannot answer, cube windows use the engine's pinned table.
+// nyse_regular table the cube windows are asked with (/calendar/nyse), rewritten from the NYSE sessions that service
+// publishes. Without it, or when the service cannot answer, cube windows use the engine's pinned table.
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, resolve, sep } from 'node:path';
