@@ -114,9 +114,13 @@ const undo = () => travel(past, future); const redo = () => travel(future, past)
 let toastTimer = 0;
 function toast(text, action = null) {
   const el = $('#toast'); clearTimeout(toastTimer);
-  if (!text) { el.hidden = true; return; }
+  // a notice that goes while the keys are on its button would leave them nowhere: they go to the selected row instead
+  const hide = () => { const had = el.contains(document.activeElement); el.hidden = true; if (had) $('#lanes > .lane.sel')?.focus({ preventScroll: true }); };
+  if (!text) { hide(); return; }
   mount(el, h('span', null, text), action ? h('button', { type: 'button', class: 'quiet', onclick: () => { action.run(); toast(null); } }, action.label) : null);
-  el.hidden = false; toastTimer = setTimeout(() => { el.hidden = true; }, 7000);
+  // it stays while the keyboard is on it, and goes a little after the keyboard leaves
+  const fade = () => { if (el.contains(document.activeElement)) { toastTimer = setTimeout(fade, 2000); return; } hide(); };
+  el.hidden = false; toastTimer = setTimeout(fade, 7000);
 }
 /**
  * Change the question. A change the engine cannot read is not made: the canvas would go on showing the previous
@@ -228,8 +232,10 @@ function candlesLink(i, cls = 'quiet') {
 
 // ---------------------------------------------------------------- menus
 
-let popup = null; let popupAnchor = null;
-function closeMenu() { if (popup) { popup.remove(); popup = null; document.removeEventListener('mousedown', outsideMenu, true); } popupAnchor?.setAttribute('aria-expanded', 'false'); popupAnchor = null; }
+let popup = null; let popupAnchor = null; let popupName = null;
+/** The control a menu opened from, as it stands now: a redraw may have replaced the one that opened it. */
+const anchorNow = () => (popupName ? $(`[data-enc="${CSS.escape(popupName)}"]`) : null) || popupAnchor;
+function closeMenu() { if (popup) { popup.remove(); popup = null; document.removeEventListener('mousedown', outsideMenu, true); } anchorNow()?.setAttribute('aria-expanded', 'false'); popupAnchor = null; popupName = null; }
 function outsideMenu(e) { if (popup && !popup.contains(e.target) && !e.target.closest('[data-menu]')) closeMenu(); }
 function menu(anchor, { title, hint, options, value, onChange }) {
   closeMenu(); closePopover();
@@ -237,14 +243,16 @@ function menu(anchor, { title, hint, options, value, onChange }) {
   const back = anchor.dataset.enc ? `[data-enc="${anchor.dataset.enc}"]` : null;
   popup = h('div', { class: 'pop', role: 'menu', 'aria-label': title, onkeydown: (e) => {
     const items = [...popup.querySelectorAll('button:not(:disabled)')]; const at = items.indexOf(document.activeElement);
-    if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); closeMenu(); anchor.focus(); }
+    // Esc goes back to the control; Tab and ⇧Tab close the menu and move on from the control, either way
+    if (e.key === 'Escape') { e.preventDefault(); closeMenu(); anchor.focus(); }
+    else if (e.key === 'Tab') { const at = anchorNow() || anchor; closeMenu(); at.focus(); }
     else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus(); }
     else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); items[e.key === 'Home' ? 0 : items.length - 1]?.focus(); }
   } },
     h('header', null, label(title)), hint ? h('p', { class: 'note' }, hint) : null,
     h('ul', { role: 'none' }, options.map((o) => h('li', { role: 'none' }, h('button', { type: 'button', role: 'menuitemradio', 'aria-checked': String(o.value === value), disabled: o.disabled,
       onclick: () => { closeMenu(); onChange(o.value); if (back) $(back)?.focus({ preventScroll: true }); } }, h('span', null, o.label, o.detail ? h('small', null, o.detail) : null))))));
-  document.body.append(popup); popupAnchor = anchor; anchor.setAttribute('aria-expanded', 'true');
+  document.body.append(popup); popupAnchor = anchor; popupName = anchor.dataset.enc || null; anchor.setAttribute('aria-expanded', 'true');
   const r = anchor.getBoundingClientRect();
   popup.style.left = Math.max(8, Math.min(window.innerWidth - popup.offsetWidth - 8, r.left)) + 'px';
   popup.style.top = (r.bottom + popup.offsetHeight + 4 < window.innerHeight ? r.bottom + 1 : r.top - popup.offsetHeight - 1) + 'px';
@@ -341,7 +349,7 @@ function draw() {
 
 // ---------------------------------------------------------------- bars
 
-const enc = (name, value, open) => { const b = h('button', { class: 'enc', type: 'button', 'data-menu': '1', 'data-enc': name, 'aria-haspopup': 'menu', 'aria-expanded': 'false', onclick: () => open(b) }, label(name), h('span', { class: 'val' }, value), h('i', { 'aria-hidden': 'true' }, '▼')); return b; };
+const enc = (name, value, open) => { const b = h('button', { class: 'enc', type: 'button', 'data-menu': '1', 'data-enc': name, 'aria-haspopup': 'menu', 'aria-expanded': String(!!popup && popupName === name), onclick: () => open(b) }, label(name), h('span', { class: 'val' }, value), h('i', { 'aria-hidden': 'true' }, '▼')); return b; };
 /** The bars the question is asked of, and the starting questions: the two choices that stand whether or not it can be answered. */
 const windowEnc = () => (state.source.cube ? enc('Window', state.loading ? 'Loading…' : env().provenance.source === 'cube' ? env().provenance.window_name : 'Pinned recording', (b) => menu(b, { title: 'Window', hint: 'The bars the question is asked of: Cube’s time windows, read from the cube. A window ends at the latest complete bar.', value: loaded(),
   options: [...state.source.windows.map((w) => ({ value: w.key, label: w.name, detail: windowDetail(w) })), { value: PINNED, label: 'Pinned recording', detail: 'Jan to May 2025, the bars the verification suite counts' }], onChange: openWindow })) : null);
@@ -1092,7 +1100,7 @@ const KEYS = [
 ];
 /** The keys sheet: every shortcut the bench answers to, opened with ? or from the dock. */
 function keysSheet() {
-  const open = $('#keys-sheet'); if (open) { open.remove(); return; }
+  const open = $('#keys-sheet'); if (open) { open.close(); return; }
   const was = document.activeElement; let back = null;
   const close = () => { back.remove(); if (was?.isConnected) was.focus({ preventScroll: true }); };
   const shut = h('button', { class: 'quiet', type: 'button', onclick: () => close() }, 'Close · Esc');
@@ -1101,7 +1109,7 @@ function keysSheet() {
   h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Keys' },
     h('header', null, label('Keys'), shut),
     h('dl', null, KEYS.map(([k, t]) => [h('dt', null, k.split(' ').map((x) => h('kbd', null, x))), h('dd', null, t)]))));
-  document.body.append(back); shut.focus();
+  back.close = close; document.body.append(back); shut.focus();
 }
 $('[data-keys]').addEventListener('click', keysSheet);
 
