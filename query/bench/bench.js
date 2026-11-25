@@ -1,6 +1,6 @@
 // Filang query bench. One locked canvas shows the pattern; the question is written in its row labels.
 // Panels around it toggle: the pattern catalogue, the inspector, and a drawer for cases, tape, query and the Limen hand-off.
-import { load, loaded, geometryRadiusReceipt, sources, PINNED, run, count, rec, env, definition, HEAD, ANY_CLOSE, T, F, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
+import { load, loaded, geometryRadiusReceipt, sources, PINNED, run, count, rec, env, definition, HEAD, ANY_CLOSE, T, F, U, isoUTC, int, pct, share, nyText, price, observed } from '/shared/filang.js';
 import { CLAUSES, PATTERNS, PRESETS, HORIZONS, OFFERS, DIMENSIONS, make, clone, toText, bodyText, fromText, clauseText, splitText, phraseText, drawingBars, drawingHeld, drawingRecorded, drawingDimensions, g1Price, g1Parts, offered, dimensionsIn } from '/shared/vocab.js';
 import { readLink, packetFromG1, casePacket, composerLink, relationsOf, attach, decodeDrawing, drawingG1, pinnedExpression } from '/shared/handoff.js';
 import { h, mount, $, plate, phrase, slotPopover, closePopover, refocusSlot } from '/shared/ui.js';
@@ -46,6 +46,44 @@ const counters = () => rec().hasCounters;
 const can = (c) => offered(c.type, counters());
 /** Whether a run failed only because the bars lack what the question reads: the engine's capability refusal, and nothing else. */
 const refusal = (res) => !res.ok && res.errors.length > 0 && res.errors.every((e) => e.kind === 'capability');
+
+// ---------------------------------------------------------------- closes the engine cannot decide
+// A line can be unable to say yes or no for a close: its calendar does not reach that date, its look-back is not complete.
+// Such a close leaves the line as unknown, not as false. The bench says how many, and gives the engine's own reason.
+/** The engine's reason for one unknown verdict, without the close it was given for. */
+const reasonOf = (why) => String(why || '').replace(/^unknown:\s*/i, '').replace(/^anchor \S+ \S+ is /, '').replace(/\.\s*$/, '');
+/** For a line: how many closes it left unknown, of how many that reached it, and why the first of them is unknown. */
+function unknownOf(lane) {
+  if (lane.kind !== 'where') return null;
+  const of = lane.k === 0 ? ctx.r.counts.T : ctx.r.survivors[lane.k - 1];
+  const unk = lane.removed.filter((row) => row.results[lane.k].v === U);
+  return unk.length ? { n: unk.length, of, why: reasonOf(unk[0].results[lane.k].why) } : null;
+}
+/** Worth saying out loud: most closes unknown, or none left and some unknown. A few at the window's start are only a receipt. */
+const loud = (u, kept) => !!u && (kept === 0 || u.n >= 0.2 * u.of);
+const unknownText = (u) => `Unknown for ${int(u.n)} of ${int(u.of)} ${u.of === 1 ? 'close' : 'closes'}: ${u.why}`;
+/** What the closes-left figure of a candidate line hides when it is zero: closes the line could not decide. */
+function unknownLeft(body) {
+  const res = run(`${HEAD}\n${body}`); if (!res.ok) return null;
+  const r = res.results[0]; const k = r.lines.wheres.length - 1; if (k < 0) return null;
+  const unk = r.rows.filter((row) => row.failAt === k && row.results[k].v === U);
+  return unk.length ? { n: unk.length, why: reasonOf(unk[0].results[k].why) } : null;
+}
+
+// ---------------------------------------------------------------- what the page is waiting for
+/** Say what the page is doing before the canvas has anything to show. */
+const booting = (text) => { const t = $('#boot-text'); if (t) t.textContent = text; };
+/**
+ * Let the browser paint a message before work that holds the page: the engine answers on the page's own thread.
+ * A hidden tab gets no animation frames, so a timer stands in for the frame there: a page opened in the background
+ * still draws its answer.
+ */
+const paint = () => new Promise((resolve) => { let done = false; const go = () => { if (!done) { done = true; setTimeout(resolve, 0); } }; requestAnimationFrame(go); setTimeout(go, 60); });
+/** The canvas still shows the previous answer while a new one is read: it is dimmed and says what it waits for. */
+function busy(text) {
+  const el = $('#busy'); el.hidden = !text; el.textContent = text || '';
+  $('#canvas').classList.toggle('stale', !!text); $('#readout').classList.toggle('stale', !!text);
+}
 
 function summarize(rows, k) {
   const v = observed(rows, k); const n = v.length;
@@ -227,7 +265,7 @@ function render() {
   const pbars = Math.min(state.lead + 1, findBars(m));
   const lanes = buildLanes(res, r, text, H);
   ctx = { res, r, text, H, hk, pbars, lanes, answer: lanes.find((l) => l.id === answerId(lanes)), caseLanes: [], used, dims: counters() ? lanesShown(used, state.dims) : [] };
-  address();
+  address(); $('#boot')?.remove();
   if (document.activeElement !== formal.el.querySelector('textarea')) formal.set(text); else formal.message('');
   addInput.disabled = false;
   $('#left').hidden = !ui.left; $('#right').hidden = !ui.right; $('#drawer').hidden = !ui.drawer;
@@ -252,7 +290,7 @@ function renderBars() {
     + (fromCube ? `cube, through ${isoUTC(Date.parse(prov.through)).slice(0, 16)} UTC${prov.provisional_rows ? ` · last ${int(prov.provisional_rows)} provisional` : ''}` : 'pinned recording');
   $('#chip').title = fromCube ? `Read from the market-state cube through Cube's bridge${prov.canonical_through ? `. Canonical through ${isoUTC(Date.parse(prov.canonical_through)).slice(0, 16)} UTC; later bars are provisional` : ''}.` : 'The pinned BTCUSDT 15m recording built into this server.';
   // Without an answer only the catalogue and the query text have anything to show: the other panels wait for one.
-  for (const b of document.querySelectorAll('.toggles button')) { const p = b.dataset.panel; b.disabled = !ctx && p !== 'left' && p !== 'query'; b.setAttribute('aria-pressed', String(!b.disabled && (p === 'left' ? ui.left : p === 'right' ? ui.right : ui.drawer === p))); }
+  for (const b of document.querySelectorAll('button[data-panel]')) { const p = b.dataset.panel; b.disabled = !ctx && p !== 'left' && p !== 'query'; b.setAttribute('aria-pressed', String(!b.disabled && (p === 'left' ? ui.left : p === 'right' ? ui.right : ui.drawer === p))); }
   $('#to-cube').href = CUBE; $('#to-cube').title = 'Open the Cube explorer';
   if (!ctx) {
     // A refused question has no answer to read out and no canvas to encode: the window and the question remain.
@@ -262,7 +300,11 @@ function renderBars() {
     return;
   }
   const { res, r, answer } = ctx; const n = answer.rows.length;
-  mount($('#readout'), h('b', null, int(n)), note(n === 1 ? 'close in the answer' : 'closes in the answer'), r.columns.length ? h('span', { class: 'sep' }) : null,
+  // closes the lines could not decide are not in the answer: when they outweigh it, the readout says so beside it
+  const unknowns = state.rows === 'ledger' ? ctx.lanes.map(unknownOf).filter(Boolean) : [];
+  const unk = unknowns.reduce((a, u) => a + u.n, 0);
+  const unkNote = unk && (n === 0 || unk >= n * 0.25) ? h('span', { class: 'sub unk', title: unknowns.map(unknownText).join('\n') }, h('b', { class: 'fig' }, int(unk)), ' unknown') : null;
+  mount($('#readout'), h('b', null, int(n)), note(n === 1 ? 'close in the answer' : 'closes in the answer'), unkNote, r.columns.length ? h('span', { class: 'sep' }) : null,
     r.columns.slice(0, 3).map((c, k) => h('span', { class: 'sub' }, h('b', { class: 'fig' }, summarize(answer.rows, k).up), ` up after ${c.text}`)));
   const sweeps = res.results.length > 1;
   const first = m.find.items[0]; const pid = first.type === 'pattern' ? first.args.p.replaceAll('_', '-') : null;
@@ -305,10 +347,10 @@ function renderBars() {
 // A row label is a ledger line: a hanging line number, a short role, the editable phrase, then a receipt and quiet actions.
 function laneHead(lane) {
   const m = state.model; const R = rec(); const { r } = ctx;
-  const head = (no, name, texts, receipt, actions = [], extra = null) => [
+  const head = (no, name, texts, receipt, actions = [], extra = null, receiptTitle = null) => [
     h('span', { class: 'no' }, no || ''), h('span', { class: 'role' }, label(name), extra, actions.length ? h('span', { class: 'acts' }, actions) : null),
     h('div', { class: 'texts' }, texts),
-    receipt ? h('div', { class: 'foot-line' }, h('span', { class: 'receipt' }, receipt)) : null];
+    receipt ? h('div', { class: 'foot-line' }, h('span', { class: 'receipt', title: receiptTitle }, receipt)) : null];
   if (lane.kind === 'off') return [h('span', { class: 'no' }, pad(lane.wi + 2)), h('span', { class: 'text' }, cap(phraseText(lane.c))),
     quiet('Unmute', () => update(() => { lane.c.off = false; }), 'Apply this condition again'), quiet('Remove', () => update((x) => { x.wheres.splice(lane.wi, 1); }))];
   if (lane.kind === 'find') {
@@ -318,14 +360,16 @@ function laneHead(lane) {
         : m.find.items.map((c, idx) => h('div', { class: 'text' + (c.type === 'drawing' ? ' shape-line' : ''), 'data-clause': 'f' + idx }, idx ? label(m.find.join, 'or') : null, findParts(c, 'f' + idx))),
       `${share(r.counts.T, R.presentCount, 1)} of the tape${r.counts.U ? ` · ${int(r.counts.U)} unknown` : ''}`,
       [quiet('Change pattern', () => togglePanel('left', true), 'Open the pattern catalogue')],
-      multi ? h('span', { class: 'join' }, ['or', 'and'].map((j) => h('button', { type: 'button', 'aria-pressed': String(m.find.join === j), onclick: () => update((x) => { x.find.join = j; }) }, j))) : null);
+      multi ? h('span', { class: 'join' }, ['or', 'and'].map((j) => h('button', { type: 'button', 'aria-pressed': String(m.find.join === j), onclick: () => update((x) => { x.find.join = j; }) }, j))) : null,
+      r.counts.U ? `Unknown: recorded closes where the engine cannot say whether the pattern occurs, such as those whose look-back reaches before the first bar. They are not counted as ${multi ? 'matches' : 'occurrences'}.` : null);
   }
   if (lane.kind === 'alt') return head(null, m.find.join, h('div', { class: 'text' + (lane.c.type === 'drawing' ? ' shape-line' : ''), 'data-clause': 'f' + lane.idx }, findParts(lane.c, 'f' + lane.idx)), 'on its own',
     [quiet('Remove', () => update((x) => { x.find.items.splice(lane.idx, 1); }), 'Remove this pattern')]);
   if (lane.kind === 'where') {
-    const entering = lane.k === 0 ? r.counts.T : r.survivors[lane.k - 1]; const nu = lane.removed.filter((row) => row.results[lane.k].v !== F).length;
-    return head(pad(lane.wi + 2), 'And', h('div', { class: 'text', 'data-clause': 'w' + lane.wi }, phrase(lane.c, slotEdit('w' + lane.wi))),
-      `${int(entering)} → ${int(lane.rows.length)}${nu ? ` · ${int(nu)} unknown` : ''}`,
+    const entering = lane.k === 0 ? r.counts.T : r.survivors[lane.k - 1]; const u = unknownOf(lane);
+    return head(pad(lane.wi + 2), 'And', [h('div', { class: 'text', 'data-clause': 'w' + lane.wi }, phrase(lane.c, slotEdit('w' + lane.wi))),
+      loud(u, lane.rows.length) ? h('p', { class: 'unknown', title: unknownText(u) }, h('b', { 'aria-hidden': 'true' }, '?'), h('span', null, unknownText(u))) : null],
+      `${int(entering)} → ${int(lane.rows.length)}${u ? ` · ${int(u.n)} unknown` : ''}`,
       [quiet(lane.c.not ? 'Affirm' : 'Negate', () => update(() => { lane.c.not = !lane.c.not; }), 'Turn this condition into its opposite'),
         quiet('Mute', () => update(() => { lane.c.off = true; }), 'Keep the line but stop applying it'),
         quiet('Remove', () => update((x) => { x.wheres.splice(lane.wi, 1); state.lane = null; }))]);
@@ -358,8 +402,8 @@ function laneTrack(lane, shown) {
 const nodes = new Map();
 function nodeFor(id) {
   if (nodes.has(id)) return nodes.get(id);
-  const n = { head: h('div', { class: 'lane-head' }), svgHost: h('div', { class: 'lane-svg' }), track: h('div', { class: 'lane-track cols' }), lane: null };
-  n.el = h('div', { class: 'lane row3', tabindex: '0', 'data-lane': id }, n.head, n.svgHost, n.track);
+  const n = { head: h('div', { class: 'lane-head' }), svgHost: h('div', { class: 'lane-svg' }), track: h('div', { class: 'lane-track cols' }), note: h('p', { class: 'lane-note', hidden: true }), lane: null };
+  n.el = h('div', { class: 'lane row3', tabindex: '0', 'data-lane': id }, n.head, n.svgHost, n.track, n.note);
   n.born = !document.hidden;
   n.el.addEventListener('click', (e) => { if (n.lane.kind !== 'off' && !e.target.closest('button, input, a')) selectLane(n.lane); });
   n.el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === n.el && n.lane.kind !== 'off') selectLane(n.lane); });
@@ -408,6 +452,10 @@ function renderCanvas() {
     n.born = false;
     mount(n.head, laneHead(lane)); mount(n.track, laneTrack(lane, shown));
     if (lane.kind === 'off') n.svgHost.replaceChildren();
+    // a row with no close left has nothing to draw: it says why where its candles would be
+    const u = unknownOf(lane); const empty = lane.kind !== 'off' && lane.kind !== 'case' && !lane.rows.length;
+    n.note.hidden = !empty;
+    if (empty) mount(n.note, h('span', null, u ? `No close is left. ${unknownText(u)}.` : lane.kind === 'where' ? 'No close is left: this line removes every close that reached it.' : 'No close is left in this row.'));
   }
   if ([...host.querySelectorAll(':scope > .lane')].map((e) => e.dataset.lane).join('|') !== order.join('|')) host.append(...order.map((id) => nodes.get(id).el));
   for (const lane of all) if (lane.agg) drawLane(nodes.get(lane.id).svgHost, { agg: lane.agg, domain: lane.kind === 'case' ? domainOf([lane.agg], true) : aggDomain, lead: state.lead, H, pbars, horizons: hk,
@@ -494,7 +542,7 @@ function readDims(k) {
 function renderRefused(text, res) {
   const m = state.model; const said = (errors) => [...new Set(errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')))];
   const msg = said(res.errors).join(' · '); const status = $('#status');
-  ctx = null; closePopover(); hideAdd(); addInput.disabled = true;
+  ctx = null; closePopover(); hideAdd(); addInput.disabled = true; $('#boot')?.remove();
   status.textContent = msg; status.className = 'err';
   if (document.activeElement !== formal.el.querySelector('textarea')) formal.set(text, msg); else formal.message(msg);
   $('#left').hidden = !ui.left; $('#right').hidden = true; $('#drawer').hidden = ui.drawer !== 'query';
@@ -517,7 +565,7 @@ function renderRefused(text, res) {
   for (const [id, n] of nodes) if (!order.includes(id)) { n.el.remove(); nodes.delete(id); }
   for (const row of rows) {
     const n = nodeFor(row.id); n.lane = { kind: 'off' }; n.born = false;
-    n.el.className = 'lane row3 refused' + (row.c.off ? ' muted' : ''); n.el.style.height = ''; n.el.tabIndex = -1;
+    n.el.className = 'lane row3 refused' + (row.c.off ? ' muted' : ''); n.el.style.height = ''; n.el.tabIndex = -1; n.note.hidden = true;
     mount(n.head, h('span', { class: 'no' }, row.no), h('span', { class: 'role' }, label(row.c.off ? 'Muted' : row.role), h('span', { class: 'acts' }, row.acts)),
       h('div', { class: 'texts' }, h('div', { class: 'text' + (row.c.type === 'drawing' ? ' shape-line' : '') }, h('span', null, row.id === 'x:g' ? splitText(row.c) : cap(phraseText(row.c))), row.c.type === 'drawing' ? codeLines(row.c) : null)));
     mount(n.svgHost, row.why.map((t) => h('p', { class: 'refusal' }, t))); mount(n.track);
@@ -720,9 +768,11 @@ function renderRight() {
   const lane = sel; const res = lane.r; const rows = lane.rows;
   const base = m.horizons.length ? run(`${HEAD}\nfind ${ANY_CLOSE}\nmeasure close_return(after: [${m.horizons.join(', ')}])`).results[0] : null;
   const defs = (lane.kind === 'where' || lane.kind === 'alt' ? [lane.c] : lane.kind === 'find' ? m.find.items : m.wheres.filter((c) => !c.off)).map(definitionOf).filter(Boolean);
-  const plots = []; const fig = (text, cls = '') => h('span', { class: 'fig ' + cls }, text);
+  const plots = []; const fig = (text, cls = '') => h('span', { class: 'fig ' + cls }, text); const u = unknownOf(lane);
   mount(el,
     h('div', { class: 'sec' }, label(lane.title, 't1'), rows.length ? quiet(`${int(rows.length)} ${rows.length === 1 ? 'close' : 'closes'} →`, () => stepClose(1), 'Inspect them one by one') : note('no closes')),
+    u ? h('section', { class: 'block' }, h('div', { class: 'sec' }, label('Unknown'), note(`${int(u.n)} of ${int(u.of)}`, 'fig')),
+      h('p', { class: 'def' }, `The engine could not say whether this line holds for ${int(u.n)} of the ${int(u.of)} closes that reached it, so they are not in the row. The engine’s reason: ${u.why}.`)) : null,
     res.columns.length ? res.columns.map((col, k) => {
       const s = summarize(rows, k); const b = base.summary[k]; const bf = b.observed ? b.positive / b.observed : null; const ci = wilson(s.k, s.n);
       const rail = h('div', { class: 'rail' }); const dist = h('div', { class: 'dist' });
@@ -819,7 +869,7 @@ function renderDrawer() {
       levels: ev ? [{ price: ev.level, label: 'FROZEN LEVEL', from: R.slotClosingAt(ev.breach) ?? i }] : [], onPick: (slot) => { state.slot = slot; if (!ui.right) ui.right = true; render(); } });
   } else if (ui.drawer === 'query') {
     const copy = h('button', { type: 'button', onclick: async () => { try { await navigator.clipboard.writeText(toText(state.model)); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select the text to copy'; } setTimeout(() => { copy.textContent = 'Copy'; }, 1400); } }, 'Copy');
-    mount(el, head('Query', 'The rows write this text. Editing it rewrites the rows as soon as it checks.', copy), body);
+    mount(el, head('Filang', 'The rows write this text. Editing it rewrites the rows as soon as it checks.', copy), body);
     mount(body, formal.el);
   } else {
     const man = res.manifest;
@@ -883,16 +933,24 @@ function suggestions(q) {
   for (const s of out) if (s.apply) {
     const x = clone(m); s.apply(x); const body = bodyText(x);
     if (s.defer) s.readCount = () => count(body); else s.n = count(body);
+    // a line that would leave nothing is either false everywhere or unable to say: the two read differently
+    if (s.n === 0 && s.tag === 'And') s.unknown = unknownLeft(body);
   }
-  return out.filter((s) => s.mode || s.n !== null);
+  // what would leave nothing goes last, so the first suggestion, the one Enter takes, is one that keeps closes
+  const kept = out.filter((s) => s.mode || s.n !== null);
+  return [...kept.filter((s) => s.n !== 0), ...kept.filter((s) => s.n === 0)];
 }
 const addInput = $('#add'); let addBox = null; let addList = []; let addPick = 0;
 function showAdd() {
   addList = suggestions(addInput.value); addPick = Math.min(addPick, Math.max(0, addList.length - 1));
   if (!addBox) { addBox = h('div', { class: 'pop', role: 'listbox', style: 'max-height:356px' }); document.body.append(addBox); }
+  // an And line can only narrow the answer: when it is empty already, every count below is zero, and the list says why
+  const none = ctx && !ctx.answer.rows.length;
   mount(addBox, h('header', null, label(addInput.value.trim() ? 'Matches' : 'Conditions to add'), label('Closes left')),
-    h('ul', null, addList.length ? addList.map((s, i) => h('li', null, h('button', { type: 'button', class: i === addPick ? 'active' : '', onmousedown: (e) => e.preventDefault(), onclick: () => applyAdd(s) },
-      h('span', null, label(s.tag, 'tag'), cap(s.label)), h('span', { class: 'fig', 'data-count': s.defer ? i : null }, s.mode ? '' : s.defer ? '…' : int(s.n))))) : h('li', { class: 'none' }, 'Nothing matches. Try wick, range, friday, session, trend, quiet, level, or a candle name.')),
+    none ? h('p', { class: 'note' }, 'The question leaves no close now, so every And line below leaves none either. Mute or remove the line that empties it first.') : null,
+    h('ul', null, addList.length ? addList.map((s, i) => h('li', null, h('button', { type: 'button', class: (i === addPick ? 'active' : '') + (s.n === 0 ? ' zero' : ''), onmousedown: (e) => e.preventDefault(), onclick: () => applyAdd(s),
+      title: s.unknown ? `Leaves no close: the engine cannot say for ${int(s.unknown.n)} of them. ${cap(s.unknown.why)}.` : s.n === 0 ? 'Leaves no close: false for every close that reaches it' : null },
+      h('span', null, label(s.tag, 'tag'), cap(s.label)), h('span', { class: 'fig' + (s.unknown ? ' unk' : ''), 'data-count': s.defer ? i : null }, s.mode ? '' : s.defer ? '…' : s.unknown ? `? ${int(s.unknown.n)} unknown` : int(s.n))))) : h('li', { class: 'none' }, 'Nothing matches. Try wick, range, friday, session, trend, quiet, level, or a candle name.')),
     h('footer', null, 'Type to search. Add numbers to set values: wick 60%, quiet 48h. Begin with “or” for another pattern.'));
   const list = addList;
   if (list.some(s => s.readCount)) requestAnimationFrame(() => setTimeout(() => {
@@ -910,14 +968,16 @@ function hideAdd() { if (addBox) { addBox.remove(); addBox = null; } }
 function applyAdd(s) {
   addInput.value = ''; addPick = 0; hideAdd();
   if (s.mode) { s.mode(); state.lane = null; render(); } else { state.lane = null; state.slot = null; state.preset = null; if (state.rows !== 'ledger' && s.tag !== 'Measure') state.rows = 'ledger'; update(s.apply); }
-  addInput.focus(); showAdd();
+  // the keys stay in the field for the next line, but the list waits for them: open now, it would cover the row just added
+  addInput.focus();
 }
 addInput.addEventListener('focus', showAdd);
 addInput.addEventListener('input', () => { addPick = 0; showAdd(); });
 addInput.addEventListener('blur', hideAdd);
 addInput.addEventListener('keydown', (e) => {
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !addBox) { e.preventDefault(); showAdd(); return; }
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (addList.length) { addPick = (addPick + (e.key === 'ArrowDown' ? 1 : -1) + addList.length) % addList.length; showAdd(); addBox.querySelector('.active')?.scrollIntoView({ block: 'nearest' }); } }
-  if (e.key === 'Enter' && addList[addPick]) { e.preventDefault(); applyAdd(addList[addPick]); }
+  if (e.key === 'Enter' && addBox && addList[addPick]) { e.preventDefault(); applyAdd(addList[addPick]); }
   if (e.key === 'Escape') { addInput.value = ''; addInput.blur(); }
 });
 
@@ -930,11 +990,13 @@ function togglePanel(p, force) {
   const el = p === 'left' || p === 'right' ? $('#' + p) : $('#drawer');
   if (!el.hidden && !document.hidden) { el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); el.addEventListener('animationend', () => el.classList.remove('enter'), { once: true }); }
 }
-for (const b of document.querySelectorAll('.toggles button')) b.addEventListener('click', () => togglePanel(b.dataset.panel));
+for (const b of document.querySelectorAll('button[data-panel]')) b.addEventListener('click', () => togglePanel(b.dataset.panel));
 document.addEventListener('keydown', (e) => {
-  if (e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
-  const map = { p: 'left', i: 'right', c: 'cases', t: 'tape', q: 'query', l: 'limen' };
-  if (map[e.key] && (ctx || e.key === 'p' || e.key === 'q')) { e.preventDefault(); togglePanel(map[e.key]); }
+  // nothing to toggle or step through until the first question is open
+  if (!state.model || e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  // F names the Filang drawer on its tab; Q, its letter before, still opens it
+  const map = { p: 'left', i: 'right', c: 'cases', t: 'tape', f: 'query', q: 'query', l: 'limen' };
+  if (map[e.key] && (ctx || e.key === 'p' || map[e.key] === 'query')) { e.preventDefault(); togglePanel(map[e.key]); }
   if (e.key === '/') { e.preventDefault(); addInput.focus(); }
   if ((e.key === ',' || e.key === '.') && ctx && (state.slot !== null || ctx.sel.rows.length)) { e.preventDefault(); if (!ui.right) ui.right = true; stepClose(e.key === '.' ? 1 : -1); }
   if (e.key === 'Escape' && state.slot !== null && !document.querySelector('.pop')) { state.slot = null; if (state.lane?.startsWith('case:')) state.lane = null; render(); }
@@ -969,7 +1031,11 @@ function asked() {
   if (hash.get('dr')) try { attach(given, decodeDrawing(hash.get('dr'))); } catch { /* the text still asks the question; only the drawing is lost */ }
   return { model: given, preset, lanes: hash.get('ln') };
 }
-const fail = (what) => (e) => { console.error(e); $('#status').textContent = `${what}: ${e.message}`; $('#status').className = 'err'; };
+const fail = (what) => (e) => {
+  console.error(e); $('#status').textContent = `${what}: ${e.message}`; $('#status').className = 'err';
+  // before the first answer the canvas is where the eye is: the failure is said there too
+  if ($('#boot')) { $('#boot').classList.add('err'); $('#boot .label').textContent = 'Stopped'; booting(`${what}: ${e.message}. Reload the page to try again.`); }
+};
 /** Ask the same question of another window. The question stays; what was selected on the old bars does not. */
 async function openWindow(key) {
   if (state.loading) return;
@@ -979,26 +1045,36 @@ async function openWindow(key) {
     if (state.asked || ui.window !== key) { ui.window = key; persist(); state.asked = null; state.notice = ''; render(); }
     return;
   }
+  // The rows on screen are the old window's until the new one is in: they are dimmed, and the canvas says what it waits for.
+  const name = key === PINNED ? 'the pinned recording' : state.source.windows.find((w) => w.key === key)?.name || key;
   state.loading = true; $('#status').className = ''; $('#status').textContent = 'Reading the window…'; renderBars();
+  busy(`Reading ${name} from the cube · the rows still show the previous window`);
   try {
     await load(key);
     ui.window = key; persist(); state.asked = null;
     Object.assign(state, { candidate: 0, lane: null, slot: null, page: 0, casePage: 0, caseKey: '', notice: '' });
+    busy(`Asking the question of ${int(rec().presentCount)} closes…`); await paint();
   } catch (e) { state.notice = `That window could not be read: ${e.message}`; }
-  state.loading = false; render();
+  state.loading = false; busy(null); render();
 }
 /** The bars to open on: the window in the address, else the one last used, else the server's default. Failing that, the pinned recording. */
 async function firstLoad() {
   state.source = await sources();
   const known = (key) => key === PINNED || state.source.windows.some((w) => w.key === key) || /^since:\d{4}-\d{2}-\d{2}$/.test(key || '');
   const want = state.source.cube ? [new URLSearchParams(location.hash.slice(1)).get('w'), ui.window, state.source.default].find(known) : PINNED;
+  const name = want === PINNED ? 'the pinned recording' : state.source.windows.find((w) => w.key === want)?.name || want;
+  booting(`Reading ${name}${want === PINNED ? '' : ' from the cube'}…`);
   try { await load(want); } catch (e) {
     if (want === PINNED) throw e;
+    booting(`The cube could not be read; reading the pinned recording…`);
     await load(PINNED); state.asked = want;
     state.notice = `The cube could not be read (${e.message}); showing the pinned recording`;
   }
 }
+booting('Reading what the server holds…');
 firstLoad().then(async () => {
+  // the first answer is worked out on the page's own thread: the message goes up before it starts
+  booting(`Asking the question of ${int(rec().presentCount)} closes…`); await paint();
   try {
     const a = asked();
     // A question that reads a dimension needs the cube's bars. When the link names no window and the bench was last

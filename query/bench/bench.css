@@ -50,10 +50,27 @@ body.bench {
 .readout .sep { width: 1px; align-self: stretch; background: var(--line-2); margin: 0 6px; }
 .readout .sub { color: var(--t2); font-size: 12px; }
 .readout .sub b { font-size: 12px; color: var(--t1); letter-spacing: 0; }
-.toggles { padding-right: 7px; }
+.readout .sub.unk { color: var(--t1); }
+.readout { transition: opacity var(--t) var(--ease); }
+.readout.stale { opacity: .45; }
 
-/* encoding bar */
-.encbar { display: flex; align-items: stretch; min-width: 0; padding-left: 7px; border-bottom: 1px solid var(--line-2); }
+/* a panel's switch sits on the edge the panel opens from, and names its key */
+.bench kbd { font: 500 10.5px/1 var(--mono); letter-spacing: 0; color: var(--t3); border: 1px solid var(--line); padding: 2px 4px 1px; text-transform: none; }
+.encrow { display: flex; align-items: stretch; min-width: 0; border-bottom: 1px solid var(--line-2); }
+.edge { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px 0 18px; color: var(--t3); white-space: nowrap; border-right: 1px solid var(--line);
+  font: 500 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; transition: color var(--t-short) var(--ease), background-color var(--t-short) var(--ease); }
+.edge.right { padding: 0 18px 0 14px; border-right: 0; border-left: 1px solid var(--line); }
+.edge:hover:not(:disabled) { color: var(--t1); background: var(--wash); }
+.edge[aria-pressed='true'] { color: var(--t1); }
+.side-icon { display: block; }
+.side-icon rect { fill: none; stroke: currentColor; stroke-width: 1; }
+.side-icon rect.fill { fill: transparent; transition: fill var(--t-short) var(--ease); }
+.edge[aria-pressed='true'] .side-icon rect.fill { fill: currentColor; }
+
+/* encoding bar: it never runs under the edge switches; what does not fit scrolls */
+.encbar { display: flex; flex: 1; align-items: stretch; min-width: 0; padding-left: 7px; overflow-x: auto; scrollbar-width: none; }
+.encbar::-webkit-scrollbar { display: none; }
+@media (max-width: 1440px) { .edge .label-text { display: none; } .edge { padding-inline: 12px; } }
 .enc { display: inline-flex; align-items: center; gap: 8px; padding: 0 11px; white-space: nowrap; transition: background-color var(--t-short) var(--ease); }
 .enc .val { font-size: 12.5px; font-weight: 500; }
 .enc i { font-style: normal; color: var(--t3); font-size: 8px; transform: translateY(1px); transition: color var(--t-short) var(--ease); }
@@ -79,10 +96,31 @@ body.bench {
 @keyframes side-in-right { from { opacity: 0; transform: translateX(8px); } }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 @keyframes pop { from { opacity: 0; transform: translateY(-3px); } }
-.main { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; min-width: 0; }
+.main { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; min-height: 0; min-width: 0; }
+
+/* the drawer's tabs, on the drawer's edge: open or closed, they stay where the drawer opens */
+.dock { display: flex; align-items: stretch; height: 30px; padding-left: 7px; border-top: 1px solid var(--line-2); }
+.dock button { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 11px; color: var(--t3); white-space: nowrap;
+  font: 500 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; transition: color var(--t-short) var(--ease), background-color var(--t-short) var(--ease); }
+.dock button::after { content: ''; position: absolute; left: 11px; right: 11px; bottom: -1px; height: 1px; background: var(--t1); transform: scaleX(0); transition: transform var(--t) var(--ease); }
+.dock button:hover:not(:disabled) { color: var(--t1); background: var(--wash); }
+.dock button[aria-pressed='true'] { color: var(--t1); }
+.dock button[aria-pressed='true']::after { transform: scaleX(1); }
+/* the open tab names the drawer: its header keeps the title for assistive reading only */
+.drawer > header .title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* canvas frame */
-.canvas { display: grid; grid-template-rows: 30px minmax(0, 1fr) 62px; min-height: 0; min-width: 0; }
+.canvas { position: relative; display: grid; grid-template-rows: 30px minmax(0, 1fr) 62px; min-height: 0; min-width: 0; }
+/* before the first answer, and while the canvas shows an answer that is being replaced */
+.boot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; color: var(--t2); font-size: 13px; }
+.boot.err { color: var(--t1); }
+.boot.err .label { color: var(--t1); }
+.boot:not(.err) .label::after { content: ''; display: block; width: 72px; height: 1px; margin: 10px auto 0; background: linear-gradient(90deg, transparent, var(--t1), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: sweep 1.4s var(--ease) infinite; }
+@keyframes sweep { from { background-position: -100% 0; } to { background-position: 200% 0; } }
+.busy { position: absolute; z-index: 8; top: 40px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 40px); padding: 7px 14px; background: var(--raised); border: 1px solid var(--line-2);
+  box-shadow: 0 10px 28px rgba(7, 12, 24, .42); color: var(--t1); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.canvas #lanes, .canvas .band, .canvas .axis { transition: opacity var(--t) var(--ease); }
+.canvas.stale #lanes, .canvas.stale .band, .canvas.stale .axis { opacity: .4; }
 .canvas.with-dimensions { grid-template-rows: 30px minmax(0, 1fr) auto 62px; }
 .row3 { display: grid; grid-template-columns: var(--head) minmax(0, 1fr) var(--track); min-width: 0; }
 .axis { border-bottom: 1px solid var(--line); align-items: center; }
@@ -172,6 +210,14 @@ body.bench {
 .lane.slim .lane-head > .no { width: 14px; }
 .lane.slim .text { color: var(--t3); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: line-through; text-decoration-color: var(--line-2); }
 .lane.slim .quiet:first-of-type { margin-left: auto; }
+/* closes a line cannot decide: said on the line, and where an empty row's candles would be */
+.lane:not(.pinned) { position: relative; }
+.lane-head p.unknown { margin: 6px 0 0; color: var(--t1); font: 400 11.5px/1.45 var(--mono); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.lane-head p.unknown b { font: 500 11px/1 var(--mono); border: 1px solid var(--line-2); padding: 1px 4px; margin-right: 6px; }
+.lane.compact .lane-head p.unknown { -webkit-line-clamp: 1; }
+.lane-note { position: absolute; top: 0; bottom: 0; left: var(--head); right: var(--track); display: flex; align-items: center; justify-content: center; margin: 0; padding: 10px 24px; pointer-events: none; }
+.lane-note span { max-width: 72ch; padding: 6px 12px; background: var(--navy); border: 1px solid var(--line); text-align: center; color: var(--t1); font: 400 12px/1.5 var(--mono); text-wrap: pretty; overflow-wrap: anywhere; }
+.lane-note[hidden] { display: none; }
 .cursor { position: absolute; top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, #F7F6F2 34%, transparent); pointer-events: none; z-index: 4; opacity: 0; transition: opacity var(--t-short) var(--ease); }
 .tip { position: absolute; z-index: 6; pointer-events: none; background: var(--raised); border: 1px solid var(--line-2); padding: 7px 10px 6px; white-space: nowrap; opacity: 0;
   transition: opacity var(--t-short) var(--ease); box-shadow: 0 10px 28px rgba(7, 12, 24, .42); }
@@ -386,6 +432,9 @@ svg.moving .b-up, svg.moving .b-down, svg.moving .b-bar, svg.moving .b-horizon, 
 .bench .pop li button small { color: var(--t2); font-size: 11.5px; margin-top: 1px; }
 .bench .pop li button .tag { color: var(--t3); margin-right: 10px; }
 .bench .pop li button:disabled { opacity: .4; }
+/* a line that would leave nothing is still offered, after the rest and quieter; one that cannot say reads as unknown, not as zero */
+.bench .pop li button.zero > span:first-child { color: var(--t2); }
+.bench .pop li button .fig.unk { color: var(--t1); white-space: nowrap; }
 .bench .pop li.none { padding: 10px 14px; color: var(--t2); font-size: 12.5px; }
 .bench .pop footer { padding: 8px 14px; color: var(--t3); border-top: 1px solid var(--line); font: 400 11.5px var(--sans); letter-spacing: 0; text-transform: none; }
 
@@ -411,8 +460,10 @@ svg.moving .b-up, svg.moving .b-down, svg.moving .b-bar, svg.moving .b-horizon, 
   .work { position: relative; }
   .side { position: absolute; z-index: 20; top: 0; bottom: 0; left: 0; background: var(--navy); }
   .side.right { left: auto; right: 0; }
-  .encbar, .topbar { overflow-x: auto; scrollbar-width: none; }
+  .encbar, .topbar, .dock { overflow-x: auto; scrollbar-width: none; }
   .readout .sub, .tabs.aspects a { display: none; }
+  /* the edge switches keep their place beside the scrolling bar; their names give way to the icon and the key */
+  .edge { padding-inline: 12px; } .edge .label-text { display: none; }
   .lane-head .text { font-size: 13px; } .lane.pinned .lane-head .text { font-size: 14.5px; }
   .lane-head > .role { flex-wrap: wrap; row-gap: 4px; }
   .lane-head .acts { display: none; flex-basis: 100%; margin-left: 0; }
