@@ -38,7 +38,7 @@ jobs:
       - name: The bench and its server parse
         run: |
           set -euo pipefail
-          for file in query/serve.mjs query/cube.mjs query/bench/*.js query/shared/*.js; do node --check "$file"; done
+          for file in query/serve.mjs query/cube.mjs query/calendar.mjs query/bench/*.js query/shared/*.js; do node --check "$file"; done
       - name: Validate deploy configuration
         run: |
           test -n "$DEPLOY_HOST"
@@ -144,4 +144,16 @@ jobs:
             echo "cube bars: $(printf '%s' "$answer" | grep -o '"row_count":[0-9]*') $(printf '%s' "$answer" | grep -o '"through":"[^"]*"') $(printf '%s' "$answer" | grep -o '"canonical_through":[^,]*')"
           else
             echo "::warning::Query is up but is not getting bars from the cube: $(printf '%s' "$answer" | head -c 300)"
+          fi
+      - name: Say whether field-data-api's NYSE calendar is reaching it
+        run: |
+          set -euo pipefail
+          # Without it the cube windows are asked with the engine's pinned table, whose days lie outside them, so their
+          # session conditions are unknown. That does not fail the deploy either; it is said here.
+          # shellcheck disable=SC2029
+          answer=$(ssh "$DEPLOY_USER@$DEPLOY_HOST" "curl -s --max-time 60 'http://127.0.0.1:$QUERY_PORT/calendar/nyse' | head -c 4000" || true)
+          if printf '%s' "$answer" | grep -q '"source":"field-data-api"'; then
+            echo "NYSE calendar: $(printf '%s' "$answer" | grep -o '"table":"[^"]*"') $(printf '%s' "$answer" | grep -o '"scope":{[^}]*}') $(printf '%s' "$answer" | grep -o '"sessions":[0-9]*')"
+          else
+            echo "::warning::Query is up but is not getting its NYSE calendar from field-data-api: $(printf '%s' "$answer" | head -c 300)"
           fi

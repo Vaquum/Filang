@@ -4,11 +4,15 @@
 // 127.0.0.1 only, behind the host's Caddy and the Portal login.
 // With CUBE_URL set to Cube's bridge it also serves the cube's bars for Cube's time windows (/bars); without it,
 // or when the bridge cannot answer, the bench reads the pinned recording.
+// With FIELD_DATA_URL set to Vaquum's field-data-api, the service Cube reads its calendar from, it also serves the
+// nyse_regular table the cube windows are asked with (/calendar/nyse), built from that service's NYSE closures and
+// early closes. Without it, or when the service cannot answer, cube windows use the engine's pinned table.
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cubeSource, CubeError, INTERVALS, WINDOWS } from './cube.mjs';
+import { fieldDataCalendar, CalendarError } from './calendar.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 // The pinned recording and the provenance that names its digest. The recording is built by study/prepare_recording.py.
@@ -20,6 +24,7 @@ const engineAssets = new Set(['index.mjs', 'worker-client.mjs', 'worker.mjs', 'f
 const host = process.env.HOST || '127.0.0.1';
 const port = Number(process.env.PORT || process.argv[2] || 8790);
 const cube = process.env.CUBE_URL ? cubeSource({ url: process.env.CUBE_URL }) : null;
+const fieldData = process.env.FIELD_DATA_URL ? fieldDataCalendar({ url: process.env.FIELD_DATA_URL, token: process.env.FIELD_DATA_API_TOKEN || null }) : null;
 // The window the bench opens on when the cube answers: about as many 15m bars as the pinned recording holds.
 const DEFAULT_WINDOW = '180d';
 
@@ -57,8 +62,16 @@ const server = createServer(async (req, res) => {
       // The answer names the service: a deploy must be able to tell Query from whatever else holds a port.
       return res.end(JSON.stringify(gone.length ? { service: 'filang-query', ok: false, missing: gone.length } : { service: 'filang-query', ok: true }));
     }
+    const json = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(req.method === 'HEAD' ? undefined : JSON.stringify(body)); };
+    if (path === 'calendar/nyse') {
+      if (!fieldData) return json(404, { error: 'this server reads no field-data-api calendar' });
+      try { return json(200, await fieldData.nyse()); }
+      catch (e) {
+        if (!(e instanceof CalendarError)) throw e;
+        return json(502, { error: e.message });
+      }
+    }
     if (path === 'bars/windows' || path === 'bars') {
-      const json = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(req.method === 'HEAD' ? undefined : JSON.stringify(body)); };
       // What the bench may ask for. Without a cube there is the pinned recording only.
       if (path === 'bars/windows') return json(200, { cube: Boolean(cube), default: DEFAULT_WINDOW, intervals: Object.keys(INTERVALS), windows: cube ? WINDOWS.map(({ key, name }) => ({ key, name })) : [] });
       if (!cube) return json(404, { error: 'this server has no cube to read; the bench uses its pinned recording' });
@@ -87,5 +100,5 @@ for (const sig of ['SIGTERM', 'SIGINT']) process.once(sig, () => server.close(()
 server.listen(port, host, async () => {
   const gone = await missing();
   // The port it bound, which is the port asked for unless that was 0: a check that starts its own server asks for any.
-  console.log(`Filang query bench on http://${host}:${server.address().port}/ · engine ${ENGINE} · bars ${cube ? `cube at ${process.env.CUBE_URL}` : 'pinned recording'}${gone.length ? ` · MISSING ${gone.join(', ')}` : ''}`);
+  console.log(`Filang query bench on http://${host}:${server.address().port}/ · engine ${ENGINE} · bars ${cube ? `cube at ${process.env.CUBE_URL}` : 'pinned recording'} · calendar ${fieldData ? `field-data-api at ${process.env.FIELD_DATA_URL}` : 'pinned table'}${gone.length ? ` · MISSING ${gone.join(', ')}` : ''}`);
 });

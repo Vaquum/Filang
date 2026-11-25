@@ -3,6 +3,7 @@
 !query/index.html
 !query/serve.mjs
 !query/cube.mjs
+!query/calendar.mjs
 !query/bench
 !query/shared
 !study/data-provenance.json

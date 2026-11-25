@@ -831,12 +831,20 @@ function renderDrawer() {
         h('dt', null, 'runs'), h('dd', null, man.candidates.map((c) => c.label).join(' · ')),
         h('dt', null, 'source'), h('dd', null, `${man.pins.source.instrument} ${man.pins.source.bar} · ${int(man.pins.source.rows)} rows · sha256 ${man.pins.source.csv_sha256.slice(0, 16)}… ${man.pins.source.verified ? 'verified' : 'unverified'}`),
         h('dt', null, 'calendar'), h('dd', null, man.pins.calendars.map((c) => `${c.id} · sha256 ${c.sha256.slice(0, 16)}…`).join(' · ')),
+        h('dt', null, 'calendar source'), h('dd', null, calendarSource(env().calendar)),
         h('dt', null, 'definitions'), h('dd', null, man.pins.definitions.join(' · ')),
         h('dt', null, 'engine'), h('dd', null, `${man.engine.name} ${man.engine.version} · ${man.arithmetic}`))),
       h('div', null, label('Still to declare before it is a strategy'), h('ul', null,
         ['Entry: the first eligible open strictly after the deciding close.', 'Exit: stop, target and expiry, with a declared intrabar policy.', 'Costs: fees and slippage on its own ledger.', 'Holdout: one chronological holdout, sealed before the search.',
           'This bench measures observed close-to-close returns. It is a study, not a backtest.'].map((t) => h('li', null, t))))));
   }
+}
+
+/** Where the run's nyse_regular table came from, as the drawer states it. */
+function calendarSource(cal) {
+  if (!cal || cal.pinned) return `the engine’s pinned table${cal?.error ? ` · field-data-api not read: ${cal.error}` : ''}`;
+  const p = cal.provenance;
+  return `field-data-api snapshot ${p.snapshot_id.slice(0, 12)}… · calendar revision ${p.revision_id.slice(0, 12)}… · NYSE closures and early closes for New York dates ${p.scope.start} … ${p.scope.end} · ${int(p.sessions)} sessions`;
 }
 
 // ---------------------------------------------------------------- add a condition
