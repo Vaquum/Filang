@@ -85,6 +85,29 @@ try {
   composer.searchParams.set('drawing', encodeDrawing(drawing));
   composer.searchParams.set('g1', drawingG1(drawing));
   composer.searchParams.set('question', 'on BTCUSDT 15m\nfind hammer');
+  await page.addInitScript(() => {
+    const send = Worker.prototype.postMessage;
+    Worker.prototype.postMessage = function(message, ...rest) {
+      if (message?.type === 'query') (window.__composerQueries ??= []).push(message.q.bars.length);
+      return send.call(this, message, ...rest);
+    };
+  });
+  await page.goto(composer.href);
+  await page.waitForFunction(() => document.querySelector('#code').textContent.split(';').length === 2);
+  const canvas = page.locator('#cv'), box = await canvas.boundingBox();
+  let found = false;
+  for (let x = 8; x < box.width - 8 && !found; x += 8) {
+    await page.mouse.move(box.x + x, box.y + box.height / 2);
+    found = await canvas.evaluate(node => ['grab', 'ns-resize'].includes(node.style.cursor));
+  }
+  assert.ok(found, 'a drawable bar must be reachable');
+  await page.mouse.down();
+  assert.equal(await canvas.evaluate(node => node.hasPointerCapture(1)), true);
+  await page.keyboard.press('+'); await page.mouse.up();
+  assert.deepEqual(errors, []);
+  await page.waitForFunction(() => document.querySelector('#code').textContent.split(';').length === 3
+    && window.__composerQueries?.includes(3));
+  // Restore the imported two-bar example for the existing transfer checks.
   await page.goto(composer.href);
   await page.getByRole('button', { name: 'Use pins on fixed candles ↗' }).click();
   await count(4828);
