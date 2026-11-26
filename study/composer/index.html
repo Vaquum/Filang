@@ -699,6 +699,7 @@ const Ops = {
   flip(i) { const b = S.bars[i]; if (i > 0 || !S.colored || b.v[1] === b.v[2]) return; pushHist(); setBars(chainBars(flipParams(chainParams(S.bars)))); Stage.fit(); refresh(); },
   add() {
     if (S.bars.length >= MAXN) return;
+    Stage.up();
     pushHist();
     // the new bar carries on the way the last one went, from where it closed
     const last = S.bars[S.bars.length - 1], span = Stage.view.thi - Stage.view.tlo;
