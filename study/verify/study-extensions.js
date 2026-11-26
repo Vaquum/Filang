@@ -39,6 +39,11 @@ for (const args of [
     conformance: [{ anchor, args, expect: 'false' }] })]), /invalid conformance argument/);
   assert.equal(bundle.registry.get('test_injection'), null);
 }
+// Literal comments must not hide later arguments and substitute their defaults.
+assert.throws(() => installSaved(bundle, [source({ ...orig, id: 'test_comment', version: 1,
+  conformance: [{ anchor: '2025-03-28T19:30:00Z',
+    args: { last: '30m --', width_max: '0\n' }, expect: 'false' }] })]), /width_max: 0 must be greater than 0%/);
+assert.equal(bundle.registry.get('test_comment'), null);
 assert.equal(installSaved(bundle, [source({ ...orig, id: 'test_literal', version: 1,
   conformance: [{ ...orig.conformance[1], args: { width_max: 0.06 } }] })])[0].ok, true);
 const child = source({ ...orig, id: 'test_contained', version: 2 });
