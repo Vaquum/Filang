@@ -401,6 +401,7 @@ function renderCompare(res) {
   const head = h('div', { class: 'cmp-head' }, h('h3', { id: 'cmp-h' }, 'Before / after'), h('label', { class: 'inline' }, 'Basis ', sel));
   if (!b) {
     S.diff = null;
+    if (S.rowView === 'diff') { S.rowView = 'matches'; S.page = 0; }
     mount(el.compare, head, h('p', { class: 'muted' }, 'No basis yet: edit the question and run again, or run a sweep to compare its candidates.'));
     return;
   }
@@ -510,7 +511,7 @@ function renderRows(res) {
       h('td', { class: 'mono' }, raw.open), h('td', { class: 'mono' }, raw.high), h('td', { class: 'mono' }, raw.low), h('td', { class: 'mono' }, raw.close),
       rr.clauses.map((c, k) => h('td', null, row.results[k] ? kleeneBadge(row.results[k].v, `${c.text}: ${KNAME[row.results[k].v]} — ${row.results[k].why}`) : '—')),
       res.group ? h('td', { title: row.group ? row.group.why : '' }, row.group ? row.group.key : '—') : null,
-      res.columns.map((c, k) => { const o = row.out[k]; return h('td', { class: `mono ${o.status !== 'observed' ? 'muted' : o.value > 0 ? 'pos' : o.value < 0 ? 'neg' : ''}`, title: o.why }, o.status === 'observed' ? pctText(o.value) : o.status); }),
+      res.columns.map((c) => { const o = row.out[rr.columns.findIndex((v) => v.key === c.key)]; return o ? h('td', { class: `mono ${o.status !== 'observed' ? 'muted' : o.value > 0 ? 'pos' : o.value < 0 ? 'neg' : ''}`, title: o.why }, o.status === 'observed' ? pctText(o.value) : o.status) : h('td', { class: 'mono muted' }, '—'); }),
       h('td', { class: 'small' }, st ? h('span', { class: `pill ${st}` }, st) : row.pass ? 'match' : `excluded by where #${row.failAt + 1} (${KNAME[row.results[row.failAt].v]})`));
   });
   const pager = pages > 1 ? h('div', { class: 'pager' },
