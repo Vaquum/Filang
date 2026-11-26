@@ -3,6 +3,10 @@
 // it does not replace a look at the page in a real browser. Usage: node verify/ui-smoke.js
 import fs from 'node:fs';
 import { inputPath } from '../native/inputs.mjs';
+import { loadEnvironment } from './node-env.js';
+import { analyze } from '../src/check.js';
+import { renderControls } from '../src/study-controls.js';
+import { setupBuilder } from '../src/study-builder.js';
 
 // ---------------------------------------------------------------- tiny DOM
 const byId = new Map();
@@ -22,6 +26,11 @@ class Element extends Node {
   constructor(tag) { super(); this.tagName = tag.toUpperCase(); this.attrs = {}; this.listeners = {}; this.style = {}; this.dataset = {}; this.hidden = false; this.open = false; this.tabIndex = 0; }
   get className() { return this.attrs.class || ''; }
   set className(v) { this.attrs.class = v; }
+  get classList() { return {
+    contains: (name) => this.className.split(/\s+/).includes(name),
+    add: (name) => { if (!this.classList.contains(name)) this.className = (this.className + ' ' + name).trim(); },
+    remove: (name) => { this.className = this.className.split(/\s+/).filter((c) => c !== name).join(' '); },
+  }; }
   setAttribute(k, v) { this.attrs[k] = String(v); if (k === 'id') byId.set(String(v), this); if (k === 'value') this._value = undefined; }
   getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
   removeAttribute(k) { delete this.attrs[k]; }
@@ -30,6 +39,7 @@ class Element extends Node {
     const ev = { type, target: this, key: extra.key, ctrlKey: !!extra.ctrlKey, metaKey: false, clientX: extra.clientX || 0, preventDefault() {}, ...extra };
     for (const f of this.listeners[type] || []) f(ev);
   }
+  dispatchEvent(ev) { this.dispatch(ev.type); return true; }
   get children() { return this.childNodes.filter((c) => c instanceof Element); }
   get value() {
     if (this.tagName === 'SELECT') { const opts = this.querySelectorAll('option'); const s = opts.find((o) => o._selected === true || (o._selected === undefined && 'selected' in o.attrs)); return (s || opts[0] || { value: '' }).value; }
@@ -296,6 +306,111 @@ await step('basis selector and candidate tabs', () => {
   const b = doc.getElementById('basis-select');
   b.value = 'none'; b.dispatch('change');
   expect(text('compare').includes('No basis yet'), 'no comparison');
+});
+
+await step('removed rows align returns with added, replaced and reordered horizon headers', () => {
+  const run = (days, horizons) => {
+    $('query').value = 'on BTCUSDT 15m\nfind "Wick rejection"\nwhere weekday(nyse_regular) = ' + days +
+      '\nmeasure close_return(after: ' + (horizons.length === 1 ? horizons[0] : '[' + horizons.join(', ') + ']') + ')';
+    $('query').dispatch('input');
+    $('run').dispatch('click');
+    expect(text('runstate').includes('Showing run'), text('diag'));
+  };
+  for (const [before, after] of [
+    [['1h'], ['1h', '4h']],
+    [['1h'], ['4h']],
+    [['1h', '4h'], ['4h', '1h']],
+  ]) {
+    run('fri', before);
+    const basis = new Map(all($('rows'), 'tbody')[0].children.map((row) => {
+      const cells = all(row, 'td');
+      const returns = cells.slice(-before.length - 1, -1);
+      return [cells[0].textContent, new Map(before.map((h, k) => [h, returns[k].textContent]))];
+    }));
+    run('mon', after);
+    button($('rows'), 'Changes vs basis').dispatch('click');
+    expect(all($('rows'), 'th').slice(-after.length - 1, -1).map((c) => c.textContent).join(',') === after.map((h) => 'r ' + h).join(','), 'current horizon headers');
+    const removed = all($('rows'), 'tr.st-removed');
+    expect(removed.length > 0, 'removed basis rows are visible');
+    for (const row of removed) {
+      const cells = all(row, 'td');
+      const saved = basis.get(cells[0].textContent);
+      expect(saved, 'removed row was recorded in the basis table');
+      const returns = cells.slice(-after.length - 1, -1);
+      after.forEach((h, k) => expect(returns[k].textContent === (saved.get(h) ?? '—'), `${cells[0].textContent}: return ${h} aligned with its own horizon`));
+    }
+  }
+});
+
+await step('clearing comparison resets a later Changes page and preserves Matches and All events', () => {
+  button($('rows'), 'next').dispatch('click');
+  expect(text('rows').includes('page 2 of'), 'later Changes page');
+  const basis = (value) => { const select = $('basis-select'); select.value = value; select.dispatch('change'); };
+  basis('none');
+  expect(button($('rows'), 'Matches').getAttribute('aria-checked') === 'true', 'Matches selected after clearing Changes');
+  const diff = button($('rows'), 'Changes vs basis');
+  expect(diff.disabled && diff.getAttribute('aria-checked') === 'false', 'Changes disabled and unselected');
+  expect(text('rows').includes('page 1 of'), 'Matches starts on the first page');
+  for (const view of ['Matches', 'All events']) {
+    basis('auto');
+    button($('rows'), view).dispatch('click');
+    button($('rows'), 'next').dispatch('click');
+    basis('none');
+    expect(button($('rows'), view).getAttribute('aria-checked') === 'true', view + ' selection preserved');
+    expect(text('rows').includes('page 2 of'), view + ' page preserved');
+  }
+});
+
+const E = loadEnvironment();
+await step('Adjust applies suggested scalar, vector and sweep horizons as standalone values', () => {
+  const host = mk('div', 'builder');
+  const dialog = mk('dialog', 'dialog');
+  const state = { env: E, analysis: analyze('on BTCUSDT 15m\nfind channel_breakout(over: 18h)\nmeasure close_return(after: 4h)', E.env) };
+  let edited = null;
+  const builder = setupBuilder(host, {
+    state,
+    edit: (text) => { edited = text; return true; },
+    openDialog: (...nodes) => { dialog.replaceChildren(...nodes); dialog.showModal(); },
+    closeDialog: () => dialog.close(),
+    getComposerURL: () => '/composer/',
+  });
+  builder.render();
+  for (const value of ['1h', '[1h, 4h]', '{1h | 4h}']) {
+    edited = null;
+    const outcome = all(host, 'button').find((b) => b.getAttribute('aria-label') === 'Change outcome Close return');
+    button(outcome.parentNode, 'Adjust').dispatch('click');
+    const pick = all(dialog, '.param-picks')[0].querySelectorAll('button').find((b) => b.textContent === value);
+    expect(pick, 'standalone suggestion ' + value);
+    pick.dispatch('click');
+    expect(all(dialog, 'input.arg-input')[0].value === value, 'suggestion fills the argument');
+    all(dialog, 'form')[0].dispatch('submit');
+    expect(edited?.endsWith('measure close_return(after: ' + value + ')'), 'suggestion applied: ' + dialog.textContent);
+    expect(!dialog.open && analyze(edited, E.env).ok, 'valid query applied and dialog closed');
+  }
+});
+
+await step('trend shortcut preserves weekday grouping by leaving mixed queries to the clause builder', () => {
+  const host = mk('div', 'question-controls');
+  let edited = null;
+  const render = (clauses) => {
+    edited = null;
+    const analysis = analyze('on BTCUSDT 15m\nfind channel_breakout(over: 18h)\n' + clauses, E.env);
+    expect(analysis.ok, 'valid controls query');
+    renderControls(host, { analysis, env: E, candidate: 0, source: { anchor: null }, composerLink: '/composer/', edit: (text) => { edited = text; } });
+    return all(host, 'select').find((s) => s.getAttribute('aria-label') === '4h bar direction');
+  };
+  expect(!render('where completed_trend(frame: 4h) = up\ngroup by weekday(nyse_regular)'), 'no shortcut for a weekday group with a trend filter');
+  expect(host.textContent.includes('completed_trend(frame: 4h) = up') && host.textContent.includes('Group by weekday(nyse_regular)'), 'both clauses remain visible');
+  expect(edited === null, 'rendering keeps the mixed query intact');
+  for (const [clause, value, expected] of [
+    ['group by completed_trend(frame: 4h)', 'down', 'where completed_trend(frame: 4h) = down'],
+    ['where completed_trend(frame: 4h) = up', 'group', 'group by completed_trend(frame: 4h)'],
+  ]) {
+    const shortcut = render(clause);
+    expect(shortcut, 'shortcut remains available for ' + clause);
+    shortcut.value = value; shortcut.dispatch('change');
+    expect(edited?.endsWith(expected) && analyze(edited, E.env).ok, 'shortcut still applies a valid trend change');
+  }
 });
 
 console.log(`\n${passed} passed, ${failures.length} failed`);
