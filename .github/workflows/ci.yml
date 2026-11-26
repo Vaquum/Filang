@@ -72,6 +72,7 @@ jobs:
           node bindings/verify/query.mjs
           node bindings/verify/query-contract.mjs
           node query/verify/handoff.mjs
+          node query/verify/suggestions.mjs
           node query/verify/cube-source.mjs
           node query/verify/calendar.mjs
           node query/verify/dimensions.mjs

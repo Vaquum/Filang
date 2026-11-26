@@ -1047,35 +1047,44 @@ function suggestions(q) {
   }
   for (const s of out) if (s.apply) {
     const x = clone(m); s.apply(x); const body = bodyText(x);
-    if (s.defer) s.readCount = () => count(body); else s.n = count(body);
-    // a line that would leave nothing is either false everywhere or unable to say: the two read differently
-    if (s.n === 0 && s.tag === 'And') s.unknown = unknownLeft(body);
+    const read = () => {
+      s.n = count(body);
+      // a line that would leave nothing may be unable to say: show the engine's reason
+      if (s.n === 0 && s.tag === 'And') s.unknown = unknownLeft(body);
+    };
+    if (s.defer) s.readCount = read; else read();
   }
-  // what would leave nothing goes last, so the first suggestion, the one Enter takes, is one that keeps closes
-  const kept = out.filter((s) => s.mode || s.n !== null);
-  return [...kept.filter((s) => s.n !== 0), ...kept.filter((s) => s.n === 0)];
+  return orderSuggestions(out);
 }
-const addInput = $('#add'); let addBox = null; let addList = []; let addPick = 0;
+function orderSuggestions(list) {
+  // Known kept closes first, pending counts next, and lines that leave nothing last.
+  const rank = (s) => s.mode || s.n > 0 ? 0 : s.n === 0 ? 2 : 1;
+  return list.filter((s) => s.mode || s.n !== null).sort((a, b) => rank(a) - rank(b));
+}
+const addInput = $('#add'); let addBox = null; let addList = []; let addPick = 0; let addMoved = false;
 function showAdd() {
-  addList = suggestions(addInput.value); addPick = Math.min(addPick, Math.max(0, addList.length - 1));
+  addList = suggestions(addInput.value); addPick = 0; addMoved = false;
+  renderAdd();
+  const list = addList;
+  if (list.some(s => s.readCount)) requestAnimationFrame(() => setTimeout(() => {
+    if (!addBox || addList !== list) return;
+    const picked = addMoved ? list[addPick] : null;
+    for (const s of list) if (s.readCount) { s.readCount(); delete s.readCount; }
+    addList = orderSuggestions(list); addPick = Math.max(0, addList.indexOf(picked));
+    renderAdd();
+    addBox.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
+  }, 0));
+}
+function renderAdd() {
   if (!addBox) { addBox = h('div', { id: 'add-list', class: 'pop', role: 'listbox', 'aria-label': 'Conditions to add', style: 'max-height:356px' }); document.body.append(addBox); }
   // an And line can only narrow the answer: when it is empty already, every count below is zero, and the list says why
   const none = ctx && !ctx.answer.rows.length;
   mount(addBox, h('header', null, label(addInput.value.trim() ? 'Matches' : 'Conditions to add'), label('Closes left')),
     none ? h('p', { class: 'note' }, 'The question leaves no close now, so every And line below leaves none either. Mute or remove the line that empties it first.') : null,
     h('ul', { role: 'none' }, addList.length ? addList.map((s, i) => h('li', { role: 'none' }, h('button', { type: 'button', role: 'option', id: `add-opt-${i}`, 'aria-selected': String(i === addPick), tabindex: '-1', class: (i === addPick ? 'active' : '') + (s.n === 0 ? ' zero' : ''), onmousedown: (e) => e.preventDefault(), onclick: () => applyAdd(s),
-      title: s.unknown ? `Leaves no close: the engine cannot say for ${int(s.unknown.n)} of them. ${cap(s.unknown.why)}.` : s.n === 0 ? 'Leaves no close: false for every close that reaches it' : null },
-      h('span', null, label(s.tag, 'tag'), cap(s.label)), h('span', { class: 'fig' + (s.unknown ? ' unk' : ''), 'data-count': s.defer ? i : null }, s.mode ? '' : s.defer ? '…' : s.unknown ? `? ${int(s.unknown.n)} unknown` : int(s.n))))) : h('li', { class: 'none' }, 'Nothing matches. Try wick, range, friday, session, trend, quiet, level, or a candle name.')),
+      title: s.unknown ? `Leaves no close: the engine cannot say for ${int(s.unknown.n)} of them. ${cap(s.unknown.why)}.` : s.n === 0 ? 'Leaves no close' : null },
+      h('span', null, label(s.tag, 'tag'), cap(s.label)), h('span', { class: 'fig' + (s.unknown ? ' unk' : ''), 'data-count': s.defer ? i : null }, s.mode ? '' : s.readCount ? '…' : s.unknown ? `? ${int(s.unknown.n)} unknown` : int(s.n))))) : h('li', { class: 'none' }, 'Nothing matches. Try wick, range, friday, session, trend, quiet, level, or a candle name.')),
     h('footer', null, 'Type to search. Add numbers to set values: wick 60%, quiet 48h. Begin with “or” for another pattern.'));
-  const list = addList;
-  if (list.some(s => s.readCount)) requestAnimationFrame(() => setTimeout(() => {
-    if (!addBox || addList !== list) return;
-    for (const cell of addBox.querySelectorAll('[data-count]')) {
-      const s = list[Number(cell.dataset.count)];
-      const n = s.readCount();
-      cell.textContent = n === null ? '—' : int(n);
-    }
-  }, 0));
   // the field stays focused; the list says which option the keys are on
   addInput.setAttribute('aria-expanded', 'true');
   if (addList.length) addInput.setAttribute('aria-activedescendant', `add-opt-${addPick}`); else addInput.removeAttribute('aria-activedescendant');
@@ -1094,7 +1103,7 @@ addInput.addEventListener('input', () => { addPick = 0; showAdd(); });
 addInput.addEventListener('blur', hideAdd);
 addInput.addEventListener('keydown', (e) => {
   if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !addBox) { e.preventDefault(); showAdd(); return; }
-  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (addList.length) { addPick = (addPick + (e.key === 'ArrowDown' ? 1 : -1) + addList.length) % addList.length; showAdd(); addBox.querySelector('.active')?.scrollIntoView({ block: 'nearest' }); } }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (addList.length) { addPick = (addPick + (e.key === 'ArrowDown' ? 1 : -1) + addList.length) % addList.length; addMoved = true; renderAdd(); addBox.querySelector('.active')?.scrollIntoView({ block: 'nearest' }); } }
   if (e.key === 'Enter' && addBox && addList[addPick]) { e.preventDefault(); applyAdd(addList[addPick]); }
   if (e.key === 'Escape') { addInput.value = ''; addInput.blur(); }
 });
