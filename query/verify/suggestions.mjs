@@ -21,7 +21,7 @@ class Element {
   replaceChildren(...children) { this.children = children; }
   get textContent() { return this.children.map(c => typeof c === 'object' ? c.textContent : String(c)).join(''); }
   addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); }
-  dispatch(type, extra = {}) { for (const fn of this.listeners[type] || []) fn({ preventDefault() {}, ...extra }); }
+  dispatch(type, extra = {}) { for (const fn of this.listeners[type] || []) fn({ type, preventDefault() {}, ...extra }); }
   querySelectorAll(selector) {
     const match = (el) => selector === '.active' ? el.className?.split(' ').includes('active')
       : selector === '[role="option"]' ? el.attrs.role === 'option' : selector === '[data-count]' && 'data-count' in el.attrs;
@@ -32,17 +32,19 @@ class Element {
   closest() { return this; }
   getBoundingClientRect() { return { width: 440, left: 0, top: 500 }; }
   get offsetHeight() { return 356; }
-  scrollIntoView() {}
+  scrollIntoView() { this.scrolls = (this.scrolls || 0) + 1; }
   remove() { this.removed = true; }
   focus() {}
 }
 
 function harness(empty = false, known = 7) {
   const input = new Element('input');
+  const document = Object.assign(new Element('document'), { createElement: tag => new Element(tag), body: new Element('body'), querySelector: () => input });
+  const window = new Element('window');
   const frames = []; const timers = []; const counted = []; const unknowns = [];
   const context = createContext({
     CANDLES: candles,
-    document: { createElement: tag => new Element(tag), body: new Element('body'), querySelector: () => input },
+    document, window,
     requestAnimationFrame: fn => frames.push(fn), setTimeout: fn => timers.push(fn),
     int: n => String(n), render() {},
     count(body) {
@@ -71,13 +73,23 @@ function harness(empty = false, known = 7) {
     ${section}
   `, context);
   const api = runInContext('({ state, showAdd, hideAdd, get list() { return addList; }, get pick() { return addPick; }, get box() { return addBox; } })', context);
-  return { api, input, counted, unknowns,
+  return { api, input, document, window, counted, unknowns,
     flush() { while (frames.length) frames.shift()(); while (timers.length) timers.shift()(); },
     key(key) { input.dispatch('keydown', { key }); },
     search(value) { input.value = value; input.dispatch('input'); },
   };
 }
 const options = h => h.api.box.querySelectorAll('[role="option"]');
+const press = button => {
+  button.dispatch('pointerdown', { pointerId: 1, isPrimary: true, button: 0 });
+  button.dispatch('mousedown', { button: 0 });
+};
+const release = (h, button = null) => {
+  h.document.dispatch('pointerup', { pointerId: 1 });
+  h.document.dispatch('mouseup', { button: 0 });
+  // A detached button cannot receive the native click from this press/release.
+  if (button && h.api.box && options(h).includes(button)) button.dispatch('click');
+};
 const rank = s => s.mode || s.n > 0 ? 0 : s.n === 0 ? 2 : 1;
 function ordered(h) {
   const ranks = Array.from(h.api.list, rank);
@@ -144,6 +156,56 @@ const chosen = first.api.list[first.api.pick].label;
 options(first)[first.api.pick].dispatch('click');
 assert.equal(first.api.state.model.wheres.length, 1, chosen);
 
+// Completion between down and up must retain both an unchanged known option and a pending one.
+for (const deferred of [false, true]) {
+  const held = harness(); held.api.showAdd();
+  const list = Array.from(held.api.list);
+  const picked = deferred ? list.find(s => s.defer && s.label.includes('net buying')) : list[0];
+  const button = options(held)[list.indexOf(picked)];
+  press(button); held.flush();
+  assert.deepEqual(Array.from(held.api.list), list, 'completion cannot reorder a pressed list');
+  assert.equal(options(held)[list.indexOf(picked)], button, 'the pressed button stays mounted');
+  assert.equal(options(held)[held.api.pick].scrolls || 0, 0, 'completion cannot scroll during a press');
+  release(held, button);
+  assert.equal(held.api.state.model.wheres.length, 1, 'release applies the original option once');
+  assert.equal(held.api.state.model.wheres[0].type, deferred ? 'taker' : 'rangex');
+  if (deferred) assert.equal(held.api.state.model.wheres[0].args.side, 'above');
+  held.flush();
+  assert.equal(held.api.box, null);
+  assert.equal(held.api.state.model.wheres.length, 1, 'late completion cannot apply it again');
+}
+
+// Releasing outside or cancelling resumes completion without applying a condition.
+for (const end of ['pointerup', 'pointercancel', 'blur']) {
+  const cancelled = harness(); cancelled.api.showAdd();
+  press(options(cancelled)[0]); cancelled.flush();
+  if (end === 'pointerup') {
+    release(cancelled); press(options(cancelled)[0]); cancelled.flush();
+    assert.ok(cancelled.api.list.some(s => s.readCount), 'a new press still holds completion');
+    release(cancelled);
+  }
+  else (end === 'blur' ? cancelled.window : cancelled.document).dispatch(end, { pointerId: 1 });
+  cancelled.flush(); ordered(cancelled); aligned(cancelled);
+  assert.ok(cancelled.api.list.every(s => !s.readCount), 'completion resumes after cancellation');
+  assert.equal(options(cancelled)[cancelled.api.pick].scrolls, 1);
+  assert.equal(cancelled.api.state.model.wheres.length, 0);
+  cancelled.key('Enter');
+  assert.equal(cancelled.api.state.model.wheres.length, 1, 'Enter still applies the selected condition');
+}
+
+// A queued release cannot complete an old list after closing or changing the popup.
+for (const change of ['close', 'search']) {
+  const stale = harness(); stale.api.showAdd();
+  press(options(stale)[0]); stale.flush(); release(stale);
+  if (change === 'close') stale.api.hideAdd(); else stale.search('measure 2h');
+  const box = stale.api.box; const list = stale.api.list; const reads = stale.counted.length;
+  stale.flush();
+  assert.equal(stale.api.box, box);
+  assert.equal(stale.api.list, list);
+  assert.equal(stale.counted.length, reads, 'stale completion does not read old counts');
+  assert.equal(stale.api.state.model.wheres.length, 0);
+}
+
 const deferredFirst = harness(false, 0);
 deferredFirst.api.showAdd();
 assert.equal(deferredFirst.api.list[0].n, undefined);
@@ -168,4 +230,4 @@ empty.api.hideAdd(); empty.flush();
 assert.equal(empty.api.box, null);
 assert.equal(empty.input.getAttribute('aria-expanded'), 'false');
 assert.equal(empty.input.getAttribute('aria-activedescendant'), null);
-console.log('Passed deferred suggestion ordering, counts, unknowns, navigation, selection, Enter, click and zero titles.');
+console.log('Passed deferred suggestion ordering, counts, unknowns, navigation, selection, Enter, pointer press/release, cancellation, stale completion and zero titles.');

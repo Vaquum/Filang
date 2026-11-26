@@ -1061,13 +1061,14 @@ function orderSuggestions(list) {
   const rank = (s) => s.mode || s.n > 0 ? 0 : s.n === 0 ? 2 : 1;
   return list.filter((s) => s.mode || s.n !== null).sort((a, b) => rank(a) - rank(b));
 }
-const addInput = $('#add'); let addBox = null; let addList = []; let addPick = 0; let addMoved = false;
+const addInput = $('#add'); let addBox = null; let addList = []; let addPick = 0; let addMoved = false; let addPress = null;
 function showAdd() {
-  addList = suggestions(addInput.value); addPick = 0; addMoved = false;
+  addList = suggestions(addInput.value); addPick = 0; addMoved = false; addPress = null;
   renderAdd();
   const list = addList;
-  if (list.some(s => s.readCount)) requestAnimationFrame(() => setTimeout(() => {
+  if (list.some(s => s.readCount)) requestAnimationFrame(() => setTimeout(function complete() {
     if (!addBox || addList !== list) return;
+    if (addPress) { addPress.complete = complete; return; }
     const picked = addMoved ? list[addPick] : null;
     for (const s of list) if (s.readCount) { s.readCount(); delete s.readCount; }
     addList = orderSuggestions(list); addPick = Math.max(0, addList.indexOf(picked));
@@ -1075,13 +1076,25 @@ function showAdd() {
     addBox.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
   }, 0));
 }
+function releaseAddPress(e) {
+  const press = addPress;
+  if (!press || (e.type !== 'blur' && e.pointerId !== press.id)) return;
+  // A release may click the option: leave it mounted through that click.
+  setTimeout(() => {
+    if (addPress !== press) return;
+    addPress = null; press.complete?.();
+  }, 0);
+}
+document.addEventListener('pointerup', releaseAddPress);
+document.addEventListener('pointercancel', releaseAddPress);
+window.addEventListener('blur', releaseAddPress);
 function renderAdd() {
   if (!addBox) { addBox = h('div', { id: 'add-list', class: 'pop', role: 'listbox', 'aria-label': 'Conditions to add', style: 'max-height:356px' }); document.body.append(addBox); }
   // an And line can only narrow the answer: when it is empty already, every count below is zero, and the list says why
   const none = ctx && !ctx.answer.rows.length;
   mount(addBox, h('header', null, label(addInput.value.trim() ? 'Matches' : 'Conditions to add'), label('Closes left')),
     none ? h('p', { class: 'note' }, 'The question leaves no close now, so every And line below leaves none either. Mute or remove the line that empties it first.') : null,
-    h('ul', { role: 'none' }, addList.length ? addList.map((s, i) => h('li', { role: 'none' }, h('button', { type: 'button', role: 'option', id: `add-opt-${i}`, 'aria-selected': String(i === addPick), tabindex: '-1', class: (i === addPick ? 'active' : '') + (s.n === 0 ? ' zero' : ''), onmousedown: (e) => e.preventDefault(), onclick: () => applyAdd(s),
+    h('ul', { role: 'none' }, addList.length ? addList.map((s, i) => h('li', { role: 'none' }, h('button', { type: 'button', role: 'option', id: `add-opt-${i}`, 'aria-selected': String(i === addPick), tabindex: '-1', class: (i === addPick ? 'active' : '') + (s.n === 0 ? ' zero' : ''), onpointerdown: (e) => { if (e.isPrimary && e.button === 0) addPress = { id: e.pointerId, complete: addPress?.complete }; }, onmousedown: (e) => e.preventDefault(), onclick: () => applyAdd(s),
       title: s.unknown ? `Leaves no close: the engine cannot say for ${int(s.unknown.n)} of them. ${cap(s.unknown.why)}.` : s.n === 0 ? 'Leaves no close' : null },
       h('span', null, label(s.tag, 'tag'), cap(s.label)), h('span', { class: 'fig' + (s.unknown ? ' unk' : ''), 'data-count': s.defer ? i : null }, s.mode ? '' : s.readCount ? '…' : s.unknown ? `? ${int(s.unknown.n)} unknown` : int(s.n))))) : h('li', { class: 'none' }, 'Nothing matches. Try wick, range, friday, session, trend, quiet, level, or a candle name.')),
     h('footer', null, 'Type to search. Add numbers to set values: wick 60%, quiet 48h. Begin with “or” for another pattern.'));
@@ -1091,7 +1104,7 @@ function renderAdd() {
   const r = addInput.closest('.cell').getBoundingClientRect();
   addBox.style.width = Math.max(440, r.width) + 'px'; addBox.style.maxWidth = '560px'; addBox.style.left = r.left + 'px'; addBox.style.top = Math.max(8, r.top - addBox.offsetHeight - 1) + 'px';
 }
-function hideAdd() { if (addBox) { addBox.remove(); addBox = null; } addInput.setAttribute('aria-expanded', 'false'); addInput.removeAttribute('aria-activedescendant'); }
+function hideAdd() { addPress = null; if (addBox) { addBox.remove(); addBox = null; } addInput.setAttribute('aria-expanded', 'false'); addInput.removeAttribute('aria-activedescendant'); }
 function applyAdd(s) {
   addInput.value = ''; addPick = 0; hideAdd();
   if (s.mode) { s.mode(); state.lane = null; render(); } else { state.lane = null; state.slot = null; state.preset = null; if (state.rows !== 'ledger' && s.tag !== 'Measure') state.rows = 'ledger'; update(s.apply); }
