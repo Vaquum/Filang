@@ -710,6 +710,7 @@ const Ops = {
   },
   remove() {
     if (S.bars.length <= MINN) return;
+    Stage.up();
     pushHist();
     Stage.retire(S.bars.pop());
     const n = S.bars.length;
@@ -2081,6 +2082,7 @@ const Panes = {
   },
   // put a neighbour's closest instance on the canvas, scaled to the drawing's height: the drawing then is that pattern exactly
   tryNear(i) {
+    if (Match.presentation) return;
     const nb = Match.result && Match.result.panes && Match.result.panes.near[i];
     if (!nb || nb.bars.length !== S.bars.length) return;
     let cmin = Infinity, cmax = -Infinity, imin = Infinity, imax = -Infinity;
@@ -2392,6 +2394,7 @@ $('#undo').addEventListener('click', () => Ops.undo());
 $('#redo').addEventListener('click', () => Ops.redo());
 addEventListener('keydown', e => {
   if (!(e.metaKey || e.ctrlKey)) return;
+  if (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
   const k = e.key.toLowerCase();
   if (k === 'z') { e.preventDefault(); e.shiftKey ? Ops.redo() : Ops.undo(); } else if (k === 'y') { e.preventDefault(); Ops.redo(); }
 });
