@@ -217,8 +217,8 @@ export async function attachComposer(api) {
       }
       const p = recordedDrawing(rec, DEFAULT_ANCHOR);
       p.bars = pattern.rows.map((row) => ({
-        d: row.direction === 'd' ? 'd' : 'u',
         v: row.ranks.map((r) => (pattern.rankCount === 1 ? 50 : 15 + (70 * r) / (pattern.rankCount - 1))),
+        d: row.direction === 'd' ? 'd' : 'u',
       }));
       const chained = p.bars.every(
         (b, i) =>

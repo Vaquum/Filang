@@ -3,6 +3,7 @@ import '../composer/sync-patterns.mjs';
 import { inputBytes } from '../native/inputs.mjs';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
+import { attachComposer } from '../composer/bridge.js';
 import {
   COMPOSER_REVISION,
   DEFAULT_ANCHOR,
@@ -137,6 +138,135 @@ const two = {
   limit: 48,
 };
 assert.deepEqual(decodeDrawing(encodeDrawing(two), drawingG1(two)), two);
+
+// Exercise the editor's actual handlers without starting its canvas or market worker.
+const source = file('index.html').toString();
+const section = (start, end) => source.slice(source.indexOf(start), source.indexOf(end));
+let historyKey;
+const editor = vm.runInNewContext([
+  section('function newBar(', 'function identity()'),
+  section('const Ops = {', '/* ================= relations, names and words'),
+  'Object.assign(Stage, {' + section('  move(e) {', '  draw() {') + '});',
+  section('const Match = {', '// a day as the cards write it'),
+  section('const Panes = {', "$('#rnear').addEventListener"),
+  section("\naddEventListener('keydown', e => {", '// spacing is how you look'),
+  '({ S, snap, hist, Ops, Stage, Match, Panes })',
+].join('\n'), {
+  MINN: 1,
+  localStorage: { getItem: () => null },
+  Stage: { cv: { style: {} }, fit() {}, retire() {}, local: () => ({ x: 0, y: 0 }), hit: () => null },
+  App: { redraw() {} },
+  Flow: { suspended: () => false },
+  refresh() {},
+  requestAnimationFrame: () => 1,
+  cancelAnimationFrame() {},
+  addEventListener: (type, handler) => { assert.equal(type, 'keydown'); historyKey = handler; },
+});
+const snapshot = () => JSON.stringify(editor.snap());
+
+// Removing the last bar ends its drag first and preserves separate drag/removal undo steps.
+const beforeDrag = snapshot();
+editor.Stage.drag = { bar: 1, kind: 'end', moved: true, start: editor.snap() };
+editor.S.bars[1].v[3] += 5;
+const afterDrag = snapshot();
+editor.Ops.remove();
+assert.equal(editor.Stage.drag, null, 'removing a bar must finish its active drag');
+assert.equal(editor.S.bars.length, 1);
+assert.doesNotThrow(() => editor.Stage.move({ altKey: false }));
+editor.Ops.undo();
+assert.equal(snapshot(), afterDrag);
+editor.Ops.undo();
+assert.equal(snapshot(), beforeDrag);
+
+// A >70-row result replaces Match.result before its old right-pane buttons disappear.
+const presented = [];
+editor.Panes.render = (result, side) => presented.push(side);
+editor.Match.render = () => {};
+editor.Match.id = 1;
+editor.Match.onmsg({ type: 'result', id: 1, panes: {
+  rows: Array(71).fill({}),
+  near: [{ bars: [[42, 65, 20, 52], [52, 75, 15, 45]] }],
+} });
+const beforeNear = snapshot(), historyLength = editor.hist.past.length;
+for (let frame = 0; frame < 2; frame++) {
+  assert.ok(editor.Match.presentation);
+  editor.Panes.tryNear(0);
+  assert.equal(snapshot(), beforeNear, 'pending presentation must ignore old Try it buttons');
+  assert.equal(editor.hist.past.length, historyLength);
+  if (!frame) editor.Match.presentResult(false); // only the left pane has caught up
+}
+editor.Match.flushPresentation();
+assert.equal(editor.Match.presentation, null);
+assert.deepEqual(presented, ['left', 'right']);
+editor.Panes.tryNear(0);
+assert.notEqual(snapshot(), beforeNear);
+assert.equal(editor.hist.past.length, historyLength + 1);
+
+// Native field history is left alone; the same shortcuts still operate on the canvas.
+const historyActions = [];
+editor.Ops.undo = () => historyActions.push('undo');
+editor.Ops.redo = () => historyActions.push('redo');
+const shortcuts = [
+  { key: 'z', ctrlKey: true, action: 'undo' },
+  { key: 'z', metaKey: true, shiftKey: true, action: 'redo' },
+  { key: 'y', ctrlKey: true, action: 'redo' },
+];
+for (const target of [
+  { tagName: 'INPUT', id: 'sample-time' }, { tagName: 'INPUT', id: 'nval' },
+  { tagName: 'TEXTAREA' }, { tagName: 'SELECT' }, { tagName: 'SPAN', isContentEditable: true },
+]) {
+  for (const shortcut of shortcuts) {
+    historyKey({ ...shortcut, target, preventDefault() { assert.fail('native field undo was intercepted'); } });
+  }
+}
+assert.deepEqual(historyActions, []);
+for (const shortcut of shortcuts) {
+  let prevented = false;
+  historyKey({ ...shortcut, target: { tagName: 'CANVAS' }, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(historyActions.at(-1), shortcut.action);
+}
+
+// G1-only imports pass through the real snap(), which emits bar properties in editor order.
+const controls = new Map([
+  'send-named', 'sample-time', 'sample-status', 'send-g1', 'send-pins', 'sample-form',
+  'sample-prev', 'sample-next', 'drawing-label', 'ordinal-preview',
+].map(id => [id, { addEventListener(type, handler) { this[type] = handler; } }]));
+const classes = new Set();
+globalThis.document = {
+  getElementById: id => controls.get(id),
+  body: { classList: { toggle: (name, on) => on ? classes.add(name) : classes.delete(name) } },
+};
+const importedG1 = 'g1:o:0,1,2,3,u;0,1,2,3,d';
+let destination, packet, changed;
+const search = '?g1=' + encodeURIComponent(importedG1);
+globalThis.location = {
+  href: 'https://filang.test/composer/' + search, search, hash: '',
+  assign: href => { destination = new URL(href); },
+};
+globalThis.fetch = async url => {
+  const bytes = inputBytes(url.slice(3));
+  return { ok: true, arrayBuffer: async () => new Uint8Array(bytes).buffer, json: async () => JSON.parse(bytes.toString()) };
+};
+const readDrawing = () => ({ ...packet, ...editor.snap() });
+await attachComposer({
+  apply: drawing => { packet = drawing; editor.Ops.restore(drawing); },
+  read: readDrawing,
+  g1: () => drawingG1(readDrawing()),
+  onChange: callback => { changed = callback; },
+});
+assert.equal(controls.get('send-g1').disabled, false);
+assert.equal(controls.get('drawing-label').textContent, 'G1 drawing · evenly spaced ranks');
+assert.ok(classes.has('ordinal-distances'));
+controls.get('send-g1').click();
+assert.equal(destination.searchParams.get('g1'), importedG1);
+assert.equal(decodeDrawing(destination.searchParams.get('drawing'), importedG1).coordinates, 'ordinal');
+editor.S.bars[1].v[3] += 5;
+changed();
+assert.equal(controls.get('drawing-label').textContent, 'Custom drawing');
+assert.equal(classes.has('ordinal-distances'), false);
+controls.get('send-g1').click();
+assert.equal(decodeDrawing(destination.searchParams.get('drawing')).coordinates, undefined);
 console.log(
-  'Composer verified. All 14,496 OHLC rows agree, the selected candle has 324 exact twins, and drawings replay with their pins and settings.',
+  'Composer verified. All 14,496 OHLC rows agree, the selected candle has 324 exact twins, drawings replay with their pins and settings, and editor interaction regressions pass.',
 );
