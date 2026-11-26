@@ -10,6 +10,7 @@ import {
   drawingG1,
   encodeDrawing,
   decodeDrawing,
+  pinnedExpression,
 } from '../composer/drawing.js';
 import { loadEnvironment } from './node-env.js';
 const file = (name) => inputBytes('composer/' + name);
@@ -110,6 +111,15 @@ assert.deepEqual(decodeDrawing(encodeDrawing(base), id), base);
 assert.throws(() => decodeDrawing(encodeDrawing(base), 'g1:u:0,1,2,2'));
 assert.throws(() => encodeDrawing({ ...base, bars: [...base.bars, ...base.bars] }));
 assert.throws(() => encodeDrawing({ ...base, pins: [{ bar: 999, color: true }] }));
+const relation = { a: { bar: 0, part: 'L' }, b: { bar: 0, part: 'H' } };
+for (const color of ['true', 1, 0, '', null, {}, []]) {
+  assert.throws(() => decodeDrawing(JSON.stringify({ ...base, pins: [{ ...relation, color }] })), /Invalid drawing pin/);
+}
+for (const pin of [relation, { ...relation, color: false }, { bar: 0, color: true }]) {
+  const packet = { ...base, pins: [pin] };
+  assert.deepEqual(decodeDrawing(JSON.stringify(packet)), packet);
+  assert.ok(pinnedExpression(packet));
+}
 assert.throws(() => encodeDrawing({ ...base, stretch: 4 }));
 const two = {
   ...base,

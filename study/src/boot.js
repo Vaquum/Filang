@@ -65,7 +65,7 @@ export function installExtension(bundle, { file, bytes }) {
     const registered = registerExtension(staging, artifact, env);
     if (!registered.ok) return fail(registered.errors);
     if (!Array.isArray(artifact.conformance) || !artifact.conformance.length) return fail(['extension needs recorded conformance cases']);
-    const results = runConformance({ ...bundle, env }, registered.def);
+    const results = runConformance({ ...bundle, env, ctx: new EvalContext(bundle.rec, bundle.calendars) }, registered.def);
     const errors = results.filter((r) => !r.pass).map((r) => `${r.anchor}: expected ${r.expect}, observed ${r.got} (${r.why})`);
     if (errors.length) return fail(errors);
     bundle.registry.addFunction(registered.def);
