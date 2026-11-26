@@ -631,7 +631,7 @@ function renderRefused(text, res) {
   const m = state.model; const said = (errors) => [...new Set(errors.map((e) => e.message + (e.hint ? ` (${e.hint})` : '')))];
   const msg = said(res.errors).join(' · '); const status = $('#status');
   ctx = null; closePopover(); hideAdd(); addInput.disabled = true; $('#boot')?.remove();
-  status.textContent = msg; status.className = 'err';
+  status.textContent = [state.notice, msg].filter(Boolean).join(' · '); status.className = 'err';
   if (document.activeElement !== formal.el.querySelector('textarea')) formal.set(text, msg); else formal.message(msg);
   $('#left').hidden = !ui.left; $('#right').hidden = true; $('#drawer').hidden = ui.drawer !== 'query';
   renderBars();
