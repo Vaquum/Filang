@@ -400,7 +400,7 @@ export function setupBuilder(host, { state, edit, openDialog, closeDialog, getCo
           '(' +
           field.name +
           ': ';
-        suggestions = queryCompletions(base, base.length, env).items.map((x) => x.insert);
+        suggestions = queryCompletions(base + ')', base.length, env).items.map((x) => x.insert);
       }
       const samples = [...new Set(suggestions.filter(Boolean))];
       let share = null;

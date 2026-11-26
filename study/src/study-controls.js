@@ -231,7 +231,7 @@ export function renderControls(el, { analysis, env, candidate, source, composerL
   } else if (
     isBreak &&
     (ast.group?.name === 'completed_trend' ||
-      (context?.k === 'cmp' && context.left?.name === 'completed_trend'))
+      (!ast.group && context?.k === 'cmp' && context.left?.name === 'completed_trend'))
   ) {
     const grouped = !!ast.group;
     const condition = grouped ? printExpr(ast.group) : printExpr(context.left);
