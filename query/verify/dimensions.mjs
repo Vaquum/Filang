@@ -6,6 +6,8 @@
 // Run from the repository root, after study/prepare_recording.py: node query/verify/dimensions.mjs
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { runInNewContext } from 'node:vm';
 import { install } from './site.mjs';
 
 await install();
@@ -222,6 +224,41 @@ ok(`${CASES.length} clauses print their exact text, read as one sentence, come b
     assert.equal(lanesParam(dimensionsIn(text), {}), null);
     assert.deepEqual(slots(text), baseAnswers[i], p.id);
   }
+
+  // Exercise the real refusal renderer without booting the page or drawing its surrounding panels.
+  const bench = await readFile(new URL('../bench/bench.js', import.meta.url), 'utf8');
+  const source = bench.match(/^function renderRefused\(text, res\) \{[\s\S]*?^\}/m)[0];
+  const element = () => ({ style: {}, classList: { remove() {} }, replaceChildren() {}, append() {}, remove() {} });
+  const elements = new Map(); const nodes = new Map();
+  const $ = (selector) => { if (!elements.has(selector)) elements.set(selector, element()); return elements.get(selector); };
+  const model = question([make('taker')]); const text = toText(model); const res = run(text);
+  assert.equal(res.ok, false); assert.equal(res.errors.length, 1); assert.equal(res.errors[0].kind, 'capability');
+  const { message, hint } = res.errors[0]; const refusalText = message + (hint ? ` (${hint})` : '');
+  const state = { model, notice: '' };
+  const formal = { el: { querySelector: () => null }, set(_text, error) { this.error = error; } };
+  const renderRefused = runInNewContext(`(${source})`, {
+    state, ctx: null, $, nodes, formal, document: {}, ui: {}, addInput: {},
+    run, HEAD, ANY_CLOSE: ANY, clauseText, phraseText, cap: (s) => s, label: (s) => s,
+    closePopover() {}, hideAdd() {}, renderBars() {}, layoutDims() {}, renderLeft() {}, renderDrawer() {},
+    h() {}, mount() {}, quiet() {},
+    nodeFor(id) {
+      if (!nodes.has(id)) nodes.set(id, { el: element(), note: {}, head: element(), svgHost: element(), track: element() });
+      return nodes.get(id);
+    },
+  });
+  for (const notice of [
+    'The cube could not be read (cube: 503); this question needs its bars',
+    'That window could not be read: window unavailable',
+    '',
+  ]) {
+    state.notice = notice;
+    renderRefused(text, res);
+    assert.equal($('#status').textContent, notice ? `${notice} · ${refusalText}` : refusalText);
+    assert.equal($('#status').className, 'err');
+    assert.equal(formal.error, refusalText);
+  }
+  ok('a refused question shows automatic and later window failures beside the engine refusal, or only the refusal when there is no notice');
+
   await load('fixture');
   ok(`the engine refuses all ${CASES.length} forms on the pinned recording and the starting answers are equal`);
 
