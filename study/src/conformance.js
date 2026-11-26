@@ -1,6 +1,6 @@
 // Runs an extension artifact's recorded conformance cases with the same checker and engine.
 
-import { parseExpression, parseLiteral } from './lang.js';
+import { parseExpression, parseLiteral, printExpr } from './lang.js';
 import { Checker } from './check.js';
 import { compileBool, KNAME } from './engine.js';
 
@@ -20,13 +20,14 @@ export function evaluateConditionText(bundle, text, anchorIso) {
 export function runConformance(bundle, def) {
   const cases = (def.artifact && def.artifact.conformance) || [];
   return cases.map((c) => {
-    const args = Object.entries(c.args || {});
-    for (const [name, value] of args) {
-      if (!def.params.some((p) => p.name === name) || parseLiteral(String(value)).error)
+    const args = [];
+    for (const [name, value] of Object.entries(c.args || {})) {
+      const { node, error } = parseLiteral(String(value));
+      if (!def.params.some((p) => p.name === name) || error)
         return { ...c, call: '', got: 'error', pass: false, why: `invalid conformance argument ${name}: expected a declared parameter and a literal value`, parts: [] };
+      args.push(`${name}: ${printExpr(node)}`);
     }
-    const argText = args.map(([k, v]) => `${k}: ${v}`).join(', ');
-    const call = `${def.name}(${argText})`;
+    const call = `${def.name}(${args.join(', ')})`;
     const r = evaluateConditionText(bundle, call, c.anchor);
     return { ...c, call, got: r.error ? 'error' : r.got, pass: !r.error && r.got === c.expect, why: r.error || r.why, parts: r.parts || [] };
   });
