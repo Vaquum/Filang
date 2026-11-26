@@ -66,6 +66,7 @@ export function decodeDrawing(text, expectedG1) {
   for (const pin of p.pins) {
     requireValue(
       object(pin) &&
+        (pin.color === undefined || typeof pin.color === 'boolean') &&
         (pin.color === true ? integer(pin.bar, 0, p.bars.length - 1) : point(pin.a) && point(pin.b)),
       'Invalid drawing pin.',
     );
