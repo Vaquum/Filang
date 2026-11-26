@@ -153,11 +153,13 @@ const editor = vm.runInNewContext([
   '({ S, snap, hist, Ops, Stage, Match, Panes })',
 ].join('\n'), {
   MINN: 1,
+  MAXN: 20,
   localStorage: { getItem: () => null },
-  Stage: { cv: { style: {} }, fit() {}, retire() {}, local: () => ({ x: 0, y: 0 }), hit: () => null },
+  Stage: { cv: { style: {} }, view: { thi: 100, tlo: 0 }, fit() {}, retire() {}, local: () => ({ x: 0, y: 0 }), hit: () => null },
   App: { redraw() {} },
   Flow: { suspended: () => false },
   refresh() {},
+  chain() {},
   requestAnimationFrame: () => 1,
   cancelAnimationFrame() {},
   addEventListener: (type, handler) => { assert.equal(type, 'keydown'); historyKey = handler; },
@@ -177,6 +179,21 @@ editor.Ops.undo();
 assert.equal(snapshot(), afterDrag);
 editor.Ops.undo();
 assert.equal(snapshot(), beforeDrag);
+
+// Adding during a press or drag ends it first; pointer-up cannot undo the addition or throw.
+for (const moved of [false, true]) {
+  const before = snapshot();
+  editor.Stage.drag = { bar: 1, kind: 'end', moved, start: editor.snap() };
+  if (moved) editor.S.bars[1].v[3] += 5;
+  const after = snapshot();
+  editor.Ops.add();
+  assert.doesNotThrow(() => editor.Stage.up());
+  assert.equal(editor.Stage.drag, null, 'adding a bar must finish its active drag');
+  assert.equal(editor.S.bars.length, 3);
+  editor.Ops.undo();
+  assert.equal(snapshot(), after);
+  if (moved) {editor.Ops.undo(); assert.equal(snapshot(), before);}
+}
 
 // A >70-row result replaces Match.result before its old right-pane buttons disappear.
 const presented = [];
