@@ -41,7 +41,7 @@ export async function startWorker(bundle, csv) {
       }
     });
     const handshake = await ready;
-    if (handshake.ready !== 'filang-study-v1') throw Error('Unexpected native study protocol.');
+    if (handshake.ready !== 'filang-study-source-v1') throw Error('Unexpected native study protocol.');
   } catch (e) {
     child?.stdin.end();
     throw e;

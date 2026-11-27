@@ -6,19 +6,28 @@
 //   node query/verify/parity.mjs [--timing] [--reasons]
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { install, ROOT } from './site.mjs';
 
 await install();
-const { run, count, load, rec, nyText, HEAD, ANY_CLOSE, T } = await import('/shared/filang.js');
+const { engine, run, count, load, rec, nyText, HEAD, ANY_CLOSE, T } = await import('/shared/filang.js');
 const { PATTERNS, PRESETS, make, toText, clauseText, fromText } = await import('/shared/vocab.js');
 const { loadEnvironment } = await import('../../study/verify/node-env.js');
 const { analyze } = await import('../../study/src/check.js');
 const { runAnalysis } = await import('../../study/src/engine.js');
 
-await load();
+const recording = await load();
 const old = loadEnvironment();
 const R = rec();
+const baselineDir = process.env.FILANG_BASELINE_ENGINE_DIR;
+let baseline;
+if (baselineDir) {
+  const { FilangEngine } = await import(pathToFileURL(resolve(baselineDir, 'index.mjs')));
+  baseline = await FilangEngine.create(await readFile(resolve(baselineDir, 'filang_engine.wasm')));
+  baseline.loadCsv(recording.csv, R.barMs, { instrument: R.instrument });
+  baseline.setCalendar();
+}
 
 // ---- the recording the charts read is the recording the reference engine reads
 assert.deepEqual([R.n, R.presentCount, R.barMs, R.t0, R.instrument, R.venue, R.barText], [old.rec.n, old.rec.presentCount, old.rec.barMs, old.rec.t0, old.rec.instrument, old.rec.venue, old.rec.barText]);
@@ -78,6 +87,11 @@ const timing = { old: 0, now: 0 };
 const seen = (o) => [o.status, o.status === 'observed' ? o.value : null];
 
 for (const [text, name] of texts) {
+  if (baseline) {
+    assert.deepEqual(engine.check(text), baseline.check(text), text);
+    assert.deepEqual(engine.describeStudy(text), baseline.describeStudy(text), text);
+    assert.deepEqual(engine.study(text), baseline.study(text), text);
+  }
   const t0 = performance.now(); const was = asked(text); const t1 = performance.now();
   const now = run(text); for (const r of now.results) void r.rows;
   const t2 = performance.now();
@@ -97,6 +111,15 @@ for (const [text, name] of texts) {
     assert.deepEqual(r.clauseStats, w.clauseStats.map((c) => ({ T: c.T, F: c.F, U: c.U })), `${at}: verdicts per line`);
     assert.deepEqual(r.columns.map((c) => c.text), w.columns.map((c) => c.text), `${at}: measured columns`);
     assert.equal(r.rows.length, w.rows.length, `${at}: rows`);
+    if (baseline) {
+      let start = 0;
+      do {
+        const options = { candidate: ci, start };
+        const page = engine.studyRows(text, options);
+        assert.deepEqual(page, baseline.studyRows(text, options), `${at}: page ${start}`);
+        start = page.next;
+      } while (start !== null);
+    }
     for (let q = 0; q < r.rows.length; q++) {
       const a = r.rows[q]; const b = w.rows[q];
       assert.deepEqual([a.i, a.t, a.failAt, a.pass, a.detector], [b.i, b.t, b.failAt, b.pass, b.detector], `${at}: row ${q}`);
@@ -111,6 +134,11 @@ for (const [text, name] of texts) {
     const step = Math.max(1, Math.floor(r.rows.length / 5));
     for (let q = 0; q < r.rows.length; q += step) {
       const a = r.rows[q]; const b = w.rows[q];
+      if (baseline) {
+        const options = { candidate: ci };
+        assert.deepEqual(engine.studyClose(text, a.t, options),
+          baseline.studyClose(text, a.t, options), `${at}: explanation at ${a.t}`);
+      }
       reason(w.event.series.why(b.i), r.event.series.why(a.i), `${name}: event`);
       a.results.forEach((x, k) => reason(b.results[k].why, x.why, `${name}: line ${k}`));
       a.out.forEach((o, k) => reason(b.out[k].why, o.why, `${name}: outcome ${k}`));
@@ -158,6 +186,16 @@ for (const i of slots) {
 
 // ---- refusals, and text through the vocabulary and back
 for (const text of refused) { assert.equal(asked(text), null, text); assert.equal(run(text).ok, false, text); assert.ok(run(text).errors[0].message, text); assert.equal(fromText(text).model, null, text); }
+if (baseline) {
+  for (const text of refused) assert.deepEqual(engine.studyDiagnostics(text), baseline.studyDiagnostics(text), text);
+  const questions = [...texts.keys()];
+  for (let i = 0; i < questions.length; i += 64) {
+    const batch = questions.slice(i, i + 64);
+    assert.deepEqual(engine.studyCounts(batch), baseline.studyCounts(batch));
+  }
+  baseline.close();
+  console.log(`Exact engine-to-engine parity across ${questions.length} questions and ${refused.length} refusals.`);
+}
 for (const text of texts.keys()) { const m = fromText(text).model; assert.ok(m, text); assert.equal(asked(toText(m)).results[0].matches.length, asked(text).results[0].matches.length, `text → rows → text asks the same\n${text}`); }
 for (const text of texts.keys()) { const once = toText(fromText(text).model); assert.equal(toText(fromText(once).model), once, `the vocabulary's text is stable\n${text}`); }
 

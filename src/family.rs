@@ -58,7 +58,7 @@ fn temporal(o: &Op) -> bool {
 pub fn boundaries(g: &Graph, roots: &[Id]) -> Vec<Id> {
     g.dependencies(roots)
         .into_iter()
-        .filter(|id| temporal(&g.nodes[*id].op) || matches!(g.nodes[*id].op, Op::Source(_)))
+        .filter(|id| temporal(&g.nodes()[*id].op) || matches!(g.nodes()[*id].op, Op::Source(_)))
         .collect()
 }
 pub fn prepare(
@@ -70,13 +70,13 @@ pub fn prepare(
     bank: Option<&Store>,
 ) -> Result<Store> {
     Backend::resolve(backend.name())?;
-    if roots.iter().any(|id| *id >= g.nodes.len()) {
+    if roots.iter().any(|id| *id >= g.nodes().len()) {
         return Err("unknown family root".into());
     }
     if let Some(b) = bank {
         if b.digest != d.digest
             || b.rows != d.len()
-            || g.nodes.get(..b.nodes.len()) != Some(b.nodes.as_slice())
+            || g.nodes().get(..b.nodes.len()) != Some(b.nodes.as_slice())
         {
             return Err("family bank context mismatch".into());
         }
@@ -97,16 +97,16 @@ pub fn prepare(
     let mut moments: BTreeMap<(Id, usize, bool), Vec<Id>> = BTreeMap::new();
     let mut rec: BTreeMap<Id, Vec<Id>> = BTreeMap::new();
     for &id in &missing {
-        match g.nodes[id].op {
+        match g.nodes()[id].op {
             Op::Mean(w) | Op::Std(w) | Op::MeanSum(w) | Op::StdSum(w) => moments
                 .entry((
-                    g.nodes[id].args[0],
+                    g.nodes()[id].args[0],
                     w,
-                    matches!(g.nodes[id].op, Op::MeanSum(_) | Op::StdSum(_)),
+                    matches!(g.nodes()[id].op, Op::MeanSum(_) | Op::StdSum(_)),
                 ))
                 .or_default()
                 .push(id),
-            Op::Ema(_) | Op::Wilder(_) => rec.entry(g.nodes[id].args[0]).or_default().push(id),
+            Op::Ema(_) | Op::Wilder(_) => rec.entry(g.nodes()[id].args[0]).or_default().push(id),
             _ => {}
         }
     }
@@ -117,7 +117,7 @@ pub fn prepare(
             payload,
             ..Work::default()
         },
-        nodes: g.nodes.clone(),
+        nodes: g.nodes().to_vec(),
         digest: d.digest.clone(),
         rows: d.len(),
     };
@@ -125,7 +125,7 @@ pub fn prepare(
         if store.values.contains_key(&id) {
             continue;
         }
-        let n = &g.nodes[id];
+        let n = &g.nodes()[id];
         match n.op {
             Op::Mean(w) | Op::Std(w) | Op::MeanSum(w) | Op::StdSum(w)
                 if moments[&(n.args[0], w, matches!(n.op, Op::MeanSum(_) | Op::StdSum(_)))]
@@ -141,7 +141,7 @@ pub fn prepare(
                 let mut mean = Some(m);
                 let mut deviation = Some(s);
                 for &j in &moments[&(n.args[0], w, raw)] {
-                    let out = if matches!(g.nodes[j].op, Op::Mean(_) | Op::MeanSum(_)) {
+                    let out = if matches!(g.nodes()[j].op, Op::Mean(_) | Op::MeanSum(_)) {
                         mean.take().unwrap()
                     } else {
                         deviation.take().unwrap()
@@ -156,7 +156,7 @@ pub fn prepare(
                 let ids = &rec[&n.args[0]];
                 let specs = ids
                     .iter()
-                    .map(|j| match g.nodes[*j].op {
+                    .map(|j| match g.nodes()[*j].op {
                         Op::Ema(w) => (w, 2.0 / (w + 1) as f64),
                         Op::Wilder(w) => (w, 1.0 / w as f64),
                         _ => unreachable!(),
@@ -204,7 +204,7 @@ pub struct Program {
 }
 impl Program {
     pub fn compile(g: &Graph, root: Id, store: &Store, bank: Option<&Store>) -> Result<Self> {
-        if root >= g.nodes.len() {
+        if root >= g.nodes().len() {
             return Err("unknown fused root".into());
         }
         fn visit(
@@ -218,7 +218,7 @@ impl Program {
             if let Some(&s) = slots.get(&id) {
                 return Ok(s);
             }
-            let n = &g.nodes[id];
+            let n = &g.nodes()[id];
             let instruction = if store.values.contains_key(&id)
                 || bank.map_or(false, |b| b.values.contains_key(&id))
             {

@@ -1,6 +1,8 @@
 // Run with the local native worker, or pass a loopback origin to exercise HTTP.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { loadInputs } from '../native/inputs.mjs';
 import { startWorker } from '../native/worker.mjs';
 import { compile, QueryError } from '../native/compiler.mjs';
@@ -13,6 +15,22 @@ import { CANDLE_PATTERNS } from '../src/registry.js';
 const base = process.argv[2];
 const {bundle:e, assets} = loadInputs();
 const worker = base ? null : await startWorker(e, assets.get('recorded-bars.csv'));
+const previous = process.env.FILANG_BASELINE_NATIVE_ROOT;
+let baseline;
+if (previous && !base) {
+  const original = process.env.FILANG_STUDY_BIN;
+  const moduleAt = (name) => pathToFileURL(resolve(previous, 'study/native', name));
+  process.env.FILANG_STUDY_BIN = process.env.FILANG_BASELINE_NATIVE_BIN || resolve(previous, 'target/release/filang');
+  try {
+    const [{ compile }, { startWorker }] = await Promise.all([
+      import(moduleAt('compiler.mjs')), import(moduleAt('worker.mjs')),
+    ]);
+    baseline = { compile, startWorker, worker: await startWorker(e, assets.get('recorded-bars.csv')) };
+  } finally {
+    if (original === undefined) delete process.env.FILANG_STUDY_BIN;
+    else process.env.FILANG_STUDY_BIN = original;
+  }
+}
 async function evaluate(request) {
   if (base) {
     const r = await fetch(new URL('/api/filang/evaluate', base), {
@@ -23,6 +41,12 @@ async function evaluate(request) {
   try {
     const checked = compile(e, request);
     const native = await worker.evaluate(checked.wire);
+    if (baseline && !native.error) {
+      const old = baseline.compile(e, request);
+      assert.deepEqual(checked.canonical, old.canonical);
+      assert.deepEqual(checked.candidates, old.candidates);
+      assert.deepEqual(native, await baseline.worker.evaluate(old.wire), request.query);
+    }
     if (native.error) return {status:422,result:native};
     const {results, ...metadata} = native;
     return {status:200,result:results.length === 1 ? {...results[0],...metadata} : native};
@@ -122,6 +146,16 @@ const {status:rStatus, result:both} = await post(readings);
 assert.equal(rStatus,200,both.error);
 assert.equal(both.work.candidates,2);
 assert.equal(both.work.geometryWindows,2);
+const equivalent = [
+  ['hammer where held(quiet_range(), for: 60m) and held(quiet_range(), for: 1h)', 4],
+  ['hammer where range_multiple(over: 60m) and range_multiple(over: 1h)', 3],
+  ['hammer where candle_share(body) and candle_share(body, min: 50%)', 3],
+];
+for (const [query, unique] of equivalent) {
+  const {status, result} = await post(find + query);
+  assert.equal(status, 200, result.error);
+  assert.equal(result.work.nodes, unique, query);
+}
 console.log('Passed native batch parity and shared rolling-window and G1 preparation checks.');
 // The native worker also checks an observed prefix with deleted real rows.
 const hammer = analyze(find + 'hammer', e.env).candidates[0];
@@ -132,6 +166,7 @@ const csv = assets.get('recorded-bars.csv').toString('utf8').trimEnd().split('\n
 const observed = csv.slice(0, cutoff + 2).filter((_, i) => i !== gap + 1 && i !== 72).join('\n') + '\n';
 const gappy = new EvalContext(e.rec.truncatedAfter(cutoff).withoutSlots([71, gap], 'delete recorded bars'), e.calendars);
 const gapWorker = await startWorker(e, observed);
+const baselineGap = baseline && await baseline.startWorker(e, observed);
 try {
   const questions = [
     find + 'hammer measure close_return(after: 1h)',
@@ -139,9 +174,11 @@ try {
     find + 'channel_breakout(over: 1h) where range_contained(over: 4h, width_max: 2.5%)',
   ];
   for (const q of questions) {
-    const {wire} = compile(e,{query:q,source:e.digest,calendar:e.sessionsDigest});
+    const request = {query:q,source:e.digest,calendar:e.sessionsDigest};
+    const {wire} = compile(e,request);
     const answer = await gapWorker.evaluate(wire);
     assert.equal(answer.error, undefined);
+    if (baselineGap) assert.deepEqual(answer, await baselineGap.evaluate(baseline.compile(e, request).wire), q);
     const got = answer.results[0];
     const expected = runCandidate(gappy, analyze(q,e.env).candidates[0]);
     assert.equal(got.counts.absent, 2);
@@ -157,5 +194,6 @@ try {
     }
   }
   console.log('Passed three native gap/prefix plans with recorded rows and distinct unknown and censored horizons.');
-} finally { gapWorker.close(); }
-} finally { worker?.close(); }
+} finally { gapWorker.close(); baselineGap?.close(); }
+if (baseline) console.log('Exact engine-to-engine parity for native responses, including custom definitions and gap fixtures.');
+} finally { worker?.close(); baseline?.worker.close(); }

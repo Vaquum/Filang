@@ -307,7 +307,7 @@ fn entry() -> Result<()> {
             }
             if cmd == "inspect" {
                 let (g, c, p) = search::generate(&cfg)?;
-                println!("programs={} DAG_definition_nodes={} generation_proposals={} generated_requested={}",c.len(),g.nodes.len(),p,cfg.generated);
+                println!("programs={} DAG_definition_nodes={} generation_proposals={} generated_requested={}",c.len(),g.nodes().len(),p,cfg.generated);
             } else {
                 let result = search::run(&cfg)?;
                 report::write(Path::new(&cfg.out).join("experiment.cfg"), &raw)?;

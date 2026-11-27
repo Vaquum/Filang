@@ -329,13 +329,13 @@ pub fn generate(cfg: &Config) -> Result<(Graph, Vec<Candidate>, usize)> {
                 g.binary(Op::Mul, delta, b)
             }
         };
-        if g.nodes[r].depth > cfg.max_depth
+        if g.nodes()[r].depth > cfg.max_depth
             || g.dependencies(&[r]).len() > cfg.max_nodes
             || !known.insert(r)
         {
             continue;
         }
-        if g.nodes[r].unit != SCALAR {
+        if g.nodes()[r].unit != SCALAR {
             return Err("generator produced non-scalar feature".into());
         }
         made += 1;
@@ -716,7 +716,7 @@ pub fn evaluate_frozen(
             return Err("bad frozen row".into());
         }
         let root = g.parse(p[5])?;
-        if g.nodes[root].unit != SCALAR {
+        if g.nodes()[root].unit != SCALAR {
             return Err("readout requires dimensionless root".into());
         }
         let rule = Rule {

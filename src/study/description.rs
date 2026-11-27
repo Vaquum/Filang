@@ -65,10 +65,10 @@ impl Study {
         let defs = terms.field("terms")?.array()?;
         let (canonical, ast) = render_question(&question, None);
         let axes = sweep_axes(&question, defs);
-        let mut candidates = Vec::with_capacity(plan.queries.len());
-        let mut candidate_manifest = Vec::with_capacity(plan.queries.len());
+        let mut candidates = Vec::with_capacity(plan.queries().len());
+        let mut candidate_manifest = Vec::with_capacity(plan.queries().len());
         let mut pins = HashSet::new();
-        for index in 0..plan.queries.len() {
+        for index in 0..plan.queries().len() {
             let mut choices = vec![0usize; axes.len()];
             question.select(index, &mut choices);
             let (resolved, _) = render_question(&question, Some(&choices));

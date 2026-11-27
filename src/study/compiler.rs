@@ -1,6 +1,8 @@
 use super::{
-    extension::{Case, Definition, Param, ParamKind, BUNDLED},
-    plan::{Plan, MAX_BATCH},
+    extension::{Case, Definition, Domain, Param, BUNDLED},
+    plan::{
+        CategoryKind, Event, Group, Horizon, Instruction, Plan, Predicate, Query, Role, MAX_BATCH,
+    },
     predicate::CandleRule,
     syntax::{self, Argument, Comparison, Duration, Expr, Literal, Question},
     tape::{DAYS, TRENDS},
@@ -195,8 +197,8 @@ impl Registry {
         }
         let probe = syntax::question("on BTCUSDT 15m find wick_rejection()")?;
         let mut compiler = Compiler::new(env, self, &probe);
-        let checked = compiler.expand(&definition, &[])?;
-        compiler.finish(vec![format!("{} - -", checked.id)])?;
+        compiler.expand(&definition, &[])?;
+        compiler.finish(Vec::new())?;
         self.extensions.insert(alias.clone(), definition);
         Ok(Some(alias))
     }
@@ -209,12 +211,16 @@ impl Registry {
         self.extensions.remove(alias);
     }
 
-    pub fn compile_case(&self, expression: &str, env: Environment<'_>) -> Result<Plan> {
+    pub fn compile_case(
+        &self,
+        expression: &str,
+        env: Environment<'_>,
+    ) -> Result<(Plan, Predicate)> {
         let question = syntax::question("on BTCUSDT 15m find wick_rejection()")?;
         let expr = syntax::expression(expression)?;
         let mut compiler = Compiler::new(env, self, &question);
-        let id = compiler.boolean(&expr, false)?;
-        compiler.finish(vec![format!("{id} - -")])
+        let predicate = compiler.boolean(&expr, false)?;
+        Ok((compiler.finish(Vec::new())?, predicate))
     }
 
     fn available_builtin(&self, name: &str) -> bool {
@@ -321,9 +327,16 @@ pub(super) fn compile(
     environment: Environment<'_>,
     registry: &Registry,
     candidate: Option<usize>,
+    keep_explanation_notes: bool,
 ) -> Result<Plan> {
     let question = syntax::question(text)?;
-    compile_question(&question, environment, registry, candidate)
+    compile_plan(
+        &question,
+        environment,
+        registry,
+        candidate,
+        keep_explanation_notes,
+    )
 }
 
 pub(super) fn compile_question(
@@ -331,6 +344,16 @@ pub(super) fn compile_question(
     environment: Environment<'_>,
     registry: &Registry,
     candidate: Option<usize>,
+) -> Result<Plan> {
+    compile_plan(question, environment, registry, candidate, true)
+}
+
+fn compile_plan(
+    question: &Question,
+    environment: Environment<'_>,
+    registry: &Registry,
+    candidate: Option<usize>,
+    keep_explanation_notes: bool,
 ) -> Result<Plan> {
     if question.instrument != environment.instrument || question.interval != environment.interval {
         return Err("study instrument or interval differs from the loaded recording".into());
@@ -350,14 +373,13 @@ pub(super) fn compile_question(
         return Err("candidate is outside the checked study".into());
     }
     let mut compiler = Compiler::new(environment, registry, question);
+    compiler.keep_explanation_notes = keep_explanation_notes;
     let mut requests = Vec::with_capacity(count);
-    let mut selected = Vec::with_capacity(count);
     for index in 0..count {
         question.select(index, &mut compiler.indices);
-        let (request, filters, horizons) = compiler.query()?;
+        let request = compiler.query()?;
         if candidate.map_or(true, |i| i == index) {
             requests.push(request);
-            selected.push((filters, horizons));
         }
     }
     if let Some(unused) = question
@@ -368,12 +390,7 @@ pub(super) fn compile_question(
     {
         return Err(format!("binding {unused} is never used"));
     }
-    let mut plan = compiler.finish(requests)?;
-    for (query, (filters, horizons)) in plan.queries.iter_mut().zip(selected) {
-        query.filters = filters;
-        query.column_labels = horizons.into_iter().map(|d| d.text.clone()).collect();
-    }
-    Ok(plan)
+    compiler.finish(requests)
 }
 
 pub(super) fn clause_errors(
@@ -422,9 +439,7 @@ pub(super) fn clause_errors(
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Kind {
-    Event,
-    Condition,
-    State,
+    Predicate(Role),
     Day,
     Trend,
     Price,
@@ -433,10 +448,6 @@ enum Kind {
 }
 
 impl Kind {
-    fn boolean(self) -> bool {
-        matches!(self, Self::Event | Self::Condition | Self::State)
-    }
-
     fn category(self) -> bool {
         matches!(self, Self::Day | Self::Trend)
     }
@@ -450,6 +461,15 @@ impl Kind {
 struct Node {
     kind: Kind,
     id: usize,
+}
+
+impl Node {
+    fn predicate(self) -> Result<Predicate> {
+        match self.kind {
+            Kind::Predicate(role) => Ok(Predicate::new(self.id, role)),
+            _ => Err("Boolean operator needs a compatible event, state or condition".into()),
+        }
+    }
 }
 
 fn category(name: &str) -> Option<Kind> {
@@ -467,9 +487,10 @@ struct Compiler<'a> {
     registry: &'a Registry,
     question: &'a Question,
     indices: Vec<usize>,
-    nodes: Vec<String>,
+    nodes: Vec<Instruction>,
     ids: HashMap<String, usize>,
     notes: HashMap<usize, String>,
+    keep_explanation_notes: bool,
     used: HashSet<String>,
     locals: Option<HashMap<&'a str, &'a Literal>>,
     depth: usize,
@@ -485,31 +506,64 @@ impl<'a> Compiler<'a> {
             nodes: Vec::new(),
             ids: HashMap::new(),
             notes: HashMap::new(),
+            keep_explanation_notes: true,
             used: HashSet::new(),
             locals: None,
             depth: 0,
         }
     }
 
-    fn finish(self, requests: Vec<String>) -> Result<Plan> {
-        let mut wire = format!("filang-study-v1\t{}", self.nodes.len());
-        for node in self.nodes.into_iter().chain(requests) {
-            wire.push('\t');
-            wire.push_str(&node);
-        }
-        if wire.len() >= 1_048_576 {
+    fn finish(self, requests: Vec<Query>) -> Result<Plan> {
+        // Retain the existing compiled size bound, including query references.
+        let header = "filang-study-v1\t".len() + self.nodes.len().to_string().len();
+        let instructions = self
+            .nodes
+            .iter()
+            .map(|node| node.text.len() + 1)
+            .sum::<usize>();
+        let references = requests
+            .iter()
+            .map(|query| {
+                3 + query.find.index().to_string().len()
+                    + query.context.map_or(1, |v| v.index().to_string().len())
+                    + query.group.map_or(1, |v| v.index().to_string().len())
+                    + query
+                        .horizons
+                        .iter()
+                        .map(|h| {
+                            1 + (h.steps() as i64 * self.environment.interval)
+                                .to_string()
+                                .len()
+                        })
+                        .sum::<usize>()
+            })
+            .sum::<usize>();
+        if header + instructions + references >= 1_048_576 {
             return Err("compiled study exceeds 1 MiB".into());
         }
-        let mut plan = Plan::parse(&wire, self.environment.interval)?;
-        plan.notes = self.notes;
-        Ok(plan)
+        Plan::build(&self.nodes, requests, self.notes, self.environment.interval)
     }
 
     fn intern(&mut self, kind: Kind, text: String) -> Result<Node> {
-        self.intern_noted(kind, text, None)
+        self.intern_instruction(kind, text, None, Vec::new())
     }
 
     fn intern_noted(&mut self, kind: Kind, text: String, note: Option<String>) -> Result<Node> {
+        self.intern_instruction(kind, text, note, Vec::new())
+    }
+
+    fn intern_instruction(
+        &mut self,
+        kind: Kind,
+        text: String,
+        note: Option<String>,
+        predicates: Vec<Predicate>,
+    ) -> Result<Node> {
+        let note = if self.keep_explanation_notes {
+            note
+        } else {
+            None
+        };
         let key = match &note {
             Some(note) => format!("{text}\t{note}"),
             None => text.clone(),
@@ -525,50 +579,57 @@ impl<'a> Compiler<'a> {
         if let Some(note) = note {
             self.notes.insert(id, note);
         }
-        self.nodes.push(text);
+        self.nodes.push(Instruction { text, predicates });
         Ok(Node { kind, id })
     }
 
-    fn query(&mut self) -> Result<(String, Vec<usize>, Vec<&'a Duration>)> {
+    fn query(&mut self) -> Result<Query> {
         let q = self.question;
-        let event = self.event(&q.find)?;
+        let find = self.event(&q.find)?;
         let mut filters = Vec::with_capacity(q.filters.len());
         for filter in &q.filters {
             filters.push(self.boolean(filter, false)?);
         }
-        let context = match filters.len() {
-            0 => "-".into(),
-            1 => filters[0].to_string(),
-            _ => self.logic(Kind::Condition, true, &filters)?.id.to_string(),
+        let context = match filters.as_slice() {
+            [] => None,
+            [single] => Some(*single),
+            _ => Some(self.logic(Role::Condition, true, &filters)?.predicate()?),
         };
-        let group = match &q.group {
-            Some(expr) => self.group(expr)?.to_string(),
-            None => "-".into(),
-        };
-        let horizons = self.horizons(&q.measures)?;
-        let mut request = format!("{event} {context} {group}");
-        for horizon in &horizons {
-            use std::fmt::Write;
-            write!(request, " {}", horizon.ms).expect("write to String");
-        }
-        Ok((request, filters, horizons))
+        let group = q.group.as_ref().map(|expr| self.group(expr)).transpose()?;
+        let durations = self.horizons(&q.measures)?;
+        let horizons = durations
+            .iter()
+            .map(|duration| Horizon::new(duration.ms, self.environment.interval))
+            .collect::<Result<_>>()?;
+        let column_labels = durations
+            .iter()
+            .map(|duration| duration.text.clone())
+            .collect();
+        Ok(Query {
+            find,
+            context,
+            filters,
+            group,
+            horizons,
+            column_labels,
+        })
     }
 
-    fn event(&mut self, expr: &'a Expr) -> Result<usize> {
-        let node = self.emit(expr, true)?;
-        if node.kind == Kind::Event {
-            Ok(node.id)
-        } else {
-            Err("find needs an event".into())
-        }
+    fn event(&mut self, expr: &'a Expr) -> Result<Event> {
+        self.emit(expr, true)?
+            .predicate()
+            .ok()
+            .and_then(Predicate::event)
+            .ok_or_else(|| "find needs an event".into())
     }
 
-    fn group(&mut self, expr: &'a Expr) -> Result<usize> {
+    fn group(&mut self, expr: &'a Expr) -> Result<Group> {
         let node = self.emit(expr, false)?;
-        if node.kind.boolean() || node.kind.category() {
-            Ok(node.id)
-        } else {
-            Err("group by needs a Boolean or categorical value".into())
+        match node.kind {
+            Kind::Day => Ok(Group::category(node.id, CategoryKind::Day)),
+            Kind::Trend => Ok(Group::category(node.id, CategoryKind::Trend)),
+            Kind::Predicate(_) => Ok(Group::Predicate(node.predicate()?)),
+            _ => Err("group by needs a Boolean or categorical value".into()),
         }
     }
 
@@ -712,40 +773,45 @@ impl<'a> Compiler<'a> {
         Ok(ratio)
     }
 
-    fn boolean(&mut self, expr: &'a Expr, event: bool) -> Result<usize> {
-        let node = self.emit(expr, event)?;
-        if (event && node.kind == Kind::Event) || (!event && node.kind.boolean()) {
-            Ok(node.id)
+    fn boolean(&mut self, expr: &'a Expr, event: bool) -> Result<Predicate> {
+        let predicate = self.emit(expr, event)?.predicate()?;
+        if !event || predicate.kind() == Role::Event {
+            Ok(predicate)
         } else {
             Err("Boolean operator needs a compatible event, state or condition".into())
         }
     }
 
-    fn logic(&mut self, kind: Kind, and: bool, terms: &[usize]) -> Result<Node> {
+    fn logic(&mut self, role: Role, and: bool, terms: &[Predicate]) -> Result<Node> {
         use std::fmt::Write;
         let mut instruction = String::from(if and { "and" } else { "or" });
         for term in terms {
-            write!(instruction, " {term}").expect("write to String");
+            write!(instruction, " {}", term.index()).expect("write to String");
         }
-        self.intern(kind, instruction)
+        self.intern_instruction(Kind::Predicate(role), instruction, None, terms.to_vec())
     }
 
     fn emit(&mut self, expr: &'a Expr, event: bool) -> Result<Node> {
         match expr {
             Expr::Logic(and, terms) => {
-                let ids = terms
+                let args = terms
                     .iter()
                     .map(|term| self.boolean(term, event))
                     .collect::<Result<Vec<_>>>()?;
                 self.logic(
-                    if event { Kind::Event } else { Kind::Condition },
+                    if event { Role::Event } else { Role::Condition },
                     *and,
-                    &ids,
+                    &args,
                 )
             }
             Expr::Not(term) => {
-                let id = self.boolean(term, false)?;
-                self.intern(Kind::Condition, format!("not {id}"))
+                let predicate = self.boolean(term, false)?;
+                self.intern_instruction(
+                    Kind::Predicate(Role::Condition),
+                    format!("not {}", predicate.index()),
+                    None,
+                    vec![predicate],
+                )
             }
             Expr::Compare(op, left, right) => {
                 let a = self.category_operand(left)?;
@@ -756,7 +822,10 @@ impl<'a> Compiler<'a> {
                 {
                     return Err("comparison needs matching categorical values and = or !=".into());
                 }
-                self.intern(Kind::Condition, format!("{} {} {}", op.wire(), a.id, b.id))
+                self.intern(
+                    Kind::Predicate(Role::Condition),
+                    format!("{} {} {}", op.wire(), a.id, b.id),
+                )
             }
             Expr::Call(name, args) => self.call(name, args),
             Expr::Scalar(_) | Expr::Choice(_) => match self.literal(expr)? {
@@ -773,7 +842,7 @@ impl<'a> Compiler<'a> {
         if let Some(pattern) = self.registry.patterns.get(&normalized) {
             if quoted || self.registry.functions.contains(name) || !name.is_ascii() {
                 return self.intern_noted(
-                    Kind::Event,
+                    Kind::Predicate(Role::Event),
                     pattern.instruction.clone(),
                     Some(pattern.rule.clone()),
                 );
@@ -876,16 +945,14 @@ impl<'a> Compiler<'a> {
         let body = self.emit(&definition.body, false);
         self.depth -= 1;
         self.locals = saved;
-        let body = body?;
-        if !body.kind.boolean() {
-            return Err("definition body must be Boolean".into());
-        }
-        let kind = if definition.event {
-            Kind::Event
-        } else {
-            Kind::Condition
-        };
-        Ok(Node { kind, id: body.id })
+        let predicate = body?
+            .predicate()
+            .map_err(|_| "definition body must be Boolean")?;
+        let declared = predicate.declared_as(definition.role);
+        Ok(Node {
+            kind: Kind::Predicate(declared.kind()),
+            id: declared.index(),
+        })
     }
 
     fn call(&mut self, name: &'a str, arguments: &'a [Argument]) -> Result<Node> {
@@ -897,7 +964,7 @@ impl<'a> Compiler<'a> {
             args.finish()?;
             let pattern = &self.registry.patterns[name];
             return self.intern_noted(
-                Kind::Event,
+                Kind::Predicate(Role::Event),
                 pattern.instruction.clone(),
                 Some(pattern.rule.clone()),
             );
@@ -916,6 +983,7 @@ impl<'a> Compiler<'a> {
         };
         let mut a = Args::new(name, arguments, positional)?;
         let mut note = None;
+        let mut predicates = Vec::new();
         let (kind, op) = match name {
             "exact_g1" | "chained_g1" => {
                 let source = match self.literal(a.required("pattern")?)? {
@@ -936,16 +1004,16 @@ impl<'a> Compiler<'a> {
                 } else {
                     format!("{op}r {pattern} {radius}")
                 };
-                (Kind::Event, wire)
+                (Kind::Predicate(Role::Event), wire)
             }
             "wick_rejection" => {
                 let body = self.ratio(a.take("body_max"), "35/100", true, false)?;
                 let wick = self.ratio(a.take("wick_min"), "45/100", true, true)?;
-                (Kind::Event, format!("wick {body} {wick}"))
+                (Kind::Predicate(Role::Event), format!("wick {body} {wick}"))
             }
             "channel_breakout" => {
                 let over = self.duration(a.required("over")?, QUARTER_HOUR, WEEK, true)?;
-                (Kind::Event, format!("breakout {over}"))
+                (Kind::Predicate(Role::Event), format!("breakout {over}"))
             }
             "quiet_range" | "range_contained" => {
                 let quiet = name == "quiet_range";
@@ -961,18 +1029,28 @@ impl<'a> Compiler<'a> {
                     )
                 };
                 (
-                    if quiet { Kind::State } else { Kind::Condition },
+                    if quiet {
+                        Kind::Predicate(Role::State)
+                    } else {
+                        Kind::Predicate(Role::Condition)
+                    },
                     format!("range {over} {width}"),
                 )
             }
             "held" => {
-                let state = self.emit(a.required("state")?, false)?;
-                if state.kind != Kind::State {
-                    return Err("held needs a State".into());
-                }
+                let state = self
+                    .emit(a.required("state")?, false)?
+                    .predicate()
+                    .ok()
+                    .filter(|value| value.kind() == Role::State)
+                    .ok_or("held needs a State")?;
+                predicates.push(state);
                 let time = self.checked_duration(a.required("for")?, QUARTER_HOUR, WEEK, true)?;
                 note = Some(time.text.clone());
-                (Kind::Condition, format!("held {} {}", state.id, time.ms))
+                (
+                    Kind::Predicate(Role::Condition),
+                    format!("held {} {}", state.index(), time.ms),
+                )
             }
             "weekday" => {
                 self.calendar(a.required("calendar")?)?;
@@ -981,7 +1059,7 @@ impl<'a> Compiler<'a> {
             "session_tail" => {
                 self.calendar(a.required("calendar")?)?;
                 let last = self.duration(a.required("last")?, 60_000, 390 * 60_000, false)?;
-                (Kind::Condition, format!("tail {last}"))
+                (Kind::Predicate(Role::Condition), format!("tail {last}"))
             }
             "completed_trend" => {
                 let frame = self.duration(a.required("frame")?, QUARTER_HOUR, DAY, true)?;
@@ -1017,7 +1095,10 @@ impl<'a> Compiler<'a> {
                 let reference = self.price(a.required("reference")?, true)?.id;
                 let min = self.whole(a.take("within_min"), 0)?;
                 let max = self.whole(a.take("within_max"), 0)?;
-                (Kind::Event, format!("reclaim {reference} {min} {max}"))
+                (
+                    Kind::Predicate(Role::Event),
+                    format!("reclaim {reference} {min} {max}"),
+                )
             }
             "candle_relation" => {
                 let left = a.required("left")?;
@@ -1031,20 +1112,36 @@ impl<'a> Compiler<'a> {
                     "unequal" => "ne",
                     _ => return Err("unknown candle relation".into()),
                 };
-                (Kind::Event, self.relation(left, op, right)?)
+                (
+                    Kind::Predicate(Role::Event),
+                    self.relation(left, op, right)?,
+                )
             }
             "candle_window" => {
                 let event = self.boolean(a.required("event")?, true)?;
+                predicates.push(event);
                 let bars = self.whole(a.take("bars"), 2)?;
-                (Kind::Event, format!("window {event} {bars}"))
+                (
+                    Kind::Predicate(Role::Event),
+                    format!("window {} {bars}", event.index()),
+                )
             }
             "candle_share" => {
                 let part = self.arg_name(a.take("part"), "lower_wick")?;
                 let lag = self.whole(a.take("bars_ago"), 0)?;
-                let min = self.ratio(a.take("min"), "1/2", true, false)?;
+                // The worker has always interned the default and an explicit 50% together.
+                let default_min = if self.keep_explanation_notes {
+                    "1/2"
+                } else {
+                    "5/10"
+                };
+                let min = self.ratio(a.take("min"), default_min, true, false)?;
                 let max = self.ratio(a.take("max"), "1/1", true, false)?;
                 ordered(&min, &max)?;
-                (Kind::Condition, format!("share {part} {lag} {min} {max}"))
+                (
+                    Kind::Predicate(Role::Condition),
+                    format!("share {part} {lag} {min} {max}"),
+                )
             }
             "range_multiple" | "dimension_multiple" => {
                 let over = match a.take("over") {
@@ -1076,35 +1173,47 @@ impl<'a> Compiler<'a> {
                 } else {
                     format!("multiple {over} {min} {max}")
                 };
-                (Kind::Condition, op)
+                (Kind::Predicate(Role::Condition), op)
             }
             "near_level" => {
                 let reference = self.price(a.required("reference")?, false)?.id;
                 let point = self.price(a.required("point")?, false)?.id;
                 let within = self.ratio(a.take("within"), "25/10000", true, false)?;
                 (
-                    Kind::Condition,
+                    Kind::Predicate(Role::Condition),
                     format!("near {reference} {point} {within}"),
                 )
             }
             _ => return Err(format!("unknown or unavailable study call {name}")),
         };
         a.finish()?;
-        self.intern_noted(kind, op, note)
+        self.intern_instruction(kind, op, note, predicates)
     }
 }
 
 fn validate_param(param: &Param, value: &Literal, interval: i64) -> Result<()> {
-    let domain = &param.domain;
-    let valid = match (&param.kind, value) {
-        (ParamKind::Duration, Literal::Duration(duration)) => {
+    let valid = match (&param.domain, value) {
+        (
+            Domain::Duration {
+                min_ms,
+                max_ms,
+                grid,
+            },
+            Literal::Duration(duration),
+        ) => {
             let ms = duration.ms;
-            domain.min_ms.map_or(true, |min| ms >= min)
-                && domain.max_ms.map_or(true, |max| ms <= max)
-                && (!domain.grid || ms % interval == 0)
+            min_ms.map_or(true, |min| ms >= min)
+                && max_ms.map_or(true, |max| ms <= max)
+                && (!grid || ms % interval == 0)
         }
-        (ParamKind::Number, Literal::Number(_, false)) => {
-            if domain.whole_min.is_none() && domain.whole_max.is_none() {
+        (
+            Domain::Number {
+                whole_min,
+                whole_max,
+            },
+            Literal::Number(_, false),
+        ) => {
+            if whole_min.is_none() && whole_max.is_none() {
                 true
             } else {
                 value
@@ -1112,19 +1221,27 @@ fn validate_param(param: &Param, value: &Literal, interval: i64) -> Result<()> {
                     .strip_suffix("/1")
                     .and_then(|n| n.parse::<usize>().ok())
                     .map_or(false, |n| {
-                        domain.whole_min.map_or(true, |min| n >= min)
-                            && domain.whole_max.map_or(true, |max| n <= max)
+                        whole_min.map_or(true, |min| n >= min)
+                            && whole_max.map_or(true, |max| n <= max)
                     })
             }
         }
-        (ParamKind::Ratio, Literal::Number(_, _)) => {
+        (
+            Domain::Ratio {
+                min,
+                max,
+                min_exclusive,
+                max_exclusive,
+            },
+            Literal::Number(_, _),
+        ) => {
             let ratio = value.wire_ratio()?;
-            domain.ratio_min.as_ref().map_or(true, |min| {
+            min.as_ref().map_or(true, |min| {
                 let comparison = compare_ratios(&ratio, min);
-                comparison.is_gt() || (comparison.is_eq() && !domain.ratio_min_exclusive)
-            }) && domain.ratio_max.as_ref().map_or(true, |max| {
+                comparison.is_gt() || (comparison.is_eq() && !min_exclusive)
+            }) && max.as_ref().map_or(true, |max| {
                 let comparison = compare_ratios(&ratio, max);
-                comparison.is_lt() || (comparison.is_eq() && !domain.ratio_max_exclusive)
+                comparison.is_lt() || (comparison.is_eq() && !max_exclusive)
             })
         }
         _ => false,

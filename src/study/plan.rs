@@ -7,9 +7,132 @@ use crate::{
     rules::Cmp,
     Result,
 };
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub(super) const MAX_BATCH: usize = 64;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum Role {
+    Event,
+    Condition,
+    State,
+}
+
+// These references carry the role at the point of use. Two roles may share
+// one physical series, for example a checked custom event using a condition.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct Ref<T> {
+    index: usize,
+    kind: T,
+}
+
+impl<T: Copy> Ref<T> {
+    pub fn index(self) -> usize {
+        self.index
+    }
+
+    pub fn kind(self) -> T {
+        self.kind
+    }
+}
+
+pub(super) type Predicate = Ref<Role>;
+
+#[derive(Clone, Copy)]
+pub(super) struct Event(Predicate);
+
+impl Event {
+    pub fn index(self) -> usize {
+        self.0.index()
+    }
+
+    pub fn predicate(self) -> Predicate {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct State(Predicate);
+
+impl State {
+    pub fn index(self) -> usize {
+        self.0.index()
+    }
+}
+
+impl Predicate {
+    pub fn new(index: usize, role: Role) -> Self {
+        Self { index, kind: role }
+    }
+
+    pub fn event(self) -> Option<Event> {
+        (self.kind == Role::Event).then_some(Event(self))
+    }
+
+    pub fn state(self) -> Option<State> {
+        (self.kind == Role::State).then_some(State(self))
+    }
+
+    pub fn declared_as(self, role: Role) -> Self {
+        Self::new(self.index, role)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum PriceKind {
+    Endpoint,
+    PriorLow,
+    PriorHigh,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum CategoryKind {
+    Day,
+    Trend,
+}
+
+pub(super) type Price = Ref<PriceKind>;
+pub(super) type Axis = Ref<Dimension>;
+pub(super) type Category = Ref<CategoryKind>;
+
+#[derive(Clone, Copy)]
+pub(super) enum Group {
+    Predicate(Predicate),
+    Category(Category),
+}
+
+impl Group {
+    pub fn category(index: usize, kind: CategoryKind) -> Self {
+        Self::Category(Ref { index, kind })
+    }
+
+    pub fn index(self) -> usize {
+        match self {
+            Self::Predicate(value) => value.index(),
+            Self::Category(value) => value.index(),
+        }
+    }
+}
+
+// Outcome offsets are positive and only constructible from an on-grid
+// duration. They never occur among the inputs to a detector or condition.
+#[derive(Clone, Copy)]
+pub(super) struct Horizon(usize);
+
+impl Horizon {
+    pub fn new(ms: i64, frame: i64) -> Result<Self> {
+        Ok(Self(steps(ms, frame)?))
+    }
+
+    pub fn steps(self) -> usize {
+        self.0
+    }
+}
+
+pub(super) struct Instruction {
+    pub text: String,
+    pub predicates: Vec<Predicate>,
+}
 
 pub(super) enum Node {
     Pattern(CandleRule),
@@ -20,53 +143,50 @@ pub(super) enum Node {
     Wick(Ratio, Ratio),
     Breakout(usize),
     Range(usize, Ratio),
-    Held(usize, usize),
+    Held(State, usize),
     Weekday,
     Tail(i64),
     Trend(i64),
     Category(u8),
-    Equal(usize, usize, bool),
-    Not(usize),
-    Logic(Vec<usize>, bool),
+    Equal(Category, Category, bool),
+    Not(Predicate),
+    Logic(Vec<Predicate>, bool),
     Price(Field, usize),
     Prior(usize, bool),
     Axis(Dimension, usize),
     AxisPrior(Dimension, usize, bool),
     AxisZero,
-    AxisRelate(usize, Cmp, usize),
+    AxisRelate(Axis, Cmp, Axis),
     AxisMultiple(Dimension, usize, f64, Option<f64>),
-    Relate(usize, Cmp, usize),
-    Near(usize, usize, Ratio),
+    Relate(Price, Cmp, Price),
+    Near(Price, Price, Ratio),
     Share(Field, usize, Ratio, Ratio),
     Multiple(usize, Ratio, Option<Ratio>),
-    Reclaim(usize, usize, usize, bool),
-    Window(usize, usize),
+    Reclaim(Price, usize, usize, bool),
+    Window(Event, usize),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Type {
     Bool,
-    Day,
-    Trend,
-    Price,
-    PriorLow,
-    PriorHigh,
+    Category(CategoryKind),
+    Price(PriceKind),
     Axis(Dimension),
 }
 
 pub(super) struct Query {
-    pub find: usize,
-    pub context: Option<usize>,
-    pub filters: Vec<usize>,
-    pub group: Option<usize>,
-    pub horizons: Vec<usize>,
+    pub find: Event,
+    pub context: Option<Predicate>,
+    pub filters: Vec<Predicate>,
+    pub group: Option<Group>,
+    pub horizons: Vec<Horizon>,
     pub column_labels: Vec<String>,
 }
 
 pub(super) struct Plan {
-    pub nodes: Vec<Node>,
-    pub queries: Vec<Query>,
-    pub notes: HashMap<usize, String>,
+    nodes: Vec<Node>,
+    queries: Vec<Query>,
+    notes: HashMap<usize, String>,
 }
 
 fn steps(ms: i64, frame: i64) -> Result<usize> {
@@ -85,13 +205,23 @@ fn reference(value: Option<&str>, types: &[Type], want: Option<Type>) -> Result<
     }
 }
 
-fn price_ref(value: Option<&str>, types: &[Type]) -> Result<usize> {
-    let id = reference(value, types, None)?;
-    if matches!(types[id], Type::Price | Type::PriorLow | Type::PriorHigh) {
-        Ok(id)
-    } else {
-        Err("expected an endpoint price or prior level".into())
+fn price_ref(value: Option<&str>, types: &[Type]) -> Result<Price> {
+    let index = reference(value, types, None)?;
+    match types[index] {
+        Type::Price(kind) => Ok(Ref { index, kind }),
+        _ => Err("expected an endpoint price or prior level".into()),
     }
+}
+
+fn predicate_ref(
+    value: Option<&str>,
+    types: &[Type],
+    operand: Option<Predicate>,
+) -> Result<Predicate> {
+    let index = reference(value, types, Some(Type::Bool))?;
+    operand
+        .filter(|reference| reference.index() == index)
+        .ok_or_else(|| "missing checked predicate operand".into())
 }
 
 fn axis(words: &mut std::str::SplitWhitespace<'_>) -> Result<Dimension> {
@@ -128,19 +258,33 @@ fn offset(value: Option<&str>) -> Result<usize> {
 }
 
 impl Plan {
-    pub fn parse(text: &str, frame: i64) -> Result<Self> {
-        let mut parts = text.trim_end_matches(['\n', '\r']).split('\t');
-        if parts.next() != Some("filang-study-v1") {
-            return Err("expected a Filang study v1 plan".into());
-        }
-        let n: usize = number(parts.next(), "plan node count")?;
+    pub fn nodes(&self) -> &[Node] {
+        &self.nodes
+    }
+
+    pub fn queries(&self) -> &[Query] {
+        &self.queries
+    }
+
+    pub fn notes(&self) -> &HashMap<usize, String> {
+        &self.notes
+    }
+
+    pub fn build(
+        instructions: &[Instruction],
+        queries: Vec<Query>,
+        notes: HashMap<usize, String>,
+        frame: i64,
+    ) -> Result<Self> {
+        let n = instructions.len();
         if !(1..=2_048).contains(&n) {
             return Err("plan must contain 1–2048 nodes".into());
         }
         let mut nodes = Vec::with_capacity(n);
         let mut types = Vec::with_capacity(n);
-        for _ in 0..n {
-            let mut words = parts.next().ok_or("missing plan node")?.split_whitespace();
+        for instruction in instructions {
+            let mut words = instruction.text.split_whitespace();
+            let mut predicates = instruction.predicates.iter().copied();
             let op = words.next().ok_or("empty plan node")?;
             let mut kind = Type::Bool;
             let node = match op {
@@ -174,7 +318,7 @@ impl Plan {
                     Ratio::parse(words.next().ok_or("missing range ratio")?)?,
                 ),
                 "price" => {
-                    kind = Type::Price;
+                    kind = Type::Price(PriceKind::Endpoint);
                     let field = Field::parse(words.next().ok_or("missing candle price point")?)?;
                     if !matches!(
                         field,
@@ -191,11 +335,11 @@ impl Plan {
                 }
                 "prior-low" | "prior-high" => {
                     let high = op == "prior-high";
-                    kind = if high {
-                        Type::PriorHigh
+                    kind = Type::Price(if high {
+                        PriceKind::PriorHigh
                     } else {
-                        Type::PriorLow
-                    };
+                        PriceKind::PriorLow
+                    });
                     Node::Prior(steps(number(words.next(), "prior window")?, frame)?, high)
                 }
                 "axis" => {
@@ -219,12 +363,23 @@ impl Plan {
                 }
                 "axis-relate" => {
                     let left = reference(words.next(), &types, None)?;
-                    if !matches!(types[left], Type::Axis(_)) {
-                        return Err("axis relation needs a dimension".into());
-                    }
+                    let axis = match types[left] {
+                        Type::Axis(axis) => axis,
+                        _ => return Err("axis relation needs a dimension".into()),
+                    };
                     let comparison = Cmp::parse(words.next().ok_or("missing axis comparison")?)?;
                     let right = reference(words.next(), &types, Some(types[left]))?;
-                    Node::AxisRelate(left, comparison, right)
+                    Node::AxisRelate(
+                        Ref {
+                            index: left,
+                            kind: axis,
+                        },
+                        comparison,
+                        Ref {
+                            index: right,
+                            kind: axis,
+                        },
+                    )
                 }
                 "axis-multiple" => {
                     let axis = axis(&mut words)?;
@@ -274,7 +429,9 @@ impl Plan {
                     },
                 ),
                 "window" => {
-                    let inner = reference(words.next(), &types, Some(Type::Bool))?;
+                    let inner = predicate_ref(words.next(), &types, predicates.next())?
+                        .event()
+                        .ok_or("candle window requires an event")?;
                     let n = offset(words.next())?;
                     if n == 0 {
                         return Err("candle window is empty".into());
@@ -283,22 +440,24 @@ impl Plan {
                 }
                 "reclaim" => {
                     let id = price_ref(words.next(), &types)?;
-                    if types[id] == Type::Price {
+                    if id.kind() == PriceKind::Endpoint {
                         return Err("reclaim needs a prior range level".into());
                     }
                     let (min, max) = (offset(words.next())?, offset(words.next())?);
                     if min > max {
                         return Err("reclaim minimum exceeds maximum".into());
                     }
-                    Node::Reclaim(id, min, max, types[id] == Type::PriorHigh)
+                    Node::Reclaim(id, min, max, id.kind() == PriceKind::PriorHigh)
                 }
                 "breakout" => Node::Breakout(steps(number(words.next(), "lookback")?, frame)?),
                 "held" => Node::Held(
-                    reference(words.next(), &types, Some(Type::Bool))?,
+                    predicate_ref(words.next(), &types, predicates.next())?
+                        .state()
+                        .ok_or("held requires a state")?,
                     steps(number(words.next(), "held duration")?, frame)? + 1,
                 ),
                 "weekday" => {
-                    kind = Type::Day;
+                    kind = Type::Category(CategoryKind::Day);
                     Node::Weekday
                 }
                 "tail" => {
@@ -309,7 +468,7 @@ impl Plan {
                     Node::Tail(duration)
                 }
                 "trend" => {
-                    kind = Type::Trend;
+                    kind = Type::Category(CategoryKind::Trend);
                     let duration = number(words.next(), "trend frame")?;
                     steps(duration, frame)?;
                     Node::Trend(duration)
@@ -317,10 +476,10 @@ impl Plan {
                 "category" => {
                     let value = words.next().ok_or("missing category")?;
                     if let Some(day) = DAYS.iter().position(|name| *name == value) {
-                        kind = Type::Day;
+                        kind = Type::Category(CategoryKind::Day);
                         Node::Category(day as u8)
                     } else if let Some(trend) = TRENDS.iter().position(|name| *name == value) {
-                        kind = Type::Trend;
+                        kind = Type::Category(CategoryKind::Trend);
                         Node::Category(6 + trend as u8)
                     } else {
                         return Err("unknown study category".into());
@@ -328,20 +487,28 @@ impl Plan {
                 }
                 "eq" | "ne" => {
                     let lhs = reference(words.next(), &types, None)?;
-                    if !matches!(types[lhs], Type::Day | Type::Trend) {
-                        return Err("comparison needs categories".into());
-                    }
+                    let category = match types[lhs] {
+                        Type::Category(category) => category,
+                        _ => return Err("comparison needs categories".into()),
+                    };
+                    let rhs = reference(words.next(), &types, Some(types[lhs]))?;
                     Node::Equal(
-                        lhs,
-                        reference(words.next(), &types, Some(types[lhs]))?,
+                        Ref {
+                            index: lhs,
+                            kind: category,
+                        },
+                        Ref {
+                            index: rhs,
+                            kind: category,
+                        },
                         op == "eq",
                     )
                 }
-                "not" => Node::Not(reference(words.next(), &types, Some(Type::Bool))?),
+                "not" => Node::Not(predicate_ref(words.next(), &types, predicates.next())?),
                 "and" | "or" => {
                     let items = words
                         .by_ref()
-                        .map(|id| reference(Some(id), &types, Some(Type::Bool)))
+                        .map(|id| predicate_ref(Some(id), &types, predicates.next()))
                         .collect::<Result<Vec<_>>>()?;
                     if items.is_empty() {
                         return Err("logic requires at least one operand".into());
@@ -350,56 +517,31 @@ impl Plan {
                 }
                 _ => return Err("unknown Filang study operator".into()),
             };
-            if words.next().is_some() {
+            if words.next().is_some() || predicates.next().is_some() {
                 return Err("trailing study node operands".into());
             }
             nodes.push(node);
             types.push(kind);
         }
-        let mut queries = Vec::new();
-        for part in parts {
-            if queries.len() == MAX_BATCH {
-                return Err("study batch exceeds 64 candidates".into());
-            }
-            let mut words = part.split_whitespace();
-            let find = reference(words.next(), &types, Some(Type::Bool))?;
-            let optional = |s, t| match s {
-                Some("-") => Ok(None),
-                value => reference(value, &types, t).map(Some),
-            };
-            let context = optional(words.next(), Some(Type::Bool))?;
-            let group = optional(words.next(), None)?;
-            if group.map_or(false, |id| {
-                !matches!(types[id], Type::Bool | Type::Day | Type::Trend)
-            }) {
-                return Err("group needs a Boolean or category".into());
-            }
-            let mut seen = HashSet::new();
-            let horizons = words
-                .map(|s| {
-                    let h = steps(number(Some(s), "outcome horizon")?, frame)?;
-                    if !seen.insert(h) {
-                        return Err("duplicate outcome horizon".into());
+        for query in &queries {
+            let mask = |predicate: Predicate| types.get(predicate.index()) == Some(&Type::Bool);
+            if !mask(query.find.predicate())
+                || query.context.map_or(false, |value| !mask(value))
+                || query.filters.iter().any(|value| !mask(*value))
+                || query.group.map_or(false, |group| match group {
+                    Group::Predicate(value) => !mask(value),
+                    Group::Category(value) => {
+                        types.get(value.index()) != Some(&Type::Category(value.kind()))
                     }
-                    Ok(h)
                 })
-                .collect::<Result<Vec<_>>>()?;
-            queries.push(Query {
-                find,
-                context,
-                filters: Vec::new(),
-                group,
-                horizons,
-                column_labels: Vec::new(),
-            });
-        }
-        if queries.is_empty() {
-            return Err("study batch is empty".into());
+            {
+                return Err("query references do not match the checked plan".into());
+            }
         }
         Ok(Self {
             nodes,
             queries,
-            notes: HashMap::new(),
+            notes,
         })
     }
 }

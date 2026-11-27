@@ -121,7 +121,7 @@ pub fn run(
             }
         }
         let root = g.parse(p[10])?;
-        if g.nodes[root].unit != SCALAR || g.identity(root) != p[5] {
+        if g.nodes()[root].unit != SCALAR || g.identity(root) != p[5] {
             return Err("feature identity/unit mismatch".into());
         }
         let rule = Rule {

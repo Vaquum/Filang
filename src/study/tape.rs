@@ -2,7 +2,6 @@ use crate::{
     geometry::{explore::MAX_SLOTS, Counters, Dimension, COUNTER_COLUMNS},
     Result,
 };
-use std::{fs, path::Path};
 
 pub(crate) const MAX_EXACT_INTEGER: i64 = 9_007_199_254_740_991;
 
@@ -78,13 +77,6 @@ fn price(text: Option<&str>) -> Result<i64> {
 }
 
 impl Tape {
-    pub fn read(path: impl AsRef<Path>, interval: i64) -> Result<Self> {
-        Self::parse(
-            &fs::read_to_string(path).map_err(|err| err.to_string())?,
-            interval,
-        )
-    }
-
     pub(super) fn parse(csv: &str, interval: i64) -> Result<Self> {
         if !(60_000..=86_400_000).contains(&interval) {
             return Err("unsupported study interval".into());
@@ -216,10 +208,6 @@ pub(super) struct Calendar {
 }
 
 impl Calendar {
-    pub fn read(path: impl AsRef<Path>) -> Result<Self> {
-        Self::parse(&fs::read_to_string(path).map_err(|err| err.to_string())?)
-    }
-
     pub(super) fn empty() -> Self {
         Self {
             start: 0,

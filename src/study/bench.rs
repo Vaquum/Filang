@@ -4,7 +4,7 @@ use super::{
     compute::{Eval, Series},
     description,
     explanation::{self, Explain},
-    plan::{Node, Query},
+    plan::{CategoryKind, Group, Query},
     quote, syntax,
     tape::{Calendar, DAYS, TRENDS},
     write_outcomes, write_reclaim, Study, OUTPUT_CELLS,
@@ -34,14 +34,14 @@ impl Study {
         )?;
         let empty = Calendar::empty();
         let calendar = self.calendar.as_ref().map_or(&empty, |(_, cal)| cal);
-        let series = Eval::new(&self.tape, calendar).series(&plan.nodes)?;
-        let query = &plan.queries[0];
+        let series = Eval::new(&self.tape, calendar).series(&plan)?;
+        let query = &plan.queries()[0];
         let filters = query
             .filters
             .iter()
-            .map(|&id| series[id].mask())
+            .map(|&id| series[id.index()].mask())
             .collect::<Result<Vec<_>>>()?;
-        let event = series[query.find].mask()?;
+        let event = series[query.find.index()].mask()?;
         let mut present_events = event.bits.clone();
         let mut event_unknown = 0;
         for (i, bar) in self.tape.bars.iter().enumerate() {
@@ -62,7 +62,7 @@ impl Study {
         let lines = description::receipt_lines(&question, candidate);
         let mut out = format!(
             "{{\"event_count\":{occurrences},\"event_unknown\":{event_unknown},\"columns\":[{columns}],\"lines\":{lines},\"clause_stats\":{clause_stats:?},\"survivors\":{survivors:?},\"group_labels\":{},\"rows\":[",
-            format_group_labels(query, &plan.nodes)
+            format_group_labels(query)
         );
         let mut next = None;
         let mut wrote = 0;
@@ -123,42 +123,47 @@ impl Study {
         let empty = Calendar::empty();
         let calendar = self.calendar.as_ref().map_or(&empty, |(_, cal)| cal);
         let mut eval = Eval::new(&self.tape, calendar);
-        let series = eval.series(&plan.nodes)?;
+        let series = eval.series(&plan)?;
         let explain = Explain {
             eval: &eval,
-            nodes: &plan.nodes,
+            nodes: plan.nodes(),
             series: &series,
-            notes: &plan.notes,
+            notes: plan.notes(),
             calendar,
         };
-        let query = &plan.queries[0];
+        let query = &plan.queries()[0];
         let answers = query
             .filters
             .iter()
-            .map(|&id| Ok(truth(series[id].mask()?, i)))
+            .map(|&id| Ok(truth(series[id.index()].mask()?, i)))
             .collect::<Result<Vec<_>>>()?;
         let mut out = format!(
             "{{\"slot\":{i},\"t\":{t},\"present\":{},\"event\":{},\"where\":[{}],\"group\":{}",
             self.tape.bars[i].is_some(),
-            truth(series[query.find].mask()?, i),
+            truth(series[query.find.index()].mask()?, i),
             answers.join(","),
             group_at(query, &series, i)
         );
         write!(
             out,
             ",\"event_why\":{},\"where_why\":[",
-            quote(&explain.at(query.find, i)?)
+            quote(&explain.at(query.find.index(), i)?)
         )
         .expect("format string");
         for (position, &filter) in query.filters.iter().enumerate() {
             if position > 0 {
                 out.push(',');
             }
-            out.push_str(&quote(&explain.at(filter, i)?));
+            out.push_str(&quote(&explain.at(filter.index(), i)?));
         }
         out.push(']');
         if let Some(group) = query.group {
-            write!(out, ",\"group_why\":{}", quote(&explain.at(group, i)?)).expect("format string");
+            write!(
+                out,
+                ",\"group_why\":{}",
+                quote(&explain.at(group.index(), i)?)
+            )
+            .expect("format string");
         }
         if self.tape.bars[i].is_some() {
             write_outcomes(&mut out, &self.tape, i, &query.horizons);
@@ -168,7 +173,11 @@ impl Study {
                 if position > 0 {
                     out.push(',');
                 }
-                out.push_str(&quote(&explanation::outcome(&self.tape, i, horizon)));
+                out.push_str(&quote(&explanation::outcome(
+                    &self.tape,
+                    i,
+                    horizon.steps(),
+                )));
             }
             out.push(']');
         } else {
@@ -241,16 +250,13 @@ fn filter_totals(
 fn group_at(query: &Query, series: &[Series], i: usize) -> String {
     query
         .group
-        .map_or_else(|| "null".into(), |id| quote(series[id].group(i)))
+        .map_or_else(|| "null".into(), |id| quote(series[id.index()].group(i)))
 }
 
-fn group_labels(query: &Query, nodes: &[Node]) -> Vec<(&'static str, &'static str)> {
-    let id = match query.group {
-        Some(id) => id,
+fn group_labels(query: &Query) -> Vec<(&'static str, &'static str)> {
+    let mut labels = match query.group {
         None => return Vec::new(),
-    };
-    let mut labels = match &nodes[id] {
-        Node::Weekday | Node::Category(0..=5) => DAYS
+        Some(Group::Category(value)) if value.kind() == CategoryKind::Day => DAYS
             .into_iter()
             .zip([
                 "Monday",
@@ -261,7 +267,7 @@ fn group_labels(query: &Query, nodes: &[Node]) -> Vec<(&'static str, &'static st
                 "closed (no session that New York date)",
             ])
             .collect(),
-        Node::Trend(_) | Node::Category(6..=8) => TRENDS
+        Some(Group::Category(_)) => TRENDS
             .into_iter()
             .zip([
                 "up (close > open)",
@@ -275,8 +281,8 @@ fn group_labels(query: &Query, nodes: &[Node]) -> Vec<(&'static str, &'static st
     labels
 }
 
-fn format_group_labels(query: &Query, nodes: &[Node]) -> String {
-    let entries = group_labels(query, nodes)
+fn format_group_labels(query: &Query) -> String {
+    let entries = group_labels(query)
         .into_iter()
         .map(|(key, label)| format!("{{\"key\":{},\"label\":{}}}", quote(key), quote(label)))
         .collect::<Vec<_>>();

@@ -76,7 +76,7 @@ fn prepared_aliases_and_committed_task_replay() {
                 cohort::defaults(&c.families[f]).unwrap().1,
             )
             .unwrap();
-            let xroot = g.nodes[root].args[0];
+            let xroot = g.nodes()[root].args[0];
             let batch = engine::evaluate(&g, &d, &[xroot], c.memory).unwrap();
             for j in lo..hi {
                 let want = Predicate::Threshold(Cmp::Gt)

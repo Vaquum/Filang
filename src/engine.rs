@@ -30,10 +30,10 @@ impl Batch {
     }
 }
 pub fn prepare(g: &Graph, d: &Data, budget: usize, backend: Backend) -> Result<Prepared> {
-    let roots = (0..g.nodes.len()).collect::<Vec<_>>();
+    let roots = (0..g.nodes().len()).collect::<Vec<_>>();
     let batch = evaluate_with(g, d, &roots, budget, backend, None)?;
     Ok(Prepared {
-        nodes: g.nodes.clone(),
+        nodes: g.nodes().to_vec(),
         digest: d.digest.clone(),
         rows: d.len(),
         batch,
@@ -51,14 +51,14 @@ pub fn evaluate_with(
     backend: Backend,
     bank: Option<&Prepared>,
 ) -> Result<Batch> {
-    if roots.iter().any(|r| *r >= g.nodes.len()) {
+    if roots.iter().any(|r| *r >= g.nodes().len()) {
         return Err("unknown output node".into());
     }
     Backend::resolve(backend.name())?;
     if let Some(p) = bank {
         if p.digest != d.digest
             || p.rows != d.len()
-            || g.nodes.get(..p.nodes.len()) != Some(p.nodes.as_slice())
+            || g.nodes().get(..p.nodes.len()) != Some(p.nodes.as_slice())
         {
             return Err("prepared bank data/graph identity mismatch".into());
         }
@@ -83,7 +83,7 @@ pub fn evaluate_with(
         if bank.map_or(false, |p| p.batch.values.contains_key(id)) {
             continue;
         }
-        let node = &g.nodes[*id];
+        let node = &g.nodes()[*id];
         let lookup = |i: &Id| {
             values
                 .get(i)

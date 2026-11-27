@@ -40,13 +40,17 @@ pub struct Node {
 }
 #[derive(Clone, Default)]
 pub struct Graph {
-    pub nodes: Vec<Node>,
+    nodes: Vec<Node>,
     index: HashMap<(Op, Vec<Id>), Id>,
 }
 impl Graph {
     pub fn new() -> Self {
         Self::default()
     }
+    pub fn nodes(&self) -> &[Node] {
+        &self.nodes
+    }
+
     pub fn add(&mut self, op: Op, args: Vec<Id>) -> Result<Id> {
         use Op::*;
         let arity = match op {
@@ -84,10 +88,14 @@ impl Graph {
             Mul | Div | Div0 => {
                 let a = self.nodes[args[0]].unit;
                 let b = self.nodes[args[1]].unit;
-                let s = if op == Mul { 1 } else { -1 };
+                let combine = if op == Mul {
+                    i8::checked_add
+                } else {
+                    i8::checked_sub
+                };
                 Unit(
-                    a.0.checked_add(s * b.0).ok_or("unit overflow")?,
-                    a.1.checked_add(s * b.1).ok_or("unit overflow")?,
+                    combine(a.0, b.0).ok_or("unit overflow")?,
+                    combine(a.1, b.1).ok_or("unit overflow")?,
                 )
             }
             _ => self.nodes[args[0]].unit,
@@ -271,6 +279,29 @@ impl Graph {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unit_arithmetic_checks_the_result_without_negating_the_operand() {
+        let mut graph = Graph::new();
+        let price = graph.source(0);
+        let mut price64 = price;
+        for _ in 0..6 {
+            price64 = graph.add(Op::Mul, vec![price64, price64]).unwrap();
+        }
+        assert_eq!(
+            graph.add(Op::Mul, vec![price64, price64]).unwrap_err(),
+            "unit overflow"
+        );
+        let one = graph.constant(1.0);
+        let inverse64 = graph.add(Op::Div, vec![one, price64]).unwrap();
+        let inverse128 = graph.add(Op::Div, vec![inverse64, price64]).unwrap();
+        let result = graph.add(Op::Div, vec![inverse64, inverse128]).unwrap();
+        assert_eq!(graph.nodes()[result].unit, Unit(64, 0));
+        assert_eq!(
+            graph.add(Op::Div, vec![one, inverse128]).unwrap_err(),
+            "unit overflow"
+        );
+    }
     #[test]
     fn types_and_roundtrip() {
         let mut g = Graph::new();
