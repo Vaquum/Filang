@@ -102,24 +102,24 @@ impl Explain<'_> {
                 None => "No first reclaim of a pierced level in the selected candle window.".into(),
             },
             Node::Relate(left, cmp, right) => {
-                let a = self.series[*left].prices()?[i];
-                let b = self.series[*right].prices()?[i];
+                let a = self.series[left.index()].prices()?[i];
+                let b = self.series[right.index()].prices()?[i];
                 if a == 0 || b == 0 {
                     "One or both price operands are unavailable.".into()
                 } else {
                     format!(
                         "{} {} and {} {}. The test was {}.",
-                        price_label(&self.nodes[*left], tape.interval),
+                        price_label(&self.nodes[left.index()], tape.interval),
                         cents(a),
-                        price_label(&self.nodes[*right], tape.interval),
+                        price_label(&self.nodes[right.index()], tape.interval),
                         cents(b),
                         comparison(*cmp)
                     )
                 }
             }
             Node::Near(reference, point, limit) => {
-                let a = self.series[*point].prices()?[i];
-                let b = self.series[*reference].prices()?[i];
+                let a = self.series[point.index()].prices()?[i];
+                let b = self.series[reference.index()].prices()?[i];
                 if a == 0 || b == 0 {
                     "One or both price operands are unavailable.".into()
                 } else {
@@ -180,7 +180,7 @@ impl Explain<'_> {
                 let first = (i + 1).saturating_sub(*steps);
                 let required = (*steps as i64 - 1) * tape.interval;
                 let label = note.map_or_else(|| duration(required), str::to_owned);
-                let mask = self.series[*child].mask()?;
+                let mask = self.series[child.index()].mask()?;
                 let witness = (first..=i).rev().find(|&j| mask.at(j) == (false, true));
                 if let Some(slot) = witness {
                     let holding = if slot < i && (slot + 1..=i).all(|j| mask.at(j) == (true, true)) {
@@ -191,7 +191,7 @@ impl Explain<'_> {
                     format!(
                         "state false at {} ({}), inside the required {label} window from {}{holding}",
                         utc(tape.close(slot)),
-                        self.explain(*child, slot, remaining)?,
+                        self.explain(child.index(), slot, remaining)?,
                         utc(t - required)
                     )
                 } else if i + 1 < *steps {
@@ -200,7 +200,7 @@ impl Explain<'_> {
                     format!(
                         "state unknown at {} ({}); no known false in the window",
                         utc(tape.close(slot)),
-                        self.explain(*child, slot, remaining)?
+                        self.explain(child.index(), slot, remaining)?
                     )
                 } else {
                     let run_start = (0..first)
@@ -263,14 +263,14 @@ impl Explain<'_> {
                 if state == "unknown" {
                     "The window or a required comparison is unknown.".into()
                 } else {
-                    self.explain(*inner, i, remaining)?
+                    self.explain(inner.index(), i, remaining)?
                 }
             }
             Node::Equal(left, right, _) => {
-                let side = if matches!(&self.nodes[*left], Node::Category(_)) {
-                    *right
+                let side = if matches!(&self.nodes[left.index()], Node::Category(_)) {
+                    right.index()
                 } else {
-                    *left
+                    left.index()
                 };
                 format!(
                     "{}: {}",
@@ -280,24 +280,24 @@ impl Explain<'_> {
             }
             Node::Not(inner) => format!(
                 "The condition is {}: {}",
-                self.series[*inner].group(i),
-                self.explain(*inner, i, remaining)?
+                self.series[inner.index()].group(i),
+                self.explain(inner.index(), i, remaining)?
             ),
             Node::Logic(items, and) => {
                 let decisive = if *and { "false" } else { "true" };
                 let selected = items
                     .iter()
-                    .find(|&&item| self.series[item].group(i) == decisive)
+                    .find(|&&item| self.series[item.index()].group(i) == decisive)
                     .or_else(|| {
                         items
                             .iter()
-                            .find(|&&item| self.series[item].group(i) == "unknown")
+                            .find(|&&item| self.series[item.index()].group(i) == "unknown")
                     });
                 if let Some(&item) = selected {
                     format!(
                         "A condition is {}: {}",
-                        self.series[item].group(i),
-                        self.explain(item, i, remaining)?
+                        self.series[item.index()].group(i),
+                        self.explain(item.index(), i, remaining)?
                     )
                 } else {
                     format!("All {} conditions are {state}.", items.len())
@@ -305,8 +305,8 @@ impl Explain<'_> {
             }
             Node::Category(_) => "value".into(),
             Node::AxisRelate(left, cmp, right) => {
-                let a = self.series[*left].axis()?[i];
-                let b = self.series[*right].axis()?[i];
+                let a = self.series[left.index()].axis()?[i];
+                let b = self.series[right.index()].axis()?[i];
                 if !a.is_finite() || !b.is_finite() {
                     "One or both dimension values are unavailable.".into()
                 } else {

@@ -248,7 +248,7 @@ impl Predicate {
             }
         }
         grid.validate()?;
-        if x >= g.nodes.len() || y.map_or(false, |i| i >= g.nodes.len()) {
+        if x >= g.nodes().len() || y.map_or(false, |i| i >= g.nodes().len()) {
             return Err("predicate input node".into());
         }
         let pair = matches!(self, Self::Relative(_) | Self::Cross(_));
@@ -256,7 +256,7 @@ impl Predicate {
             return Err("predicate arity".into());
         }
         if let Some(y) = y {
-            if g.nodes[x].unit != g.nodes[y].unit {
+            if g.nodes()[x].unit != g.nodes()[y].unit {
                 return Err("predicate comparisons require equal units".into());
             }
         }

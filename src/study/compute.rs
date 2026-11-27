@@ -1,6 +1,6 @@
 use super::{
     candles::{median_sums, prior_medians, reclaims},
-    plan::Node,
+    plan::{Node, Plan},
     tape::{Calendar, Tape, DAYS, TRENDS},
 };
 use crate::{
@@ -168,7 +168,8 @@ impl<'a> Eval<'a> {
         Ok(())
     }
 
-    pub fn series(&mut self, nodes: &[Node]) -> Result<Vec<Series>> {
+    pub fn series(&mut self, plan: &Plan) -> Result<Vec<Series>> {
+        let nodes = plan.nodes();
         let mut out = Vec::with_capacity(nodes.len());
         let n = self.tape.bars.len();
         for node in nodes {
@@ -252,7 +253,7 @@ impl<'a> Eval<'a> {
             }
             Node::AxisZero => Series::Axis(vec![0.0; n]),
             Node::AxisRelate(left, cmp, right) => {
-                let (a, b) = (series[*left].axis()?, series[*right].axis()?);
+                let (a, b) = (series[left.index()].axis()?, series[right.index()].axis()?);
                 self.mask(|i| {
                     tape.bars[i]?;
                     (a[i].is_finite() && b[i].is_finite()).then(|| cmp.test(a[i], b[i]))
@@ -279,7 +280,10 @@ impl<'a> Eval<'a> {
                 })
             }
             Node::Relate(left, cmp, right) => {
-                let (a, b) = (series[*left].prices()?, series[*right].prices()?);
+                let (a, b) = (
+                    series[left.index()].prices()?,
+                    series[right.index()].prices()?,
+                );
                 self.mask(|i| {
                     if a[i] == 0 || b[i] == 0 {
                         return None;
@@ -289,7 +293,10 @@ impl<'a> Eval<'a> {
                 })
             }
             Node::Near(reference, point, ratio) => {
-                let (a, b) = (series[*reference].prices()?, series[*point].prices()?);
+                let (a, b) = (
+                    series[reference.index()].prices()?,
+                    series[point.index()].prices()?,
+                );
                 self.mask(|i| {
                     if a[i] == 0 || b[i] == 0 {
                         return None;
@@ -329,7 +336,7 @@ impl<'a> Eval<'a> {
                 })
             }
             Node::Window(inner, bars) => {
-                let input = series[*inner].mask()?;
+                let input = series[inner.index()].mask()?;
                 self.mask(|i| {
                     if i + 1 < *bars || !tape.complete(i + 1 - bars, i + 1) {
                         return None;
@@ -340,8 +347,8 @@ impl<'a> Eval<'a> {
             }
             Node::Reclaim(reference, min, max, high) => {
                 let (mask, breaches) =
-                    reclaims(tape, series[*reference].prices()?, *min, *max, *high);
-                Series::Reclaim(mask, breaches, *reference)
+                    reclaims(tape, series[reference.index()].prices()?, *min, *max, *high);
+                Series::Reclaim(mask, breaches, reference.index())
             }
             Node::Wick(body, wick) => self.mask(|i| {
                 let b = tape.bars[i]?;
@@ -381,7 +388,7 @@ impl<'a> Eval<'a> {
                 })
             }
             Node::Held(child, steps) => {
-                let m = series[*child].mask()?;
+                let m = series[child.index()].mask()?;
                 let (mut last_false, mut last_unknown) = (0, 0);
                 self.mask(|i| {
                     let (value, valid) = m.at(i);
@@ -413,15 +420,15 @@ impl<'a> Eval<'a> {
             ),
             Node::Category(v) => Series::Category(vec![*v; n]),
             Node::Equal(a, b, eq) => {
-                let a = series[*a].category()?;
-                let b = series[*b].category()?;
+                let a = series[a.index()].category()?;
+                let b = series[b.index()].category()?;
                 self.mask(|i| (a[i] != 255 && b[i] != 255).then(|| (a[i] == b[i]) == *eq))
             }
-            Node::Not(id) => Series::Bool(series[*id].mask()?.not()),
+            Node::Not(id) => Series::Bool(series[id.index()].mask()?.not()),
             Node::Logic(items, and) => {
-                let mut out = series[items[0]].mask()?.clone();
+                let mut out = series[items[0].index()].mask()?.clone();
                 for &ref_id in &items[1..] {
-                    join(&mut out, series[ref_id].mask()?, *and);
+                    join(&mut out, series[ref_id.index()].mask()?, *and);
                 }
                 Series::Bool(out)
             }

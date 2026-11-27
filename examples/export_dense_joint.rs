@@ -21,7 +21,7 @@ fn run() -> Result<()> {
                 let (n, a, b) = c.parameters(kind, atom)?;
                 let (mut g, ids) = cohort::stripe(kind, n, a)?;
                 let r = cohort::output(&mut g, kind, ids, b, cohort::defaults(kind)?.1)?;
-                let expr = g.expression(g.nodes[r].args[0]);
+                let expr = g.expression(g.nodes()[r].args[0]);
                 for (q, qual) in c.qualifier_text.split(',').enumerate() {
                     writeln!(
                         &mut text,

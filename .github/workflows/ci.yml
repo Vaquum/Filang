@@ -71,6 +71,7 @@ jobs:
           "$RUNNER_TEMP/filang-binding-test/bin/python" bindings/verify/limen.py "$RUNNER_TEMP/filang-limen.csv"
           node bindings/verify/query.mjs
           node bindings/verify/query-contract.mjs
+          node bindings/verify/type-preservation.mjs
           node query/verify/handoff.mjs
           node query/verify/suggestions.mjs
           node query/verify/cube-source.mjs

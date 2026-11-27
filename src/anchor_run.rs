@@ -179,7 +179,7 @@ pub fn run(g: &Graph, requests: &[Anchor], o: &Options, gate: Option<&str>) -> R
     };
     // Data-scoped reuse is keyed by graph structure. A bounded optional bank
     // keeps only temporal dependency closures reused by at least two programs.
-    let mut counts = vec![0usize; g.nodes.len()];
+    let mut counts = vec![0usize; g.nodes().len()];
     for a in requests {
         for j in g.dependencies(&[a.root]) {
             counts[j] += 1;
@@ -190,7 +190,7 @@ pub fn run(g: &Graph, requests: &[Anchor], o: &Options, gate: Option<&str>) -> R
         for (id, &n) in counts.iter().enumerate() {
             if n > 1
                 && matches!(
-                    g.nodes[id].op,
+                    g.nodes()[id].op,
                     Op::Mean(_) | Op::Std(_) | Op::Ema(_) | Op::Wilder(_) | Op::Min(_) | Op::Max(_)
                 )
             {
@@ -288,7 +288,7 @@ pub fn run(g: &Graph, requests: &[Anchor], o: &Options, gate: Option<&str>) -> R
                 .iter()
                 .filter(|i| {
                     matches!(
-                        g.nodes[**i].op,
+                        g.nodes()[**i].op,
                         Op::Mean(_)
                             | Op::MeanSum(_)
                             | Op::StdSum(_)

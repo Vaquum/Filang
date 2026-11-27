@@ -438,7 +438,7 @@ fn prepared(
         }
         let mut g = gbase.clone();
         let root = cohort::output(&mut g, kind, ids, b, center)?;
-        let xroot = g.nodes[root].args[0];
+        let xroot = g.nodes()[root].args[0];
         let x = ex
             .numerical_roots(&g, &[xroot], None)?
             .pop()
@@ -797,7 +797,7 @@ fn export_best(c: &Config, best: &Best, dir: &Path) -> Result<()> {
         let (grid_center, grid) = (cohort::defaults(kind)?.1, c.grid(kind)?);
         let (mut g, ids) = cohort::stripe(kind, n, a)?;
         let root = cohort::output(&mut g, kind, ids, b, grid_center)?;
-        let xroot = g.nodes[root].args[0];
+        let xroot = g.nodes()[root].args[0];
         // Exact singleton rational grid retains the chosen binary64 threshold.
         let numerator = grid.start as i128 + co.cutoff as i128 * grid.step as i128;
         let singleton = format!("{numerator}:1:1:{}", grid.denominator);

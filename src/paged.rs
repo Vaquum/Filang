@@ -252,7 +252,7 @@ impl<'a> Executor<'a> {
         }
         if req.len() > 4096
             || req.iter().any(|r| {
-                r.root >= page.graph.nodes.len()
+                r.root >= page.graph.nodes().len()
                     || r.rules.is_empty()
                     || r.rules.len() > 8194
                     || r.rules.iter().any(|r| !r.threshold.is_finite())
@@ -411,7 +411,7 @@ impl<'a> Executor<'a> {
         roots: &[Id],
         mut capture: Option<&mut dyn Write>,
     ) -> Result<Vec<Vec<f64>>> {
-        if roots.is_empty() || roots.len() > 4096 || roots.iter().any(|r| *r >= g.nodes.len()) {
+        if roots.is_empty() || roots.len() > 4096 || roots.iter().any(|r| *r >= g.nodes().len()) {
             return Err("invalid numerical root batch".into());
         }
         let timer = Instant::now();
@@ -464,10 +464,10 @@ impl<'a> Executor<'a> {
         F: FnMut(u64, u64, &[Metrics]) -> Result<()>,
     {
         use crate::lang::Op;
-        let node = g.nodes.get(root).ok_or("unknown offset root")?;
+        let node = g.nodes().get(root).ok_or("unknown offset root")?;
         if node.op != Op::Sub
             || node.args.len() != 2
-            || !matches!(g.nodes[node.args[1]].op, Op::Constant(_))
+            || !matches!(g.nodes()[node.args[1]].op, Op::Constant(_))
         {
             return Err("region root must be ordinary sub(series,constant), read out >0".into());
         }

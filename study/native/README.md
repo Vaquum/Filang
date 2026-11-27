@@ -1,12 +1,18 @@
 # Filang study execution
 
-The builder and CLI share the lexer, grammar, type checker, signature registry,
-versioned definitions and extension tests under `study/src`. They resolve
-scalars, vectors and finite choices before compiling checked expressions to a
-bounded DAG. Composer's pinned comparison trees supply the candle names and
-rules. Agents add compositions by authoring artifacts with typed parameters
-and recorded acceptance cases. The runtime performs deterministic lookup,
-checking and execution.
+The browser engine and native study worker compile Filang source with the same
+Rust checker. The older builder also uses the JavaScript checker under
+`study/src` for editor diagnostics and candidate labels. The executable plan
+carries distinct references for events, states, other predicates, prices,
+activity axes and categories. Outcome horizons have their own type and enter
+the plan only through `measure`. The compiler resolves scalars, vectors and
+finite choices before execution.
+
+Custom definitions use the same compiler. An artifact declares its event or
+condition role, parameter types and domains. Its body must compile as a
+Boolean predicate. The declared role applies at calls to the definition.
+Filang checks default values at installation and supplied values at each call.
+Pinned dependencies and recorded acceptance cases apply to each version.
 
 `POST /api/filang/evaluate` accepts a JSON object with `query`, source and
 calendar SHA-256s in `source` and `calendar`, optional `candidate` (the
@@ -20,11 +26,12 @@ milliseconds and exact integer price ticks. `work` declares the number of
 candidates, unique compiled nodes, rolling windows prepared, and ordinal window
 scans. `medianWindows` counts distinct prior-median preparations.
 
-The Node process compiles to a private, bounded `filang-study-v1` protocol.
-One worker loads its exact integer-cent source and session table for the
-lifetime of the process. The worker validates the DAG, reference order,
-types and operator arguments. It reuses packed masks across the batch's
-identical nodes, shares the rolling high and low for a fixed lookback, and
+The Node process sends source over the private, bounded
+`filang-study-source-v1` protocol. One worker loads its exact integer-cent
+recording and session table for the lifetime of the process. Request-local
+definitions apply only to the current request. The worker validates the DAG,
+reference order, types and operator arguments. It reuses packed masks across
+the batch's identical nodes, shares the rolling high and low for a fixed lookback, and
 uses Filang's ordinal geometry encoder and compact keys to share complete
 price windows of up to ten bars. For larger price windows it uses the native
 encoder directly. `exact_g1` and `chained_g1` also accept selected
@@ -63,3 +70,21 @@ discovery commands and their exact coverage contracts. The study validity
 policy and observational returns are separate from research rule validity
 and the next-open backtest ledger. A successful study or batch gives no new
 large-scale performance result.
+
+## Type preservation checks
+
+[Shared vectors](../verify/typing-vectors.json) exercise the same built-in and
+custom queries across the native worker and browser engine. They also compare
+the match count for a Composer drawing as a Filang query. Run
+`node bindings/verify/type-preservation.mjs` after preparing the pinned study
+inputs and building both engines. Set `FILANG_BASELINE_ENGINE_DIR` to the
+browser package from an earlier checkout to compare study results, receipts
+and explanations directly. The same setting enables a comparison across the
+full Query verification corpus in `node query/verify/parity.mjs`.
+
+`FILANG_BASELINE_NATIVE_ROOT` enables the direct comparison in
+`node study/verify/native.mjs`. It points to the earlier checkout containing
+its own compiler, worker and native executable. The baseline executable
+defaults to `target/release/filang` within that checkout, or can be set with
+`FILANG_BASELINE_NATIVE_BIN`. Both versions receive the same pinned data and
+queries.

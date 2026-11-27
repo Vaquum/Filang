@@ -55,7 +55,7 @@ fn general_mean_absolute_deviation_contract() {
     assert!((x[2] - 2. / 3.).abs() < 1e-15);
     assert!(x[3..6].iter().all(|v| v.is_nan()));
     assert!((x[6] - 2. / 3.).abs() < 1e-15);
-    assert_eq!(g.nodes[r].unit, g.nodes[c].unit);
+    assert_eq!(g.nodes()[r].unit, g.nodes()[c].unit);
     assert_eq!(g.parse(&g.expression(r)).unwrap(), r);
 }
 #[test]

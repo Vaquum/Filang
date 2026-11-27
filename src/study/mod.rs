@@ -25,11 +25,12 @@ pub(crate) fn geometry_frame(
 
 use self::{
     compute::{Eval, Series},
-    plan::{Plan, Query},
+    plan::{Horizon, Plan, Query},
     tape::{Calendar, Tape},
 };
-use crate::Result;
+use crate::{engine_json, Result};
 use std::{
+    fs,
     io::{self, BufRead, BufReader, BufWriter, Write},
     path::Path,
 };
@@ -38,11 +39,15 @@ const PLAN_LIMIT: u64 = 1_048_576;
 const OUTPUT_CELLS: usize = 1_000_000;
 
 pub fn serve(bars: impl AsRef<Path>, calendar: impl AsRef<Path>, interval_ms: i64) -> Result<()> {
-    let tape = Tape::read(bars, interval_ms)?;
-    let calendar = Calendar::read(calendar)?;
+    let mut study = Study::new(
+        &fs::read_to_string(bars).map_err(io_error)?,
+        interval_ms,
+        "BTCUSDT",
+    )?;
+    study.set_calendar(&fs::read_to_string(calendar).map_err(io_error)?)?;
     let mut input = BufReader::new(io::stdin().lock());
     let mut out = BufWriter::new(io::stdout().lock());
-    writeln!(out, "{{\"ready\":\"filang-study-v1\"}}").map_err(io_error)?;
+    writeln!(out, "{{\"ready\":\"filang-study-source-v1\"}}").map_err(io_error)?;
     out.flush().map_err(io_error)?;
     loop {
         let mut line = String::new();
@@ -55,7 +60,7 @@ pub fn serve(bars: impl AsRef<Path>, calendar: impl AsRef<Path>, interval_ms: i6
         if len as u64 > PLAN_LIMIT {
             return Err("study request exceeds 1 MiB".into());
         }
-        match evaluate(&line, &tape, &calendar) {
+        match study.request(&line) {
             Ok(value) => writeln!(out, "{value}").map_err(io_error)?,
             Err(error) => writeln!(out, "{{\"error\":{}}}", quote(&error)).map_err(io_error)?,
         }
@@ -114,6 +119,10 @@ impl Study {
     }
 
     pub fn install_definition(&mut self, text: &str, sha256: &str) -> Result<()> {
+        self.register_definition(text, sha256).map(|_| ())
+    }
+
+    fn register_definition(&mut self, text: &str, sha256: &str) -> Result<Option<String>> {
         if crate::hash::sha256(text.as_bytes()) != sha256 {
             return Err("definition bytes do not match the pinned SHA-256".into());
         }
@@ -129,8 +138,39 @@ impl Study {
                 self.registry.remove(&alias);
             }
             result?;
+            Ok(Some(alias))
+        } else {
+            Ok(None)
         }
-        Ok(())
+    }
+
+    // The worker takes source, so native and browser use the same checker.
+    // Definitions supplied by a request are visible only during that request.
+    fn request(&mut self, line: &str) -> Result<String> {
+        let request = engine_json::parse(line)?;
+        let query = request.field("query")?.text()?;
+        let candidate = request
+            .object()?
+            .get("candidate")
+            .map(|v| v.number())
+            .transpose()?;
+        let definitions = request.field("extensions")?.array()?;
+        let mut added = Vec::new();
+        let result = (|| {
+            for definition in definitions {
+                if let Some(alias) = self.register_definition(
+                    definition.field("text")?.text()?,
+                    definition.field("sha256")?.text()?,
+                )? {
+                    added.push(alias);
+                }
+            }
+            self.query(query, candidate)
+        })();
+        for alias in added {
+            self.registry.remove(&alias);
+        }
+        result
     }
 
     fn validate_definition(&self, alias: &str) -> Result<()> {
@@ -157,12 +197,12 @@ impl Study {
                         case.anchor
                     )
                 })?;
-            let plan = self
+            let (plan, predicate) = self
                 .registry
                 .compile_case(&format!("{alias}({})", case.arguments), self.environment())?;
             let mut evaluator = Eval::new(&self.tape, calendar);
-            let series = evaluator.series(&plan.nodes)?;
-            let (truth, known) = series[plan.queries[0].find].mask()?.at(slot);
+            let series = evaluator.series(&plan)?;
+            let (truth, known) = series[predicate.index()].mask()?.at(slot);
             let observed = known.then_some(truth);
             if observed != case.expected {
                 return Err(format!(
@@ -200,7 +240,7 @@ impl Study {
     }
 
     pub fn check(&self, text: &str) -> Result<usize> {
-        Ok(self.compile(text, None)?.queries.len())
+        Ok(self.compile(text, None)?.queries().len())
     }
 
     /// Evaluate checked Filang text and return the existing study result shape.
@@ -226,10 +266,13 @@ impl Study {
             .as_ref()
             .map_or(&empty, |(_, calendar)| calendar);
         let mut eval = Eval::new(&self.tape, calendar);
-        let series = eval.series(&plan.nodes)?;
-        let query = &plan.queries[0];
-        let event = series[query.find].mask()?;
-        let context = query.context.map(|id| series[id].mask()).transpose()?;
+        let series = eval.series(&plan)?;
+        let query = &plan.queries()[0];
+        let event = series[query.find.index()].mask()?;
+        let context = query
+            .context
+            .map(|id| series[id.index()].mask())
+            .transpose()?;
         Ok(self
             .tape
             .bars
@@ -297,20 +340,16 @@ pub(crate) fn quote(text: &str) -> String {
     value
 }
 
-fn evaluate(text: &str, tape: &Tape, calendar: &Calendar) -> Result<String> {
-    evaluate_plan(Plan::parse(text, tape.interval)?, tape, calendar)
-}
-
 fn evaluate_plan(plan: Plan, tape: &Tape, calendar: &Calendar) -> Result<String> {
     use std::fmt::Write;
     let mut eval = Eval::new(tape, calendar);
-    let series = eval.series(&plan.nodes)?;
+    let series = eval.series(&plan)?;
     let mut out = String::new();
     write!(out, "{{\"engine\":\"Filang {} · study v1\",\"work\":{{\"candidates\":{},\"nodes\":{},\"rollingWindows\":{},\"geometryWindows\":{},\"medianWindows\":{}}},\"results\":[",
-        env!("CARGO_PKG_VERSION"), plan.queries.len(), plan.nodes.len(), eval.rolling_windows, eval.geometry_windows, eval.median_windows())
+        env!("CARGO_PKG_VERSION"), plan.queries().len(), plan.nodes().len(), eval.rolling_windows, eval.geometry_windows, eval.median_windows())
         .expect("format string");
     let mut cells_left = OUTPUT_CELLS;
-    for (i, query) in plan.queries.iter().enumerate() {
+    for (i, query) in plan.queries().iter().enumerate() {
         if i > 0 {
             out.push(',');
         }
@@ -328,8 +367,11 @@ fn write_result(
     budget: &mut usize,
 ) -> Result<()> {
     use std::fmt::Write;
-    let event = series[query.find].mask()?;
-    let context = query.context.map(|id| series[id].mask()).transpose()?;
+    let event = series[query.find.index()].mask()?;
+    let context = query
+        .context
+        .map(|id| series[id.index()].mask())
+        .transpose()?;
     let mut eligible = Vec::new();
     let mut event_unknown = Vec::new();
     let mut context_unknown = Vec::new();
@@ -382,7 +424,7 @@ fn write_result(
         }
         write!(out, "{{\"t\":{},\"group\":", tape.close(i)).expect("format string");
         if let Some(id) = query.group {
-            write!(out, "\"{}\"", series[id].group(i)).expect("format string");
+            write!(out, "\"{}\"", series[id.index()].group(i)).expect("format string");
         } else {
             out.push_str("null");
         }
@@ -394,7 +436,7 @@ fn write_result(
     Ok(())
 }
 
-fn write_outcomes(out: &mut String, tape: &Tape, i: usize, horizons: &[usize]) {
+fn write_outcomes(out: &mut String, tape: &Tape, i: usize, horizons: &[Horizon]) {
     use std::fmt::Write;
     out.push_str(",\"out\":[");
     let start = tape.bars[i].expect("present occurrence").c;
@@ -402,7 +444,7 @@ fn write_outcomes(out: &mut String, tape: &Tape, i: usize, horizons: &[usize]) {
         if k > 0 {
             out.push(',');
         }
-        match tape.bars.get(i + h) {
+        match tape.bars.get(i + h.steps()) {
             None => out.push_str("{\"status\":\"censored\",\"value\":null}"),
             Some(None) => out.push_str("{\"status\":\"unknown\",\"value\":null}"),
             Some(Some(bar)) => write!(
@@ -424,7 +466,7 @@ fn write_reclaim(
     i: usize,
 ) -> Result<()> {
     use std::fmt::Write;
-    if let Some((breach, level)) = series[query.find].reclaim(i, series)? {
+    if let Some((breach, level)) = series[query.find.index()].reclaim(i, series)? {
         write!(
             out,
             ",\"reclaim\":{{\"breach\":{},\"reclaim\":{},\"level\":{level}}}",
@@ -443,18 +485,6 @@ mod tests {
     use std::fmt::Write as _;
 
     const BAR: i64 = 900_000;
-
-    fn calendar() -> Calendar {
-        let path = std::env::temp_dir().join(format!(
-            "filang-study-calendar-{}-{:?}.tsv",
-            std::process::id(),
-            std::thread::current().id()
-        ));
-        std::fs::write(&path, "0\t86400000\n").unwrap();
-        let calendar = Calendar::read(&path).unwrap();
-        std::fs::remove_file(path).unwrap();
-        calendar
-    }
 
     /// Six slots: two up bars, a flat bar without trades, a missing bar and
     /// two more up bars. Counters are USDT traded, taker-buy USDT, trades.
@@ -482,9 +512,11 @@ mod tests {
     }
 
     /// The closes at which the code matches, and those at which it is unknown.
-    fn read(tape: &Tape, node: &str) -> Result<(Vec<i64>, Vec<i64>)> {
-        let plan = format!("filang-study-v1\t1\t{node}\t0 - -");
-        let answer = evaluate(&plan, tape, &calendar())?;
+    fn read(study: &Study, node: &str) -> Result<(Vec<i64>, Vec<i64>)> {
+        let (op, pattern) = node.split_once(' ').unwrap();
+        let name = if op == "g1" { "exact_g1" } else { "chained_g1" };
+        let query = format!("on BTCUSDT 15m find {name}({})", quote(pattern));
+        let answer = study.query(&query, None)?;
         let list = |key: &str| -> Vec<i64> {
             let marker = format!("\"{key}\":[");
             let at = answer.find(&marker).unwrap() + marker.len();
@@ -552,25 +584,25 @@ mod tests {
 
     #[test]
     fn dimension_codes_are_three_valued_and_need_counters() {
-        let tape = Tape::parse(&recording(true), BAR).unwrap();
+        let study = Study::new(&recording(true), BAR, "BTCUSDT").unwrap();
         let close = |slots: &[i64]| slots.iter().map(|s| (s + 1) * BAR).collect::<Vec<_>>();
         // One up candle with net buying: the flat bar and the net seller are
         // known not to match, and no present bar is unknown.
         assert_eq!(
-            read(&tape, "g1 g1:o:0,1,2,3,u|delta:1/0").unwrap(),
+            read(&study, "g1 g1:o:0,1,2,3,u|delta:1/0").unwrap(),
             (close(&[0, 1, 5]), vec![])
         );
         assert_eq!(
-            read(&tape, "g1 g1:o:0,1,2,3,u").unwrap(),
+            read(&study, "g1 g1:o:0,1,2,3,u").unwrap(),
             (close(&[0, 1, 4, 5]), vec![])
         );
         // The bar without trades has no size: unknown, whatever its prices.
         assert_eq!(
-            read(&tape, "g1 g1:o:0,0,0,0,z|size:0").unwrap(),
+            read(&study, "g1 g1:o:0,0,0,0,z|size:0").unwrap(),
             (vec![], close(&[2]))
         );
         assert_eq!(
-            read(&tape, "g1 g1:o:0,0,0,0,z|volume:0|delta:0/0").unwrap(),
+            read(&study, "g1 g1:o:0,0,0,0,z|volume:0|delta:0/0").unwrap(),
             (close(&[2]), vec![])
         );
         // Two bars: unknown for want of a bar at slots 0 and 4, and also for
@@ -578,31 +610,31 @@ mod tests {
         let pair = "g1:o:0,1,3,4,u;2,3,5,6,u";
         for op in ["g1", "g1c"] {
             assert_eq!(
-                read(&tape, &format!("{op} {pair}")).unwrap(),
+                read(&study, &format!("{op} {pair}")).unwrap(),
                 (close(&[1, 5]), close(&[0, 4]))
             );
             assert_eq!(
-                read(&tape, &format!("{op} {pair}|volume:0,1")).unwrap(),
+                read(&study, &format!("{op} {pair}|volume:0,1")).unwrap(),
                 (close(&[1, 5]), close(&[0, 4]))
             );
             assert_eq!(
-                read(&tape, &format!("{op} {pair}|volume:1,0")).unwrap(),
+                read(&study, &format!("{op} {pair}|volume:1,0")).unwrap(),
                 (vec![], close(&[0, 4]))
             );
             assert_eq!(
-                read(&tape, &format!("{op} {pair}|imbalance:0,2/1")).unwrap(),
+                read(&study, &format!("{op} {pair}|imbalance:0,2/1")).unwrap(),
                 (close(&[5]), close(&[0, 2, 4]))
             );
             assert_eq!(
-                read(&tape, &format!("{op} {pair}|volume:0,1|imbalance:1,1/0")).unwrap(),
+                read(&study, &format!("{op} {pair}|volume:0,1|imbalance:1,1/0")).unwrap(),
                 (close(&[1]), close(&[0, 2, 4]))
             );
         }
         // Malformed parts are rejected with the plan, and a recording without
         // counters refuses the code rather than reading its price part.
-        assert!(read(&tape, &format!("g1 {pair}|volume:0")).is_err());
-        assert!(read(&tape, &format!("g1 {pair}|delta:0,1")).is_err());
-        let plain = Tape::parse(&recording(false), BAR).unwrap();
+        assert!(read(&study, &format!("g1 {pair}|volume:0")).is_err());
+        assert!(read(&study, &format!("g1 {pair}|delta:0,1")).is_err());
+        let plain = Study::new(&recording(false), BAR, "BTCUSDT").unwrap();
         assert_eq!(
             read(&plain, &format!("g1 {pair}")).unwrap(),
             (close(&[1, 5]), close(&[0, 4]))

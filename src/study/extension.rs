@@ -1,4 +1,7 @@
-use super::syntax::{self, Expr, Literal};
+use super::{
+    plan::Role,
+    syntax::{self, Expr, Literal},
+};
 use crate::{
     engine_json::{self, Value},
     Result,
@@ -14,7 +17,7 @@ pub(super) const BUNDLED: &[&str] = &[
 pub(super) struct Definition {
     pub id: String,
     pub version: u32,
-    pub event: bool,
+    pub role: Role,
     pub body: Expr,
     pub params: Vec<Param>,
     pub pins: HashSet<String>,
@@ -31,27 +34,25 @@ pub(super) struct Case {
 pub(super) struct Param {
     pub name: String,
     pub default: Literal,
-    pub kind: ParamKind,
     pub domain: Domain,
 }
 
-pub(super) enum ParamKind {
-    Duration,
-    Ratio,
-    Number,
-}
-
-#[derive(Default)]
-pub(super) struct Domain {
-    pub min_ms: Option<i64>,
-    pub max_ms: Option<i64>,
-    pub grid: bool,
-    pub whole_min: Option<usize>,
-    pub whole_max: Option<usize>,
-    pub ratio_min: Option<String>,
-    pub ratio_max: Option<String>,
-    pub ratio_min_exclusive: bool,
-    pub ratio_max_exclusive: bool,
+pub(super) enum Domain {
+    Duration {
+        min_ms: Option<i64>,
+        max_ms: Option<i64>,
+        grid: bool,
+    },
+    Ratio {
+        min: Option<String>,
+        max: Option<String>,
+        min_exclusive: bool,
+        max_exclusive: bool,
+    },
+    Number {
+        whole_min: Option<usize>,
+        whole_max: Option<usize>,
+    },
 }
 
 impl Definition {
@@ -68,9 +69,9 @@ impl Definition {
         if !identifier(id) || version == 0 || version_suffix(id) {
             return Err("invalid definition id or version".into());
         }
-        let event = match json.field("kind")?.text()? {
-            "condition" => false,
-            "event" => true,
+        let role = match json.field("kind")?.text()? {
+            "condition" => Role::Condition,
+            "event" => Role::Event,
             _ => return Err("definition kind must be condition or event".into()),
         };
         let mut seen = HashSet::new();
@@ -85,20 +86,14 @@ impl Definition {
                     Expr::Scalar(default) => default,
                     _ => return Err(format!("parameter {name} needs a literal default")),
                 };
-                let kind = match value.field("type")?.text()? {
-                    "Duration" => ParamKind::Duration,
-                    "Ratio" => ParamKind::Ratio,
-                    "Number" => ParamKind::Number,
-                    _ => return Err(format!("parameter {name} has an unsupported type")),
-                };
-                let domain = value
-                    .object()?
-                    .get("domain")
-                    .map_or(Ok(Domain::default()), domain)?;
+                let domain = domain(
+                    value.field("type")?.text()?,
+                    value.object()?.get("domain"),
+                    name,
+                )?;
                 params.push(Param {
                     name: name.to_owned(),
                     default,
-                    kind,
                     domain,
                 });
             }
@@ -154,7 +149,7 @@ impl Definition {
         Ok(Self {
             id: id.to_owned(),
             version,
-            event,
+            role,
             params,
             pins,
             digest: crate::hash::sha256(text.as_bytes()),
@@ -188,8 +183,25 @@ fn version_suffix(name: &str) -> bool {
     })
 }
 
-fn domain(value: &Value) -> Result<Domain> {
-    let fields = value.object()?;
+fn domain(kind: &str, value: Option<&Value>, name: &str) -> Result<Domain> {
+    let empty = Default::default();
+    let fields = value.map(Value::object).transpose()?.unwrap_or(&empty);
+    let allowed: &[&str] = match kind {
+        "Duration" => &["minMs", "maxMs", "barMultiple"],
+        "Ratio" => &[
+            "ratioMin",
+            "ratioMax",
+            "ratioMinExclusive",
+            "ratioMaxExclusive",
+        ],
+        "Number" => &["wholeMin", "wholeMax"],
+        _ => return Err(format!("parameter {name} has an unsupported type")),
+    };
+    if let Some(key) = fields.keys().find(|key| !allowed.contains(&key.as_str())) {
+        return Err(format!(
+            "parameter {name}: {key} is outside its {kind} domain"
+        ));
+    }
     let ms = |key| fields.get(key).map(Value::number::<i64>).transpose();
     let count = |key| fields.get(key).map(Value::number::<usize>).transpose();
     let flag = |key| fields.get(key).map_or(Ok(false), Value::bool);
@@ -208,15 +220,22 @@ fn domain(value: &Value) -> Result<Domain> {
             })
             .transpose()
     };
-    Ok(Domain {
-        min_ms: ms("minMs")?,
-        max_ms: ms("maxMs")?,
-        grid: flag("barMultiple")?,
-        whole_min: count("wholeMin")?,
-        whole_max: count("wholeMax")?,
-        ratio_min: ratio("ratioMin")?,
-        ratio_max: ratio("ratioMax")?,
-        ratio_min_exclusive: flag("ratioMinExclusive")?,
-        ratio_max_exclusive: flag("ratioMaxExclusive")?,
+    Ok(match kind {
+        "Duration" => Domain::Duration {
+            min_ms: ms("minMs")?,
+            max_ms: ms("maxMs")?,
+            grid: flag("barMultiple")?,
+        },
+        "Ratio" => Domain::Ratio {
+            min: ratio("ratioMin")?,
+            max: ratio("ratioMax")?,
+            min_exclusive: flag("ratioMinExclusive")?,
+            max_exclusive: flag("ratioMaxExclusive")?,
+        },
+        "Number" => Domain::Number {
+            whole_min: count("wholeMin")?,
+            whole_max: count("wholeMax")?,
+        },
+        _ => unreachable!("parameter type was checked"),
     })
 }

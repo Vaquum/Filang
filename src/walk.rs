@@ -570,7 +570,7 @@ pub fn run(c: &WalkConfig) -> Result<String> {
         for (label, mut picks) in portfolios {
             if picks.is_empty() {
                 let root = base_graph
-                    .nodes
+                    .nodes()
                     .iter()
                     .position(|n| n.op == crate::lang::Op::Constant(1.0f64.to_bits()))
                     .unwrap();
@@ -650,7 +650,7 @@ mod tests {
             .collect::<Vec<_>>();
         assert_eq!(ids_a, ids_b);
         assert_eq!(ids_a.len(), c.page_size);
-        assert!(a.nodes.len() < 20_000);
+        assert!(a.nodes().len() < 20_000);
         // Only a bounded page of definitions was generated. No historical data scored here.
     }
 }

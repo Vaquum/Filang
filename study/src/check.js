@@ -418,8 +418,8 @@ export class Checker {
           const lo = Math.max(bar, Math.floor(node.ms / bar) * bar);
           return this.err('domain', `${where} ${node.text} is not a whole number of ${barText} bars`, node, `use a multiple of ${barText}, e.g. ${msToText(lo)} or ${msToText(lo + bar)}`);
         }
-        if (dom.minMs && node.ms < dom.minMs) return this.err('domain', `${where} ${node.text} is below the minimum ${msToText(dom.minMs)}`, node);
-        if (dom.maxMs && node.ms > dom.maxMs) return this.err('domain', `${where} ${node.text} exceeds the maximum ${msToText(dom.maxMs)}`, node);
+        if (dom.minMs !== undefined && node.ms < dom.minMs) return this.err('domain', `${where} ${node.text} is below the minimum ${msToText(dom.minMs)}`, node);
+        if (dom.maxMs !== undefined && node.ms > dom.maxMs) return this.err('domain', `${where} ${node.text} exceeds the maximum ${msToText(dom.maxMs)}`, node);
         if (dom.dividesDay && 86_400_000 % node.ms !== 0) {
           return this.err('domain', `${where} ${node.text} does not divide 24h, so its bars cannot be UTC-aligned`, node, 'use e.g. 1h, 2h, 4h, 6h, 8h, 12h or 1d');
         }
@@ -437,8 +437,13 @@ export class Checker {
         }
         const rat = ratFromText(node.text, node.k === 'pct');
         const text = printExpr(node);
-        if (dom.ratioMax !== undefined && ratCmp(rat, ratFromText(dom.ratioMax)) > 0) {
-          return this.err('domain', `${where} ${text} is above ${ratToPercentText(ratFromText(dom.ratioMax))}`, node, node.k === 'num' ? `a plain number is a ratio (0.35 = 35%); did you mean ${node.text}%?` : null);
+        if (dom.ratioMax !== undefined) {
+          const max = ratFromText(dom.ratioMax);
+          const c = ratCmp(rat, max);
+          if (c > 0)
+            return this.err('domain', `${where} ${text} is above ${ratToPercentText(max)}`, node, node.k === 'num' ? `a plain number is a ratio (0.35 = 35%); did you mean ${node.text}%?` : null);
+          if (c === 0 && dom.ratioMaxExclusive)
+            return this.err('domain', `${where} ${text} must be less than ${ratToPercentText(max)}`, node);
         }
         if (dom.ratioMin !== undefined) {
           const c = ratCmp(rat, ratFromText(dom.ratioMin));
@@ -449,8 +454,9 @@ export class Checker {
       case 'Number': {
         if (node.k !== 'num') return this.err('type', `${where} expects a plain number; got ${litDesc(node)}`, node);
         const rat = ratFromText(node.text);
-        if (dom.wholeMax !== undefined && (rat.den !== 1n || rat.num < BigInt(dom.wholeMin || 0) || rat.num > BigInt(dom.wholeMax))) {
-          return this.err('domain', `${where} choose a whole number from ${dom.wholeMin || 0} to ${dom.wholeMax}`, node);
+        if ((dom.wholeMin !== undefined || dom.wholeMax !== undefined)
+            && (rat.den !== 1n || rat.num < BigInt(dom.wholeMin ?? 0) || (dom.wholeMax !== undefined && rat.num > BigInt(dom.wholeMax)))) {
+          return this.err('domain', `${where} choose a whole number ${dom.wholeMax === undefined ? "of at least " + dom.wholeMin : "from " + (dom.wholeMin ?? 0) + " to " + dom.wholeMax}`, node);
         }
         return { t: 'Number', rat, text: node.text, ...span };
       }
@@ -730,7 +736,11 @@ export function analyzeAst(ast, src, env) {
 
 // ---------------------------------------------------------------- extensions (agent-authored compositions)
 
-const EXT_TYPES = new Set(['Duration', 'Ratio', 'Number']);
+const EXT_DOMAINS = new Map([
+  ['Duration', new Set(['minMs', 'maxMs', 'barMultiple'])],
+  ['Ratio', new Set(['ratioMin', 'ratioMax', 'ratioMinExclusive', 'ratioMaxExclusive'])],
+  ['Number', new Set(['wholeMin', 'wholeMax'])],
+]);
 
 /**
  * Register a versioned composition (e.g. "Quiet Friday close") from an artifact object.
@@ -761,12 +771,35 @@ export function registerExtension(registry, artifact, env) {
     if (!d || d.version !== dep.version) return fail(`dependency ${dep.name}@${dep.version} is not available (found ${d ? d.name + '@' + d.version : 'nothing'})`);
   }
   const ps = [];
+  const seen = new Set();
   for (const p of params || []) {
     if (!/^[a-z_][a-z0-9_]*$/.test(p.name || '')) return fail(`bad parameter name ${p.name}`);
-    if (!EXT_TYPES.has(p.type)) return fail(`parameter ${p.name}: unsupported type ${p.type}`);
+    if (seen.has(p.name)) return fail(`duplicate parameter ${p.name}`);
+    seen.add(p.name);
+    const allowed = EXT_DOMAINS.get(p.type);
+    if (!allowed) return fail(`parameter ${p.name}: unsupported type ${p.type}`);
+    if (p.domain !== undefined && (!p.domain || typeof p.domain !== 'object' || Array.isArray(p.domain)))
+      return fail(`parameter ${p.name} needs a domain object`);
+    const domain = {};
+    for (const [key, value] of Object.entries(p.domain || {})) {
+      if (!allowed.has(key)) return fail(`parameter ${p.name}: ${key} is outside its ${p.type} domain`);
+      const badValue = () => fail(`parameter ${p.name}: invalid ${key} in its ${p.type} domain`);
+      if (key === 'barMultiple' || key.endsWith('Exclusive')) {
+        if (typeof value !== 'boolean') return badValue();
+        domain[key] = value;
+      } else if (p.type === 'Ratio') {
+        if (typeof value !== 'string' && typeof value !== 'number') return badValue();
+        const { node } = parseLiteral(String(value));
+        if (!node || (node.k !== 'num' && node.k !== 'pct')) return badValue();
+        domain[key] = ratToDecimalText(ratFromText(node.text, node.k === 'pct'));
+      } else {
+        if (!Number.isSafeInteger(value) || (p.type === 'Number' && value < 0)) return badValue();
+        domain[key] = value;
+      }
+    }
     if (env.calendars.has(p.name) || registry.isEnumValue(p.name)) return fail(`parameter ${p.name} shadows a registered name`);
     if (typeof p.default !== 'string' || parseLiteral(p.default).error) return fail(`parameter ${p.name} needs a literal default (extension parameters are defaulted in this prototype)`);
-    ps.push({ name: p.name, type: p.type, default: p.default, required: false, domain: p.domain || {}, doc: p.doc || '' });
+    ps.push({ name: p.name, type: p.type, default: p.default, required: false, domain, doc: p.doc || '' });
   }
   const parsed = parseExpression(body);
   if (parsed.error) return fail(`body: ${parsed.error.message} at offset ${parsed.error.start}`);
@@ -799,7 +832,10 @@ export function registerExtension(registry, artifact, env) {
   };
   // type-check the body with default arguments before accepting it
   const probe = new Checker({ ...env, registry }, (d) => errors.push(`body check: ${d.message}`), []);
-  const map = new Map(ps.map((p) => [p.name, parseLiteral(p.default).node]));
+  const defaults = ps.map(p => [p, parseLiteral(p.default).node]);
+  for (const [p, literal] of defaults) probe.scalar(literal, p, def);
+  if (errors.length) return { ok: false, errors, def: null };
+  const map = new Map(defaults.map(([p, literal]) => [p.name, literal]));
   const res = probe.expr(substituteIds(parsed.ast, map));
   if (errors.length) return { ok: false, errors, def: null };
   if (!res || !isBoolType(res.type)) return fail('body is not a condition');

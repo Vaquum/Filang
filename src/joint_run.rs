@@ -579,7 +579,7 @@ pub fn example(out: &str, count: u64, neighbors: bool, temporal: bool, slots: us
             for (i, (n, a, b)) in variants.into_iter().enumerate() {
                 let (mut g, ids) = cohort::stripe(kind, n, a)?;
                 let r = cohort::output(&mut g, kind, ids, b, 0.)?;
-                let value = g.nodes[r].args[0];
+                let value = g.nodes()[r].args[0];
                 for q in if temporal {
                     vec!["plain", "persist:2", "recent:3"]
                 } else {
