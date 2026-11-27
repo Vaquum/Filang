@@ -7,6 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- the surface, navy or warm stock, is set before anything is drawn -->
+  <script src="/shared/surface.js"></script>
+  <link rel="stylesheet" href="/shared/surface.css">
   <link rel="stylesheet" href="/shared/base.css">
   <link rel="stylesheet" href="/bench/bench.css">
 </head>
@@ -15,6 +18,7 @@
     <span class="word">Filang</span>
     <nav class="tabs aspects" aria-label="Aspects of the tool"><a id="to-cube" target="_blank" rel="noopener">Cube ↗</a><a id="to-composer" target="_blank" rel="noopener">Composer ↗</a><span aria-current="page">Query</span></nav>
     <div id="readout" class="readout" aria-live="polite"></div>
+    <button type="button" class="surface-toggle" data-surface-toggle><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5.5"/><path d="M6 .5a5.5 5.5 0 0 1 0 11Z"/></svg><span data-surface-word>Auto</span></button>
   </header>
   <!-- Each panel's switch sits on the edge it opens from: the catalogue on the left, Inspect on the right, the drawer's tabs on the drawer. -->
   <div class="encrow">
@@ -51,11 +55,11 @@
   <footer class="foot">
     <span id="chip"></span>
     <span class="keys">
-      <span class="key"><svg width="9" height="14"><line x1="4.5" x2="4.5" y1="0" y2="14" stroke="#AAB3BD"/><rect x="1.5" y="3.5" width="6" height="6" fill="#142038" stroke="#AAB3BD"/></svg>Median candle, up</span>
-      <span class="key"><svg width="9" height="14"><line x1="4.5" x2="4.5" y1="0" y2="14" stroke="#AAB3BD"/><rect x="1.5" y="3.5" width="6" height="6" fill="#AAB3BD" stroke="#AAB3BD"/></svg>Down</span>
-      <span class="key"><svg width="16" height="10"><rect width="16" height="10" fill="#F7F6F2" fill-opacity=".14"/></svg>Middle half of closes</span>
-      <span class="key"><svg width="18" height="6"><line x1="0" x2="18" y1="3" y2="3" stroke="#AAB3BD" stroke-dasharray="2 4"/></svg>Anchor close</span>
-      <span class="key"><svg width="8" height="6"><path d="M0 0H8L4 6Z" fill="#AAB3BD"/></svg>Measured horizon</span>
+      <span class="key"><svg width="9" height="14"><line x1="4.5" x2="4.5" y1="0" y2="14" style="stroke:var(--t2)"/><rect x="1.5" y="3.5" width="6" height="6" style="fill:var(--surface);stroke:var(--t2)"/></svg>Median candle, up</span>
+      <span class="key"><svg width="9" height="14"><line x1="4.5" x2="4.5" y1="0" y2="14" style="stroke:var(--t2)"/><rect x="1.5" y="3.5" width="6" height="6" style="fill:var(--t2);stroke:var(--t2)"/></svg>Down</span>
+      <span class="key"><svg width="16" height="10"><rect width="16" height="10" fill-opacity=".14" style="fill:var(--tint)"/></svg>Middle half of closes</span>
+      <span class="key"><svg width="18" height="6"><line x1="0" x2="18" y1="3" y2="3" stroke-dasharray="2 4" style="stroke:var(--t2)"/></svg>Anchor close</span>
+      <span class="key"><svg width="8" height="6"><path d="M0 0H8L4 6Z" style="fill:var(--t2)"/></svg>Measured horizon</span>
     </span>
     <span id="status"></span>
   </footer>

@@ -1,0 +1,61 @@
+/* The two surfaces of the Vaquum instruments (vaquum.fi/style): navy and warm stock.
+   Shared verbatim by Composer, Query and Cube. Change it in one and copy it to the others.
+
+   Every colour an instrument draws with is named here for its role, with one value on each surface. Pages and charts
+   use the roles, never the palette's own names, so the same page reads on either surface:
+   - --surface, --raised, --selected: the field, what stands on it, and a selected row;
+   - --t1, --t2, --t3: three levels of text, at the same contrast steps on both surfaces;
+   - --line, --line-2, --wash, --wash-2: hairline rules and the washes under hover and press;
+   - --tint: the colour marks are drawn in at a strength, white on navy and ink on stock;
+   - --select, --select-fill: gold for the selection only, as a line or text and as a fill; --focus: the focus ring;
+   - --code-key, --code-string, --code-number, --code-comment: source syntax, blue and green as the style gives them;
+   - --shadow, --shadow-deep, --scrim: what lifts a popover or a sheet off the field.
+   The surface is set on <html> as data-surface="navy" or "stock" by surface.js; without script, the system decides. */
+
+:root, :root[data-surface='navy'] {
+  color-scheme: dark;
+  --surface: #142038; --raised: #1B2A49; --selected: color-mix(in srgb, #1B2A49 45%, #142038);
+  --t1: #F7F6F2; --t2: #AAB3BD; --t3: #8F9AA7;
+  --tint: #F7F6F2;
+  --line: color-mix(in srgb, #F7F6F2 9%, transparent); --line-2: color-mix(in srgb, #F7F6F2 19%, transparent);
+  --wash: color-mix(in srgb, #F7F6F2 4%, transparent); --wash-2: color-mix(in srgb, #F7F6F2 8%, transparent);
+  --select: #DFB967; --select-fill: #DFB967; --focus: #DFB967;
+  --code-key: #AFCBE3; --code-string: #D1DCC6; --code-number: #DFB967; --code-comment: #AAB3BD;
+  --shadow: rgba(7, 12, 24, .42); --shadow-deep: rgba(7, 12, 24, .6); --scrim: color-mix(in srgb, #142038 70%, transparent);
+}
+:root[data-surface='stock'] {
+  color-scheme: light;
+  --surface: #F4F2EC; --raised: #FBFAF6; --selected: color-mix(in srgb, #FBFAF6 70%, #F4F2EC);
+  --t1: #0E1A2B; --t2: #46525F; --t3: #5E6977;
+  --tint: #0E1A2B;
+  --line: color-mix(in srgb, #0E1A2B 10%, transparent); --line-2: color-mix(in srgb, #0E1A2B 20%, transparent);
+  --wash: color-mix(in srgb, #0E1A2B 4%, transparent); --wash-2: color-mix(in srgb, #0E1A2B 7%, transparent);
+  --select: #805A1B; --select-fill: #DFB967; --focus: #805A1B;
+  --code-key: #2E5A80; --code-string: #4D6B3C; --code-number: #805A1B; --code-comment: #5E6977;
+  --shadow: rgba(14, 26, 43, .14); --shadow-deep: rgba(14, 26, 43, .22); --scrim: color-mix(in srgb, #F4F2EC 72%, transparent);
+}
+/* without script the reader's system chooses; surface.js sets the attribute before the first paint */
+@media (prefers-color-scheme: light) {
+  :root:not([data-surface]) {
+    color-scheme: light;
+    --surface: #F4F2EC; --raised: #FBFAF6; --selected: color-mix(in srgb, #FBFAF6 70%, #F4F2EC);
+    --t1: #0E1A2B; --t2: #46525F; --t3: #5E6977;
+    --tint: #0E1A2B;
+    --line: color-mix(in srgb, #0E1A2B 10%, transparent); --line-2: color-mix(in srgb, #0E1A2B 20%, transparent);
+    --wash: color-mix(in srgb, #0E1A2B 4%, transparent); --wash-2: color-mix(in srgb, #0E1A2B 7%, transparent);
+    --select: #805A1B; --select-fill: #DFB967; --focus: #805A1B;
+    --code-key: #2E5A80; --code-string: #4D6B3C; --code-number: #805A1B; --code-comment: #5E6977;
+    --shadow: rgba(14, 26, 43, .14); --shadow-deep: rgba(14, 26, 43, .22); --scrim: color-mix(in srgb, #F4F2EC 72%, transparent);
+  }
+}
+
+/* The surface switch: one button in each instrument's top bar. It follows the system until a surface is chosen, and
+   then keeps that surface on every vaquum.fi instrument. */
+.surface-toggle {
+  display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; align-self: stretch; color: var(--t3); white-space: nowrap; border-left: 1px solid var(--line);
+  font: 500 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; transition: color var(--t-short) var(--ease), background-color var(--t-short) var(--ease);
+}
+.surface-toggle:hover { color: var(--t1); background: var(--wash); }
+.surface-toggle svg { display: block; }
+.surface-toggle circle { fill: none; stroke: currentColor; }
+.surface-toggle path { fill: currentColor; }
