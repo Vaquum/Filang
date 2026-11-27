@@ -1,21 +1,29 @@
 # Filang
 
-A parametric financial-program language and factorized feature-discovery engine.
+Filang is a language and engine for financial research. It combines ordinal
+patterns, numerical features and rules to study market data and search
+declared strategy spaces.
 
-**Status: runnable 0.10, with complete qualitative geometry and a completed, independently audited three-family research campaign.** Candle bodies and wicks have an exact canonical language, including missing wicks, doji, ties, opening gaps and global relationships. The native direction sweep maps two through ten candles, retains every observed pattern and label, and accounts exactly for the unobserved universe with arbitrary-precision counts. The existing dense full-risk geometry executor retains its checked `u128` strategy multiplicities. Broader factory requirements remain open in issue #1.
+Filang uses [`g1`](docs/BAR_GEOMETRY.md) to represent complete ordinal
+patterns. It records order and ties across candle endpoints, optional body
+direction, and the ranks of any selected [activity dimensions](docs/G1_DIMENSIONS.md).
+Filang can also compare individual observations directly, apply numerical
+conditions such as wick ratios, and measure outcomes.
 
-**Optional qualitative algebra layer (Phase 1):** [Exact projection, overlap composition, one-candle extension, and oriented multiscale aggregation](docs/QUALITATIVE_GEOMETRY_ALGEBRA.md) are available as the separate `filang::geometry_algebra` Rust module. This is an opt-in layer over native geometry, not a change to the discovery or execution engine.
+**Status: runnable 0.10, with a completed, independently audited three-family research campaign.** The native direction sweep maps two through ten candles, retains every observed pattern and label, and accounts exactly for the unobserved universe with arbitrary-precision counts. The dense full-risk geometry executor retains its checked `u128` strategy multiplicities. Broader factory requirements remain open in issue #1.
+
+Filang's [ordinal algebra](docs/QUALITATIVE_GEOMETRY_ALGEBRA.md) projects,
+composes and extends ordinal patterns. It can also aggregate oriented
+price-only patterns.
 
 ## Trader queries
 
 The [Filang query workspace](study/README.md) runs observed-market studies
 from a visual builder or formal text. It supports bilingual candle names,
 Composer drawings, typed filters, grouping, parameter choices, and pinned
-saved questions. Query and Composer exchange ordinal patterns in Filang's
-`g1` format. A pattern records endpoint order and ties, optional body
-direction, and the ranks of any selected activity dimensions. Each app runs
-the pattern on its selected history. To compare the match sets, use the same
-bars, counters, and matching mode.
+saved questions. Query and Composer use the Filang engine and exchange
+patterns in `g1` format. Each app runs the pattern on its selected history.
+To compare the match sets, use the same bars, counters, and matching mode.
 
 The native study runner shares the ordinal representation and packed masks.
 Its close-to-close observations have their own
@@ -48,9 +56,9 @@ the 120m advantage is almost entirely lower turnover, and the 240m extension
 loses relative to its additive baseline. No timeframe passes every frozen gate.
 
 The campaign budget is exhausted. Its complete outcomes and original failure
-remain reproducible; no robust live trading edge is claimed. The existing
-qualitative language and native sweeps below remain available for explicitly
-specified research.
+remain reproducible; no robust live trading edge is claimed. Filang's ordinal
+patterns and native sweeps below remain available for explicitly specified
+research.
 
 ## Earlier: Bitcoin next-bar direction (0.10)
 
@@ -81,12 +89,9 @@ Use `--stage prepare|map|analyze|verify` to run a stage explicitly. The native
 
 ## Earlier: qualitative bar geometry (0.9)
 
-[The complete technical reference](docs/BAR_GEOMETRY.md) defines the atoms,
-canonical format, completeness boundary, exact counts, sweep domain, memory
-budgets, durable artifacts and independent verification. A pattern preserves the
-global order and equality of every low, body bottom, body top and high. Optional
-body direction is part of the candle; indicators and volume are not geometry
-atoms. Lengths and ratios are outside this ordinal language.
+[The technical reference](docs/BAR_GEOMETRY.md) defines the price axis of
+`g1`, the sweep domain, exact counts, memory budgets, durable artifacts and
+independent verification. The examples in this section use price-only patterns.
 
 For a fixed lag window, every valid historical decision matches exactly one
 complete pattern. Unobserved patterns share an all-false raw mask on that causal

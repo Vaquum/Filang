@@ -1,11 +1,11 @@
-# Bar geometry — language and execution contract (0.9)
+# Filang bar geometry and execution
 
-This language describes the relative vertical order of candle bodies and wicks.
-Its complete pattern is the global weak order of all endpoint prices in a
-declared window. Body direction is an explicit optional part of the domain.
-The input vocabulary contains only candles, their body boundaries and their
-wick endpoints. Numerical indicators, volume, distance thresholds and named
-chart patterns are not geometry primitives.
+Filang represents complete ordinal patterns in the `g1` format. This
+reference covers the price axis introduced in 0.9 and its execution in Filang.
+A price-only pattern is the global weak order of all candle endpoints in a
+declared window, with optional body direction. [Activity dimensions](G1_DIMENSIONS.md)
+can add a separate order for each selected measure. Filang queries can
+combine these patterns with direct comparisons and numerical conditions.
 
 The distinction between a primitive, a complete pattern and a strategy address
 is essential. A comparison is a primitive. A complete pattern fixes every
@@ -37,13 +37,13 @@ also agree. A strictly increasing change of the price scale preserves geometry.
 The next candle's open is independent of the previous candle's close in the
 legal domain: opening gaps and cross-candle exact ties are both permitted.
 
-This equivalence preserves containment, overlap, separation, contact, exact
+Price-axis equivalence preserves containment, overlap, separation, contact, exact
 alignment, wick existence and all nonadjacent endpoint relationships. It does
 not preserve numerical prices, price distances, body or wick lengths, ratios,
 slopes, the size of a gap, volume, or the intrabar price path. For example,
-whether one body's length is twice another's is outside this language, even
-when that relationship might be visually meaningful. Exactness always refers
-to the declared endpoint-order equivalence.
+Filang tests whether one body is twice as long as another using the measured
+prices. Exactness on the price axis refers to endpoint order and, in oriented
+mode, body direction.
 
 ## 2. The actual comparison primitives
 
@@ -177,7 +177,7 @@ ranks starting at zero. Equal prices receive the same rank. Store the four ranks
 in the order `L,b,t,H` for each candle. Candle order is preserved; the geometry
 core does not reverse, sort or infer the caller's chronological order.
 
-The stable text format is:
+The price part of the stable `g1` format is:
 
 ```text
 pattern       = "g1:u:" [unorient-row (";" unorient-row)*]
@@ -195,6 +195,8 @@ pattern is rejected rather than silently interpreted as another pattern.
 The empty patterns `g1:u:` and `g1:o:` are the algebra's zero-candle constructions.
 Executable sweep windows are nonempty. Decimal ranks have no leading zeros
 except the single digit `0`; signs and whitespace inside a pattern are rejected.
+The [dimensions reference](G1_DIMENSIONS.md#4-text) specifies the optional
+parts that can follow the price part.
 
 For example:
 
@@ -255,8 +257,11 @@ which the global endpoint order retains directly.
 
 ## 7. Exact n-candle domain counts
 
-The counter does not enumerate the pattern domain. Let `F_n(r)` count canonical
-patterns of `n` candles with exactly `r` distinct global levels. Start with the
+The following recurrence counts the price-only domain without enumeration.
+Activity axes add the factors described in the
+[dimensions reference](G1_DIMENSIONS.md#6-counts).
+Let `F_n(r)` count canonical patterns of `n` candles with exactly `r`
+distinct global levels. Start with the
 empty construction `F_0(0)=1`. Insert a candle with `k` local levels and local
 multiplicity `w_k`. Sharing `j` of them with old levels creates
 `s=r+k-j` levels and contributes:
@@ -401,8 +406,8 @@ recent-occurrence qualifier whose input occurred just before scoring.
 all N consecutive decisions ending now. `recent:N` requires at least one such
 occurrence. Both require validity throughout the entire N-decision window.
 `onset` requires the pattern now and its absence one decision earlier, with both
-decisions valid. These are general predicate composition operators above the
-geometry language. They do not add a numerical indicator or a new geometry atom.
+decisions valid. Filang applies these qualifiers to the pattern's predicate
+over time.
 
 Exact truth **and** validity words are interned into the existing predicate-state
 dictionary. Hashes locate candidate states; full words are compared before
@@ -534,8 +539,8 @@ most the number of observed identities plus one. Full large-domain enumeration
 is not a preparation step.
 
 `GeometryEncoder::encode_key_ohlc` and `encode_key_endpoints` return a copyable
-`GeometryKey` without per-window allocation. A key is exactly four `u64` words:
-six bits per endpoint rank, one upward-direction bit per candle, four bits for
+price-only `GeometryKey` without per-window allocation. A price key uses four
+`u64` words with six bits per endpoint rank, one upward-direction bit per candle, four bits for
 the candle count and one mode bit. Flat bodies are inferred from tied body
 ranks. At ten candles this uses 255 bits; the final bit and all unused fields
 must be zero. Keys retain the complete global order, including every
@@ -543,7 +548,9 @@ nonadjacent comparison, and distinguish different counts and modes.
 `GeometryKey::from_pattern` packs a validated pattern, `to_pattern` reconstructs
 it for catalogue export, and `from_words` validates raw words, including all
 unused bits and direction consistency. Key ordering is deterministic word
-ordering; canonical persisted pattern text remains `g1`.
+ordering. `GeometryDimensionKey` extends the price key with the selected
+[activity words](G1_DIMENSIONS.md#7-keys-and-execution). Both use `g1` for
+persisted pattern text.
 
 `count_domain_decimal(n, mode)` returns the exact complete-domain count as a
 decimal string for `n=0..10`. `count_domain_unobserved_decimal(n, mode,
@@ -579,8 +586,10 @@ fee_bps=10
 slip_bps=10
 ```
 
-Dates are Gregorian UTC midnights. Each semicolon-separated window is one bank;
-its comma-separated offsets are nonnegative bar lags in strictly increasing
+The optional `dimensions` setting selects the
+[activity axes](G1_DIMENSIONS.md#5-on-and-off) for every bank in the run.
+Dates are Gregorian UTC midnights. Each semicolon-separated window is one
+bank. Its comma-separated offsets are nonnegative bar lags in strictly increasing
 order beginning with zero. Thus `0,1,2` encodes current, previous and two bars ago
 in that order; `0,2,4` selects current, two bars ago and four bars ago. Intermediate
 candles still exist in the input timeline. Sparse selection does not compress

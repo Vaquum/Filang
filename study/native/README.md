@@ -17,7 +17,7 @@ close timestamps, group keys and per-horizon outcomes. A batch wraps the
 results and candidate labels. A direct `breach_reclaim` detector adds
 `reclaim: {breach, reclaim, level}` to each match row, using UTC close
 milliseconds and exact integer price ticks. `work` declares the number of
-candidates, unique compiled nodes, rolling windows prepared, and G1 window
+candidates, unique compiled nodes, rolling windows prepared, and ordinal window
 scans. `medianWindows` counts distinct prior-median preparations.
 
 The Node process compiles to a private, bounded `filang-study-v1` protocol.
@@ -25,13 +25,14 @@ One worker loads its exact integer-cent source and session table for the
 lifetime of the process. The worker validates the DAG, reference order,
 types and operator arguments. It reuses packed masks across the batch's
 identical nodes, shares the rolling high and low for a fixed lookback, and
-uses Filang's existing G1 encoder and compact key to share complete
-windows of up to ten bars. For larger G1 windows it uses the native
-encoder directly.
+uses Filang's ordinal geometry encoder and compact keys to share complete
+price windows of up to ten bars. For larger price windows it uses the native
+encoder directly. `exact_g1` and `chained_g1` also accept selected
+[activity dimensions](../../docs/G1_DIMENSIONS.md) when the recording supplies
+their counters.
 
 - A present candle is available at its close. A missing candle retains its
-  grid slot. An incomplete G1, named-pattern, or consecutive-candle window
-  is unknown.
+  grid slot. An incomplete pattern window is unknown.
 - Studies use strong Kleene Boolean logic. Known false decides conjunction,
   and known true decides disjunction. A known false anywhere in an elapsed
   persistence window disproves it. Only true context admits an eligible
