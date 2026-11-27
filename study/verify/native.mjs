@@ -146,6 +146,16 @@ const {status:rStatus, result:both} = await post(readings);
 assert.equal(rStatus,200,both.error);
 assert.equal(both.work.candidates,2);
 assert.equal(both.work.geometryWindows,2);
+const equivalent = [
+  ['hammer where held(quiet_range(), for: 60m) and held(quiet_range(), for: 1h)', 4],
+  ['hammer where range_multiple(over: 60m) and range_multiple(over: 1h)', 3],
+  ['hammer where candle_share(body) and candle_share(body, min: 50%)', 3],
+];
+for (const [query, unique] of equivalent) {
+  const {status, result} = await post(find + query);
+  assert.equal(status, 200, result.error);
+  assert.equal(result.work.nodes, unique, query);
+}
 console.log('Passed native batch parity and shared rolling-window and G1 preparation checks.');
 // The native worker also checks an observed prefix with deleted real rows.
 const hammer = analyze(find + 'hammer', e.env).candidates[0];

@@ -327,9 +327,16 @@ pub(super) fn compile(
     environment: Environment<'_>,
     registry: &Registry,
     candidate: Option<usize>,
+    keep_explanation_notes: bool,
 ) -> Result<Plan> {
     let question = syntax::question(text)?;
-    compile_question(&question, environment, registry, candidate)
+    compile_plan(
+        &question,
+        environment,
+        registry,
+        candidate,
+        keep_explanation_notes,
+    )
 }
 
 pub(super) fn compile_question(
@@ -337,6 +344,16 @@ pub(super) fn compile_question(
     environment: Environment<'_>,
     registry: &Registry,
     candidate: Option<usize>,
+) -> Result<Plan> {
+    compile_plan(question, environment, registry, candidate, true)
+}
+
+fn compile_plan(
+    question: &Question,
+    environment: Environment<'_>,
+    registry: &Registry,
+    candidate: Option<usize>,
+    keep_explanation_notes: bool,
 ) -> Result<Plan> {
     if question.instrument != environment.instrument || question.interval != environment.interval {
         return Err("study instrument or interval differs from the loaded recording".into());
@@ -356,6 +373,7 @@ pub(super) fn compile_question(
         return Err("candidate is outside the checked study".into());
     }
     let mut compiler = Compiler::new(environment, registry, question);
+    compiler.keep_explanation_notes = keep_explanation_notes;
     let mut requests = Vec::with_capacity(count);
     for index in 0..count {
         question.select(index, &mut compiler.indices);
@@ -472,6 +490,7 @@ struct Compiler<'a> {
     nodes: Vec<Instruction>,
     ids: HashMap<String, usize>,
     notes: HashMap<usize, String>,
+    keep_explanation_notes: bool,
     used: HashSet<String>,
     locals: Option<HashMap<&'a str, &'a Literal>>,
     depth: usize,
@@ -487,6 +506,7 @@ impl<'a> Compiler<'a> {
             nodes: Vec::new(),
             ids: HashMap::new(),
             notes: HashMap::new(),
+            keep_explanation_notes: true,
             used: HashSet::new(),
             locals: None,
             depth: 0,
@@ -539,6 +559,11 @@ impl<'a> Compiler<'a> {
         note: Option<String>,
         predicates: Vec<Predicate>,
     ) -> Result<Node> {
+        let note = if self.keep_explanation_notes {
+            note
+        } else {
+            None
+        };
         let key = match &note {
             Some(note) => format!("{text}\t{note}"),
             None => text.clone(),
@@ -1104,7 +1129,13 @@ impl<'a> Compiler<'a> {
             "candle_share" => {
                 let part = self.arg_name(a.take("part"), "lower_wick")?;
                 let lag = self.whole(a.take("bars_ago"), 0)?;
-                let min = self.ratio(a.take("min"), "1/2", true, false)?;
+                // The worker has always interned the default and an explicit 50% together.
+                let default_min = if self.keep_explanation_notes {
+                    "1/2"
+                } else {
+                    "5/10"
+                };
+                let min = self.ratio(a.take("min"), default_min, true, false)?;
                 let max = self.ratio(a.take("max"), "1/1", true, false)?;
                 ordered(&min, &max)?;
                 (

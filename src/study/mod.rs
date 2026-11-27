@@ -165,7 +165,11 @@ impl Study {
                     added.push(alias);
                 }
             }
-            self.query(query, candidate)
+            // The worker's work counts have always treated equivalent spellings
+            // as one instruction. Browser receipts also retain explanation text.
+            let plan =
+                compiler::compile(query, self.environment(), &self.registry, candidate, false)?;
+            self.evaluate(plan)
         })();
         for alias in added {
             self.registry.remove(&alias);
@@ -236,7 +240,7 @@ impl Study {
     }
 
     fn compile(&self, text: &str, candidate: Option<usize>) -> Result<Plan> {
-        compiler::compile(text, self.environment(), &self.registry, candidate)
+        compiler::compile(text, self.environment(), &self.registry, candidate, true)
     }
 
     pub fn check(&self, text: &str) -> Result<usize> {
@@ -245,7 +249,10 @@ impl Study {
 
     /// Evaluate checked Filang text and return the existing study result shape.
     pub fn query(&self, text: &str, candidate: Option<usize>) -> Result<String> {
-        let plan = self.compile(text, candidate)?;
+        self.evaluate(self.compile(text, candidate)?)
+    }
+
+    fn evaluate(&self, plan: Plan) -> Result<String> {
         let empty = Calendar::empty();
         evaluate_plan(
             plan,
