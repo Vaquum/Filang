@@ -16,7 +16,7 @@ services:
       dockerfile: query/Dockerfile
       args:
         # The published Filang release whose browser package the bench runs on (github.com/Vaquum/Filang/releases).
-        FILANG_ENGINE_VERSION: "0.10.0.post32"
+        FILANG_ENGINE_VERSION: "0.10.0.post85"
     image: query:latest
     network_mode: host
     environment:
