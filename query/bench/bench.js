@@ -215,7 +215,8 @@ function drawnParts(c) {
       radius > 0 ? h('small', {title: bins.map(([cost, count]) => `${cost} half-flips · ${int(count)}`).join('\n')},
         ` +${int(expanded)} within radius`) : null);
   }
-  return [glyph, h('span', { class: 'drawn' }, `${c.not ? 'Not a' : 'A'} ${p ? 'drawn shape' : 'g1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
+  const description = p ? 'a drawn shape' : 'an ordinal pattern';
+  return [glyph, h('span', { class: 'drawn' }, `${c.not ? `Not ${description}` : cap(description)} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
     p && forms.length > 1 ? h('span', { class: 'join form' }, forms) : null), loose,
   codeLines(c), radiusControl,
   c.args.packet ? h('span', { class: 'from', title: OWN_COUNT }, 'From Composer · counted on this window') : null];
@@ -785,7 +786,7 @@ function definitionOf(c) {
     const n = drawingBars(c); const rel = c.args.packet ? relationsOf(c.args.packet) : []; const held = drawingHeld(c);
     const parts = held ? [] : g1Parts(c.args.g1); const dims = held ? '' : drawingDimensions(c);
     const same = `every endpoint in the drawn order, with the same ties${c.args.g1[3] === 'o' ? ' and the same directions' : ''}`;
-    return { title: `${packetOf(c) ? 'Drawn shape' : 'G1 code'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
+    return { title: `${packetOf(c) ? 'Drawn shape' : 'Ordinal pattern'} · ${n} ${n === 1 ? 'bar' : 'bars'}`,
       summary: (held ? `${rel.length === 1 ? 'One relation' : rel.length + ' relations'} held on ${n} fixed candles ending at the close. Only which side each level lies on is kept, not the drawn distance.`
         : n === 1 ? `The last candle has ${same}.`
           : drawingRecorded(c) ? `The last ${n} candles, with their opens as recorded, have ${same}. ${packetOf(c) ? 'This shape ties each later open to the close before it, so the recorded open must equal that close to the cent.' : 'In this code a later open lies away from the close before it, or no directions are kept, so it is not a chain and cannot be drawn as one.'}`

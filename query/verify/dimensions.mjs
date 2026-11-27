@@ -304,6 +304,27 @@ ok(`${CASES.length} clauses print their exact text, read as one sentence, come b
   const risen = slots(`${HEAD}\nfind chained_g1("g1:o:0,1,3,4,u;2,3,5,6,u|volume:0,1")`);
   assert.ok(risen.length > 0 && risen.length < all.size && risen.every((i) => all.has(i) && D.volume[i] > D.volume[i - 1]));
   ok('a g1 code with dimension parts reads as a shape with those dimensions, each part in order from lowest to highest, and is refused without counters');
+
+  // Composer searches the drawing as a chain. Give both entry points the same
+  // grid and compare every exact close, including with ordinal activity.
+  engine.loadComposerFrame(csv, cube.rec.barMs);
+  const base = g1Price(drawable);
+  for (const pattern of [base, base + '|volume:0,1', drawable]) {
+    const link = readLink(`?drawing=${encodeURIComponent(JSON.stringify(packetFromG1(pattern)))}&g1=${encodeURIComponent(pattern)}`);
+    assert.equal(link.error, undefined);
+    assert.equal(link.g1, pattern);
+    const text = toText(question([make('drawing', { g1: link.g1, packet: link.packet })]));
+    assert.ok(text.includes(`find chained_g1(${JSON.stringify(pattern)})`));
+    const expected = slots(text);
+    assert.ok(expected.length > 0, pattern);
+
+    engine.composerStart(link.packet, { timeframes: 1 });
+    while (!engine.composerStep(4096).done) {}
+    const { starts, spans } = engine.composerPositionsPacked(cube.rec.barMs, { kind: 'exact' });
+    const closes = Array.from(starts, (start, i) => start + spans[i] - 1).sort((a, b) => a - b);
+    assert.deepEqual(closes, expected, pattern);
+  }
+  ok('Query and Composer return the same exact closes on one recording for price, volume and delta patterns');
 }
 
 // ---------------------------------------------------------------- what a question refers to
