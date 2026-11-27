@@ -11,8 +11,14 @@ A parametric financial-program language and factorized feature-discovery engine.
 The [Filang query workspace](study/README.md) runs observed-market studies
 from a visual builder or formal text. It supports bilingual candle names,
 Composer drawings, typed filters, grouping, parameter choices, and pinned
-saved questions. The native study runner shares Filang's G1 representation
-and packed masks. Its close-to-close observations have their own
+saved questions. Query and Composer exchange ordinal patterns in Filang's
+`g1` format. A pattern records endpoint order and ties, optional body
+direction, and the ranks of any selected activity dimensions. Each app runs
+the pattern on its selected history. To compare the match sets, use the same
+bars, counters, and matching mode.
+
+The native study runner shares the ordinal representation and packed masks.
+Its close-to-close observations have their own
 [evaluation contract](study/native/README.md).
 
 ## Current: completed Bitcoin geometry research campaign
