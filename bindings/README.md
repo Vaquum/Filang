@@ -65,6 +65,12 @@ ABI are available through `version()`.
 
 ## Query and Composer
 
+Both apps use the Filang engine. They exchange complete ordinal patterns
+in Filang's [`g1` format](../docs/BAR_GEOMETRY.md), including selected
+[activity dimensions](../docs/G1_DIMENSIONS.md). Filang also evaluates
+partial comparison rules, numerical filters and study outcomes through
+the same browser binding.
+
 Serve the four files in `target/engine-dist/browser` from one origin. Serve
 the WASM file as `application/wasm`. The module worker owns the recording
 and prepared widths.

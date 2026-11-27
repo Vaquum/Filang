@@ -1,56 +1,57 @@
-# Qualitative geometry algebra — optional Phase 1 layer
+# Filang algebra for ordinal patterns
 
-This document specifies an **additive library module**, not a change to the
-existing geometry language or execution machinery. The sole library entrypoint
-is the new `filang::geometry_algebra` module, exported from `src/lib.rs`.
-All operations accept and return existing validated
-`geometry::GeometryPattern` objects. No execution rules, serialization
-formats, source adapters, scoring kernels, transaction costs, or inference
-methods change. The layer has no third-party dependencies, supports Rust 1.63,
-and never reads training labels or prices.
+Filang's `geometry_algebra` Rust module operates on validated
+`geometry::GeometryPattern` values, which Filang writes in the `g1` format.
+It projects, composes and aggregates ordinal relationships without loading
+price observations or outcomes. The module has no third-party dependencies
+and supports Rust 1.63.
 
 ## Input semantics and API
 
-A complete n-candle pattern is the canonical **global weak order** of its
-four endpoint labels per candle, plus (in oriented mode) body direction.
-Ordinal ranks are relative to the entire input window. Removing candles
-therefore requires dense re-ranking, not slicing the serialized rank bytes.
+A complete pattern contains the global weak order of candle endpoints and,
+in oriented mode, body direction. Each selected
+[activity dimension](G1_DIMENSIONS.md) has a separate weak order. Ranks are
+relative to the entire input window on each axis. Removing candles requires
+assigning dense ranks again on each axis, with any reference point retained.
 
 The public operations are:
 
 | API | Meaning |
 |---|---|
-| `project(g, indices)` | Restrict to increasing candle indices and re-rank surviving endpoints |
+| `project(g, indices)` | Restrict to increasing candle indices and re-rank each axis |
 | `forget_orientation(g)` | Drop body direction while keeping endpoint order |
+| `forget_dimension(g, dimension)` | Drop one activity axis and keep the other orders |
 | `overlap_compatible(a,b,s)` | Test whether last s rows of a and first s rows of b have identical induced geometry |
 | `composition_count(a,b,s)` | Count all global weak orders compatible with both windows, with their s shared candles |
 | `compose_overlap(a,b,s,max_results)` | Materialize all such complete patterns, or fail before output when the cap is too small |
 | `append_one(prefix,candle,max_results)` | Complete every positioning of one prescribed candle at the end of caller row order |
 | `prepend_one(candle,suffix,max_results)` | Symmetric extension at the beginning of caller row order |
-| `aggregate_partition(g,group_lengths,order)` | Exact OHLC aggregation for consecutive groups of arbitrary positive sizes |
-| `aggregate_blocks(g,block_size,order)` | Exact OHLC aggregation for uniform consecutive groups |
+| `aggregate_partition(g,group_lengths,order)` | Aggregate oriented price geometry over consecutive groups of arbitrary positive sizes |
+| `aggregate_blocks(g,block_size,order)` | Aggregate oriented price geometry over uniform consecutive groups |
 
 `CandleOrder::{OldestFirst,NewestFirst}` is **explicit** for aggregation.
 Filang's direction experiment uses newest-first windows. No layer operation
 guesses chronology from rank values or presumes a canonical dataset order.
 
-Unoriented patterns cannot, in general, recover aggregated OHLC bodies,
-because the first open and last close are unknown. The API rejects an
-unoriented input rather than choosing an arbitrary answer.
+Aggregation requires oriented price-only patterns. Direction identifies the
+first open and last close of each group. To aggregate activity, combine the
+underlying counters and encode the resulting order.
 
 ## Laws and correctness arguments
 
 ### Projection
 
-Let `P_I(g)` retain the candle indices `I` in strictly increasing order,
-and reassign the surviving endpoints' global ranks densely. Then:
+Let `P_I(g)` retain the candle indices `I` in strictly increasing order
+and reassign dense ranks on each axis. Each reference point is retained.
 
-- **Restriction:** every surviving endpoint comparison (less, equal, greater)
-  is unchanged, including comparisons between nonadjacent surviving candles.
+- **Restriction:** every surviving comparison (less, equal, greater) keeps
+  its result, including comparisons between nonadjacent candles and with a
+  reference point.
 - **Identity:** `P_[0,...,n-1](g) = g`.
 - **Composition:** `P_J(P_I(g)) = P_(I[J])(g)`.
 - **Mode preservation:** direction tokens of surviving candles are unchanged.
-- **Forgetful compatibility:** `P_I(forget(g)) = forget(P_I(g))`.
+- **Forgetful compatibility:** `P_I(forget(g)) = forget(P_I(g))` for either
+  orientation or a selected dimension.
 
 Empty projection yields the native zero-candle geometry in the same mode.
 Repeated, reordered, or out-of-range indices are rejected; projection is
@@ -58,8 +59,9 @@ not an arbitrary row-permutation operator.
 
 ### Overlap and exact relational composition
 
-For patterns `a` and `b` in the same mode, with `s` shared candles,
-compatibility requires their respective overlapping projections to agree.
+For patterns `a` and `b` with the same mode and dimensions, and `s` shared
+candles, compatibility requires their overlapping projections to agree on
+every axis, including each reference point.
 The output sequence contains all of `a`, then the last `len(b)-s`
 candles from `b`, retaining the caller's ordering.
 
@@ -67,7 +69,7 @@ Compatibility **does not** determine how endpoints appearing only in
 `a` compare with endpoints appearing only in `b`. Those comparisons
 must be completed explicitly rather than discarded or assumed independent.
 
-For the proof of completeness, collapse each operand's equal endpoint levels
+On the price axis, collapse each operand's equal endpoint levels
 to ordered chains `L_0 < ... < L_(p-1)` and
 `R_0 < ... < R_(q-1)`. The shared endpoints give compatible one-to-one
 **anchors** between levels in the two chains. A candidate global weak order
@@ -90,6 +92,12 @@ the Delannoy recurrence. Two one-candle shapes with four distinct endpoints
 each have `D(4,4)=321` completions, not just one. A zero count means the
 overlap is incompatible. A zero-overlap composition combines disjoint
 windows without adding chronology-dependent price assumptions.
+
+Filang completes each selected activity axis by the same merge rule. Its
+reference point, where present, is a shared anchor even with zero shared
+candles. The declared composition count is the product of the axis counts.
+Some combinations of [dependent dimensions](G1_DIMENSIONS.md#6-counts) can
+be valid ordinal patterns without arising from any set of trade counters.
 
 **Set-valued associativity:** composing successive overlapping windows
 in either bracketing gives the same set of complete global completions,

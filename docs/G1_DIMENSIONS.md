@@ -1,19 +1,18 @@
-# g1 dimensions — revision to the bar geometry contract (0.9 → 0.10)
+# Filang activity dimensions in ordinal patterns
 
-**Status: contract revision, being implemented in stages.** The study engine and the Query language read
-dimensions as written here. The Query bench, Composer and the Rust core follow in their own changes; until the
-Rust core lands, sections 6 to 8 describe what it will do, and the native study worker refuses a code with a
-dimension part. With the Rust core this text is folded into `BAR_GEOMETRY.md` and
-`QUALITATIVE_GEOMETRY_ALGEBRA.md`, and this file is removed. Section 11 records the decisions taken on it.
+Filang's `g1` format can include optional activity dimensions alongside its
+[price axis](BAR_GEOMETRY.md). The native geometry and study engines, Query and
+Composer support these dimensions when the input supplies the required
+counters. Sections 10 and 11 record the original criteria and decisions for
+the rollout.
 
-## 1. What changes, in three sentences
+## 1. Axes in an ordinal pattern
 
-g1 stays the global weak order of labelled points in a window, but the points now sit on separate **axes**,
-and order is recorded only within an axis. Price is the axis g1 has today, with four points per candle; each
-further axis is a **dimension** that can be switched on, with one point per candle. With every dimension off,
-g1 is exactly what it is in 0.9: the same text, keys, counts, catalogues and results, at the same cost.
-
-There is no second language and no new prefix. A 0.9 pattern is a 0.10 pattern.
+Each axis records a weak order of labelled points across the window. Price has
+four endpoint points per candle. Each selected activity dimension adds one
+point per candle, and signed dimensions also include a zero reference.
+Each axis ranks its points separately. Price-only patterns use the same
+`g1` prefix, text and packed key introduced in 0.9.
 
 ## 2. The first dimensions
 
@@ -63,10 +62,10 @@ tape: net selling, balanced or net buying.
   for patterns that leave the dimension off. A recording whose counters are not finite and nonnegative,
   whose taker-buy amount exceeds its volume, or whose trade count is not whole is refused.
 
-What this does and does not preserve: which candle traded most, whether volume rose through the window,
-which side was the aggressor on each candle, whether the largest volume came with selling. Not how much
-more, nor any ratio between candles. "Volume at least 1.5 times its recent median" is a threshold, and
-thresholds stay where they are today, in the study language above g1 (section 9).
+The ranks identify which candle had the highest volume, whether volume rose,
+and whether the highest volume coincided with net selling. Filang evaluates a
+condition such as "volume at least 1.5 times its recent median" from measured
+values. A query can combine that condition with an ordinal pattern (section 9).
 
 ## 4. Text
 
@@ -103,11 +102,10 @@ A dimension is on in three places, and off means the same thing in each.
 
 - **In a pattern.** A dimension is on when its part is present. A pattern says nothing about a dimension
   that is off: it matches every window that matches its other parts.
-- **In a declared domain.** A bank declares its dimensions beside its mode (`dimensions=volume,delta`).
-  The complete patterns of that bank fix the order on every declared axis. With the key absent or empty the
-  bank is a 0.9 bank.
-- **In the tools.** Composer and Query each show one switch per dimension. All off is today's Composer and
-  today's Query.
+- **In a declared domain.** A geometry sweep configuration declares the dimensions
+  for all its banks (`dimensions=volume,delta`). A complete pattern fixes the order
+  on every declared axis. An absent or empty `dimensions` key selects price only.
+- **In the tools.** Composer and Query each show one switch per dimension.
 
 Turning a dimension off is a projection (`forget_dimension`, section 8). So every pattern with dimensions
 on is a refinement of its price-only pattern: its matches are a subset of that pattern's matches, and the
@@ -115,9 +113,9 @@ refinements of one price pattern partition its matches over the windows valid fo
 Compare dimension switches on that common valid population. A parent match on a window with an undefined
 dimension is unknown for every refinement that requires it.
 
-A sweep may range over the switches themselves. Each set of switches over a window is its own bank, so the
-32 sets of the five dimensions are 32 banks whose patterns nest. On the richer bank's valid population,
-a pattern of one bank is the union of the patterns that refine it in any bank with more switches on.
+Comparing dimension selections in native sweeps uses separate configurations.
+On the valid population for the richer selection, a pattern with fewer axes
+is the union of its refinements on the additional axes.
 
 ## 6. Counts
 
@@ -150,8 +148,8 @@ reaches all 12,675 combinations, and `delta` with `imbalance` reaches 459 of 5,6
 with the Rust core's counts.
 
 **Any set may be on, in a pattern and in a declared domain.** A domain that declares a dependent core
-contains patterns no data can produce. They cost no work: preparation materialises only the patterns it
-observes, and every other pattern, possible or not, sits in the symbolic complement. Coverage arithmetic
+contains patterns no data can produce. Preparation materialises the observed
+patterns and counts the rest in the symbolic complement. Coverage arithmetic
 stays exact, because it counts declared patterns. Only the headline count is affected, so a report on such
 a domain gives the declared count and says that it includes patterns that cannot occur. For `delta` with
 `imbalance` the count that can occur is known: the sum, over the ways to split `n` candles into `p` net
@@ -160,8 +158,8 @@ and three candles, matching the enumeration. No closed form is claimed for the o
 
 **What limits an open sweep is occurrences.** Two oriented candles with all five dimensions on have
 7,452 × 209 = 1,557,468 states that can occur. Twenty-three months of 15m bars hold about 66,000 windows,
-so most patterns observed at that depth occur once. A sweep therefore ranges over the switches as well
-(section 5) and reads each pattern at the finest depth that still has enough occurrences.
+so many patterns can have little observed support. Compare separate dimension
+selections (section 5) when assessing occurrence support.
 
 ## 7. Keys and execution
 
@@ -186,19 +184,19 @@ so most patterns observed at that depth occur once. A sweep therefore ranges ove
   volume is a sum, which an order does not determine. Aggregation from data sums the counters first and
   derives the values afterwards, as Cube does.
 
-## 9. One change across the system
+## 9. Where Filang uses the dimensions
 
-| Where | What changes |
+| Where | Role |
 |---|---|
-| Geometry contract and Rust core | Sections 3 to 8 above: values, text, counts, key words, `dimensions=` in a bank, the algebra laws, the verifier's independent recomputation. |
-| Recording | A nine-column form beside today's six: `open_ms,open,high,low,close,base_volume,volume,taker_buy_volume,trade_count`, with Cube's names and `volume` in USDT. Counters are written so that reading them back gives the same float. A pattern with a dimension on is refused, not weakened, on a recording without counters. The pinned six-column recording stays valid, its `volume` stays BTC, and it supports no dimension. |
-| Study engine | `parseG1`, `g1FromRecording`, `chainedG1FromRecording` and the two matchers read and write dimension parts. |
-| Query language | A reading per dimension beside `price(…)`: `volume()`, `trades()`, `delta()`, `size()`, `imbalance()`, each with `bars_ago:`. `candle_relation` compares two readings of one dimension, or a `delta` or `imbalance` reading with `0`, and refuses a mix of axes. `prior_high` and `prior_low` take `of:` a dimension. `dimension_multiple` measures volume, trades or size against the median of the candles before. `exact_g1` and `chained_g1` accept dimension parts. On a recording without counters all of these are refused and none is offered. |
+| Filang geometry and algebra | Encode the per-axis ranks and count declared domains. A native geometry sweep selects the axes through `dimensions=`. The independent sweep verifier reconstructs the patterns from the recording. |
+| Recording | The nine-column form is `open_ms,open,high,low,close,base_volume,volume,taker_buy_volume,trade_count`, with Cube's names and `volume` in USDT. Counters round-trip as floats. Dimensioned patterns require those counters. The pinned six-column study recording has BTC volume and supports price-only patterns. |
+| Filang study engine | `exact_g1` and `chained_g1` match complete ordinal patterns with selected dimensions, using recorded or chained opens respectively. |
+| Filang query language | The readings `volume()`, `trades()`, `delta()`, `size()` and `imbalance()` accept `bars_ago:`. `candle_relation` compares two readings on one axis, or a signed reading with `0`. `prior_high` and `prior_low` take `of:` a dimension. `dimension_multiple` uses measured volume, trades or size against the prior median. Any clause that requires a dimension needs its counters. |
 | Composer | One switch per dimension and, for each one on, a track under the drawn candles with a mark per candle and a zero line where there is a reference; only order is read. The drawn bar, the address (`dim=`) and the encoder carry the ranks. A drawing with a dimension on is written in a later revision of the drawing packet, with one more field, `dimensions`, holding the parts of its g1 code; with every dimension off the packet is the first revision to the letter. Recorded counters come from a new exact payload, `/counters`, fetched only when a dimension is on. Its existing recorded tracks (volume and maker share against recent medians) are other measures and keep their names. |
-| Cube | No change. It is the source of the definitions. Its bridge already serves the three counters. |
-| Query bench | Its cube reader (`query/cube.mjs`) writes the three counters into the recording. The vocabulary gains the dimension clauses; a lane per dimension in use shows each candle's value under the canvas, with a switch each and a place in the address (`ln=`). The drawing reader takes both packet revisions, so a shape with dimensions crosses between Composer and Query in either direction. |
-| Limen feature | Hands the evaluator the three counters from Limen's bars (section 11). Nothing else of its own: the switches arrive as slots of the pattern template, so a search can turn each one on and off as a parameter. |
-| Shared vectors | The vectors Filang and Composer both check (`study/verify/chained-vectors.json` here, `checks/chained-vectors.json` there) gain windows with dimensions on, and the Rust core checks the same file. One set of answers binds all three. |
+| Cube | Supplies the measure definitions and serves the three per-bar counters. |
+| Query bench | Its Cube reader (`query/cube.mjs`) writes the three counters into the recording. Each selected dimension can show a lane of candle values. The drawing reader accepts both packet revisions, so a shape with dimensions crosses between Composer and Query in either direction. |
+| Filang bindings | Accept the counters as recording columns. Callers such as Limen supply them from their own bar sources (section 11). |
+| Shared vectors | [Dimension vectors](../study/verify/dimension-vectors.json) define shared expected orders for Filang's Rust tests and Composer's dimension checks. |
 
 ## 10. Criteria, written before the work
 
@@ -245,5 +243,5 @@ bar; USDT traded differs by at most 0.05 and taker-buy USDT by at most 0.10, bec
 kept to one decimal; and every reading g1 would take agrees on every bar (the order of adjacent bars'
 `volume`, `delta`, `size` and `imbalance`, and the side of `delta`).
 
-Still owed: the same comparison against the cube's own counters. They are reachable only through the
-bridge on the host, and Query's reader does not pass them through until this change is built.
+This record leaves the like-for-like comparison against Cube's delivered
+counters open.

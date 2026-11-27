@@ -4,10 +4,12 @@ Compose a question from the typed builder or the formal editor. Choose a named
 candle pattern in English or Japanese, combine same-close events, add filters
 or a grouping, compare parameter values, and inspect the recorded closes and
 outcomes. **Explore in Composer** opens the matching named rule or drawing.
-Drawings return to the builder as exact G1 or as pinned relationships on fixed
-consecutive candles. **Agent definitions** accepts versioned, tested event and
-condition compositions. Saved links pin the data, definitions and evidence.
-Reopening a question rechecks its evidence.
+Drawings return to the builder as a complete ordinal pattern in Filang's
+[`g1` format](../docs/BAR_GEOMETRY.md) or as pinned relationships on fixed
+consecutive candles. Filang queries can combine either with numerical filters,
+grouping, and outcome measurements. **Agent definitions** accepts versioned,
+tested event and condition compositions. Saved links pin the data, definitions
+and evidence. Reopening a question rechecks its evidence.
 
 ## Run locally
 
@@ -76,7 +78,16 @@ In the bundled Composer, mark endpoint relationships or candle directions in
 explicitly pinned endpoints and directions over consecutive recorded candles
 ending at each candidate close. Other relationships may vary. The draw search
 retains its skeleton and stretch settings. **Use exact G1** queries the
-complete ordinal geometry.
+complete Filang ordinal pattern encoded by the drawing.
+
+One Filang query can match an ordinal pattern and filter it by a measured
+wick ratio.
+
+```text
+on BTCUSDT 15m
+find exact_g1("g1:o:0,1,2,3,u")
+where candle_share(lower_wick, min: 50%)
+```
 
 Upload [the example event](examples/long_wick_reclaim.v1.json) under **Agent
 definitions** to add the 126-case composition to **New question**. Each custom
